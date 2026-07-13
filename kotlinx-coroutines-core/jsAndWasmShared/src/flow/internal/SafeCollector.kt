@@ -4,9 +4,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 
-internal actual class SafeCollector<T> actual constructor(
+internal actual class SafeCollector<T>
+actual constructor(
     internal actual val collector: FlowCollector<T>,
-    internal actual val collectContext: CoroutineContext
+    internal actual val collectContext: CoroutineContext,
 ) : FlowCollector<T> {
 
     // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
@@ -23,6 +24,5 @@ internal actual class SafeCollector<T> actual constructor(
         collector.emit(value)
     }
 
-    public actual fun releaseIntercepted() {
-    }
+    public actual fun releaseIntercepted() {}
 }

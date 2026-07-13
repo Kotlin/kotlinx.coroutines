@@ -40,7 +40,7 @@ class CancelledParentAttachTest : TestBase() {
             withContext(Job()) {
                 cancel()
                 expect(1)
-                val d = launch(start = start) { }
+                val d = launch(start = start) {}
                 expect(2)
                 d.invokeOnCompletion {
                     finish(3)
@@ -54,16 +54,17 @@ class CancelledParentAttachTest : TestBase() {
     }
 
     @Test
-    fun testProduce() = runTest({ it is CancellationException }) {
-        cancel()
-        expect(1)
-        val d = produce<Int> { }
-        expect(2)
-        (d as Job).invokeOnCompletion {
-            finish(3)
-            reset()
+    fun testProduce() =
+        runTest({ it is CancellationException }) {
+            cancel()
+            expect(1)
+            val d = produce<Int> {}
+            expect(2)
+            (d as Job).invokeOnCompletion {
+                finish(3)
+                reset()
+            }
         }
-    }
 
     @Test
     fun testBroadcast() = runTest {
@@ -91,12 +92,12 @@ class CancelledParentAttachTest : TestBase() {
 
     @Test
     fun testScopes() = runTest {
-        testScope { coroutineScope { } }
-        testScope { supervisorScope { } }
-        testScope { flowScope { } }
-        testScope { withTimeout(Long.MAX_VALUE) { } }
-        testScope { withContext(Job()) { } }
-        testScope { withContext(CoroutineName("")) { } }
+        testScope { coroutineScope {} }
+        testScope { supervisorScope {} }
+        testScope { flowScope {} }
+        testScope { withTimeout(Long.MAX_VALUE) {} }
+        testScope { withContext(Job()) {} }
+        testScope { withContext(CoroutineName("")) {} }
     }
 
     private suspend inline fun testScope(crossinline block: suspend () -> Unit) {

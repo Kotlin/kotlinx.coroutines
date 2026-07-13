@@ -5,29 +5,26 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
-/**
- * Similar to [ShareInBufferTest] and [BufferConflationTest],
- * but tests [shareIn] and its fusion with [conflate] operator.
- */
+/** Similar to [ShareInBufferTest] and [BufferConflationTest], but tests [shareIn] and its fusion with [conflate] operator. */
 class ShareInConflationTest : TestBase() {
     private val n = 100
 
     private fun checkConflation(
         bufferCapacity: Int,
         onBufferOverflow: BufferOverflow = BufferOverflow.DROP_OLDEST,
-        op: suspend Flow<Int>.(CoroutineScope) -> Flow<Int>
+        op: suspend Flow<Int>.(CoroutineScope) -> Flow<Int>,
     ) = runTest {
         expect(1)
         // emit all and conflate, then should collect bufferCapacity the latest ones
         val done = Job()
         flow {
-            repeat(n) { i ->
-                expect(i + 2)
-                emit(i)
+                repeat(n) { i ->
+                    expect(i + 2)
+                    emit(i)
+                }
+                done.join() // wait until done collection
+                emit(-1) // signal flow completion
             }
-            done.join() // wait until done collection
-            emit(-1) // signal flow completion
-        }
             .op(this)
             .takeWhile { i -> i >= 0 }
             .collect { i ->

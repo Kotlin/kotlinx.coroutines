@@ -32,9 +32,10 @@ class UnlimitedChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
-        val channel = Channel<Int>(Channel.UNLIMITED)
-        channel.cancel(TestCancellationException())
-        channel.receive()
-    }
+    fun testCancelWithCause() =
+        runTest({ it is TestCancellationException }) {
+            val channel = Channel<Int>(Channel.UNLIMITED)
+            channel.cancel(TestCancellationException())
+            channel.receive()
+        }
 }

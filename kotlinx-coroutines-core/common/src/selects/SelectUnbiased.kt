@@ -6,12 +6,11 @@ import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
- * Waits for the result of multiple suspending functions simultaneously like [select], but in an _unbiased_
- * way when multiple clauses are selectable at the same time.
+ * Waits for the result of multiple suspending functions simultaneously like [select], but in an _unbiased_ way when multiple clauses are
+ * selectable at the same time.
  *
- * This unbiased implementation of `select` expression randomly shuffles the clauses before checking
- * if they are selectable, thus ensuring that there is no statistical bias to the selection of the first
- * clauses.
+ * This unbiased implementation of `select` expression randomly shuffles the clauses before checking if they are selectable, thus ensuring
+ * that there is no statistical bias to the selection of the first clauses.
  *
  * See [select] function description for all the other details.
  */
@@ -27,11 +26,9 @@ public suspend inline fun <R> selectUnbiased(crossinline builder: SelectBuilder<
 }
 
 /**
- * The unbiased `select` inherits the [standard one][SelectImplementation],
- * but does not register clauses immediately. Instead, it stores all of them
- * in [clausesToRegister] lists, shuffles and registers them in the beginning of [doSelect]
- * (see [shuffleAndRegisterClauses]), and then delegates the rest
- * to the parent's [doSelect] implementation.
+ * The unbiased `select` inherits the [standard one][SelectImplementation], but does not register clauses immediately. Instead, it stores
+ * all of them in [clausesToRegister] lists, shuffles and registers them in the beginning of [doSelect] (see [shuffleAndRegisterClauses]),
+ * and then delegates the rest to the parent's [doSelect] implementation.
  */
 @PublishedApi
 internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) : SelectImplementation<R>(context) {
@@ -55,10 +52,11 @@ internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) :
         return super.doSelect()
     }
 
-    private fun shuffleAndRegisterClauses() = try {
-        clausesToRegister.shuffle()
-        clausesToRegister.forEach { it.register() }
-    } finally {
-        clausesToRegister.clear()
-    }
+    private fun shuffleAndRegisterClauses() =
+        try {
+            clausesToRegister.shuffle()
+            clausesToRegister.forEach { it.register() }
+        } finally {
+            clausesToRegister.clear()
+        }
 }

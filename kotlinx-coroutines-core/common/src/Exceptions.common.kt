@@ -5,17 +5,16 @@ package kotlinx.coroutines
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-@InternalCoroutinesApi
-public class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException(message, cause)
+@InternalCoroutinesApi public class CompletionHandlerException(message: String, cause: Throwable) : RuntimeException(message, cause)
 
 public expect open class CancellationException(message: String?) : IllegalStateException
 
-public expect fun CancellationException(message: String?, cause: Throwable?) : CancellationException
+public expect fun CancellationException(message: String?, cause: Throwable?): CancellationException
 
 internal expect class JobCancellationException(
     message: String,
     cause: Throwable?,
-    job: Job
+    job: Job,
 ) : CancellationException {
     internal val job: Job
 }

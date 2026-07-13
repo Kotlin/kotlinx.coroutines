@@ -9,7 +9,7 @@ import kotlin.test.*
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val nSenders = 2
     private val nReceivers = 3
-    private val nEvents =  (if (isNative) 5_000 else 500_000) * stressTestMultiplier
+    private val nEvents = (if (isNative) 5_000 else 500_000) * stressTestMultiplier
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
 
     private val broadcast = ConflatedBroadcastChannel<Int>()
@@ -20,35 +20,37 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val receivedTotal = atomic(0)
 
     @Test
-    fun testStressNotify()= runTest {
+    fun testStressNotify() = runTest {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
-        val senders = List(nSenders) { senderId ->
-            launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
-                repeat(nEvents) { i ->
-                    if (i % nSenders == senderId) {
-                        broadcast.trySend(i)
-                        sentTotal.incrementAndGet()
+        val senders =
+            List(nSenders) { senderId ->
+                launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
+                    repeat(nEvents) { i ->
+                        if (i % nSenders == senderId) {
+                            broadcast.trySend(i)
+                            sentTotal.incrementAndGet()
+                            yield()
+                        }
+                    }
+                    sendersCompleted.incrementAndGet()
+                }
+            }
+        val receivers =
+            List(nReceivers) { receiverId ->
+                launch(Dispatchers.Default + CoroutineName("Receiver$receiverId")) {
+                    var last = -1
+                    while (isActive) {
+                        val i = waitForEvent()
+                        if (i > last) {
+                            receivedTotal.incrementAndGet()
+                            last = i
+                        }
+                        if (i >= nEvents) break
                         yield()
                     }
+                    receiversCompleted.incrementAndGet()
                 }
-                sendersCompleted.incrementAndGet()
             }
-        }
-        val receivers = List(nReceivers) { receiverId ->
-            launch(Dispatchers.Default + CoroutineName("Receiver$receiverId")) {
-                var last = -1
-                while (isActive) {
-                    val i = waitForEvent()
-                    if (i > last) {
-                        receivedTotal.incrementAndGet()
-                        last = i
-                    }
-                    if (i >= nEvents) break
-                    yield()
-                }
-                receiversCompleted.incrementAndGet()
-            }
-        }
         // print progress
         val progressJob = launch {
             var seconds = 0

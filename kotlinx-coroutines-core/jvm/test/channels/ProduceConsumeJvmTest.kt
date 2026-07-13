@@ -10,7 +10,7 @@ import kotlin.test.*
 @RunWith(Parameterized::class)
 class ProduceConsumeJvmTest(
     private val capacity: Int,
-    private val number: Int
+    private val number: Int,
 ) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "capacity={0}, number={1}")
@@ -26,12 +26,13 @@ class ProduceConsumeJvmTest(
     @Test
     fun testProducer() = runTest {
         var sentAll = false
-        val producer = produce(capacity = capacity) {
-            for (i in 1..number) {
-                send(i)
+        val producer =
+            produce(capacity = capacity) {
+                for (i in 1..number) {
+                    send(i)
+                }
+                sentAll = true
             }
-            sentAll = true
-        }
         var consumed = 0
         for (x in producer) {
             consumed++
@@ -43,14 +44,15 @@ class ProduceConsumeJvmTest(
     @Test
     fun testActor() = runTest {
         val received = CompletableDeferred<Int>()
-        val actor = actor<Int>(capacity = capacity) {
-            var n = 0
-            for(i in channel) {
-                n++
+        val actor =
+            actor<Int>(capacity = capacity) {
+                var n = 0
+                for (i in channel) {
+                    n++
+                }
+                received.complete(n)
             }
-            received.complete(n)
-        }
-        for(i in 1..number) {
+        for (i in 1..number) {
             actor.send(i)
         }
         actor.close()

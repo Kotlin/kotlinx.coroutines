@@ -43,17 +43,19 @@ class BufferedChannelStressTest(private val capacity: Int) : TestBase() {
         Assume.assumeTrue(capacity < 100_000)
         repeat(10_000 * stressTestMultiplier) {
             val channel = Channel<Int>(capacity)
-            val sender = launch(Dispatchers.Default) {
-                for (i in 1..capacity * 2) {
-                    channel.send(i)
+            val sender =
+                launch(Dispatchers.Default) {
+                    for (i in 1..capacity * 2) {
+                        channel.send(i)
+                    }
                 }
-            }
-            val receiver = launch(Dispatchers.Default) {
-                for (i in 1..capacity * 2) {
-                    val next = channel.receive()
-                    check(next == i)
+            val receiver =
+                launch(Dispatchers.Default) {
+                    for (i in 1..capacity * 2) {
+                        val next = channel.receive()
+                        check(next == i)
+                    }
                 }
-            }
             sender.join()
             receiver.join()
         }

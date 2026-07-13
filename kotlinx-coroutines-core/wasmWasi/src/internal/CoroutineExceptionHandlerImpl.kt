@@ -8,9 +8,7 @@ import kotlin.wasm.unsafe.withScopedMemoryAllocator
 
 private const val STDERR = 2
 
-/**
- * Write to a file descriptor. Note: This is similar to `writev` in POSIX.
- */
+/** Write to a file descriptor. Note: This is similar to `writev` in POSIX. */
 @OptIn(ExperimentalWasmInterop::class)
 @WasmImport("wasi_snapshot_preview1", "fd_write")
 private external fun wasiRawFdWrite(descriptor: Int, scatterPtr: Int, scatterSize: Int, errorPtr: Int): Int
@@ -35,22 +33,21 @@ private fun printlnErrorStream(message: String): Int = withScopedMemoryAllocator
 
     val rp0 = allocator.allocate(4)
 
-    val ret = wasiRawFdWrite(
-        descriptor = STDERR,
-        scatterPtr = scatterPtr.address.toInt(),
-        scatterSize = 1,
-        errorPtr = rp0.address.toInt()
-    )
+    val ret =
+        wasiRawFdWrite(
+            descriptor = STDERR,
+            scatterPtr = scatterPtr.address.toInt(),
+            scatterSize = 1,
+            errorPtr = rp0.address.toInt(),
+        )
 
     if (ret != 0) rp0.loadInt() else 0
 }
 
 /*
-* Terminate the process normally with an exit code.
+ * Terminate the process normally with an exit code.
  */
-@OptIn(ExperimentalWasmInterop::class)
-@WasmImport("wasi_snapshot_preview1", "proc_exit")
-private external fun wasiProcExit(exitCode: Int)
+@OptIn(ExperimentalWasmInterop::class) @WasmImport("wasi_snapshot_preview1", "proc_exit") private external fun wasiProcExit(exitCode: Int)
 
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     val errorCode = printlnErrorStream("!!!")

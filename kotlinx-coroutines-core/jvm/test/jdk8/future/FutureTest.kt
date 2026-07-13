@@ -25,8 +25,9 @@ class FutureTest : TestBase() {
     fun testSimpleAwait() {
         val future = GlobalScope.future {
             CompletableFuture.supplyAsync {
-                "O"
-            }.await() + "K"
+                    "O"
+                }
+                .await() + "K"
         }
         assertEquals("OK", future.get())
     }
@@ -110,15 +111,16 @@ class FutureTest : TestBase() {
     fun testWaitForFutureWithException() = runTest {
         expect(1)
         val toAwait = CompletableFuture<String>()
-        val future = future(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
-                toAwait.await() // will suspend (slow path)
-            } catch (e: TestException) {
-                expect(4)
-                e.message!!
-            } + "K"
-        }
+        val future =
+            future(start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    expect(2)
+                    toAwait.await() // will suspend (slow path)
+                } catch (e: TestException) {
+                    expect(4)
+                    e.message!!
+                } + "K"
+            }
         expect(3)
         assertFalse(future.isDone)
         toAwait.completeExceptionally(TestException("O"))
@@ -164,15 +166,16 @@ class FutureTest : TestBase() {
     fun testCancellableAwaitFuture() = runBlocking {
         expect(1)
         val toAwait = CompletableFuture<String>()
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                toAwait.await() // suspends
-            } catch (e: CancellationException) {
-                expect(5) // should throw cancellation exception
-                throw e
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                try {
+                    toAwait.await() // suspends
+                } catch (e: CancellationException) {
+                    expect(5) // should throw cancellation exception
+                    throw e
+                }
             }
-        }
         expect(3)
         job.cancel() // cancel the job
         toAwait.complete("fail") // too late, the waiting job was already cancelled
@@ -184,26 +187,31 @@ class FutureTest : TestBase() {
     @Test
     fun testContinuationWrapped() {
         val depth = AtomicInteger()
-        val future = GlobalScope.future(wrapContinuation {
-            depth.andIncrement
-            it()
-            depth.andDecrement
-        }) {
-            assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
-            val result =
+        val future =
+            GlobalScope.future(
+                wrapContinuation {
+                    depth.andIncrement
+                    it()
+                    depth.andDecrement
+                }
+            ) {
+                assertEquals(1, depth.get(), "Part before first suspension must be wrapped")
+                val result =
                     CompletableFuture.supplyAsync {
-                        while (depth.get() > 0);
+                            while (depth.get() > 0) ;
+                            assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
+                            "OK"
+                        }
+                        .await()
+                assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
+                CompletableFuture.supplyAsync {
+                        while (depth.get() > 0) ;
                         assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
-                        "OK"
-                    }.await()
-            assertEquals(1, depth.get(), "Part after first suspension should be wrapped")
-            CompletableFuture.supplyAsync {
-                while (depth.get() > 0);
-                assertEquals(0, depth.get(), "Part inside suspension point should not be wrapped")
-                "ignored"
-            }.await()
-            result
-        }
+                        "ignored"
+                    }
+                    .await()
+                result
+            }
         assertEquals("OK", future.get())
     }
 
@@ -211,9 +219,11 @@ class FutureTest : TestBase() {
     fun testCompletableFutureStageAsDeferred() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = CompletableFuture.supplyAsync {
-            lock.withLock { 42 }
-        }.asDeferred()
+        val deferred: Deferred<Int> =
+            CompletableFuture.supplyAsync {
+                    lock.withLock { 42 }
+                }
+                .asDeferred()
 
         assertFalse(deferred.isCompleted)
         lock.unlock()
@@ -230,9 +240,10 @@ class FutureTest : TestBase() {
 
     @Test
     fun testFailedFutureAsDeferred() = runBlocking {
-        val future = CompletableFuture<Int>().apply {
-            completeExceptionally(TestException("something went wrong"))
-        }
+        val future =
+            CompletableFuture<Int>().apply {
+                completeExceptionally(TestException("something went wrong"))
+            }
         val deferred = future.asDeferred()
 
         assertTrue(deferred.isCancelled)
@@ -253,9 +264,11 @@ class FutureTest : TestBase() {
     fun testCompletableFutureWithExceptionAsDeferred() = runBlocking {
         val lock = ReentrantLock().apply { lock() }
 
-        val deferred: Deferred<Int> = CompletableFuture.supplyAsync {
-            lock.withLock { throw TestException("something went wrong") }
-        }.asDeferred()
+        val deferred: Deferred<Int> =
+            CompletableFuture.supplyAsync {
+                    lock.withLock { throw TestException("something went wrong") }
+                }
+                .asDeferred()
 
         assertFalse(deferred.isCompleted)
         lock.unlock()
@@ -272,15 +285,17 @@ class FutureTest : TestBase() {
 
     @Test
     fun testApiBridge() = runTest {
-        val result = newSingleThreadContext("ctx").use {
-            val future = CompletableFuture.supplyAsync(Supplier { threadLocal.set("value") }, it.executor)
-            val job = async(it) {
-                future.await()
-                threadLocal.get()
-            }
+        val result =
+            newSingleThreadContext("ctx").use {
+                val future = CompletableFuture.supplyAsync(Supplier { threadLocal.set("value") }, it.executor)
+                val job =
+                    async(it) {
+                        future.await()
+                        threadLocal.get()
+                    }
 
-            job.await()
-        }
+                job.await()
+            }
 
         assertEquals("value", result)
     }
@@ -310,8 +325,7 @@ class FutureTest : TestBase() {
 
         val deferred = async {
             expect(2)
-            if (cancellable) future.await()
-            else future.asDeferred().await()
+            if (cancellable) future.await() else future.asDeferred().await()
         }
         expect(1)
         yield()
@@ -322,92 +336,100 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testStructuredException() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future<Int>(Dispatchers.Unconfined) {
-            throw TestException("FAIL")
+    fun testStructuredException() =
+        runTest(
+            expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result =
+                future<Int>(Dispatchers.Unconfined) {
+                    throw TestException("FAIL")
+                }
+            result.checkFutureException<TestException>()
         }
-        result.checkFutureException<TestException>()
-    }
 
     @Test
-    fun testChildException() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future(Dispatchers.Unconfined) {
-            // child crashes
-            launch { throw TestException("FAIL") }
-            42
+    fun testChildException() =
+        runTest(
+            expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result =
+                future(Dispatchers.Unconfined) {
+                    // child crashes
+                    launch { throw TestException("FAIL") }
+                    42
+                }
+            result.checkFutureException<TestException>()
         }
-        result.checkFutureException<TestException>()
-    }
 
     @Test
-    fun testExceptionAggregation() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        val result = future(Dispatchers.Unconfined) {
-            // child crashes
-            launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
-            launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
-            throw TestException()
+    fun testExceptionAggregation() =
+        runTest(
+            expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            val result =
+                future(Dispatchers.Unconfined) {
+                    // child crashes
+                    launch(start = CoroutineStart.ATOMIC) { throw TestException1("FAIL") }
+                    launch(start = CoroutineStart.ATOMIC) { throw TestException2("FAIL") }
+                    throw TestException()
+                }
+            result.checkFutureException<TestException>(TestException1::class, TestException2::class)
+            finish(1)
         }
-        result.checkFutureException<TestException>(TestException1::class, TestException2::class)
-        finish(1)
-    }
 
     @Test
     fun testExternalCompletion() = runTest {
         expect(1)
-        val result = future(Dispatchers.Unconfined) {
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
+        val result =
+            future(Dispatchers.Unconfined) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(2)
+                }
             }
-        }
 
         result.complete(Unit)
         finish(3)
     }
 
     @Test
-    fun testExceptionOnExternalCompletion() = runTest(
-        expected = { it is TestException } // exception propagates to parent with structured concurrency
-    ) {
-        expect(1)
-        val result = future(Dispatchers.Unconfined) {
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
-                throw TestException()
-            }
+    fun testExceptionOnExternalCompletion() =
+        runTest(
+            expected = { it is TestException } // exception propagates to parent with structured concurrency
+        ) {
+            expect(1)
+            val result =
+                future(Dispatchers.Unconfined) {
+                    try {
+                        delay(Long.MAX_VALUE)
+                    } finally {
+                        expect(2)
+                        throw TestException()
+                    }
+                }
+            result.complete(Unit)
+            finish(3)
         }
-        result.complete(Unit)
-        finish(3)
-    }
 
     @Test
     fun testUnhandledExceptionOnExternalCompletionIsNotReported() = runTest {
         expect(1)
         // No parent here (NonCancellable), so nowhere to propagate exception
-        val result = future(NonCancellable + Dispatchers.Unconfined) {
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
-                throw TestException() // this exception cannot be handled
+        val result =
+            future(NonCancellable + Dispatchers.Unconfined) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(2)
+                    throw TestException() // this exception cannot be handled
+                }
             }
-        }
         result.complete(Unit)
         finish(3)
     }
 
-    /**
-     * See [https://github.com/Kotlin/kotlinx.coroutines/issues/892]
-     */
+    /** See [https://github.com/Kotlin/kotlinx.coroutines/issues/892] */
     @Test
     fun testTimeoutCancellationFailRace() {
         repeat(10 * stressTestMultiplier) {
@@ -417,8 +439,9 @@ class FutureTest : TestBase() {
                         var caught = false
                         try {
                             CompletableFuture.supplyAsync {
-                                throw TestException()
-                            }.await()
+                                    throw TestException()
+                                }
+                                .await()
                         } catch (ignored: TestException) {
                             caught = true
                         }
@@ -430,9 +453,8 @@ class FutureTest : TestBase() {
     }
 
     /**
-     * Tests that both [CompletionStage.await] and [CompletionStage.asDeferred] consistently unwrap
-     * [CompletionException] both in their slow and fast paths.
-     * See [issue #1479](https://github.com/Kotlin/kotlinx.coroutines/issues/1479).
+     * Tests that both [CompletionStage.await] and [CompletionStage.asDeferred] consistently unwrap [CompletionException] both in their slow
+     * and fast paths. See [issue #1479](https://github.com/Kotlin/kotlinx.coroutines/issues/1479).
      */
     @Test
     fun testConsistentExceptionUnwrapping() = runTest {
@@ -468,7 +490,7 @@ class FutureTest : TestBase() {
         fSlow.checkFutureException<TestException>() // now wait until it completes
     }
 
-    private inline fun <reified T: Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
+    private inline fun <reified T : Throwable> CompletableFuture<*>.checkFutureException(vararg suppressed: KClass<out Throwable>) {
         val e = assertFailsWith<ExecutionException> { get() }
         val cause = e.cause!!
         assertIs<T>(cause)
@@ -477,26 +499,23 @@ class FutureTest : TestBase() {
         }
     }
 
-    private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher = object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            wrapper {
-                block.run()
+    private fun wrapContinuation(wrapper: (() -> Unit) -> Unit): CoroutineDispatcher =
+        object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                wrapper {
+                    block.run()
+                }
             }
         }
-    }
 
-    /**
-     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
-     */
+    /** https://github.com/Kotlin/kotlinx.coroutines/issues/2456 */
     @Test
     fun testCompletedStageAwait() = runTest {
         val stage = CompletableFuture.completedStage("OK")
         assertEquals("OK", stage.await())
     }
 
-    /**
-     * https://github.com/Kotlin/kotlinx.coroutines/issues/2456
-     */
+    /** https://github.com/Kotlin/kotlinx.coroutines/issues/2456 */
     @Test
     fun testCompletedStageAsDeferredAwait() = runTest {
         val stage = CompletableFuture.completedStage("OK")
@@ -563,12 +582,13 @@ class FutureTest : TestBase() {
     }
 
     @Test
-    fun testCancelledParent() = runTest({ it is java.util.concurrent.CancellationException }) {
-        cancel()
-        future { expectUnreached() }
-        future(start = CoroutineStart.ATOMIC) { }
-        future(start = CoroutineStart.UNDISPATCHED) { }
-    }
+    fun testCancelledParent() =
+        runTest({ it is java.util.concurrent.CancellationException }) {
+            cancel()
+            future { expectUnreached() }
+            future(start = CoroutineStart.ATOMIC) {}
+            future(start = CoroutineStart.UNDISPATCHED) {}
+        }
 
     @Test
     fun testStackOverflow() = runTest {
@@ -577,10 +597,11 @@ class FutureTest : TestBase() {
         val count = 10000L
         val children = ArrayList<Job>()
         for (i in 0 until count) {
-            children += launch(Dispatchers.Default) {
-                future.asDeferred().await()
-                completed.incrementAndGet()
-            }
+            children +=
+                launch(Dispatchers.Default) {
+                    future.asDeferred().await()
+                    completed.incrementAndGet()
+                }
         }
         future.complete(1)
         withTimeout(60_000) {
@@ -592,7 +613,7 @@ class FutureTest : TestBase() {
     @Test
     fun testFailsIfLazy() {
         assertFailsWith<IllegalArgumentException> {
-            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {  }
+            GlobalScope.future<Unit>(start = CoroutineStart.LAZY) {}
         }
     }
 

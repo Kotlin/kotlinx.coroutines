@@ -10,9 +10,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
         val threadLocalData: ThreadLocal<MutableList<String>> = ThreadLocal.withInitial { ArrayList() }
     }
 
-    class MyMutableElement(
-        val mutableData: MutableList<String>
-    ) : CopyableThreadContextElement<MutableList<String>> {
+    class MyMutableElement(val mutableData: MutableList<String>) : CopyableThreadContextElement<MutableList<String>> {
 
         companion object Key : CoroutineContext.Key<MyMutableElement>
 
@@ -135,10 +133,10 @@ class ThreadContextMutableCopiesTest : TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         flow {
-            assertNotSame(originalData, threadLocalData.get())
-            assertEquals(originalData, threadLocalData.get())
-            emit(1)
-        }
+                assertNotSame(originalData, threadLocalData.get())
+                assertEquals(originalData, threadLocalData.get())
+                emit(1)
+            }
             .flowOn(root)
             .single()
     }
@@ -148,10 +146,10 @@ class ThreadContextMutableCopiesTest : TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         flow {
-            assertNotSame(originalData, threadLocalData.get())
-            assertEquals(originalData, threadLocalData.get())
-            emit(1)
-        }
+                assertNotSame(originalData, threadLocalData.get())
+                assertEquals(originalData, threadLocalData.get())
+                emit(1)
+            }
             .flowOn(root + Dispatchers.Default)
             .single()
     }

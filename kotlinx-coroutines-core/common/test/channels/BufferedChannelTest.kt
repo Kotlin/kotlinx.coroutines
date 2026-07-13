@@ -115,8 +115,9 @@ class BufferedChannelTest : TestBase() {
         expect(1)
         launch {
             expect(4)
-            try { q.receive() }
-            catch (e: ClosedReceiveChannelException) {
+            try {
+                q.receive()
+            } catch (e: ClosedReceiveChannelException) {
                 expect(5)
             }
         }
@@ -126,8 +127,9 @@ class BufferedChannelTest : TestBase() {
         expect(3)
         yield()
         expect(6)
-        try { q.send(42) }
-        catch (e: ClosedSendChannelException) {
+        try {
+            q.send(42)
+        } catch (e: ClosedSendChannelException) {
             (q as BufferedChannel<*>).checkSegmentStructureInvariants()
             finish(7)
         }
@@ -189,11 +191,12 @@ class BufferedChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
-        val channel = Channel<Int>(5)
-        channel.cancel(TestCancellationException())
-        channel.receive()
-    }
+    fun testCancelWithCause() =
+        runTest({ it is TestCancellationException }) {
+            val channel = Channel<Int>(5)
+            channel.cancel(TestCancellationException())
+            channel.receive()
+        }
 
     @Test
     fun testBufferSize() = runTest {
@@ -222,7 +225,7 @@ class BufferedChannelTest : TestBase() {
 
     private suspend fun CoroutineScope.checkBufferChannel(
         channel: Channel<Int>,
-        capacity: Int
+        capacity: Int,
     ) {
         launch {
             expect(2)

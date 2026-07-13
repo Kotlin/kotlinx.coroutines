@@ -32,22 +32,21 @@ class UnboundedIntegerIncrementPublisherTest : PublisherVerification<Int>(TestEn
     }
 
     override fun createFailedPublisher(): Publisher<Int> {
-        return AsyncIterablePublisher(object : Iterable<Int> {
-            override fun iterator(): Iterator<Int> {
-                throw RuntimeException("Error state signal!")
-            }
-        }, e!!)
+        return AsyncIterablePublisher(
+            object : Iterable<Int> {
+                override fun iterator(): Iterator<Int> {
+                    throw RuntimeException("Error state signal!")
+                }
+            },
+            e!!,
+        )
     }
 
     override fun maxElementsFromPublisher(): Long {
         return super.publisherUnableToSignalOnComplete()
     }
 
-    @Ignore
-    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {
-    }
+    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore
-    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {
-    }
+    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 }

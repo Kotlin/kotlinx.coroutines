@@ -8,9 +8,8 @@ import kotlin.test.*
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * This test suite contains some basic tests for [SharedFlow]. There are some scenarios here written
- * using [expect] and they are not very readable. See [SharedFlowScenarioTest] for a better
- * behavioral test-suit.
+ * This test suite contains some basic tests for [SharedFlow]. There are some scenarios here written using [expect] and they are not very
+ * readable. See [SharedFlowScenarioTest] for a better behavioral test-suit.
  */
 class SharedFlowTest : TestBase() {
     @Test
@@ -24,19 +23,20 @@ class SharedFlowTest : TestBase() {
         assertEquals(0, sh.subscriptionCount.value)
         expect(2)
         // one collector
-        val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(3)
-            sh.collect {
-                when(it) {
-                    4 -> expect(5)
-                    6 -> expect(7)
-                    10 -> expect(11)
-                    13 -> expect(14)
-                    else -> expectUnreached()
+        val job1 =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(3)
+                sh.collect {
+                    when (it) {
+                        4 -> expect(5)
+                        6 -> expect(7)
+                        10 -> expect(11)
+                        13 -> expect(14)
+                        else -> expectUnreached()
+                    }
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(4)
         assertEquals(1, sh.subscriptionCount.value)
         sh.emit(4)
@@ -45,20 +45,21 @@ class SharedFlowTest : TestBase() {
         sh.emit(6)
         expect(8)
         // one more collector
-        val job2 = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(9)
-            sh.collect {
-                when(it) {
-                    10 -> expect(12)
-                    13 -> expect(15)
-                    17 -> expect(18)
-                    null -> expect(20)
-                    21 -> expect(22)
-                    else -> expectUnreached()
+        val job2 =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(9)
+                sh.collect {
+                    when (it) {
+                        10 -> expect(12)
+                        13 -> expect(15)
+                        17 -> expect(18)
+                        null -> expect(20)
+                        21 -> expect(22)
+                        else -> expectUnreached()
+                    }
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(10)
         assertEquals(2, sh.subscriptionCount.value)
         sh.emit(10) // to both collectors now!
@@ -91,20 +92,21 @@ class SharedFlowTest : TestBase() {
         expect(1)
         val sh = MutableSharedFlow<Int>()
         val barrier = Channel<Unit>(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            sh.collect {
-                when (it) {
-                    3 -> {
-                        expect(4)
-                        barrier.receive() // hold on before collecting next one
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                sh.collect {
+                    when (it) {
+                        3 -> {
+                            expect(4)
+                            barrier.receive() // hold on before collecting next one
+                        }
+                        6 -> expect(10)
+                        else -> expectUnreached()
                     }
-                    6 -> expect(10)
-                    else -> expectUnreached()
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(3)
         sh.emit(3) // rendezvous
         expect(5)
@@ -146,19 +148,20 @@ class SharedFlowTest : TestBase() {
         assertEquals(listOf(2), sh.replayCache)
         expect(3)
         // one collector
-        val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(4)
-            sh.collect {
-                when(it) {
-                    2 -> expect(5) // got it immediately from replay cache
-                    6 -> expect(8)
-                    null -> expect(14)
-                    17 -> expect(18)
-                    else -> expectUnreached()
+        val job1 =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(4)
+                sh.collect {
+                    when (it) {
+                        2 -> expect(5) // got it immediately from replay cache
+                        6 -> expect(8)
+                        null -> expect(14)
+                        17 -> expect(18)
+                        else -> expectUnreached()
+                    }
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(6)
         assertEquals(1, sh.subscriptionCount.value)
         sh.emit(6) // does not suspend, but buffers
@@ -167,17 +170,18 @@ class SharedFlowTest : TestBase() {
         yield()
         expect(9)
         // one more collector
-        val job2 = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(10)
-            sh.collect {
-                when(it) {
-                    6 -> expect(11) // from replay cache
-                    null -> expect(15)
-                    else -> expectUnreached()
+        val job2 =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(10)
+                sh.collect {
+                    when (it) {
+                        6 -> expect(11) // from replay cache
+                        null -> expect(15)
+                        else -> expectUnreached()
+                    }
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(12)
         assertEquals(2, sh.subscriptionCount.value)
         sh.emit(null)
@@ -207,21 +211,22 @@ class SharedFlowTest : TestBase() {
         val sh = MutableSharedFlow<Int>(1)
         assertEquals(listOf(), sh.replayCache)
         val barrier = Channel<Unit>(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            sh.collect {
-                when (it) {
-                    3 -> {
-                        expect(4)
-                        barrier.receive() // collector waits
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                sh.collect {
+                    when (it) {
+                        3 -> {
+                            expect(4)
+                            barrier.receive() // collector waits
+                        }
+                        5 -> expect(10)
+                        6 -> expect(11)
+                        else -> expectUnreached()
                     }
-                    5 -> expect(10)
-                    6 -> expect(11)
-                    else -> expectUnreached()
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(3)
         assertTrue(sh.tryEmit(3)) // buffered
         assertEquals(listOf(3), sh.replayCache)
@@ -257,34 +262,37 @@ class SharedFlowTest : TestBase() {
     @Test
     fun testReplay2Extra1() = runTest {
         expect(1)
-        val sh = MutableSharedFlow<Int>(
-            replay = 2,
-            extraBufferCapacity = 1
-        )
+        val sh =
+            MutableSharedFlow<Int>(
+                replay = 2,
+                extraBufferCapacity = 1,
+            )
         assertEquals(listOf(), sh.replayCache)
         assertTrue(sh.tryEmit(0))
         assertEquals(listOf(0), sh.replayCache)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            var cnt = 0
-            sh.collect {
-                when (it) {
-                    0 -> when (cnt++) {
-                        0 -> expect(3)
-                        1 -> expect(14)
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                var cnt = 0
+                sh.collect {
+                    when (it) {
+                        0 ->
+                            when (cnt++) {
+                                0 -> expect(3)
+                                1 -> expect(14)
+                                else -> expectUnreached()
+                            }
+                        1 -> expect(6)
+                        2 -> expect(7)
+                        3 -> expect(8)
+                        4 -> expect(12)
+                        5 -> expect(13)
+                        16 -> expect(17)
                         else -> expectUnreached()
                     }
-                    1 -> expect(6)
-                    2 -> expect(7)
-                    3 -> expect(8)
-                    4 -> expect(12)
-                    5 -> expect(13)
-                    16 -> expect(17)
-                    else -> expectUnreached()
                 }
+                expectUnreached() // does not complete normally
             }
-            expectUnreached() // does not complete normally
-        }
         expect(4)
         assertTrue(sh.tryEmit(1)) // buffered
         assertEquals(listOf(0, 1), sh.replayCache)
@@ -330,17 +338,17 @@ class SharedFlowTest : TestBase() {
         repeat(3) {
             val m = n / 2 // collect half, then suspend
             val barrier = Channel<Int>(1)
-            val collectorJob = sh
-                .onSubscription {
-                    barrier.send(1)
-                }
-                .onEach { value ->
-                    if (value == m) {
-                        barrier.send(2)
-                        delay(Long.MAX_VALUE)
+            val collectorJob =
+                sh.onSubscription {
+                        barrier.send(1)
                     }
-                }
-                .launchIn(this)
+                    .onEach { value ->
+                        if (value == m) {
+                            barrier.send(2)
+                            delay(Long.MAX_VALUE)
+                        }
+                    }
+                    .launchIn(this)
             assertEquals(1, barrier.receive()) // make sure it subscribes
             launch(start = CoroutineStart.UNDISPATCHED) {
                 for (i in 0 until n + m) sh.emit(i) // these emits should go Ok
@@ -364,7 +372,10 @@ class SharedFlowTest : TestBase() {
             // collector is slow
             val collector = sh.onEach { delay(Long.MAX_VALUE) }.launchIn(this)
             val emitter = launch {
-                repeat(3 * n) { sh.emit(i); i++ }
+                repeat(3 * n) {
+                    sh.emit(i)
+                    i++
+                }
             }
             repeat(3) { yield() } // enough to run it to suspension
             assertEquals((i - n until i).toList(), sh.replayCache)
@@ -385,39 +396,44 @@ class SharedFlowTest : TestBase() {
         val barrier1 = Job()
         val barrier2 = Job()
         val barrier3 = Job()
-        val collector1 = sh.onEach {
-            when (it) {
-                1 ->  expect(3)
-                2 -> {
-                    expect(6)
-                    barrier2.complete()
+        val collector1 =
+            sh.onEach {
+                    when (it) {
+                        1 -> expect(3)
+                        2 -> {
+                            expect(6)
+                            barrier2.complete()
+                        }
+                        3 -> {
+                            expect(9)
+                            barrier3.complete()
+                        }
+                        else -> expectUnreached()
+                    }
                 }
-                3 -> {
-                    expect(9)
-                    barrier3.complete()
+                .launchIn(this)
+        val collector2 =
+            sh.onEach {
+                    when (it) {
+                        1 -> {
+                            expect(4)
+                            barrier1.complete()
+                            delay(Long.MAX_VALUE)
+                        }
+                        else -> expectUnreached()
+                    }
                 }
-                else -> expectUnreached()
-            }
-        }.launchIn(this)
-        val collector2 = sh.onEach {
-            when (it) {
-                1 -> {
-                    expect(4)
-                    barrier1.complete()
-                    delay(Long.MAX_VALUE)
-                }
-                else -> expectUnreached()
-            }
-        }.launchIn(this)
+                .launchIn(this)
         repeat(2) { yield() } // launch both subscribers
-        val emitter = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            sh.emit(1)
-            barrier1.join()
-            expect(5)
-            sh.emit(2) // suspends because of slow collector2
-            expectUnreached() // will be cancelled
-        }
+        val emitter =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                sh.emit(1)
+                barrier1.join()
+                expect(5)
+                sh.emit(2) // suspends because of slow collector2
+                expectUnreached() // will be cancelled
+            }
         barrier2.join() // wait
         expect(7)
         // Now cancel the emitter!
@@ -455,57 +471,57 @@ class SharedFlowTest : TestBase() {
         }
     }
 
-    private suspend fun testBufferedFlow(sh: MutableSharedFlow<Int>, replay: Int) = withContext(Job()) {
-        reset()
-        expect(1)
-        val n = 100 // initially emitted to fill buffer
-        for (i in 1..n) assertTrue(sh.tryEmit(i))
-        // initial expected replayCache
-        val rcStart = n - replay + 1
-        val rcRange = rcStart..n
-        val rcSize = n - rcStart + 1
-        assertEquals(rcRange.toList(), sh.replayCache)
-        // create collectors
-        val m = 10 // collectors created
-        var ofs = 0
-        val k = 42 // emissions to collectors
-        val ecRange = n + 1..n + k
-        val jobs = List(m) { jobIndex ->
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                sh.collect { i ->
-                    when (i) {
-                        in rcRange -> expect(2 + i - rcStart + jobIndex * rcSize)
-                        in ecRange -> expect(2 + ofs + jobIndex)
-                        else -> expectUnreached()
+    private suspend fun testBufferedFlow(sh: MutableSharedFlow<Int>, replay: Int) =
+        withContext(Job()) {
+            reset()
+            expect(1)
+            val n = 100 // initially emitted to fill buffer
+            for (i in 1..n) assertTrue(sh.tryEmit(i))
+            // initial expected replayCache
+            val rcStart = n - replay + 1
+            val rcRange = rcStart..n
+            val rcSize = n - rcStart + 1
+            assertEquals(rcRange.toList(), sh.replayCache)
+            // create collectors
+            val m = 10 // collectors created
+            var ofs = 0
+            val k = 42 // emissions to collectors
+            val ecRange = n + 1..n + k
+            val jobs =
+                List(m) { jobIndex ->
+                    launch(start = CoroutineStart.UNDISPATCHED) {
+                        sh.collect { i ->
+                            when (i) {
+                                in rcRange -> expect(2 + i - rcStart + jobIndex * rcSize)
+                                in ecRange -> expect(2 + ofs + jobIndex)
+                                else -> expectUnreached()
+                            }
+                        }
+                        expectUnreached() // does not complete normally
                     }
                 }
-                expectUnreached() // does not complete normally
-            }
-        }
-        ofs = rcSize * m + 2
-        expect(ofs)
-        // emit to all k times
-        for (p in ecRange) {
-            sh.emit(p)
-            expect(1 + ofs) // buffered, no suspend
-            yield()
-            ofs += 2 + m
+            ofs = rcSize * m + 2
             expect(ofs)
+            // emit to all k times
+            for (p in ecRange) {
+                sh.emit(p)
+                expect(1 + ofs) // buffered, no suspend
+                yield()
+                ofs += 2 + m
+                expect(ofs)
+            }
+            assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
+            // cancel all collectors
+            jobs.forEach { it.cancel() }
+            yield()
+            // replay cache is still there
+            assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
+            finish(1 + ofs)
         }
-        assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
-        // cancel all collectors
-        jobs.forEach { it.cancel() }
-        yield()
-        // replay cache is still there
-        assertEquals(ecRange.toList().takeLast(replay), sh.replayCache)
-        finish(1 + ofs)
-    }
 
-    @Test
-    fun testDropLatest() = testDropLatestOrOldest(BufferOverflow.DROP_LATEST)
+    @Test fun testDropLatest() = testDropLatestOrOldest(BufferOverflow.DROP_LATEST)
 
-    @Test
-    fun testDropOldest() = testDropLatestOrOldest(BufferOverflow.DROP_OLDEST)
+    @Test fun testDropOldest() = testDropLatestOrOldest(BufferOverflow.DROP_OLDEST)
 
     private fun testDropLatestOrOldest(bufferOverflow: BufferOverflow) = runTest {
         reset()
@@ -517,26 +533,28 @@ class SharedFlowTest : TestBase() {
         assertEquals(listOf(2), sh.replayCache)
         assertEquals(0, sh.subscriptionCount.value)
         // one collector
-        val valueAfterOverflow = when (bufferOverflow) {
-            BufferOverflow.DROP_OLDEST -> 5
-            BufferOverflow.DROP_LATEST -> 4
-            else -> error("not supported in this test: $bufferOverflow")
-        }
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            sh.collect {
-                when(it) {
-                    2 -> { // replayed
-                        expect(3)
-                        yield() // and suspends, busy waiting
-                    }
-                    valueAfterOverflow -> expect(7)
-                    8 -> expect(9)
-                    else -> expectUnreached()
-                }
+        val valueAfterOverflow =
+            when (bufferOverflow) {
+                BufferOverflow.DROP_OLDEST -> 5
+                BufferOverflow.DROP_LATEST -> 4
+                else -> error("not supported in this test: $bufferOverflow")
             }
-            expectUnreached() // does not complete normally
-        }
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                sh.collect {
+                    when (it) {
+                        2 -> { // replayed
+                            expect(3)
+                            yield() // and suspends, busy waiting
+                        }
+                        valueAfterOverflow -> expect(7)
+                        8 -> expect(9)
+                        else -> expectUnreached()
+                    }
+                }
+                expectUnreached() // does not complete normally
+            }
         expect(4)
         assertEquals(1, sh.subscriptionCount.value)
         assertEquals(listOf(2), sh.replayCache)
@@ -562,9 +580,10 @@ class SharedFlowTest : TestBase() {
     fun testOnSubscription() = runTest {
         expect(1)
         val sh = MutableSharedFlow<String>()
-        fun share(s: String) { launch(start = CoroutineStart.UNDISPATCHED) { sh.emit(s) } }
-        sh
-            .onSubscription {
+        fun share(s: String) {
+            launch(start = CoroutineStart.UNDISPATCHED) { sh.emit(s) }
+        }
+        sh.onSubscription {
                 emit("collector->A")
                 share("share->A")
             }
@@ -606,8 +625,7 @@ class SharedFlowTest : TestBase() {
         val sh = MutableSharedFlow<String>(1)
         sh.tryEmit("OK") // buffer a string
         assertEquals(listOf("OK"), sh.replayCache)
-        sh
-            .onSubscription {
+        sh.onSubscription {
                 expect(2)
                 throw TestException()
             }
@@ -623,19 +641,18 @@ class SharedFlowTest : TestBase() {
         finish(4)
     }
 
-    @Test
-    fun testBigReplayManySubscribers() = testManySubscribers(true)
+    @Test fun testBigReplayManySubscribers() = testManySubscribers(true)
 
-    @Test
-    fun testBigBufferManySubscribers() = testManySubscribers(false)
+    @Test fun testBigBufferManySubscribers() = testManySubscribers(false)
 
     private fun testManySubscribers(replay: Boolean) = runTest {
         val n = 100
         val rnd = Random(replay.hashCode())
-        val sh = MutableSharedFlow<Int>(
-            replay = if (replay) n else 0,
-            extraBufferCapacity = if (replay) 0 else n
-        )
+        val sh =
+            MutableSharedFlow<Int>(
+                replay = if (replay) n else 0,
+                extraBufferCapacity = if (replay) 0 else n,
+            )
         val subs = ArrayList<SubJob>()
         for (i in 1..n) {
             sh.emit(i)
@@ -644,15 +661,15 @@ class SharedFlowTest : TestBase() {
             subs += subJob
             // will receive all starting from replay or from new emissions only
             subJob.lastReceived = if (replay) 0 else i
-            subJob.job = sh
-                .onSubscription {
-                    subBarrier.send(Unit) // signal subscribed
-                }
-                .onEach { value ->
-                    assertEquals(subJob.lastReceived + 1, value)
-                    subJob.lastReceived = value
-                }
-                .launchIn(this)
+            subJob.job =
+                sh.onSubscription {
+                        subBarrier.send(Unit) // signal subscribed
+                    }
+                    .onEach { value ->
+                        assertEquals(subJob.lastReceived + 1, value)
+                        subJob.lastReceived = value
+                    }
+                    .launchIn(this)
             subBarrier.receive() // wait until subscribed
             // must have also receive all from the replay buffer directly after being subscribed
             assertEquals(subJob.lastReceived, i)
@@ -681,10 +698,11 @@ class SharedFlowTest : TestBase() {
         if (isBoundByJsTestTimeout) return@runTest // Too slow for JS, bounded by 2 sec. default JS timeout
         val stateFlow = MutableStateFlow<Data?>(null)
         val expect = modelLog(stateFlow)
-        val sharedFlow = MutableSharedFlow<Data?>(
-            replay = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
-        )
+        val sharedFlow =
+            MutableSharedFlow<Data?>(
+                replay = 1,
+                onBufferOverflow = BufferOverflow.DROP_OLDEST,
+            )
         sharedFlow.tryEmit(null) // initial value
         val actual = modelLog(sharedFlow) { distinctUntilChanged() }
         for (i in 0 until minOf(expect.size, actual.size)) {
@@ -698,7 +716,7 @@ class SharedFlowTest : TestBase() {
 
     private suspend fun modelLog(
         sh: MutableSharedFlow<Data?>,
-        op: Flow<Data?>.() -> Flow<Data?> = { this }
+        op: Flow<Data?>.() -> Flow<Data?> = { this },
     ): List<String> = coroutineScope {
         val rnd = Random(1)
         val result = ArrayList<String>()
@@ -736,6 +754,7 @@ class SharedFlowTest : TestBase() {
     }
 
     data class Data(val x: Int)
+
     private val dataCache = (1..5).associateWith { Data(it) }
 
     // Note that we test proper null support here, too
@@ -743,7 +762,7 @@ class SharedFlowTest : TestBase() {
         val x = nextInt(0..5)
         if (x == 0) return null
         // randomly reuse ref or create a new instance
-        return if(nextBoolean()) dataCache[x] else Data(x)
+        return if (nextBoolean()) dataCache[x] else Data(x)
     }
 
     @Test
@@ -762,11 +781,9 @@ class SharedFlowTest : TestBase() {
         assertFailsWith<IllegalArgumentException> { MutableSharedFlow<Int>(0, onBufferOverflow = BufferOverflow.DROP_OLDEST) }
     }
 
-    @Test
-    fun testReplayCancellability() = testCancellability(fromReplay = true)
+    @Test fun testReplayCancellability() = testCancellability(fromReplay = true)
 
-    @Test
-    fun testEmitCancellability() = testCancellability(fromReplay = false)
+    @Test fun testEmitCancellability() = testCancellability(fromReplay = false)
 
     private fun testCancellability(fromReplay: Boolean) = runTest {
         expect(1)
@@ -776,20 +793,20 @@ class SharedFlowTest : TestBase() {
         }
         if (fromReplay) emitTestData() // fill in replay first
         var subscribed = true
-        val job = sh
-            .onSubscription { subscribed = true }
-            .onEach { i ->
-                when (i) {
-                    1 -> expect(2)
-                    2 -> expect(3)
-                    3 -> {
-                        expect(4)
-                        currentCoroutineContext().cancel()
+        val job =
+            sh.onSubscription { subscribed = true }
+                .onEach { i ->
+                    when (i) {
+                        1 -> expect(2)
+                        2 -> expect(3)
+                        3 -> {
+                            expect(4)
+                            currentCoroutineContext().cancel()
+                        }
+                        else -> expectUnreached() // shall check for cancellation
                     }
-                    else -> expectUnreached() // shall check for cancellation
                 }
-            }
-            .launchIn(this)
+                .launchIn(this)
         yield()
         assertTrue(subscribed) // yielding in enough
         if (!fromReplay) emitTestData() // emit after subscription
@@ -822,48 +839,47 @@ class SharedFlowTest : TestBase() {
         testSubscriptionByFirstSuspensionInCollect(MutableSharedFlow()) { emit(it) }
     }
 
-    /** Tests that cancelling a subscriber and an emitter simultaneously
-     * does not break the invariants of a [SharedFlow] with no buffer. */
+    /** Tests that cancelling a subscriber and an emitter simultaneously does not break the invariants of a [SharedFlow] with no buffer. */
     @Test
     fun testCancellingSubscriberAndEmitterWithNoBuffer() = runTest {
         val mutableSharedFlow = MutableSharedFlow<Unit>()
         repeat(10) {
             launch {
-                val valueObtained = CompletableDeferred<Unit>()
-                val j1 = launch {
-                    mutableSharedFlow.collect {
-                        valueObtained.complete(Unit)
+                    val valueObtained = CompletableDeferred<Unit>()
+                    val j1 = launch {
+                        mutableSharedFlow.collect {
+                            valueObtained.complete(Unit)
+                        }
                     }
-                }
-                val j2 =
-                    launch {
+                    val j2 = launch {
                         while (isActive) {
                             mutableSharedFlow.emit(Unit)
                         }
                     }
-                val successfullyAwaited = withTimeoutOrNull(100.milliseconds) {
-                    valueObtained.await()
+                    val successfullyAwaited =
+                        withTimeoutOrNull(100.milliseconds) {
+                            valueObtained.await()
+                        }
+                    if (successfullyAwaited == null) {
+                        throw AssertionError("The collector failed to obtain a value from a non-empty shared flow")
+                    }
+                    j1.cancel()
+                    j2.cancel()
                 }
-                if (successfullyAwaited == null) {
-                    throw AssertionError("The collector failed to obtain a value from a non-empty shared flow")
-                }
-                j1.cancel()
-                j2.cancel()
-            }.join()
+                .join()
         }
     }
 }
 
-/**
- * Check that, by the time [SharedFlow.collect] suspends for the first time, its subscription is already active.
- */
-inline fun<T: Flow<Int>> CoroutineScope.testSubscriptionByFirstSuspensionInCollect(flow: T, emit: T.(Int) -> Unit) {
+/** Check that, by the time [SharedFlow.collect] suspends for the first time, its subscription is already active. */
+inline fun <T : Flow<Int>> CoroutineScope.testSubscriptionByFirstSuspensionInCollect(flow: T, emit: T.(Int) -> Unit) {
     var received = 0
-    val job = launch(start = CoroutineStart.UNDISPATCHED) {
-        flow.collect {
-            received = it
+    val job =
+        launch(start = CoroutineStart.UNDISPATCHED) {
+            flow.collect {
+                received = it
+            }
         }
-    }
     flow.emit(1)
     assertEquals(1, received)
     job.cancel()

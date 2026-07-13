@@ -8,8 +8,8 @@ import kotlin.coroutines.CoroutineContext
 @InternalCoroutinesApi
 public interface ContextInjector {
     /**
-     * Injects `ReactorContext` element from the given context into the `SubscriberContext` of the publisher.
-     * This API used as an indirection layer between `reactive` and `reactor` modules.
+     * Injects `ReactorContext` element from the given context into the `SubscriberContext` of the publisher. This API used as an
+     * indirection layer between `reactive` and `reactor` modules.
      */
     public fun <T> injectCoroutineContext(publisher: Publisher<T>, coroutineContext: CoroutineContext): Publisher<T>
 }

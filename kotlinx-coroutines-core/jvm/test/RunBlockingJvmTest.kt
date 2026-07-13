@@ -57,8 +57,7 @@ class RunBlockingJvmTest : TestBase() {
         finish(5)
     }
 
-    /** Tests that [runBlocking] does not check for interruptions before the first attempt to suspend,
-     * as no blocking actually happens. */
+    /** Tests that [runBlocking] does not check for interruptions before the first attempt to suspend, as no blocking actually happens. */
     @Test
     fun testInitialPortionRunningDespiteInterruptions() {
         Thread.currentThread().interrupt()
@@ -75,8 +74,8 @@ class RunBlockingJvmTest : TestBase() {
     }
 
     /**
-     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
-     * or if thread switches occur.
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted or if thread switches
+     * occur.
      */
     @Test
     fun testNonInterruptibleRunBlocking() {
@@ -97,26 +96,27 @@ class RunBlockingJvmTest : TestBase() {
     }
 
     /**
-     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
-     * or if thread switches occur, and then will rethrow the exception thrown by the job.
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted or if thread switches
+     * occur, and then will rethrow the exception thrown by the job.
      */
     @Test
     fun testNonInterruptibleRunBlockingFailure() {
         val exception = AssertionError()
         startInSeparateThreadAndInterrupt { mayInterrupt ->
-            val exception2 = assertFailsWith<AssertionError> {
-                runBlockingNonInterruptible {
-                    mayInterrupt()
-                    repeat(10) {
-                        expect(it + 1)
-                        // even thread switches should not be a problem
-                        withContext(Dispatchers.IO) {
-                            delay(1)
+            val exception2 =
+                assertFailsWith<AssertionError> {
+                    runBlockingNonInterruptible {
+                        mayInterrupt()
+                        repeat(10) {
+                            expect(it + 1)
+                            // even thread switches should not be a problem
+                            withContext(Dispatchers.IO) {
+                                delay(1)
+                            }
                         }
+                        throw exception
                     }
-                    throw exception
                 }
-            }
             assertTrue(Thread.interrupted())
             assertSame(exception, exception2)
             expect(11)
@@ -124,10 +124,9 @@ class RunBlockingJvmTest : TestBase() {
         finish(12)
     }
 
-
     /**
-     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted
-     * or if thread switches occur.
+     * Tests that [runBlockingNonInterruptible] is going to run its job to completion even if it gets interrupted or if thread switches
+     * occur.
      */
     @Test
     fun testNonInterruptibleRunBlockingPropagatingInterruptions() {
@@ -147,9 +146,7 @@ class RunBlockingJvmTest : TestBase() {
         finish(3)
     }
 
-    /**
-     * Tests that starting [runBlockingNonInterruptible] in an interrupted thread does not affect the result.
-     */
+    /** Tests that starting [runBlockingNonInterruptible] in an interrupted thread does not affect the result. */
     @Test
     fun testNonInterruptibleRunBlockingStartingInterrupted() {
         Thread.currentThread().interrupt()

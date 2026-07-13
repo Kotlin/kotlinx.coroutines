@@ -25,9 +25,13 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle = schedule(timeMillis, Runnable {
-            with(continuation) { resumeUndispatched(Unit) }
-        })
+        val handle =
+            schedule(
+                timeMillis,
+                Runnable {
+                    with(continuation) { resumeUndispatched(Unit) }
+                },
+            )
         continuation.disposeOnCancellation(handle)
     }
 
@@ -77,27 +81,25 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
 
 private class MultiWorkerDispatcher(
     private val name: String,
-    private val workersCount: Int
+    private val workersCount: Int,
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
     private val availableWorkers = Channel<CancellableContinuation<Runnable>>(Channel.UNLIMITED)
-    private val workerPool = OnDemandAllocatingPool(workersCount) {
-        Worker.start(name = "$name-$it").apply {
-            executeAfter { workerRunLoop() }
+    private val workerPool =
+        OnDemandAllocatingPool(workersCount) {
+            Worker.start(name = "$name-$it").apply {
+                executeAfter { workerRunLoop() }
+            }
         }
-    }
 
-    /**
-     * (number of tasks - number of workers) * 2 + (1 if closed)
-     */
+    /** (number of tasks - number of workers) * 2 + (1 if closed) */
     private val tasksAndWorkersCounter = atomic(0L)
 
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun Long.isClosed() = this and 1L == 1L
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun Long.hasTasks() = this >= 2
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun Long.hasWorkers() = this < 0
+    @Suppress("NOTHING_TO_INLINE") private inline fun Long.isClosed() = this and 1L == 1L
+
+    @Suppress("NOTHING_TO_INLINE") private inline fun Long.hasTasks() = this >= 2
+
+    @Suppress("NOTHING_TO_INLINE") private inline fun Long.hasWorkers() = this < 0
 
     private fun workerRunLoop() = runBlocking {
         while (true) {
@@ -111,12 +113,15 @@ private class MultiWorkerDispatcher(
             } else {
                 try {
                     suspendCancellableCoroutine {
-                        val result = availableWorkers.trySend(it)
-                        checkChannelResult(result)
-                    }.run()
+                            val result = availableWorkers.trySend(it)
+                            checkChannelResult(result)
+                        }
+                        .run()
                 } catch (e: CancellationException) {
-                    /** we are cancelled from [close] and thus will never get back to this branch of code,
-                    but there may still be pending work, so we can't just exit here. */
+                    /**
+                     * we are cancelled from [close] and thus will never get back to this branch of code, but there may still be pending
+                     * work, so we can't just exit here.
+                     */
                 }
             }
         }
@@ -128,8 +133,7 @@ private class MultiWorkerDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val state = tasksAndWorkersCounter.getAndUpdate {
-            if (it.isClosed())
-                throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+            if (it.isClosed()) throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
             it + 2
         }
         if (state.hasWorkers()) {
@@ -159,8 +163,7 @@ private class MultiWorkerDispatcher(
             val state = tasksAndWorkersCounter.getAndUpdate {
                 if (it.hasWorkers()) it + 2 else it
             }
-            if (!state.hasWorkers())
-                break
+            if (!state.hasWorkers()) break
             obtainWorker().cancel()
         }
         /*
@@ -175,7 +178,7 @@ private class MultiWorkerDispatcher(
         if (!result.isSuccess)
             throw IllegalStateException(
                 "Internal invariants of $this were violated, please file a bug to kotlinx.coroutines",
-                result.exceptionOrNull()
+                result.exceptionOrNull(),
             )
     }
 }

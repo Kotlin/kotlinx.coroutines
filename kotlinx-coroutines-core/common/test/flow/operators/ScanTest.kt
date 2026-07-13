@@ -44,20 +44,23 @@ class ScanTest : TestBase() {
     fun testErrorCancelsUpstream() = runTest {
         expect(1)
         val latch = Channel<Unit>()
-        val flow = flow {
-            coroutineScope {
-                launch {
-                    latch.send(Unit)
-                    hang { expect(3) }
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch {
+                            latch.send(Unit)
+                            hang { expect(3) }
+                        }
+                        emit(1)
+                        emit(2)
+                    }
                 }
-                emit(1)
-                emit(2)
-            }
-        }.runningReduce { _, value ->
-            expect(value) // 2
-            latch.receive()
-            throw TestException()
-        }.catch { /* ignore */ }
+                .runningReduce { _, value ->
+                    expect(value) // 2
+                    latch.receive()
+                    throw TestException()
+                }
+                .catch { /* ignore */ }
 
         assertEquals(1, flow.single())
         finish(4)

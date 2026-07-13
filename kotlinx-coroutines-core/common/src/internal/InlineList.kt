@@ -12,7 +12,7 @@ import kotlin.jvm.*
  */
 @JvmInline
 internal value class InlineList<E>(private val holder: Any? = null) {
-    operator fun plus(element: E): InlineList<E>  {
+    operator fun plus(element: E): InlineList<E> {
         assert { element !is List<*> } // Lists are prohibited
         return when (holder) {
             null -> InlineList(element)

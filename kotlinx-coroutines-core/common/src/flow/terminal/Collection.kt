@@ -1,22 +1,17 @@
-@file:JvmMultifileClass @file:JvmName("FlowKt")
+@file:JvmMultifileClass
+@file:JvmName("FlowKt")
 
 package kotlinx.coroutines.flow
 
 import kotlin.jvm.*
 
-/**
- * Collects given flow into a [destination]
- */
+/** Collects given flow into a [destination] */
 public suspend fun <T> Flow<T>.toList(destination: MutableList<T> = ArrayList()): List<T> = toCollection(destination)
 
-/**
- * Collects given flow into a [destination]
- */
+/** Collects given flow into a [destination] */
 public suspend fun <T> Flow<T>.toSet(destination: MutableSet<T> = LinkedHashSet()): Set<T> = toCollection(destination)
 
-/**
- * Collects given flow into a [destination]
- */
+/** Collects given flow into a [destination] */
 public suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
     collect { value ->
         destination.add(value)
@@ -25,8 +20,7 @@ public suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destina
 }
 
 /**
- * Collects `this` [Flow] into a [Map]
- * with the key-value pairs provided by the [transform] function applied to each element.
+ * Collects `this` [Flow] into a [Map] with the key-value pairs provided by the [transform] function applied to each element.
  *
  * If the same key appears in more than one pair, the last one gets added to the map.
  *
@@ -47,8 +41,7 @@ public suspend inline fun <T, K, V> Flow<T>.associate(crossinline transform: sus
     associateTo(LinkedHashMap(), transform)
 
 /**
- * Collects `this` [Flow] into a [Map]
- * with the keys provided by the [keySelector] function applied to each element.
+ * Collects `this` [Flow] into a [Map] with the keys provided by the [keySelector] function applied to each element.
  *
  * If the same key is returned for more than one element by [keySelector], the last one gets added to the map.
  *
@@ -73,8 +66,8 @@ public suspend inline fun <T, K> Flow<T>.associateBy(crossinline keySelector: su
     associateByTo(LinkedHashMap(), keySelector)
 
 /**
- * Collects `this` [Flow] into a [Map]
- * with the keys and values provided by the [keySelector] and [valueTransform] functions applied to each element.
+ * Collects `this` [Flow] into a [Map] with the keys and values provided by the [keySelector] and [valueTransform] functions applied to each
+ * element.
  *
  * If the same key is returned for more than one element by [keySelector], the last one gets added to the map.
  *
@@ -94,15 +87,14 @@ public suspend inline fun <T, K> Flow<T>.associateBy(crossinline keySelector: su
  * ```
  */
 public suspend inline fun <T, K, V> Flow<T>.associateBy(
-    crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+    crossinline keySelector: suspend (T) -> K,
+    crossinline valueTransform: suspend (T) -> V,
 ): Map<K, V> = associateByTo(LinkedHashMap(), keySelector, valueTransform)
 
 /**
- * Collects `this` [Flow] into the given [Map]
- * with the keys provided by the [keySelector] function applied to each element.
+ * Collects `this` [Flow] into the given [Map] with the keys provided by the [keySelector] function applied to each element.
  *
- * The order in which key-value pairs get inserted into the [destination] is
- * the order of the elements in the original [Flow].
+ * The order in which key-value pairs get inserted into the [destination] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  *
@@ -124,7 +116,8 @@ public suspend inline fun <T, K, V> Flow<T>.associateBy(
  * ```
  */
 public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(
-    destination: M, crossinline keySelector: suspend (T) -> K
+    destination: M,
+    crossinline keySelector: suspend (T) -> K,
 ): M {
     collect { element ->
         destination[keySelector(element)] = element
@@ -133,11 +126,10 @@ public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateBy
 }
 
 /**
- * Collects `this` [Flow] into the given [Map]
- * with the keys and values provided by the [keySelector] and [valueTransform] functions applied to each element.
+ * Collects `this` [Flow] into the given [Map] with the keys and values provided by the [keySelector] and [valueTransform] functions applied
+ * to each element.
  *
- * The order in which key-value pairs get inserted into the [destination] is
- * the order of the elements in the original [Flow].
+ * The order in which key-value pairs get inserted into the [destination] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  *
@@ -157,7 +149,9 @@ public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateBy
  * ```
  */
 public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(
-    destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+    destination: M,
+    crossinline keySelector: suspend (T) -> K,
+    crossinline valueTransform: suspend (T) -> V,
 ): M {
     collect { element ->
         destination[keySelector(element)] = valueTransform(element)
@@ -166,11 +160,9 @@ public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associat
 }
 
 /**
- * Collects `this` [Flow] into the given [Map]
- * with the key-value pairs provided by the [transform] function applied to each element.
+ * Collects `this` [Flow] into the given [Map] with the key-value pairs provided by the [transform] function applied to each element.
  *
- * The order in which key-value pairs get inserted into the [destination] is
- * the order of the elements in the original [Flow].
+ * The order in which key-value pairs get inserted into the [destination] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  *
@@ -190,7 +182,8 @@ public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associat
  * ```
  */
 public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(
-    destination: M, crossinline transform: suspend (T) -> Pair<K, V>
+    destination: M,
+    crossinline transform: suspend (T) -> Pair<K, V>,
 ): M {
     collect { element ->
         destination += transform(element)
@@ -199,8 +192,8 @@ public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associat
 }
 
 /**
- * Collects `this` [Flow] into a [Map]
- * with the keys being the [Flow] elements and the corresponding values being obtained from them using [valueSelector].
+ * Collects `this` [Flow] into a [Map] with the keys being the [Flow] elements and the corresponding values being obtained from them using
+ * [valueSelector].
  *
  * If the same element is emitted more than once, the last value returned by [valueSelector] gets added to the map.
  *
@@ -219,11 +212,10 @@ public suspend inline fun <K, V> Flow<K>.associateWith(crossinline valueSelector
     associateWithTo(LinkedHashMap(), valueSelector)
 
 /**
- * Collects `this` [Flow] into the given [Map]
- * with the keys being the [Flow] elements and the corresponding values being obtained from them using [valueSelector].
+ * Collects `this` [Flow] into the given [Map] with the keys being the [Flow] elements and the corresponding values being obtained from them
+ * using [valueSelector].
  *
- * The order in which key-value pairs get inserted into the [destination] is
- * the order of the elements in the original [Flow].
+ * The order in which key-value pairs get inserted into the [destination] is the order of the elements in the original [Flow].
  *
  * The operation is _terminal_.
  *
@@ -244,7 +236,8 @@ public suspend inline fun <K, V> Flow<K>.associateWith(crossinline valueSelector
  * ```
  */
 public suspend inline fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(
-    destination: M, crossinline valueSelector: suspend (K) -> V
+    destination: M,
+    crossinline valueSelector: suspend (K) -> V,
 ): M {
     collect { element ->
         destination[element] = valueSelector(element)
@@ -253,11 +246,11 @@ public suspend inline fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWi
 }
 
 /**
- * Groups elements of the original [Flow] by the key returned by the given [keySelector] function
- * applied to each element and returns a map where each group key is associated with the list of corresponding elements.
+ * Groups elements of the original [Flow] by the key returned by the given [keySelector] function applied to each element and returns a map
+ * where each group key is associated with the list of corresponding elements.
  *
- * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when
- * applying [keySelector] to the [Flow] elements.
+ * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when applying [keySelector] to the
+ * [Flow] elements.
  *
  * The operation is _terminal_.
  *
@@ -277,12 +270,11 @@ public suspend inline fun <T, K> Flow<T>.groupBy(crossinline keySelector: suspen
     groupByTo(LinkedHashMap<K, MutableList<T>>(), keySelector)
 
 /**
- * Groups values returned by the [valueTransform] function applied to each element of the original [Flow]
- * by the key returned by the given [keySelector] function applied to the element
- * and returns a map where each group key is associated with the list of corresponding values.
+ * Groups values returned by the [valueTransform] function applied to each element of the original [Flow] by the key returned by the given
+ * [keySelector] function applied to the element and returns a map where each group key is associated with the list of corresponding values.
  *
- * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when
- * applying [keySelector] to the [Flow] elements.
+ * The entry iteration order of the resulting [Map] is the order in which the keys were first encountered when applying [keySelector] to the
+ * [Flow] elements.
  *
  * The operation is _terminal_.
  *
@@ -297,13 +289,13 @@ public suspend inline fun <T, K> Flow<T>.groupBy(crossinline keySelector: suspen
  * ```
  */
 public suspend inline fun <T, K, V> Flow<T>.groupBy(
-    crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+    crossinline keySelector: suspend (T) -> K,
+    crossinline valueTransform: suspend (T) -> V,
 ): Map<K, List<V>> = groupByTo(LinkedHashMap<K, MutableList<V>>(), keySelector, valueTransform)
 
 /**
- * Groups elements of the original [Flow] by the key returned by the given [keySelector] function
- * applied to each element and puts each group key associated with the list of corresponding elements into the given
- * [Map].
+ * Groups elements of the original [Flow] by the key returned by the given [keySelector] function applied to each element and puts each
+ * group key associated with the list of corresponding elements into the given [Map].
  *
  * @return The [destination] map.
  *
@@ -322,7 +314,8 @@ public suspend inline fun <T, K, V> Flow<T>.groupBy(
  * ```
  */
 public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByTo(
-    destination: M, crossinline keySelector: suspend (T) -> K
+    destination: M,
+    crossinline keySelector: suspend (T) -> K,
 ): M {
     collect { element ->
         val key = keySelector(element)
@@ -333,9 +326,9 @@ public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.g
 }
 
 /**
- * Groups values returned by the [valueTransform] function applied to each element of the original [Flow]
- * by the key returned by the given [keySelector] function applied to the element
- * and puts each group key associated with the list of corresponding values into the given [Map].
+ * Groups values returned by the [valueTransform] function applied to each element of the original [Flow] by the key returned by the given
+ * [keySelector] function applied to the element and puts each group key associated with the list of corresponding values into the given
+ * [Map].
  *
  * @return The [destination] map.
  *
@@ -352,7 +345,9 @@ public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.g
  * ```
  */
 public suspend inline fun <T, K, V, M : MutableMap<in K, MutableList<V>>> Flow<T>.groupByTo(
-    destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
+    destination: M,
+    crossinline keySelector: suspend (T) -> K,
+    crossinline valueTransform: suspend (T) -> V,
 ): M {
     collect { element ->
         val key = keySelector(element)

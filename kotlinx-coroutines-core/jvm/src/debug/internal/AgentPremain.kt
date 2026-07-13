@@ -15,11 +15,12 @@ import java.security.*
 @SuppressLint("all")
 @IgnoreJRERequirement // Never touched on Android
 internal object AgentPremain {
-    private val enableCreationStackTraces = try {
-        System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()!!
-    } catch (_: Throwable) {
-        DebugProbesImpl.enableCreationStackTraces
-    }
+    private val enableCreationStackTraces =
+        try {
+            System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()!!
+        } catch (_: Throwable) {
+            DebugProbesImpl.enableCreationStackTraces
+        }
 
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
@@ -37,10 +38,10 @@ internal object AgentPremain {
             className: String,
             classBeingRedefined: Class<*>?,
             protectionDomain: ProtectionDomain,
-            classfileBuffer: ByteArray?
+            classfileBuffer: ByteArray?,
         ): ByteArray? {
             if (loader == null || className != "kotlin/coroutines/jvm/internal/DebugProbesKt") {
-               return null
+                return null
             }
             /*
              * DebugProbesKt.bin contains `kotlin.coroutines.jvm.internal.DebugProbesKt` class

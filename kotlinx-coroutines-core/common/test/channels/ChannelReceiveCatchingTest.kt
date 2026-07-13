@@ -137,7 +137,6 @@ class ChannelReceiveCatchingTest : TestBase() {
         assertEquals("Value(message)", channel.receiveCatching().toString())
         // toString implementation for exception differs on every platform
         val str = channel.receiveCatching().toString()
-        if (!str.matches("Closed\\(.*TestException1: OK\\)".toRegex()))
-            error("Unexpected string: '$str'")
+        if (!str.matches("Closed\\(.*TestException1: OK\\)".toRegex())) error("Unexpected string: '$str'")
     }
 }

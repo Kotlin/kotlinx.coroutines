@@ -24,9 +24,9 @@ class CompletableDeferredTest : TestBase() {
     @Test
     fun testCompleteWithIncompleteResult() {
         val c = CompletableDeferred<DisposableHandle>()
-        assertEquals(true, c.complete(c.invokeOnCompletion { }))
+        assertEquals(true, c.complete(c.invokeOnCompletion {}))
         checkCompleteOk(c)
-        assertEquals(false, c.complete(c.invokeOnCompletion { }))
+        assertEquals(false, c.complete(c.invokeOnCompletion {}))
         checkCompleteOk(c)
         assertIs<Incomplete>(c.getCompleted())
     }
@@ -202,7 +202,7 @@ class CompletableDeferredTest : TestBase() {
         finish(6)
     }
 
-    private inline fun <reified T: Throwable> assertThrows(block: () -> Unit) {
+    private inline fun <reified T : Throwable> assertThrows(block: () -> Unit) {
         try {
             block()
             fail("Should not complete normally")

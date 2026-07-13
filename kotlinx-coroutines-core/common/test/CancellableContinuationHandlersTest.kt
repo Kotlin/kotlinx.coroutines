@@ -8,12 +8,13 @@ import kotlin.test.*
 class CancellableContinuationHandlersTest : TestBase() {
 
     @Test
-    fun testDoubleSubscription() = runTest({ it is IllegalStateException }) {
-        suspendCancellableCoroutine { c ->
-            c.invokeOnCancellation { finish(1) }
-            c.invokeOnCancellation { expectUnreached() }
+    fun testDoubleSubscription() =
+        runTest({ it is IllegalStateException }) {
+            suspendCancellableCoroutine { c ->
+                c.invokeOnCancellation { finish(1) }
+                c.invokeOnCancellation { expectUnreached() }
+            }
         }
-    }
 
     @Test
     fun testDoubleSubscriptionAfterCompletion() = runTest {
@@ -78,21 +79,22 @@ class CancellableContinuationHandlersTest : TestBase() {
     @Test
     fun testSecondSubscriptionAfterResumeCancelAndDispatch() = runTest {
         var cont: CancellableContinuation<Unit>? = null
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            // will be cancelled during dispatch
-            assertFailsWith<CancellationException> {
-                suspendCancellableCoroutine { c ->
-                    cont = c
-                    // Set IOC first -- not called (completed)
-                    c.invokeOnCancellation {
-                        assertIs<CancellationException>(it)
-                        expect(4)
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                // will be cancelled during dispatch
+                assertFailsWith<CancellationException> {
+                    suspendCancellableCoroutine { c ->
+                        cont = c
+                        // Set IOC first -- not called (completed)
+                        c.invokeOnCancellation {
+                            assertIs<CancellationException>(it)
+                            expect(4)
+                        }
+                        expect(1)
                     }
-                    expect(1)
                 }
+                expect(5)
             }
-            expect(5)
-        }
         expect(2)
         // then resume it
         cont!!.resume(Unit) // schedule cancelled continuation for dispatch
@@ -141,27 +143,28 @@ class CancellableContinuationHandlersTest : TestBase() {
     }
 
     @Test
-    fun testExceptionInHandler() = runTest(
-        unhandled = listOf({ it -> it is CompletionHandlerException })
-    ) {
-        expect(1)
-        try {
-            suspendCancellableCoroutine { c ->
-                c.invokeOnCancellation { throw AssertionError() }
-                c.cancel()
+    fun testExceptionInHandler() =
+        runTest(unhandled = listOf({ it -> it is CompletionHandlerException })) {
+            expect(1)
+            try {
+                suspendCancellableCoroutine { c ->
+                    c.invokeOnCancellation { throw AssertionError() }
+                    c.cancel()
+                }
+            } catch (_: CancellationException) {
+                expect(2)
             }
-        } catch (_: CancellationException) {
-            expect(2)
+            finish(3)
         }
-        finish(3)
-    }
 
     @Test
     fun testSegmentAsHandler() = runTest {
         class MySegment : Segment<MySegment>(0, null, 0) {
-            override val numberOfSlots: Int get() = 0
+            override val numberOfSlots: Int
+                get() = 0
 
             var invokeOnCancellationCalled = false
+
             override fun onCancellation(index: Int, cause: Throwable?, context: CoroutineContext) {
                 invokeOnCancellationCalled = true
             }

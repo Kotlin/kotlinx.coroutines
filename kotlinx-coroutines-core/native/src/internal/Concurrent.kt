@@ -16,7 +16,7 @@ internal actual class WorkaroundAtomicReference<V> actual constructor(value: V) 
 
     private val nativeAtomic = kotlin.concurrent.AtomicReference<V>(value)
 
-    public actual fun get(): V= nativeAtomic.value
+    public actual fun get(): V = nativeAtomic.value
 
     public actual fun set(value: V) {
         nativeAtomic.value = value

@@ -8,10 +8,10 @@ import java.util.AbstractMap
 // This is very limited implementation, not suitable as a generic map replacement.
 // It has lock-free get and put with synchronized rehash for simplicity (and better CPU usage on contention)
 @Suppress("UNCHECKED_CAST")
-internal class ConcurrentWeakMap<K : Any, V: Any>(
+internal class ConcurrentWeakMap<K : Any, V : Any>(
     /**
-     * Weak reference queue is needed when a small key is mapped to a large value, and we need to promptly release a
-     * reference to the value when the key was already disposed.
+     * Weak reference queue is needed when a small key is mapped to a large value, and we need to promptly release a reference to the value
+     * when the key was already disposed.
      */
     weakRefQueue: Boolean = false
 ) : AbstractMap<K, V>() {
@@ -22,7 +22,9 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
     override val size: Int
         get() = _size.value
 
-    private fun decrementSize() { _size.decrementAndGet() }
+    private fun decrementSize() {
+        _size.decrementAndGet()
+    }
 
     override fun get(key: K): V? = core.value.getImpl(key)
 
@@ -159,7 +161,7 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
         fun rehash(): Core {
             // use size to approximate new required capacity to have at least 25-50% fill factor,
             // may fail due to concurrent modification, will retry
-            retry@while (true) {
+            retry@ while (true) {
                 val newCapacity = size.coerceAtLeast(MIN_CAPACITY / 4).takeHighestOneBit() * 4
                 val newCore = Core(newCapacity)
                 for (index in 0 until allocated) {
@@ -208,7 +210,9 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
             private lateinit var key: K
             private lateinit var value: V
 
-            init { findNext() }
+            init {
+                findNext()
+            }
 
             private fun findNext() {
                 while (++index < allocated) {
@@ -237,11 +241,12 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
         override fun setValue(newValue: V): V = noImpl()
     }
 
-    private inner class KeyValueSet<E>(
-        private val factory: (K, V) -> E
-    ) : AbstractMutableSet<E>() {
-        override val size: Int get() = this@ConcurrentWeakMap.size
+    private inner class KeyValueSet<E>(private val factory: (K, V) -> E) : AbstractMutableSet<E>() {
+        override val size: Int
+            get() = this@ConcurrentWeakMap.size
+
         override fun add(element: E): Boolean = noImpl()
+
         override fun iterator(): MutableIterator<E> = core.value.keyValueIterator(factory)
     }
 }
@@ -253,27 +258,28 @@ private val MARKED_NULL = Marked(null)
 private val MARKED_TRUE = Marked(true) // When using map as set "true" used as value, optimize its mark allocation
 
 /**
- * Weak reference that stores the original hash code so that we can use reference queue to promptly clean them up
- * from the hashtable even in the absence of ongoing modifications.
+ * Weak reference that stores the original hash code so that we can use reference queue to promptly clean them up from the hashtable even in
+ * the absence of ongoing modifications.
  */
 internal class HashedWeakRef<T>(
-    ref: T, queue: ReferenceQueue<T>?
+    ref: T,
+    queue: ReferenceQueue<T>?,
 ) : WeakReference<T>(ref, queue) {
-    @JvmField
-    val hash = ref.hashCode()
+    @JvmField val hash = ref.hashCode()
 }
 
 /**
- * Marked values cannot be modified. The marking is performed when rehash has started to ensure that concurrent
- * modifications (that are lock-free) cannot perform any changes and are forced to synchronize with ongoing rehash.
+ * Marked values cannot be modified. The marking is performed when rehash has started to ensure that concurrent modifications (that are
+ * lock-free) cannot perform any changes and are forced to synchronize with ongoing rehash.
  */
 private class Marked(@JvmField val ref: Any?)
 
-private fun Any?.mark(): Marked = when(this) {
-    null -> MARKED_NULL
-    true -> MARKED_TRUE
-    else -> Marked(this)
-}
+private fun Any?.mark(): Marked =
+    when (this) {
+        null -> MARKED_NULL
+        true -> MARKED_TRUE
+        else -> Marked(this)
+    }
 
 private fun noImpl(): Nothing {
     throw UnsupportedOperationException("not implemented")

@@ -34,11 +34,13 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testSingleNull() = withVirtualTime {
-        val flow = flow<Int?> {
-            emit(null)
-            delay(1)
-            expect(1)
-        }.timeout(2.milliseconds)
+        val flow =
+            flow<Int?> {
+                    emit(null)
+                    delay(1)
+                    expect(1)
+                }
+                .timeout(2.milliseconds)
         assertNull(flow.single())
         finish(2)
     }
@@ -68,12 +70,14 @@ class TimeoutTest : TestBase() {
     @Test
     fun testDelayedFirst() = withVirtualTime {
         expect(1)
-        val flow = flow {
-            expect(3)
-            delay(100)
-            emit(1)
-            expect(4)
-        }.timeout(250.milliseconds)
+        val flow =
+            flow {
+                    expect(3)
+                    delay(100)
+                    emit(1)
+                    expect(4)
+                }
+                .timeout(250.milliseconds)
         expect(2)
         assertEquals(1, flow.singleOrNull())
         finish(5)
@@ -93,23 +97,21 @@ class TimeoutTest : TestBase() {
         finish(1)
     }
 
-    @Test
-    fun testUpstreamError() = testUpstreamError(TestException())
+    @Test fun testUpstreamError() = testUpstreamError(TestException())
 
-    @Test
-    fun testUpstreamErrorTimeoutException() =
-        testUpstreamError(TimeoutCancellationException("Timed out waiting for ${0} ms", Job()))
+    @Test fun testUpstreamErrorTimeoutException() = testUpstreamError(TimeoutCancellationException("Timed out waiting for ${0} ms", Job()))
 
-    @Test
-    fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
+    @Test fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
 
-    private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
+    private inline fun <reified T : Throwable> testUpstreamError(cause: T) = runTest {
         try {
             // Workaround for JS legacy bug
             flow {
-                emit(1)
-                throw cause
-            }.timeout(1000.milliseconds).collect()
+                    emit(1)
+                    throw cause
+                }
+                .timeout(1000.milliseconds)
+                .collect()
             expectUnreached()
         } catch (e: Throwable) {
             assertTrue { e is T }
@@ -119,15 +121,17 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testUpstreamExceptionsTakingPriority() = withVirtualTime {
-        val flow = flow<Unit> {
-            expect(2)
-            withContext(NonCancellable) {
-                delay(2.milliseconds)
-            }
-            assertFalse(currentCoroutineContext().isActive) // cancelled already
-            expect(3)
-            throw TestException()
-        }.timeout(1.milliseconds)
+        val flow =
+            flow<Unit> {
+                    expect(2)
+                    withContext(NonCancellable) {
+                        delay(2.milliseconds)
+                    }
+                    assertFalse(currentCoroutineContext().isActive) // cancelled already
+                    expect(3)
+                    throw TestException()
+                }
+                .timeout(1.milliseconds)
         expect(1)
         assertFailsWith<TestException> {
             flow.collect {
@@ -139,16 +143,19 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testDownstreamError() = runTest {
-        val flow = flow {
-            expect(1)
-            emit(1)
-            hang { expect(3) }
-            expectUnreached()
-        }.timeout(100.milliseconds).map {
-            expect(2)
-            yield()
-            throw TestException()
-        }
+        val flow =
+            flow {
+                    expect(1)
+                    emit(1)
+                    hang { expect(3) }
+                    expectUnreached()
+                }
+                .timeout(100.milliseconds)
+                .map {
+                    expect(2)
+                    yield()
+                    throw TestException()
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -156,14 +163,17 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testUpstreamTimeoutIsolatedContext() = withVirtualTime {
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            expect(2)
-            delay(300)
-            expectUnreached()
-        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds)
+        val flow =
+            flow {
+                    assertEquals("upstream", NamedDispatchers.name())
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    delay(300)
+                    expectUnreached()
+                }
+                .flowOn(NamedDispatchers("upstream"))
+                .timeout(100.milliseconds)
 
         assertFailsWith<TimeoutCancellationException>(flow)
         finish(3)
@@ -171,17 +181,21 @@ class TimeoutTest : TestBase() {
 
     @Test
     fun testUpstreamTimeoutActionIsolatedContext() = withVirtualTime {
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            expect(2)
-            delay(300)
-            expectUnreached()
-        }.flowOn(NamedDispatchers("upstream")).timeout(100.milliseconds).catch {
-            expect(3)
-            emit(2)
-        }
+        val flow =
+            flow {
+                    assertEquals("upstream", NamedDispatchers.name())
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    delay(300)
+                    expectUnreached()
+                }
+                .flowOn(NamedDispatchers("upstream"))
+                .timeout(100.milliseconds)
+                .catch {
+                    expect(3)
+                    emit(2)
+                }
 
         assertEquals(listOf(1, 2), flow.toList())
         finish(4)
@@ -250,9 +264,12 @@ class TimeoutTest : TestBase() {
     private fun testImmediateTimeout(timeout: Duration) {
         expect(1)
         val flow = emptyFlow<Int>().timeout(timeout)
-        flow::collect.startCoroutine(NopCollector, Continuation(EmptyCoroutineContext) {
-            assertIs<TimeoutCancellationException>(it.exceptionOrNull())
-            finish(2)
-        })
+        flow::collect.startCoroutine(
+            NopCollector,
+            Continuation(EmptyCoroutineContext) {
+                assertIs<TimeoutCancellationException>(it.exceptionOrNull())
+                finish(2)
+            },
+        )
     }
 }

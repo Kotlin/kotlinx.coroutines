@@ -12,13 +12,15 @@ class SendReceiveJvmStressTest(private val channel: Channel<Int>) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = listOf(
-            Channel<Int>(1),
-            Channel (10),
-            Channel(1_000_000),
-            Channel(Channel.UNLIMITED),
-            Channel(Channel.RENDEZVOUS)
-        ).map { arrayOf<Any>(it) }
+        fun params(): Collection<Array<Any>> =
+            listOf(
+                    Channel<Int>(1),
+                    Channel(10),
+                    Channel(1_000_000),
+                    Channel(Channel.UNLIMITED),
+                    Channel(Channel.RENDEZVOUS),
+                )
+                .map { arrayOf<Any>(it) }
     }
 
     @Test

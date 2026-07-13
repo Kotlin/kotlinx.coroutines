@@ -12,13 +12,15 @@ class SafeCollectorMemoryLeakTest : TestBase() {
 
     @Test
     fun testCompletionIsProperlyCleanedUp() = runBlocking {
-        val job = flow {
-            emit(listOf(239))
-            expect(2)
-            hang {}
-        }.transform { l -> l.listForEach { _ -> emit(42) } }
-            .onEach { expect(1) }
-            .launchIn(this)
+        val job =
+            flow {
+                    emit(listOf(239))
+                    expect(2)
+                    hang {}
+                }
+                .transform { l -> l.listForEach { _ -> emit(42) } }
+                .onEach { expect(1) }
+                .launchIn(this)
         yield()
         expect(3)
         FieldWalker.assertReachableCount(0, job) { it == 239 }
@@ -28,15 +30,17 @@ class SafeCollectorMemoryLeakTest : TestBase() {
 
     @Test
     fun testCompletionIsNotCleanedUp() = runBlocking {
-        val job = flow {
-            emit(listOf(239))
-            hang {}
-        }.transform { l -> l.listForEach { _ -> emit(42) } }
-            .onEach {
-                expect(1)
-                hang { finish(3) }
-            }
-            .launchIn(this)
+        val job =
+            flow {
+                    emit(listOf(239))
+                    hang {}
+                }
+                .transform { l -> l.listForEach { _ -> emit(42) } }
+                .onEach {
+                    expect(1)
+                    hang { finish(3) }
+                }
+                .launchIn(this)
         yield()
         expect(2)
         FieldWalker.assertReachableCount(1, job) { it == 239 }

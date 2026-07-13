@@ -18,33 +18,39 @@ class ChannelFlowTest : TestBase() {
 
     @Test
     fun testBuffer() = runTest {
-        val flow = channelFlow {
-            assertTrue(trySend(1).isSuccess)
-            assertTrue(trySend(2).isSuccess)
-            assertFalse(trySend(3).isSuccess)
-        }.buffer(1)
+        val flow =
+            channelFlow {
+                    assertTrue(trySend(1).isSuccess)
+                    assertTrue(trySend(2).isSuccess)
+                    assertFalse(trySend(3).isSuccess)
+                }
+                .buffer(1)
         assertEquals(listOf(1, 2), flow.toList())
     }
 
     @Test
     fun testConflated() = runTest {
-        val flow = channelFlow {
-            assertTrue(trySend(1).isSuccess)
-            assertTrue(trySend(2).isSuccess)
-            assertTrue(trySend(3).isSuccess)
-            assertTrue(trySend(4).isSuccess)
-        }.buffer(Channel.CONFLATED)
+        val flow =
+            channelFlow {
+                    assertTrue(trySend(1).isSuccess)
+                    assertTrue(trySend(2).isSuccess)
+                    assertTrue(trySend(3).isSuccess)
+                    assertTrue(trySend(4).isSuccess)
+                }
+                .buffer(Channel.CONFLATED)
         assertEquals(listOf(1, 4), flow.toList()) // two elements in the middle got conflated
     }
 
     @Test
     fun testFailureCancelsChannel() = runTest {
-        val flow = channelFlow {
-            trySend(1)
-            invokeOnClose {
-                expect(2)
-            }
-        }.onEach { throw TestException() }
+        val flow =
+            channelFlow {
+                    trySend(1)
+                    invokeOnClose {
+                        expect(2)
+                    }
+                }
+                .onEach { throw TestException() }
 
         expect(1)
         assertFailsWith<TestException>(flow)
@@ -53,10 +59,12 @@ class ChannelFlowTest : TestBase() {
 
     @Test
     fun testFailureInSourceCancelsConsumer() = runTest {
-        val flow = channelFlow<Int> {
-            expect(2)
-            throw TestException()
-        }.onEach { expectUnreached() }
+        val flow =
+            channelFlow<Int> {
+                    expect(2)
+                    throw TestException()
+                }
+                .onEach { expectUnreached() }
 
         expect(1)
         assertFailsWith<TestException>(flow)
@@ -65,13 +73,15 @@ class ChannelFlowTest : TestBase() {
 
     @Test
     fun testScopedCancellation() = runTest {
-        val flow = channelFlow<Int> {
-            expect(2)
-            launch(start = CoroutineStart.ATOMIC) {
-                hang { expect(3) }
-            }
-            throw TestException()
-        }.onEach { expectUnreached() }
+        val flow =
+            channelFlow<Int> {
+                    expect(2)
+                    launch(start = CoroutineStart.ATOMIC) {
+                        hang { expect(3) }
+                    }
+                    throw TestException()
+                }
+                .onEach { expectUnreached() }
 
         expect(1)
         assertFailsWith<TestException>(flow)
@@ -94,7 +104,10 @@ class ChannelFlowTest : TestBase() {
 
     private fun Flow<Int>.mergeTwoCoroutines(other: Flow<Int>): Flow<Int> = channelFlow {
         launch {
-            collect { send(it); yield() }
+            collect {
+                send(it)
+                yield()
+            }
         }
         launch {
             other.collect { send(it) }
@@ -103,10 +116,16 @@ class ChannelFlowTest : TestBase() {
 
     private fun Flow<Int>.mergeOneCoroutine(other: Flow<Int>): Flow<Int> = channelFlow {
         launch {
-            collect { send(it); yield() }
+            collect {
+                send(it)
+                yield()
+            }
         }
 
-        other.collect { send(it); yield() }
+        other.collect {
+            send(it)
+            yield()
+        }
     }
 
     @Test
@@ -141,38 +160,39 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testChildCancellation() = runTest {
         channelFlow {
-            val job = launch {
-                expect(2)
-                hang { expect(4) }
+                val job = launch {
+                    expect(2)
+                    hang { expect(4) }
+                }
+                expect(1)
+                yield()
+                expect(3)
+                job.cancelAndJoin()
+                send(5)
             }
-            expect(1)
-            yield()
-            expect(3)
-            job.cancelAndJoin()
-            send(5)
-
-        }.collect {
-            expect(it)
-        }
+            .collect {
+                expect(it)
+            }
 
         finish(6)
     }
 
     @Test
-    fun testClosedPrematurely() = runTest(unhandled = listOf({ e -> e is ClosedSendChannelException })) {
-        val outerScope = this
-        val flow = channelFlow {
-            // ~ callback-based API, no children
-            outerScope.launch(Job()) {
-                expect(2)
-                send(1)
-                expectUnreached()
+    fun testClosedPrematurely() =
+        runTest(unhandled = listOf({ e -> e is ClosedSendChannelException })) {
+            val outerScope = this
+            val flow = channelFlow {
+                // ~ callback-based API, no children
+                outerScope.launch(Job()) {
+                    expect(2)
+                    send(1)
+                    expectUnreached()
+                }
+                expect(1)
             }
-            expect(1)
+            assertEquals(emptyList(), flow.toList())
+            finish(3)
         }
-        assertEquals(emptyList(), flow.toList())
-        finish(3)
-    }
 
     @Test
     fun testNotClosedPrematurely() = runTest {
@@ -194,11 +214,12 @@ class ChannelFlowTest : TestBase() {
 
     @Test
     fun testCancelledOnCompletion() = runTest {
-        val myFlow = callbackFlow<Any> {
-            expect(2)
-            close()
-            hang { expect(3) }
-        }
+        val myFlow =
+            callbackFlow<Any> {
+                expect(2)
+                close()
+                hang { expect(3) }
+            }
 
         expect(1)
         myFlow.collect()

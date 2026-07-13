@@ -1,13 +1,12 @@
 package kotlinx.coroutines
 
-internal actual abstract class EventLoopImplPlatform: EventLoop() {
+internal actual abstract class EventLoopImplPlatform : EventLoop() {
 
     protected abstract val thread: Thread
 
     protected actual fun unpark() {
         val thread = thread // atomic read
-        if (Thread.currentThread() !== thread)
-            unpark(thread)
+        if (Thread.currentThread() !== thread) unpark(thread)
     }
 
     protected actual open fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
@@ -15,9 +14,7 @@ internal actual abstract class EventLoopImplPlatform: EventLoop() {
     }
 }
 
-internal class BlockingEventLoop(
-    override val thread: Thread
-) : EventLoopImplBase()
+internal class BlockingEventLoop(override val thread: Thread) : EventLoopImplBase()
 
 internal actual fun createEventLoop(): EventLoop = BlockingEventLoop(Thread.currentThread())
 

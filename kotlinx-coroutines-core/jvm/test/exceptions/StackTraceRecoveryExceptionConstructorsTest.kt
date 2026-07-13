@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.produce
 import kotlin.test.*
 
-class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
+class StackTraceRecoveryExceptionConstructorsTest : TestBase() {
     internal class NonCopyable(val customData: Int) : Throwable() {
         // Bait
         constructor(cause: Throwable) : this(42)
@@ -53,7 +53,6 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
         assertEquals("Token OK", ex.message)
     }
 
-
     @Test
     fun testNestedExceptionWithCause() = runTest {
         val result = runCatching {
@@ -71,20 +70,24 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
 
     class NestedException : RuntimeException {
         constructor(cause: Throwable) : super(cause)
+
         constructor() : super()
     }
 
     @Test
     fun testWrongMessageExceptionInChannel() = runTest {
-        val result = produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
-            throw WrongMessageException("OK")
-        }
-        val ex = runCatching {
-            @Suppress("ControlFlowWithEmptyBody")
-            for (unit in result) {
-                // Iterator has a special code path
+        val result =
+            produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
+                throw WrongMessageException("OK")
             }
-        }.exceptionOrNull() ?: error("Expected to fail")
+        val ex =
+            runCatching {
+                    @Suppress("ControlFlowWithEmptyBody")
+                    for (unit in result) {
+                        // Iterator has a special code path
+                    }
+                }
+                .exceptionOrNull() ?: error("Expected to fail")
         assertIs<WrongMessageException>(ex)
         assertEquals("Token OK", ex.message)
     }

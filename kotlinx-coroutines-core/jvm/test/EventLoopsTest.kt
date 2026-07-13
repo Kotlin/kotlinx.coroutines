@@ -8,10 +8,7 @@ import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 import kotlin.test.*
 
-/**
- * Tests event loops integration.
- * See [https://github.com/Kotlin/kotlinx.coroutines/issues/860].
- */
+/** Tests event loops integration. See [https://github.com/Kotlin/kotlinx.coroutines/issues/860]. */
 class EventLoopsTest : TestBase() {
     @Test
     fun testNestedRunBlocking() {
@@ -78,10 +75,13 @@ class EventLoopsTest : TestBase() {
                 // Produce string "OK"
                 val ch = produce { send("OK") }
                 // try receive this string in a blocking way using test context (another thread)
-                assertEquals("OK", runBlocking(testContext) {
-                    assertEquals(testThread, Thread.currentThread())
-                    ch.receive() // it should not hang here
-                })
+                assertEquals(
+                    "OK",
+                    runBlocking(testContext) {
+                        assertEquals(testThread, Thread.currentThread())
+                        ch.receive() // it should not hang here
+                    },
+                )
             }
             event.fireEvent() // done thread
         }
@@ -89,10 +89,7 @@ class EventLoopsTest : TestBase() {
         thread.join() // it is safe to join the thread now
     }
 
-    /**
-     * Tests that, when delayed tasks are due on an event loop, they will execute earlier than the newly-scheduled
-     * non-delayed tasks.
-     */
+    /** Tests that, when delayed tasks are due on an event loop, they will execute earlier than the newly-scheduled non-delayed tasks. */
     @Test
     fun testPendingDelayedBeingDueEarlier() = runTest {
         launch(start = CoroutineStart.UNDISPATCHED) {

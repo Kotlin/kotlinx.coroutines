@@ -1,16 +1,16 @@
 package kotlinx.coroutines.internal
 
 /**
- * Analogue of java.util.concurrent.CopyOnWriteArrayList for JS.
- * Even though JS has no real concurrency, [CopyOnWriteList] is essential to manage any kinds
- * of callbacks or continuations.
+ * Analogue of java.util.concurrent.CopyOnWriteArrayList for JS. Even though JS has no real concurrency, [CopyOnWriteList] is essential to
+ * manage any kinds of callbacks or continuations.
  *
- * Implementation note: most of the methods fallbacks to [AbstractMutableList] (thus inefficient for CoW pattern)
- * and some methods are unsupported, because currently they are not required for this class consumers.
+ * Implementation note: most of the methods fallbacks to [AbstractMutableList] (thus inefficient for CoW pattern) and some methods are
+ * unsupported, because currently they are not required for this class consumers.
  */
 internal class CopyOnWriteList<E>(private var array: Array<E> = emptyArray()) : AbstractMutableList<E>() {
 
-    override val size: Int get() = array.size
+    override val size: Int
+        get() = array.size
 
     override fun add(element: E): Boolean {
         val copy = array.asDynamic().slice()
@@ -41,11 +41,12 @@ internal class CopyOnWriteList<E>(private var array: Array<E> = emptyArray()) : 
     override fun removeAt(index: Int): E {
         rangeCheck(index)
         val copy = array.asDynamic().slice()
-        val result = if (index == lastIndex) {
-            copy.pop()
-        } else {
-            copy.splice(index, 1)[0]
-        }
+        val result =
+            if (index == lastIndex) {
+                copy.pop()
+            } else {
+                copy.splice(index, 1)[0]
+            }
 
         array = copy as Array<E>
         return result as E

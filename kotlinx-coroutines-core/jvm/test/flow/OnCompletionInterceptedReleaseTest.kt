@@ -12,15 +12,16 @@ class OnCompletionInterceptedReleaseTest : TestBase() {
         expect(1)
         var cont: Continuation<Unit>? = null
         val interceptor = CountingInterceptor()
-        val job = launch(interceptor, start = CoroutineStart.UNDISPATCHED) {
-            emptyFlow<Int>()
-                .onCompletion { emit(1) }
-                .collect { value ->
-                    expect(2)
-                    assertEquals(1, value)
-                    suspendCoroutine { cont = it }
-                }
-        }
+        val job =
+            launch(interceptor, start = CoroutineStart.UNDISPATCHED) {
+                emptyFlow<Int>()
+                    .onCompletion { emit(1) }
+                    .collect { value ->
+                        expect(2)
+                        assertEquals(1, value)
+                        suspendCoroutine { cont = it }
+                    }
+            }
         cont!!.resume(Unit)
         assertTrue(job.isCompleted)
         assertEquals(interceptor.intercepted, interceptor.released)
@@ -30,6 +31,7 @@ class OnCompletionInterceptedReleaseTest : TestBase() {
     class CountingInterceptor : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
         var intercepted = 0
         var released = 0
+
         override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
             intercepted++
             return Continuation(continuation.context) { continuation.resumeWith(it) }

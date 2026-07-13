@@ -26,7 +26,7 @@ class ConsumeAsFlowTest : TestBase() {
     @Test
     fun testCollectTwice() = runTest {
         val list = listOf(2, 3, 9)
-        val flow = list.stream().onClose { expect(2) } .consumeAsFlow()
+        val flow = list.stream().onClose { expect(2) }.consumeAsFlow()
         expect(1)
         assertEquals(list, flow.toList())
         assertFailsWith<IllegalStateException> { flow.collect() }

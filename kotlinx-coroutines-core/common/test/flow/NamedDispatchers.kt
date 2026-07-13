@@ -2,9 +2,7 @@ package kotlinx.coroutines
 
 import kotlin.coroutines.*
 
-/**
- * Test dispatchers that emulate multiplatform context tracking.
- */
+/** Test dispatchers that emulate multiplatform context tracking. */
 object NamedDispatchers {
 
     private val stack = ArrayStack()
@@ -15,17 +13,18 @@ object NamedDispatchers {
 
     operator fun invoke(name: String) = named(name)
 
-    private fun named(name: String): CoroutineDispatcher = object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            stack.push(name)
-            try {
-                block.run()
-            } finally {
-                val last = stack.pop() ?: error("No names on stack")
-                require(last == name) { "Inconsistent stack: expected $name, but had $last" }
+    private fun named(name: String): CoroutineDispatcher =
+        object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                stack.push(name)
+                try {
+                    block.run()
+                } finally {
+                    val last = stack.pop() ?: error("No names on stack")
+                    require(last == name) { "Inconsistent stack: expected $name, but had $last" }
+                }
             }
         }
-    }
 }
 
 private class ArrayStack {
@@ -50,12 +49,12 @@ private class ArrayStack {
         val newElements = arrayOfNulls<String>(newCapacity)
         elements.copyInto(
             destination = newElements,
-            startIndex = head
+            startIndex = head,
         )
         elements.copyInto(
             destination = newElements,
             destinationOffset = elements.size - head,
-            endIndex = head
+            endIndex = head,
         )
         elements = newElements
     }

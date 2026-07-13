@@ -11,11 +11,12 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() = runBlocking<Unit> {
-    simple()
-        .catch { e -> println("Caught $e") } // does not catch downstream exceptions
-        .collect { value ->
-            check(value <= 1) { "Collected $value" }                 
-            println(value) 
-        }
-}            
+fun main() =
+    runBlocking<Unit> {
+        simple()
+            .catch { e -> println("Caught $e") } // does not catch downstream exceptions
+            .collect { value ->
+                check(value <= 1) { "Collected $value" }
+                println(value)
+            }
+    }

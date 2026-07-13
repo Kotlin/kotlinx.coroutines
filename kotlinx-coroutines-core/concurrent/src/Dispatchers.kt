@@ -1,31 +1,28 @@
 package kotlinx.coroutines
 
 /**
- * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
- * Additional threads in this pool are created on demand.
- * Default IO pool size is `64`; on JVM it can be configured using JVM-specific mechanisms,
- * please refer to `Dispatchers.IO` documentation on JVM platform.
+ * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads. Additional threads in this pool
+ * are created on demand. Default IO pool size is `64`; on JVM it can be configured using JVM-specific mechanisms, please refer to
+ * `Dispatchers.IO` documentation on JVM platform.
  *
  * ### Elasticity for limited parallelism
  *
- * `Dispatchers.IO` has a unique property of elasticity: its views
- * obtained with [CoroutineDispatcher.limitedParallelism] are
- * not restricted by the `Dispatchers.IO` parallelism. Conceptually, there is
- * a dispatcher backed by an unlimited pool of threads, and both `Dispatchers.IO`
- * and views of `Dispatchers.IO` are actually views of that dispatcher. In practice
- * this means that, despite not abiding by `Dispatchers.IO`'s parallelism
- * restrictions, its views share threads and resources with it.
+ * `Dispatchers.IO` has a unique property of elasticity: its views obtained with [CoroutineDispatcher.limitedParallelism] are not restricted
+ * by the `Dispatchers.IO` parallelism. Conceptually, there is a dispatcher backed by an unlimited pool of threads, and both
+ * `Dispatchers.IO` and views of `Dispatchers.IO` are actually views of that dispatcher. In practice this means that, despite not abiding by
+ * `Dispatchers.IO`'s parallelism restrictions, its views share threads and resources with it.
  *
  * In the following example
+ *
  * ```
  * // 100 threads for MySQL connection
  * val myMysqlDbDispatcher = Dispatchers.IO.limitedParallelism(100)
  * // 60 threads for MongoDB connection
  * val myMongoDbDispatcher = Dispatchers.IO.limitedParallelism(60)
  * ```
- * the system may have up to `64 + 100 + 60` threads running blocking tasks in parallel during peak loads,
- * but during its steady state there is only a small number of threads shared
- * among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`
+ *
+ * the system may have up to `64 + 100 + 60` threads running blocking tasks in parallel during peak loads, but during its steady state there
+ * is only a small number of threads shared among `Dispatchers.IO`, `myMysqlDbDispatcher` and `myMongoDbDispatcher`
  *
  * It is recommended to replace manually created thread-backed executors with `Dispatchers.IO.limitedParallelism` instead:
  * ```
@@ -38,10 +35,8 @@ package kotlinx.coroutines
  *
  * ### Implementation note
  *
- * The limit on the number of blocking tasks running in parallel is *not* a strict limit on the number of threads.
- * It is possible for more thread than the limit to exist at the same time, but the extra threads are guaranteed
- * to be in their start-up or shutdown phases and not actually executing work.
+ * The limit on the number of blocking tasks running in parallel is *not* a strict limit on the number of threads. It is possible for more
+ * thread than the limit to exist at the same time, but the extra threads are guaranteed to be in their start-up or shutdown phases and not
+ * actually executing work.
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-public expect val Dispatchers.IO: CoroutineDispatcher
-
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER") public expect val Dispatchers.IO: CoroutineDispatcher

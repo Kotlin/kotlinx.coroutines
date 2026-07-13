@@ -6,6 +6,7 @@ internal actual inline fun <T> ReentrantLock.withLock(action: () -> T) = action(
 
 internal class NoOpLock {
     fun tryLock() = true
+
     fun unlock(): Unit {}
 }
 

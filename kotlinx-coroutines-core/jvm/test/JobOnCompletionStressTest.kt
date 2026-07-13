@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
 
-class JobOnCompletionStressTest: TestBase() {
+class JobOnCompletionStressTest : TestBase() {
     private val N_ITERATIONS = 10_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(2, "JobOnCompletionStressTest")
 
@@ -25,7 +25,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = false,
             invokeImmediately = true,
-            parentCompletion = { complete(Unit) }
+            parentCompletion = { complete(Unit) },
         ) {
             assertNull(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -38,7 +38,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = false,
             invokeImmediately = true,
-            parentCompletion = { completeExceptionally(TestException()) }
+            parentCompletion = { completeExceptionally(TestException()) },
         ) {
             assertIs<TestException>(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -51,7 +51,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = true,
             invokeImmediately = true,
-            parentCompletion = { complete(Unit) }
+            parentCompletion = { complete(Unit) },
         ) {
             assertNull(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -64,7 +64,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = true,
             invokeImmediately = true,
-            parentCompletion = { completeExceptionally(TestException()) }
+            parentCompletion = { completeExceptionally(TestException()) },
         ) {
             assertIs<TestException>(encounteredException.get())
             assertTrue(completionHandlerSeesCancelledParent.get())
@@ -76,7 +76,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = false,
             invokeImmediately = false,
-            parentCompletion = { complete(Unit) }
+            parentCompletion = { complete(Unit) },
         ) {
             assertNull(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -89,7 +89,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = false,
             invokeImmediately = false,
-            parentCompletion = { completeExceptionally(TestException()) }
+            parentCompletion = { completeExceptionally(TestException()) },
         ) {
             assertIs<TestException>(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -102,7 +102,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = true,
             invokeImmediately = false,
-            parentCompletion = { complete(Unit) }
+            parentCompletion = { complete(Unit) },
         ) {
             assertNull(encounteredException.get())
             assertTrue(completionHandlerSeesCompletedParent.get())
@@ -115,7 +115,7 @@ class JobOnCompletionStressTest: TestBase() {
         testHandlerRacingWithCancellation(
             onCancelling = true,
             invokeImmediately = false,
-            parentCompletion = { completeExceptionally(TestException()) }
+            parentCompletion = { completeExceptionally(TestException()) },
         ) {
             assertIs<TestException>(encounteredException.get())
             assertTrue(completionHandlerSeesCancelledParent.get())
@@ -172,21 +172,20 @@ class JobOnCompletionStressTest: TestBase() {
 }
 
 /**
- * Creates a [CompletableDeferred], optionally adding completion handlers and/or other children to the job depending
- * on [iteration].
- * The purpose is to test not just attaching completion handlers to empty or one-element lists (see the [JobSupport]
- * implementation for details on what this means), but also to lists with multiple elements.
+ * Creates a [CompletableDeferred], optionally adding completion handlers and/or other children to the job depending on [iteration]. The
+ * purpose is to test not just attaching completion handlers to empty or one-element lists (see the [JobSupport] implementation for details
+ * on what this means), but also to lists with multiple elements.
  */
 fun createCompletableDeferredForTesting(iteration: Int): CompletableDeferred<Unit> {
     val parent = CompletableDeferred<Unit>()
     /* We optionally add completion handlers and/or other children to the parent job
-       to test the scenarios where a child is placed into an empty list, a single-element list,
-       or a list with multiple elements. */
+    to test the scenarios where a child is placed into an empty list, a single-element list,
+    or a list with multiple elements. */
     if (iteration.mod(2) == 0) {
-        parent.invokeOnCompletion { }
+        parent.invokeOnCompletion {}
     }
     if (iteration.mod(3) == 0) {
-        GlobalScope.launch(parent) { }
+        GlobalScope.launch(parent) {}
     }
     return parent
 }

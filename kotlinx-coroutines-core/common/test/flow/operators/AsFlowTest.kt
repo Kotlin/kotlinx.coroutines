@@ -17,9 +17,7 @@ class AsFlowTest : TestBase() {
 
         assertEquals(
             expected = listOf(1, 2, 3),
-            actual = flow
-                .take(count = 3)
-                .toList(),
+            actual = flow.take(count = 3).toList(),
         )
     }
 

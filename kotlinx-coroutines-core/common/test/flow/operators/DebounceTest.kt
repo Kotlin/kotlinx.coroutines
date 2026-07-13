@@ -74,42 +74,45 @@ class DebounceTest : TestBase() {
 
     @Test
     fun testPace() = withVirtualTime {
-        val flow = flow {
-            expect(1)
-            repeat(10) {
-                emit(-it)
-                delay(99)
-            }
+        val flow =
+            flow {
+                    expect(1)
+                    repeat(10) {
+                        emit(-it)
+                        delay(99)
+                    }
 
-            repeat(10) {
-                emit(it)
-                delay(101)
-            }
-            expect(2)
-        }.debounce(100)
+                    repeat(10) {
+                        emit(it)
+                        delay(101)
+                    }
+                    expect(2)
+                }
+                .debounce(100)
 
         assertEquals((0..9).toList(), flow.toList())
         finish(3)
     }
 
-    @Test
-    fun testUpstreamError()= testUpstreamError(TimeoutCancellationException(""))
+    @Test fun testUpstreamError() = testUpstreamError(TimeoutCancellationException(""))
 
-    @Test
-    fun testUpstreamErrorCancellation() = testUpstreamError(TimeoutCancellationException(""))
+    @Test fun testUpstreamErrorCancellation() = testUpstreamError(TimeoutCancellationException(""))
 
-    private inline fun <reified T: Throwable> testUpstreamError(cause: T) = runTest {
+    private inline fun <reified T : Throwable> testUpstreamError(cause: T) = runTest {
         val latch = Channel<Unit>()
-        val flow = flow {
-            expect(1)
-            emit(1)
-            expect(2)
-            latch.receive()
-            throw cause
-        }.debounce(1).map {
-            latch.send(Unit)
-            hang { expect(3) }
-        }
+        val flow =
+            flow {
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    latch.receive()
+                    throw cause
+                }
+                .debounce(1)
+                .map {
+                    latch.send(Unit)
+                    hang { expect(3) }
+                }
 
         assertFailsWith<T>(flow)
         finish(4)
@@ -118,17 +121,21 @@ class DebounceTest : TestBase() {
     @Test
     fun testUpstreamErrorIsolatedContext() = runTest {
         val latch = Channel<Unit>()
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            expect(2)
-            latch.receive()
-            throw TestException()
-        }.flowOn(NamedDispatchers("upstream")).debounce(1).map {
-            latch.send(Unit)
-            hang { expect(3) }
-        }
+        val flow =
+            flow {
+                    assertEquals("upstream", NamedDispatchers.name())
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    latch.receive()
+                    throw TestException()
+                }
+                .flowOn(NamedDispatchers("upstream"))
+                .debounce(1)
+                .map {
+                    latch.send(Unit)
+                    hang { expect(3) }
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -136,43 +143,53 @@ class DebounceTest : TestBase() {
 
     @Test
     fun testUpstreamErrorDebounceNotTriggered() = runTest {
-        val flow = flow {
-            expect(1)
-            emit(1)
-            expect(2)
-            throw TestException()
-        }.debounce(Long.MAX_VALUE).map {
-            expectUnreached()
-        }
+        val flow =
+            flow {
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    throw TestException()
+                }
+                .debounce(Long.MAX_VALUE)
+                .map {
+                    expectUnreached()
+                }
         assertFailsWith<TestException>(flow)
         finish(3)
     }
 
     @Test
     fun testUpstreamErrorDebounceNotTriggeredInIsolatedContext() = runTest {
-        val flow = flow {
-            expect(1)
-            emit(1)
-            expect(2)
-            throw TestException()
-        }.flowOn(NamedDispatchers("source")).debounce(Long.MAX_VALUE).map {
-            expectUnreached()
-        }
+        val flow =
+            flow {
+                    expect(1)
+                    emit(1)
+                    expect(2)
+                    throw TestException()
+                }
+                .flowOn(NamedDispatchers("source"))
+                .debounce(Long.MAX_VALUE)
+                .map {
+                    expectUnreached()
+                }
         assertFailsWith<TestException>(flow)
         finish(3)
     }
 
     @Test
     fun testDownstreamError() = runTest {
-        val flow = flow {
-            expect(1)
-            emit(1)
-            hang { expect(3) }
-        }.debounce(100).map {
-            expect(2)
-            yield()
-            throw TestException()
-        }
+        val flow =
+            flow {
+                    expect(1)
+                    emit(1)
+                    hang { expect(3) }
+                }
+                .debounce(100)
+                .map {
+                    expect(2)
+                    yield()
+                    throw TestException()
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -180,16 +197,20 @@ class DebounceTest : TestBase() {
 
     @Test
     fun testDownstreamErrorIsolatedContext() = runTest {
-        val flow = flow {
-            assertEquals("upstream", NamedDispatchers.name())
-            expect(1)
-            emit(1)
-            hang { expect(3) }
-        }.flowOn(NamedDispatchers("upstream")).debounce(100).map {
-            expect(2)
-            yield()
-            throw TestException()
-        }
+        val flow =
+            flow {
+                    assertEquals("upstream", NamedDispatchers.name())
+                    expect(1)
+                    emit(1)
+                    hang { expect(3) }
+                }
+                .flowOn(NamedDispatchers("upstream"))
+                .debounce(100)
+                .map {
+                    expect(2)
+                    yield()
+                    throw TestException()
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -236,13 +257,16 @@ class DebounceTest : TestBase() {
         }
 
         expect(2)
-        val result = flow.debounce {
-            if (it == 1) {
-                0
-            } else {
-                1000
-            }
-        }.toList()
+        val result =
+            flow
+                .debounce {
+                    if (it == 1) {
+                        0
+                    } else {
+                        1000
+                    }
+                }
+                .toList()
 
         assertEquals(listOf(1, 3, 4, 5), result)
         finish(5)
@@ -301,13 +325,16 @@ class DebounceTest : TestBase() {
         }
 
         expect(2)
-        val result = flow.debounce {
-            if (it == "C") {
-                0.milliseconds
-            } else {
-                1000.milliseconds
-            }
-        }.toList()
+        val result =
+            flow
+                .debounce {
+                    if (it == "C") {
+                        0.milliseconds
+                    } else {
+                        1000.milliseconds
+                    }
+                }
+                .toList()
 
         assertEquals(listOf("A", "C", "D", "E"), result)
         finish(5)

@@ -7,26 +7,26 @@ import kotlin.coroutines.*
 import kotlin.AutoCloseable
 
 /**
- * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks.
- * Instances of [ExecutorCoroutineDispatcher] should be closed by the owner of the dispatcher.
+ * [CoroutineDispatcher] that has underlying [Executor] for dispatching tasks. Instances of [ExecutorCoroutineDispatcher] should be closed
+ * by the owner of the dispatcher.
  *
- * This class is generally used as a bridge between coroutine-based API and
- * asynchronous API that requires an instance of the [Executor].
+ * This class is generally used as a bridge between coroutine-based API and asynchronous API that requires an instance of the [Executor].
  */
 public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Closeable, AutoCloseable {
     /** @suppress */
-    @Deprecated("Use ContinuationInterceptor.Key and attempt " +
-        "casting the context element to ExecutorCoroutineDispatcher instead",
-        level = DeprecationLevel.WARNING)
+    @Deprecated(
+        "Use ContinuationInterceptor.Key and attempt " + "casting the context element to ExecutorCoroutineDispatcher instead",
+        level = DeprecationLevel.WARNING,
+    )
     @ExperimentalStdlibApi
     @Suppress("DEPRECATION")
-    public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
-        CoroutineDispatcher,
-        { it as? ExecutorCoroutineDispatcher })
+    public companion object Key :
+        AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
+            CoroutineDispatcher,
+            { it as? ExecutorCoroutineDispatcher },
+        )
 
-    /**
-     * Underlying executor of current [CoroutineDispatcher].
-     */
+    /** Underlying executor of current [CoroutineDispatcher]. */
     public abstract val executor: Executor
 
     /**
@@ -45,54 +45,45 @@ public actual typealias CloseableCoroutineDispatcher = ExecutorCoroutineDispatch
  *
  * ## Interaction with [delay] and time-based coroutines.
  *
- * If the given [ExecutorService] is an instance of [ScheduledExecutorService], then all time-related
- * coroutine operations such as [delay], [withTimeout] and time-based [Flow] operators will be scheduled
- * on this executor using [schedule][ScheduledExecutorService.schedule] method. If the corresponding
- * coroutine is cancelled, [ScheduledFuture.cancel] will be invoked on the corresponding future.
+ * If the given [ExecutorService] is an instance of [ScheduledExecutorService], then all time-related coroutine operations such as [delay],
+ * [withTimeout] and time-based [Flow] operators will be scheduled on this executor using [schedule][ScheduledExecutorService.schedule]
+ * method. If the corresponding coroutine is cancelled, [ScheduledFuture.cancel] will be invoked on the corresponding future.
  *
- * If the given [ExecutorService] is an instance of [ScheduledThreadPoolExecutor], then prior to any scheduling,
- * remove on cancel policy will be set via [ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy] in order
- * to reduce the memory pressure of cancelled coroutines.
+ * If the given [ExecutorService] is an instance of [ScheduledThreadPoolExecutor], then prior to any scheduling, remove on cancel policy
+ * will be set via [ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy] in order to reduce the memory pressure of cancelled coroutines.
  *
- * If the executor service is neither of this types, the separate internal thread will be used to
- * _track_ the delay and time-related executions, but the coroutine itself will still be executed
- * on top of the given executor.
+ * If the executor service is neither of this types, the separate internal thread will be used to _track_ the delay and time-related
+ * executions, but the coroutine itself will still be executed on top of the given executor.
  *
  * ## Rejected execution
- * If the underlying executor throws [RejectedExecutionException] on
- * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
- * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
- * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * If the underlying executor throws [RejectedExecutionException] on attempt to submit a continuation task (it happens when
+ * [closing][ExecutorCoroutineDispatcher.close] the resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or
+ * when it uses limited queues), then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
-public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher =
-    ExecutorCoroutineDispatcherImpl(this)
+public fun ExecutorService.asCoroutineDispatcher(): ExecutorCoroutineDispatcher = ExecutorCoroutineDispatcherImpl(this)
 
 /**
  * Converts an instance of [Executor] to an implementation of [CoroutineDispatcher].
  *
  * ## Interaction with [delay] and time-based coroutines.
  *
- * If the given [Executor] is an instance of [ScheduledExecutorService], then all time-related
- * coroutine operations such as [delay], [withTimeout] and time-based [Flow] operators will be scheduled
- * on this executor using [schedule][ScheduledExecutorService.schedule] method. If the corresponding
- * coroutine is cancelled, [ScheduledFuture.cancel] will be invoked on the corresponding future.
+ * If the given [Executor] is an instance of [ScheduledExecutorService], then all time-related coroutine operations such as [delay],
+ * [withTimeout] and time-based [Flow] operators will be scheduled on this executor using [schedule][ScheduledExecutorService.schedule]
+ * method. If the corresponding coroutine is cancelled, [ScheduledFuture.cancel] will be invoked on the corresponding future.
  *
- * If the given [Executor] is an instance of [ScheduledThreadPoolExecutor], then prior to any scheduling,
- * remove on cancel policy will be set via [ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy] in order
- * to reduce the memory pressure of cancelled coroutines.
+ * If the given [Executor] is an instance of [ScheduledThreadPoolExecutor], then prior to any scheduling, remove on cancel policy will be
+ * set via [ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy] in order to reduce the memory pressure of cancelled coroutines.
  *
- * If the executor is neither of this types, the separate internal thread will be used to
- * _track_ the delay and time-related executions, but the coroutine itself will still be executed
- * on top of the given executor.
+ * If the executor is neither of this types, the separate internal thread will be used to _track_ the delay and time-related executions, but
+ * the coroutine itself will still be executed on top of the given executor.
  *
  * ## Rejected execution
  *
- * If the underlying executor throws [RejectedExecutionException] on
- * attempt to submit a continuation task (it happens when [closing][ExecutorCoroutineDispatcher.close] the
- * resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or when it uses limited queues),
- * then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
+ * If the underlying executor throws [RejectedExecutionException] on attempt to submit a continuation task (it happens when
+ * [closing][ExecutorCoroutineDispatcher.close] the resulting dispatcher, on underlying executor [shutdown][ExecutorService.shutdown], or
+ * when it uses limited queues), then the [Job] of the affected task is [cancelled][Job.cancel] and the task is submitted to the
  * [Dispatchers.IO], so that the affected coroutine can cleanup its resources and promptly complete.
  */
 @JvmName("from") // this is for a nice Java API, see issue #255
@@ -104,8 +95,7 @@ public fun Executor.asCoroutineDispatcher(): CoroutineDispatcher =
  *
  * It returns the original executor when used on the result of [Executor.asCoroutineDispatcher] extensions.
  */
-public fun CoroutineDispatcher.asExecutor(): Executor =
-    (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
+public fun CoroutineDispatcher.asExecutor(): Executor = (this as? ExecutorCoroutineDispatcher)?.executor ?: DispatcherExecutor(this)
 
 private class DispatcherExecutor(@JvmField val dispatcher: CoroutineDispatcher) : Executor {
     override fun execute(block: Runnable) {
@@ -141,11 +131,12 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val future = (executor as? ScheduledExecutorService)?.scheduleBlock(
-            ResumeUndispatchedRunnable(this, continuation),
-            continuation.context,
-            timeMillis
-        )
+        val future =
+            (executor as? ScheduledExecutorService)?.scheduleBlock(
+                ResumeUndispatchedRunnable(this, continuation),
+                continuation.context,
+                timeMillis,
+            )
         // If everything went fine and the scheduling attempt was not rejected -- use it
         if (future != null) {
             continuation.invokeOnCancellation(CancelFutureOnCancel(future))
@@ -181,13 +172,15 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
     }
 
     override fun toString(): String = executor.toString()
+
     override fun equals(other: Any?): Boolean = other is ExecutorCoroutineDispatcherImpl && other.executor === executor
+
     override fun hashCode(): Int = System.identityHashCode(executor)
 }
 
 private class ResumeUndispatchedRunnable(
     private val dispatcher: CoroutineDispatcher,
-    private val continuation: CancellableContinuation<Unit>
+    private val continuation: CancellableContinuation<Unit>,
 ) : Runnable {
     override fun run() {
         with(continuation) { dispatcher.resumeUndispatched(Unit) }
@@ -196,12 +189,14 @@ private class ResumeUndispatchedRunnable(
 
 /**
  * An implementation of [DisposableHandle] that cancels the specified future on dispose.
+ *
  * @suppress **This is unstable API and it is subject to change.**
  */
 private class DisposableFutureHandle(private val future: Future<*>) : DisposableHandle {
     override fun dispose() {
         future.cancel(false)
     }
+
     override fun toString(): String = "DisposableFutureHandle[$future]"
 }
 
@@ -211,5 +206,6 @@ private class CancelFutureOnCancel(private val future: Future<*>) : CancelHandle
         // interruption flag and it will cause spurious failures elsewhere
         future.cancel(false)
     }
+
     override fun toString() = "CancelFutureOnCancel[$future]"
 }

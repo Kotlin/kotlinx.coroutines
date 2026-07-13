@@ -11,29 +11,33 @@ abstract class FlatMapBaseTest : TestBase() {
     @Test
     fun testFlatMap() = runTest {
         val n = 100
-        val sum = (1..100).asFlow()
-            .flatMap { value ->
-                // 1 + (1 + 2) + (1 + 2 + 3) + ... (1 + .. + n)
-                flow {
-                    repeat(value) {
-                        emit(it + 1)
+        val sum =
+            (1..100)
+                .asFlow()
+                .flatMap { value ->
+                    // 1 + (1 + 2) + (1 + 2 + 3) + ... (1 + .. + n)
+                    flow {
+                        repeat(value) {
+                            emit(it + 1)
+                        }
                     }
                 }
-            }.sum()
+                .sum()
 
         assertEquals(n * (n + 1) * (n + 2) / 6, sum)
     }
 
     @Test
     fun testSingle() = runTest {
-        val flow = flow {
-            repeat(100) {
-                emit(it)
-            }
-        }.flatMap { value ->
-            if (value == 99) flowOf(42)
-            else flowOf()
-        }
+        val flow =
+            flow {
+                    repeat(100) {
+                        emit(it)
+                    }
+                }
+                .flatMap { value ->
+                    if (value == 99) flowOf(42) else flowOf()
+                }
 
         val value = flow.single()
         assertEquals(42, value)
@@ -41,19 +45,21 @@ abstract class FlatMapBaseTest : TestBase() {
 
     @Test
     fun testNulls() = runTest {
-        val list = flowOf(1, null, 2).flatMap {
-            flowOf(1, null, null, 2)
-        }.toList()
+        val list =
+            flowOf(1, null, 2)
+                .flatMap {
+                    flowOf(1, null, null, 2)
+                }
+                .toList()
 
-        assertEquals(List(3) { listOf(1, null, null, 2)}.flatten(), list)
+        assertEquals(List(3) { listOf(1, null, null, 2) }.flatten(), list)
     }
 
     @Test
     fun testContext() = runTest {
         val captured = ArrayList<String>()
-        val flow = flowOf(1)
-            .flowOn(NamedDispatchers("irrelevant"))
-            .flatMap {
+        val flow =
+            flowOf(1).flowOn(NamedDispatchers("irrelevant")).flatMap {
                 captured += NamedDispatchers.name()
                 flow {
                     captured += NamedDispatchers.name()
@@ -68,20 +74,23 @@ abstract class FlatMapBaseTest : TestBase() {
 
     @Test
     fun testIsolatedContext() = runTest {
-        val flow = flowOf(1)
-            .flowOn(NamedDispatchers("irrelevant"))
-            .flatMap {
+        val flow =
+            flowOf(1)
+                .flowOn(NamedDispatchers("irrelevant"))
+                .flatMap {
                     flow {
                         assertEquals("inner", NamedDispatchers.name())
                         emit(it)
                     }
-            }.flowOn(NamedDispatchers("inner"))
-            .flatMap {
-                flow {
-                    assertEquals("outer", NamedDispatchers.name())
-                    emit(it)
                 }
-            }.flowOn(NamedDispatchers("outer"))
+                .flowOn(NamedDispatchers("inner"))
+                .flatMap {
+                    flow {
+                        assertEquals("outer", NamedDispatchers.name())
+                        emit(it)
+                    }
+                }
+                .flowOn(NamedDispatchers("outer"))
 
         assertEquals(1, flow.singleOrNull())
     }

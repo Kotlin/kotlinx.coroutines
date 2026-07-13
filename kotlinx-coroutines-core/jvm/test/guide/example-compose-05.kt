@@ -4,12 +4,13 @@ package kotlinx.coroutines.guide.exampleCompose05
 import kotlinx.coroutines.*
 import kotlin.system.*
 
-fun main() = runBlocking<Unit> {
-    val time = measureTimeMillis {
-        println("The answer is ${concurrentSum()}")
+fun main() =
+    runBlocking<Unit> {
+        val time = measureTimeMillis {
+            println("The answer is ${concurrentSum()}")
+        }
+        println("Completed in $time ms")
     }
-    println("Completed in $time ms")
-}
 
 suspend fun concurrentSum(): Int = coroutineScope {
     val one = async { doSomethingUsefulOne() }

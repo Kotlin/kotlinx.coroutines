@@ -6,71 +6,70 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Use this function to start a new coroutine in [CoroutineStart.UNDISPATCHED] mode &mdash;
- * immediately execute the coroutine in the current thread until the next suspension.
- * It does not use [ContinuationInterceptor], but updates the context of the current thread for the new coroutine.
+ * Use this function to start a new coroutine in [CoroutineStart.UNDISPATCHED] mode &mdash; immediately execute the coroutine in the current
+ * thread until the next suspension. It does not use [ContinuationInterceptor], but updates the context of the current thread for the new
+ * coroutine.
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     val actualCompletion = probeCoroutineCreated(completion)
-    val value = try {
-        /* The code below is started immediately in the current stack-frame
-         * and runs until the first suspension point. */
-        withCoroutineContext(actualCompletion.context, null) {
-            probeCoroutineResumed(actualCompletion)
-            startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
+    val value =
+        try {
+            /* The code below is started immediately in the current stack-frame
+             * and runs until the first suspension point. */
+            withCoroutineContext(actualCompletion.context, null) {
+                probeCoroutineResumed(actualCompletion)
+                startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
+            }
+        } catch (e: Throwable) {
+            val reportException = if (e is DispatchException) e.cause else e
+            actualCompletion.resumeWithException(reportException)
+            return
         }
-    } catch (e: Throwable) {
-        val reportException = if (e is DispatchException) e.cause else e
-        actualCompletion.resumeWithException(reportException)
-        return
-    }
     if (value !== COROUTINE_SUSPENDED) {
-        @Suppress("UNCHECKED_CAST")
-        actualCompletion.resume(value as T)
+        @Suppress("UNCHECKED_CAST") actualCompletion.resume(value as T)
     }
 }
 
 /**
- * Starts this coroutine with the given code [block] in the same context and returns the coroutine result when it
- * completes without suspension.
- * This function shall be invoked at most once on this coroutine.
- * This function checks cancellation of the outer [Job] on fast-path.
+ * Starts this coroutine with the given code [block] in the same context and returns the coroutine result when it completes without
+ * suspension. This function shall be invoked at most once on this coroutine. This function checks cancellation of the outer [Job] on
+ * fast-path.
  *
  * It starts the coroutine using [startCoroutineUninterceptedOrReturn].
  */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturn(
-    receiver: R, block: suspend R.() -> T
+    receiver: R,
+    block: suspend R.() -> T,
 ): Any? = startUndispatched(alwaysRethrow = true, receiver, block)
 
-/**
- * Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path.
- */
+/** Same as [startUndispatchedOrReturn], but ignores [TimeoutCancellationException] on fast-path. */
 internal fun <T, R> ScopeCoroutine<T>.startUndispatchedOrReturnIgnoreTimeout(
-    receiver: R, block: suspend R.() -> T
+    receiver: R,
+    block: suspend R.() -> T,
 ): Any? = startUndispatched(alwaysRethrow = false, receiver, block)
 
 /**
- * Starts and handles the result of an undispatched coroutine, potentially with children.
- * For example, it handles `coroutineScope { ...suspend of throw, maybe start children... }`
- * and `launch(start = UNDISPATCHED) { ... }`
+ * Starts and handles the result of an undispatched coroutine, potentially with children. For example, it handles `coroutineScope {
+ * ...suspend of throw, maybe start children... }` and `launch(start = UNDISPATCHED) { ... }`
  *
- * @param alwaysRethrow specifies whether an exception should be unconditionally rethrown.
- *     It is a tweak for 'withTimeout' in order to successfully return values when the block was cancelled:
- *     i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
+ * @param alwaysRethrow specifies whether an exception should be unconditionally rethrown. It is a tweak for 'withTimeout' in order to
+ *   successfully return values when the block was cancelled: i.e. `withTimeout(1ms) { Thread.sleep(1000); 42 }` should not fail.
  */
 private fun <T, R> ScopeCoroutine<T>.startUndispatched(
     alwaysRethrow: Boolean,
-    receiver: R, block: suspend R.() -> T
+    receiver: R,
+    block: suspend R.() -> T,
 ): Any? {
-    val result = try {
-        block.startCoroutineUninterceptedOrReturn(receiver, this)
-    } catch (e: DispatchException) {
-        // Special codepath for failing CoroutineDispatcher: rethrow an exception
-        // immediately without waiting for children to indicate something is wrong
-        dispatchExceptionAndMakeCompleting(e)
-    } catch (e: Throwable) {
-        CompletedExceptionally(e)
-    }
+    val result =
+        try {
+            block.startCoroutineUninterceptedOrReturn(receiver, this)
+        } catch (e: DispatchException) {
+            // Special codepath for failing CoroutineDispatcher: rethrow an exception
+            // immediately without waiting for children to indicate something is wrong
+            dispatchExceptionAndMakeCompleting(e)
+        } catch (e: Throwable) {
+            CompletedExceptionally(e)
+        }
 
     /*
      * We are trying to complete our undispatched block with the following possible codepaths:

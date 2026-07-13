@@ -9,8 +9,7 @@ import org.junit.rules.*
 
 class StackTraceRecoverySelectTest : TestBase() {
 
-    @get:Rule
-    val name = TestName()
+    @get:Rule val name = TestName()
 
     @Test
     fun testSelectJoin() = runTest {
@@ -53,7 +52,7 @@ class StackTraceRecoverySelectTest : TestBase() {
     fun testSelectOnReceive() = runTest {
         val c = Channel<Unit>()
         c.close()
-        val result = kotlin.runCatching {  doSelectOnReceive(c) }
+        val result = kotlin.runCatching { doSelectOnReceive(c) }
         verifyStackTrace("select/${name.methodName}", result.exceptionOrNull()!!)
     }
 

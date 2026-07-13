@@ -11,34 +11,29 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 
-/**
- * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
- */
+/** @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0 */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported",
+)
 public interface BroadcastChannel<E> : SendChannel<E> {
-    /**
-     * @suppress
-     */
+    /** @suppress */
     public fun openSubscription(): ReceiveChannel<E>
 
-    /**
-     * @suppress
-     */
+    /** @suppress */
     public fun cancel(cause: CancellationException? = null)
 
-    /**
-     * @suppress
-     */
-    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only")
-    public fun cancel(cause: Throwable? = null): Boolean
+    /** @suppress */
+    @Deprecated(level = DeprecationLevel.HIDDEN, message = "Binary compatibility only") public fun cancel(cause: Throwable? = null): Boolean
 }
 
-/**
- * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
- */
+/** @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0 */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and StateFlow, and is no longer supported")
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "BroadcastChannel is deprecated in the favour of SharedFlow and StateFlow, and is no longer supported",
+)
 public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
     when (capacity) {
         0 -> throw IllegalArgumentException("Unsupported 0 capacity for BroadcastChannel")
@@ -48,47 +43,44 @@ public fun <E> BroadcastChannel(capacity: Int): BroadcastChannel<E> =
         else -> BroadcastChannelImpl(capacity)
     }
 
-/**
- * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
- */
+/** @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0 */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.ERROR, message = "ConflatedBroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
-public class ConflatedBroadcastChannel<E> private constructor(
-    private val broadcast: BroadcastChannelImpl<E>
-) : BroadcastChannel<E> by broadcast {
-    public constructor(): this(BroadcastChannelImpl<E>(capacity = CONFLATED))
-    /**
-     * @suppress
-     */
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "ConflatedBroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported",
+)
+public class ConflatedBroadcastChannel<E> private constructor(private val broadcast: BroadcastChannelImpl<E>) :
+    BroadcastChannel<E> by broadcast {
+    public constructor() : this(BroadcastChannelImpl<E>(capacity = CONFLATED))
+
+    /** @suppress */
     public constructor(value: E) : this() {
         trySend(value)
     }
 
-    /**
-     * @suppress
-     */
-    public val value: E get() = broadcast.value
+    /** @suppress */
+    public val value: E
+        get() = broadcast.value
 
-    /**
-     * @suppress
-     */
-    public val valueOrNull: E? get() = broadcast.valueOrNull
+    /** @suppress */
+    public val valueOrNull: E?
+        get() = broadcast.valueOrNull
 }
 
 /**
- * A common implementation for both the broadcast channel with a buffer of fixed [capacity]
- * and the conflated broadcast channel (see [ConflatedBroadcastChannel]).
+ * A common implementation for both the broadcast channel with a buffer of fixed [capacity] and the conflated broadcast channel (see
+ * [ConflatedBroadcastChannel]).
  *
- * **Note**, that elements that are sent to this channel while there are no
- * [openSubscription] subscribers are immediately lost.
+ * **Note**, that elements that are sent to this channel while there are no [openSubscription] subscribers are immediately lost.
  *
  * This channel is created by `BroadcastChannel(capacity)` factory function invocation.
  */
-@Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING", "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
+@Suppress(
+    "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING",
+    "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE_DEPRECATION_WARNING",
+) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
 internal class BroadcastChannelImpl<E>(
-    /**
-     * Buffer capacity; [Channel.CONFLATED] when this broadcast is conflated.
-     */
+    /** Buffer capacity; [Channel.CONFLATED] when this broadcast is conflated. */
     val capacity: Int
 ) : BufferedChannel<E>(capacity = Channel.RENDEZVOUS, onUndeliveredElement = null), BroadcastChannel<E> {
     init {
@@ -147,16 +139,10 @@ internal class BroadcastChannelImpl<E>(
      *
      * **!!! THIS IMPLEMENTATION IS NOT LINEARIZABLE !!!**
      *
-     * As the operation should send the element to multiple
-     * subscribers simultaneously, it is non-trivial to
-     * implement it in an atomic way. Specifically, this
-     * would require a special implementation that does
-     * not transfer the element until all parties are able
-     * to resume it (this `send(..)` can be cancelled
-     * or the broadcast can become closed in the meantime).
-     * As broadcasts are obsolete, we keep this implementation
-     * as simple as possible, allowing non-linearizability
-     * in corner cases.
+     * As the operation should send the element to multiple subscribers simultaneously, it is non-trivial to implement it in an atomic way.
+     * Specifically, this would require a special implementation that does not transfer the element until all parties are able to resume it
+     * (this `send(..)` can be cancelled or the broadcast can become closed in the meantime). As broadcasts are obsolete, we keep this
+     * implementation as simple as possible, allowing non-linearizability in corner cases.
      */
     override suspend fun send(element: E) {
         val subs = lock.withLock { // protected by lock
@@ -236,18 +222,18 @@ internal class BroadcastChannelImpl<E>(
         // Start a new coroutine that performs plain `send(..)`
         // and tries to select this `onSend` clause at the end.
         CoroutineScope(select.context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val success: Boolean = try {
-                send(element)
-                // The element has been successfully sent!
-                true
-            } catch (t: Throwable) {
-                // This broadcast must be closed. However, it is possible that
-                // an unrelated exception, such as `OutOfMemoryError` has been thrown.
-                // This implementation checks that the channel is actually closed,
-                // re-throwing the caught exception otherwise.
-                if (isClosedForSend && (t is ClosedSendChannelException || sendException === t)) false
-                else throw t
-            }
+            val success: Boolean =
+                try {
+                    send(element)
+                    // The element has been successfully sent!
+                    true
+                } catch (t: Throwable) {
+                    // This broadcast must be closed. However, it is possible that
+                    // an unrelated exception, such as `OutOfMemoryError` has been thrown.
+                    // This implementation checks that the channel is actually closed,
+                    // re-throwing the caught exception otherwise.
+                    if (isClosedForSend && (t is ClosedSendChannelException || sendException === t)) false else throw t
+                }
             // Mark this `onSend` clause as selected and
             // try to complete the `select` operation.
             lock.withLock {
@@ -257,7 +243,7 @@ internal class BroadcastChannelImpl<E>(
                 onSendInternalResult[select] = if (success) Unit else CHANNEL_CLOSED
                 // Try to select this `onSend` clause.
                 select as SelectImplementation<*>
-                val trySelectResult = select.trySelectDetailed(this@BroadcastChannelImpl,  Unit)
+                val trySelectResult = select.trySelectDetailed(this@BroadcastChannelImpl, Unit)
                 if (trySelectResult !== TrySelectDetailedResult.REREGISTER) {
                     // In case of re-registration (this `select` was still
                     // in the registration phase), the algorithm will invoke
@@ -268,9 +254,9 @@ internal class BroadcastChannelImpl<E>(
                     onSendInternalResult.remove(select)
                 }
             }
-
         }
     }
+
     private val onSendInternalResult = HashMap<SelectInstance<*>, Any?>() // select -> Unit or CHANNEL_CLOSED
 
     // ############################
@@ -310,7 +296,7 @@ internal class BroadcastChannelImpl<E>(
     private inner class SubscriberBuffered : BufferedChannel<E>(capacity = capacity) {
         public override fun cancelImpl(cause: Throwable?): Boolean = lock.withLock {
             // Remove this subscriber from the broadcast on cancellation.
-            removeSubscriber(this@SubscriberBuffered )
+            removeSubscriber(this@SubscriberBuffered)
             super.cancelImpl(cause)
         }
     }
@@ -318,7 +304,7 @@ internal class BroadcastChannelImpl<E>(
     private inner class SubscriberConflated : ConflatedBufferedChannel<E>(capacity = 1, onBufferOverflow = DROP_OLDEST) {
         public override fun cancelImpl(cause: Throwable?): Boolean {
             // Remove this subscriber from the broadcast on cancellation.
-            removeSubscriber(this@SubscriberConflated )
+            removeSubscriber(this@SubscriberConflated)
             return super.cancelImpl(cause)
         }
     }
@@ -328,26 +314,28 @@ internal class BroadcastChannelImpl<E>(
     // ########################################
 
     @Suppress("UNCHECKED_CAST")
-    val value: E get() = lock.withLock {
-        // Is this channel closed for sending?
-        if (isClosedForSend) {
-            throw closeCause ?: IllegalStateException("This broadcast channel is closed")
+    val value: E
+        get() = lock.withLock {
+            // Is this channel closed for sending?
+            if (isClosedForSend) {
+                throw closeCause ?: IllegalStateException("This broadcast channel is closed")
+            }
+            // Is there sent element?
+            if (lastConflatedElement === NO_ELEMENT) error("No value")
+            // Return the last sent element.
+            lastConflatedElement as E
         }
-        // Is there sent element?
-        if (lastConflatedElement === NO_ELEMENT) error("No value")
-        // Return the last sent element.
-        lastConflatedElement as E
-    }
 
     @Suppress("UNCHECKED_CAST")
-    val valueOrNull: E? get() = lock.withLock {
-        // Is this channel closed for sending?
-        if (isClosedForReceive) null
-        // Is there sent element?
-        else if (lastConflatedElement === NO_ELEMENT) null
-        // Return the last sent element.
-        else lastConflatedElement as E
-    }
+    val valueOrNull: E?
+        get() = lock.withLock {
+            // Is this channel closed for sending?
+            if (isClosedForReceive) null
+            // Is there sent element?
+            else if (lastConflatedElement === NO_ELEMENT) null
+            // Return the last sent element.
+            else lastConflatedElement as E
+        }
 
     // #################
     // # For Debugging #

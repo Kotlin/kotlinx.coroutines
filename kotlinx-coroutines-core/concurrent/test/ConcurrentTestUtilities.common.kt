@@ -16,8 +16,7 @@ fun randomWait() {
 }
 
 private object BlackHole {
-    @Volatile
-    var sink = 1
+    @Volatile var sink = 1
 }
 
 expect inline fun yieldThread()

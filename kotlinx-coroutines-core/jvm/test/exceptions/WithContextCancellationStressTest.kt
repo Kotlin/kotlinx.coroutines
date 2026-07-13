@@ -32,24 +32,25 @@ class WithContextCancellationStressTest : TestBase() {
                 val ctx = pool + NonCancellable
                 var e1 = false
                 var e2 = false
-                val jobWithContext = async(ctx) {
-                    withContext(wrapperDispatcher(coroutineContext)) {
-                        launch {
-                            barrier.await()
-                            e1 = true
-                            throw TestException1()
-                        }
+                val jobWithContext =
+                    async(ctx) {
+                        withContext(wrapperDispatcher(coroutineContext)) {
+                            launch {
+                                barrier.await()
+                                e1 = true
+                                throw TestException1()
+                            }
 
-                        launch {
-                            barrier.await()
-                            e2 = true
-                            throw TestException2()
-                        }
+                            launch {
+                                barrier.await()
+                                e2 = true
+                                throw TestException2()
+                            }
 
-                        barrier.await()
-                        throw TestException()
+                            barrier.await()
+                            throw TestException()
+                        }
                     }
-                }
 
                 barrier.await()
 
@@ -88,7 +89,7 @@ class WithContextCancellationStressTest : TestBase() {
     private fun Throwable.checkSuppressed(
         ex: Boolean = false,
         e1: Boolean = false,
-        e2: Boolean = false
+        e2: Boolean = false,
     ) {
         val suppressed: Array<Throwable> = suppressed
         if (ex) {

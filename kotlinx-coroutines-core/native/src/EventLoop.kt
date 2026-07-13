@@ -11,7 +11,7 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
     private val current = Worker.current
 
     protected actual fun unpark() {
-        current.executeAfter(0L, {})// send an empty task to unpark the waiting event loop
+        current.executeAfter(0L, {}) // send an empty task to unpark the waiting event loop
     }
 
     protected actual fun reschedule(now: Long, delayedTask: EventLoopImplBase.DelayedTask) {
@@ -20,7 +20,7 @@ internal actual abstract class EventLoopImplPlatform : EventLoop() {
     }
 }
 
-internal class EventLoopImpl: EventLoopImplBase() {
+internal class EventLoopImpl : EventLoopImplBase() {
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         DefaultDelay.invokeOnTimeout(timeMillis, block, context)
 }

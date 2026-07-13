@@ -16,47 +16,27 @@ class SharingStressTest : TestBase() {
     private val nSubscribers = 5
     private val testStarted = TimeSource.Monotonic.markNow()
 
-    @get:Rule
-    val emitterDispatcher = ExecutorRule(1)
-    
-    @get:Rule
-    val subscriberDispatcher = ExecutorRule(nSubscribers)
+    @get:Rule val emitterDispatcher = ExecutorRule(1)
 
-    @Test
-    fun testNoReplayLazy() =
-        testStress(0, started = SharingStarted.Lazily)
+    @get:Rule val subscriberDispatcher = ExecutorRule(nSubscribers)
 
-    @Test
-    fun testNoReplayWhileSubscribed() =
-        testStress(0, started = SharingStarted.WhileSubscribed())
+    @Test fun testNoReplayLazy() = testStress(0, started = SharingStarted.Lazily)
 
-    @Test
-    fun testNoReplayWhileSubscribedTimeout() =
-        testStress(0, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
+    @Test fun testNoReplayWhileSubscribed() = testStress(0, started = SharingStarted.WhileSubscribed())
 
-    @Test
-    fun testReplay100WhileSubscribed() =
-        testStress(100, started = SharingStarted.WhileSubscribed())
+    @Test fun testNoReplayWhileSubscribedTimeout() = testStress(0, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
 
-    @Test
-    fun testReplay100WhileSubscribedReset() =                             
-        testStress(100, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
+    @Test fun testReplay100WhileSubscribed() = testStress(100, started = SharingStarted.WhileSubscribed())
 
-    @Test
-    fun testReplay100WhileSubscribedTimeout() =
-        testStress(100, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
+    @Test fun testReplay100WhileSubscribedReset() = testStress(100, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
 
-    @Test
-    fun testStateLazy() =
-        testStress(1, started = SharingStarted.Lazily)
+    @Test fun testReplay100WhileSubscribedTimeout() = testStress(100, started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 50L))
 
-    @Test
-    fun testStateWhileSubscribed() =
-        testStress(1, started = SharingStarted.WhileSubscribed())
+    @Test fun testStateLazy() = testStress(1, started = SharingStarted.Lazily)
 
-    @Test
-    fun testStateWhileSubscribedReset() =
-        testStress(1, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
+    @Test fun testStateWhileSubscribed() = testStress(1, started = SharingStarted.WhileSubscribed())
+
+    @Test fun testStateWhileSubscribedReset() = testStress(1, started = SharingStarted.WhileSubscribed(replayExpirationMillis = 0L))
 
     private fun testStress(replay: Int, started: SharingStarted) = runTest {
         log("-- Stress with replay=$replay, started=$started")
@@ -87,10 +67,8 @@ class SharingStressTest : TestBase() {
         val sharingJob = Job()
         val sharingScope = this + emitterDispatcher + sharingJob
         val usingStateFlow = replay == 1
-        val sharedFlow = if (usingStateFlow)
-            upstream.stateIn(sharingScope, started, 0L)
-        else
-            upstream.shareIn(sharingScope, started, replay)
+        val sharedFlow =
+            if (usingStateFlow) upstream.stateIn(sharingScope, started, 0L) else upstream.shareIn(sharingScope, started, replay)
         try {
             val subscribers = ArrayList<SubJob>()
             withTimeoutOrNull(testDuration) {
@@ -108,7 +86,7 @@ class SharingStressTest : TestBase() {
                     withTimeout(10000) { // wait for at most 10s for something to be emitted
                         do {
                             delay(random.nextLong(50L..100L))
-                        } while (emitIndex.get() < waitEmitIndex)  // Ok, enough was emitted, wait more if not
+                        } while (emitIndex.get() < waitEmitIndex) // Ok, enough was emitted, wait more if not
                     }
                     // Stop all subscribers and ensure they collected something
                     log("Stopping subscribers (emitted = ${emitIndex.get() - fromEmitIndex})")
@@ -141,42 +119,42 @@ class SharingStressTest : TestBase() {
         sharedFlow: SharedFlow<Long>,
         usingStateFlow: Boolean,
         subCount: MutableStateFlow<Int>,
-        missingCollects: MutableSet<Long>
+        missingCollects: MutableSet<Long>,
     ): SubJob {
         val subJob = SubJob()
-        subJob.job = launch(subscriberDispatcher) {
-            var last = -1L
-            sharedFlow
-                .onSubscription {
-                    subCount.increment(1)
-                }
-                .onCompletion {
-                    subCount.increment(-1)
-                }
-                .collect { j ->
-                    subJob.count++
-                    // last must grow sequentially, no jumping or losses
-                    if (last == -1L) {
-                        last = j
-                    } else {
-                        val expected = last + 1
-                        if (usingStateFlow)
-                            assertTrue(expected <= j)
-                        else {
-                            if (expected != j) {
-                                if (j == expected + 1) {
-                                    // if missing just one -- could be race with cancelled emit
-                                    missingCollects.add(expected)
-                                } else {
-                                    // broken otherwise
-                                    assertEquals(expected, j)
+        subJob.job =
+            launch(subscriberDispatcher) {
+                var last = -1L
+                sharedFlow
+                    .onSubscription {
+                        subCount.increment(1)
+                    }
+                    .onCompletion {
+                        subCount.increment(-1)
+                    }
+                    .collect { j ->
+                        subJob.count++
+                        // last must grow sequentially, no jumping or losses
+                        if (last == -1L) {
+                            last = j
+                        } else {
+                            val expected = last + 1
+                            if (usingStateFlow) assertTrue(expected <= j)
+                            else {
+                                if (expected != j) {
+                                    if (j == expected + 1) {
+                                        // if missing just one -- could be race with cancelled emit
+                                        missingCollects.add(expected)
+                                    } else {
+                                        // broken otherwise
+                                        assertEquals(expected, j)
+                                    }
                                 }
                             }
+                            last = j
                         }
-                        last = j
                     }
-                }
-        }
+            }
         return subJob
     }
 

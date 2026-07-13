@@ -6,22 +6,27 @@ import kotlinx.coroutines.*
 var acquired = 0
 
 class Resource {
-    init { acquired++ } // Acquire the resource
-    fun close() { acquired-- } // Release the resource
+    init {
+        acquired++
+    } // Acquire the resource
+
+    fun close() {
+        acquired--
+    } // Release the resource
 }
 
 fun main() {
     runBlocking {
         repeat(10_000) { // Launch 10K coroutines
-            launch { 
+            launch {
                 var resource: Resource? = null // Not acquired yet
                 try {
                     withTimeout(60) { // Timeout of 60 ms
                         delay(50) // Delay for 50 ms
-                        resource = Resource() // Store a resource to the variable if acquired      
+                        resource = Resource() // Store a resource to the variable if acquired
                     }
                     // We can do something else with the resource here
-                } finally {  
+                } finally {
                     resource?.close() // Release the resource if it was acquired
                 }
             }

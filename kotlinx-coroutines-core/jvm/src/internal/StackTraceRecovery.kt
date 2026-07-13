@@ -18,13 +18,17 @@ private const val stackTraceRecoveryClass = "kotlinx.coroutines.internal.StackTr
 
 private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineBoundary()
 
-private val baseContinuationImplClassName = runCatching {
-    Class.forName(baseContinuationImplClass).canonicalName
-}.getOrElse { baseContinuationImplClass }
+private val baseContinuationImplClassName =
+    runCatching {
+            Class.forName(baseContinuationImplClass).canonicalName
+        }
+        .getOrElse { baseContinuationImplClass }
 
-private val stackTraceRecoveryClassName = runCatching {
-    Class.forName(stackTraceRecoveryClass).canonicalName
-}.getOrElse { stackTraceRecoveryClass }
+private val stackTraceRecoveryClassName =
+    runCatching {
+            Class.forName(stackTraceRecoveryClass).canonicalName
+        }
+        .getOrElse { stackTraceRecoveryClass }
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
     if (!RECOVER_STACK_TRACES) return exception
@@ -40,13 +44,14 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
     val startIndex = lastIntrinsic + 1
     val endIndex = stackTrace.firstFrameIndex(baseContinuationImplClassName)
     val adjustment = if (endIndex == -1) 0 else size - endIndex
-    val trace = Array(size - lastIntrinsic - adjustment) {
-        if (it == 0) {
-            ARTIFICIAL_FRAME
-        } else {
-            stackTrace[startIndex + it - 1]
+    val trace =
+        Array(size - lastIntrinsic - adjustment) {
+            if (it == 0) {
+                ARTIFICIAL_FRAME
+            } else {
+                stackTrace[startIndex + it - 1]
+            }
         }
-    }
 
     setStackTrace(trace)
     return this
@@ -60,9 +65,9 @@ internal actual inline fun <E : Throwable> recoverStackTrace(exception: E, conti
 
 private fun <E : Throwable> recoverFromStackFrame(exception: E, continuation: CoroutineStackFrame): E {
     /*
-    * Here we are checking whether exception has already recovered stacktrace.
-    * If so, we extract initial and merge recovered stacktrace and current one
-    */
+     * Here we are checking whether exception has already recovered stacktrace.
+     * If so, we extract initial and merge recovered stacktrace and current one
+     */
     val (cause, recoveredStacktrace) = exception.causeAndStacktrace()
 
     // Try to create an exception of the same type and get stacktrace from continuation
@@ -117,16 +122,14 @@ private fun <E : Throwable> createFinalException(cause: E, result: E, resultStac
 }
 
 /**
- * Find initial cause of the exception without restored stacktrace.
- * Returns intermediate stacktrace as well in order to avoid excess cloning of array as an optimization.
+ * Find initial cause of the exception without restored stacktrace. Returns intermediate stacktrace as well in order to avoid excess cloning
+ * of array as an optimization.
  */
 private fun <E : Throwable> E.causeAndStacktrace(): Pair<E, Array<StackTraceElement>> {
     val cause = cause
     return if (cause != null && cause.javaClass == javaClass) {
         val currentTrace = stackTrace
-        if (currentTrace.any { it.isArtificial() })
-            cause as E to currentTrace
-        else this to emptyArray()
+        if (currentTrace.any { it.isArtificial() }) cause as E to currentTrace else this to emptyArray()
     } else {
         this to emptyArray()
     }
@@ -155,8 +158,7 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
 
 @PublishedApi
 @Suppress("NOTHING_TO_INLINE") // Inline for better R8 optimizations
-internal actual inline fun <E : Throwable> unwrap(exception: E): E =
-    if (!RECOVER_STACK_TRACES) exception else unwrapImpl(exception)
+internal actual inline fun <E : Throwable> unwrap(exception: E): E = if (!RECOVER_STACK_TRACES) exception else unwrapImpl(exception)
 
 @PublishedApi
 internal fun <E : Throwable> unwrapImpl(exception: E): E {
@@ -187,6 +189,7 @@ private fun createStackTrace(continuation: CoroutineStackFrame): ArrayDeque<Stac
 }
 
 internal fun StackTraceElement.isArtificial() = className.startsWith(ARTIFICIAL_FRAME_PACKAGE_NAME)
+
 private fun Array<StackTraceElement>.firstFrameIndex(methodName: String) = indexOfFirst { methodName == it.className }
 
 private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
@@ -194,8 +197,7 @@ private fun StackTraceElement.elementWiseEquals(e: StackTraceElement): Boolean {
      * In order to work on Java 9 where modules and classloaders of enclosing class
      * are part of the comparison
      */
-    return lineNumber == e.lineNumber && methodName == e.methodName
-            && fileName == e.fileName && className == e.className
+    return lineNumber == e.lineNumber && methodName == e.methodName && fileName == e.fileName && className == e.className
 }
 
 internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.CoroutineStackFrame

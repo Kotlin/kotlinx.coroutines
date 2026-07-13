@@ -7,25 +7,22 @@ import java.util.function.*
 import kotlin.coroutines.*
 
 /**
- * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread
- * and returns a [CompletableFuture] representing the result of the coroutine's execution.
+ * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread and returns a [CompletableFuture] representing
+ * the result of the coroutine's execution.
  *
  * The running coroutine is cancelled when the resulting future is cancelled or otherwise completed.
  *
- * [block] is the computation of the new coroutine that will run concurrently.
- * The [CompletableFuture] will only be completed once both the [block] and all the child coroutines created in it
- * finish.
+ * [block] is the computation of the new coroutine that will run concurrently. The [CompletableFuture] will only be completed once both the
+ * [block] and all the child coroutines created in it finish.
  *
- * [context] specifies the additional context elements for the coroutine to combine with
- * the elements already present in the [CoroutineScope.coroutineContext].
- * It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
+ * [context] specifies the additional context elements for the coroutine to combine with the elements already present in the
+ * [CoroutineScope.coroutineContext]. It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
  *
- * By default, the coroutine is scheduled for execution on its [ContinuationInterceptor].
- * There is no guarantee that it will start immediately: this is decided by the [ContinuationInterceptor].
- * It is possible that the new coroutine will be cancelled before starting, in which case its code will not be executed.
- * The [start] parameter can be used to adjust this behavior. See [CoroutineStart] for details.
- * The [CoroutineStart.LAZY] value for [start] is not supported, since [CompletableFuture] does not provide an API
- * for only starting the computation when its result is queried.
+ * By default, the coroutine is scheduled for execution on its [ContinuationInterceptor]. There is no guarantee that it will start
+ * immediately: this is decided by the [ContinuationInterceptor]. It is possible that the new coroutine will be cancelled before starting,
+ * in which case its code will not be executed. The [start] parameter can be used to adjust this behavior. See [CoroutineStart] for details.
+ * The [CoroutineStart.LAZY] value for [start] is not supported, since [CompletableFuture] does not provide an API for only starting the
+ * computation when its result is queried.
  *
  * ## Structured Concurrency
  *
@@ -33,14 +30,12 @@ import kotlin.coroutines.*
  *
  * ## Communicating with the coroutine
  *
- * [CompletableFuture.get] can be used to block the current thread until the result of the [future] is available.
- * If the [future] coroutine fails with an exception, [CompletableFuture.get] will throw an [ExecutionException]
- * with the original error set as the cause.
+ * [CompletableFuture.get] can be used to block the current thread until the result of the [future] is available. If the [future] coroutine
+ * fails with an exception, [CompletableFuture.get] will throw an [ExecutionException] with the original error set as the cause.
  *
- * If [CompletableFuture.complete] or [CompletableFuture.completeExceptionally] are called on the result of the
- * [future], the coroutine gets cancelled *without a cause specified*.
- * This means that even if the future is completed with an exception externally,
- * the parent [CoroutineScope] will not be notified about the error.
+ * If [CompletableFuture.complete] or [CompletableFuture.completeExceptionally] are called on the result of the [future], the coroutine gets
+ * cancelled *without a cause specified*. This means that even if the future is completed with an exception externally, the parent
+ * [CoroutineScope] will not be notified about the error.
  *
  * @param context the context to be added to the [CoroutineScope.coroutineContext] when creating the new coroutine.
  * @param start the coroutine start strategy. The default value is [CoroutineStart.DEFAULT].
@@ -51,8 +46,8 @@ import kotlin.coroutines.*
 public fun <T> CoroutineScope.future(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
-) : CompletableFuture<T> {
+    block: suspend CoroutineScope.() -> T,
+): CompletableFuture<T> {
     require(!start.isLazy) { "$start start is not supported" }
     val newContext = this.newCoroutineContext(context)
     val future = CompletableFuture<T>()
@@ -67,23 +62,24 @@ public fun <T> CoroutineScope.future(
  *
  * See the documentation for the non-deprecated [future] function to learn about the functionality of this function.
  *
- * See the documentation for the deprecated [async] overload accepting a [Job] for an explanation of the reason
- * this pattern is deprecated and the list of possible alternatives.
+ * See the documentation for the deprecated [async] overload accepting a [Job] for an explanation of the reason this pattern is deprecated
+ * and the list of possible alternatives.
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
         "This pattern should be avoided. " +
         "This overload will be deprecated with an error in the future.",
-    level = DeprecationLevel.WARNING)
+    level = DeprecationLevel.WARNING,
+)
 public fun <T> CoroutineScope.future(
     context: Job,
     start: CoroutineStart = CoroutineStart.DEFAULT,
-    block: suspend CoroutineScope.() -> T
+    block: suspend CoroutineScope.() -> T,
 ): CompletableFuture<T> = future(context as CoroutineContext, start, block)
 
 private class CompletableFutureCoroutine<T>(
     context: CoroutineContext,
-    private val future: CompletableFuture<T>
+    private val future: CompletableFuture<T>,
 ) : AbstractCoroutine<T>(context, initParentJob = true, active = true), BiFunction<T?, Throwable?, Unit> {
     override fun apply(value: T?, exception: Throwable?) {
         cancel()
@@ -104,8 +100,8 @@ private class CompletableFutureCoroutine<T>(
 }
 
 /**
- * Converts this deferred value to the instance of [CompletableFuture].
- * The deferred value is cancelled when the resulting future is cancelled or otherwise completed.
+ * Converts this deferred value to the instance of [CompletableFuture]. The deferred value is cancelled when the resulting future is
+ * cancelled or otherwise completed.
  */
 public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
@@ -121,32 +117,33 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
 }
 
 /**
- * Converts this job to the instance of [CompletableFuture].
- * The job is cancelled when the resulting future is cancelled or otherwise completed.
+ * Converts this job to the instance of [CompletableFuture]. The job is cancelled when the resulting future is cancelled or otherwise
+ * completed.
  */
 public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
     val future = CompletableFuture<Unit>()
     setupCancellation(future)
     invokeOnCompletion { cause ->
-        if (cause === null) future.complete(Unit)
-        else future.completeExceptionally(cause)
+        if (cause === null) future.complete(Unit) else future.completeExceptionally(cause)
     }
     return future
 }
 
 private fun Job.setupCancellation(future: CompletableFuture<*>) {
     future.handle { _, exception ->
-        cancel(exception?.let {
-            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
-        })
+        cancel(
+            exception?.let {
+                it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
+            }
+        )
     }
 }
 
 /**
  * Converts this [CompletionStage] to an instance of [Deferred].
  *
- * The [CompletableFuture] that corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
- * is cancelled when the resulting deferred is cancelled.
+ * The [CompletableFuture] that corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture]) is cancelled when the
+ * resulting deferred is cancelled.
  */
 @Suppress("DeferredIsResult")
 public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
@@ -154,8 +151,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     // Fast path if already completed
     if (future.isDone) {
         return try {
-            @Suppress("UNCHECKED_CAST")
-            CompletableDeferred(future.get() as T)
+            @Suppress("UNCHECKED_CAST") CompletableDeferred(future.get() as T)
         } catch (e: Throwable) {
             // unwrap original cause from ExecutionException
             val original = (e as? ExecutionException)?.cause ?: e
@@ -185,13 +181,13 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
 /**
  * Awaits for completion of [CompletionStage] without blocking a thread.
  *
- * This suspending function is cancellable.
- * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
- * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
+ * This suspending function is cancellable. If the [Job] of the current coroutine is cancelled while this suspending function is waiting,
+ * this function stops waiting for the completion stage and immediately resumes with
+ * [CancellationException][kotlinx.coroutines.CancellationException].
  *
- * This method is intended to be used with one-shot futures, so on coroutine cancellation the [CompletableFuture] that
- * corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
- * is cancelled. If cancelling the given stage is undesired, `stage.asDeferred().await()` should be used instead.
+ * This method is intended to be used with one-shot futures, so on coroutine cancellation the [CompletableFuture] that corresponds to this
+ * [CompletionStage] (see [CompletionStage.toCompletableFuture]) is cancelled. If cancelling the given stage is undesired,
+ * `stage.asDeferred().await()` should be used instead.
  */
 public suspend fun <T> CompletionStage<T>.await(): T {
     val future = toCompletableFuture() // retrieve the future
@@ -215,9 +211,7 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     }
 }
 
-private class ContinuationHandler<T>(
-    @Volatile @JvmField var cont: Continuation<T>?
-) : BiFunction<T?, Throwable?, Unit> {
+private class ContinuationHandler<T>(@Volatile @JvmField var cont: Continuation<T>?) : BiFunction<T?, Throwable?, Unit> {
     @Suppress("UNCHECKED_CAST")
     override fun apply(result: T?, exception: Throwable?) {
         val cont = this.cont ?: return // atomically read current value unless null
@@ -225,16 +219,16 @@ private class ContinuationHandler<T>(
             // the future has completed normally
             cont.resume(result as T)
         } else {
-            // the future has completed with an exception, unwrap it to provide consistent view of .await() result and to propagate only original exception
+            // the future has completed with an exception, unwrap it to provide consistent view of .await() result and to propagate only
+            // original exception
             cont.resumeWithException((exception as? CompletionException)?.cause ?: exception)
         }
     }
 }
 
-private class CancelFutureOnCompletion(
-    private val future: Future<*>
-) : JobNode() {
-    override val onCancelling get() = false
+private class CancelFutureOnCompletion(private val future: Future<*>) : JobNode() {
+    override val onCancelling
+        get() = false
 
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this

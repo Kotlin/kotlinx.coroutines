@@ -6,14 +6,12 @@ package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.toCollection
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.selects.*
 import kotlin.contracts.*
 import kotlin.jvm.*
 
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
-
 
 // -------- Operations on BroadcastChannel --------
 
@@ -23,15 +21,15 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
  * This function is considered error-prone for the following reasons;
  * - Is throwing if the channel has failed even though its signature may suggest it returns 'null'
  * - It is easy to forget that exception handling still have to be explicit
- * - During code reviews and code reading, intentions of the code are frequently unclear:
- *   are potential exceptions ignored deliberately or not?
+ * - During code reviews and code reading, intentions of the code are frequently unclear: are potential exceptions ignored deliberately or
+ *   not?
  *
  * @suppress doc
  */
 @Deprecated(
     "Deprecated in the favour of 'receiveCatching'",
     ReplaceWith("receiveCatching().getOrNull()"),
-    DeprecationLevel.HIDDEN
+    DeprecationLevel.HIDDEN,
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DEPRECATION_ERROR")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
@@ -39,13 +37,11 @@ public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
 
-/**
- * This function is deprecated in the favour of [ReceiveChannel.onReceiveCatching]
- */
+/** This function is deprecated in the favour of [ReceiveChannel.onReceiveCatching] */
 @Deprecated(
     "Deprecated in the favour of 'onReceiveCatching'",
-    level = DeprecationLevel.HIDDEN
-)  // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
+    level = DeprecationLevel.HIDDEN,
+) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
 @Suppress("DEPRECATION_ERROR")
 public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
     return (this as ReceiveChannel<E?>).onReceiveOrNull
@@ -54,12 +50,11 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
 /**
  * Executes the [block] and then [cancels][ReceiveChannel.cancel] the channel.
  *
- * It is guaranteed that, after invoking this operation, the channel will be [cancelled][ReceiveChannel.cancel], so
- * the operation is _terminal_.
- * If the [block] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
+ * It is guaranteed that, after invoking this operation, the channel will be [cancelled][ReceiveChannel.cancel], so the operation is
+ * _terminal_. If the [block] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
  *
- * This function is useful for building more complex terminal operators while ensuring that the producers stop sending
- * new elements to the channel.
+ * This function is useful for building more complex terminal operators while ensuring that the producers stop sending new elements to the
+ * channel.
  *
  * Example:
  * ```
@@ -80,15 +75,13 @@ public fun <E : Any> ReceiveChannel<E>.onReceiveOrNull(): SelectClause1<E?> {
  * // *Note*: some elements could be lost in the channel!
  * ```
  *
- * In this example, the channel will get closed, and the producer coroutine will finish its work after the first
- * element is obtained.
- * If `consumeFirst` was implemented as `for (e in this) { return e }` instead, the producer coroutine would be active
- * until it was cancelled some other way.
+ * In this example, the channel will get closed, and the producer coroutine will finish its work after the first element is obtained. If
+ * `consumeFirst` was implemented as `for (e in this) { return e }` instead, the producer coroutine would be active until it was cancelled
+ * some other way.
  *
- * [consume] does not guarantee that new elements will not enter the channel after [block] finishes executing, so
- * some channel elements may be lost.
- * Use the `onUndeliveredElement` parameter of a manually created [Channel] to define what should happen with these
- * elements during [ReceiveChannel.cancel].
+ * [consume] does not guarantee that new elements will not enter the channel after [block] finishes executing, so some channel elements may
+ * be lost. Use the `onUndeliveredElement` parameter of a manually created [Channel] to define what should happen with these elements during
+ * [ReceiveChannel.cancel].
  */
 public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -> R): R {
     contract {
@@ -108,24 +101,18 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
 /**
  * Performs the given [action] for each received element and [cancels][ReceiveChannel.cancel] the channel afterward.
  *
- * This function stops processing elements when either the channel is [closed][SendChannel.close],
- * the coroutine in which the collection is performed gets cancelled and there are no readily available elements in the
- * channel's buffer,
- * [action] fails with an exception,
- * or an early return from [action] happens.
- * If the [action] finishes with an exception, that exception will be used for cancelling the channel and rethrown.
- * If the channel is [closed][SendChannel.close] with a cause, this cause will be rethrown from [consumeEach].
+ * This function stops processing elements when either the channel is [closed][SendChannel.close], the coroutine in which the collection is
+ * performed gets cancelled and there are no readily available elements in the channel's buffer, [action] fails with an exception, or an
+ * early return from [action] happens. If the [action] finishes with an exception, that exception will be used for cancelling the channel
+ * and rethrown. If the channel is [closed][SendChannel.close] with a cause, this cause will be rethrown from [consumeEach].
  *
- * When the channel does not need to be closed after iterating over its elements,
- * a regular `for` loop (`for (element in channel)`) should be used instead.
+ * When the channel does not need to be closed after iterating over its elements, a regular `for` loop (`for (element in channel)`) should
+ * be used instead.
  *
- * The operation is _terminal_.
- * This function [consumes][ReceiveChannel.consume] the elements of the original [ReceiveChannel].
+ * The operation is _terminal_. This function [consumes][ReceiveChannel.consume] the elements of the original [ReceiveChannel].
  *
- * This function is useful in cases when this channel is only expected to have a single consumer that decides when
- * the producer may stop.
+ * This function is useful in cases when this channel is only expected to have a single consumer that decides when the producer may stop.
  * Example:
- *
  * ```
  * val channel = Channel<Int>(1)
  * // Launch several procedures that create values
@@ -149,39 +136,34 @@ public inline fun <E, R> ReceiveChannel<E>.consume(block: ReceiveChannel<E>.() -
  * check(result == 42)
  * ```
  *
- * In this example, several coroutines put elements into a single channel, and a single consumer processes the elements.
- * Once it finds the elements it's looking for, it stops [consumeEach] by making an early return.
+ * In this example, several coroutines put elements into a single channel, and a single consumer processes the elements. Once it finds the
+ * elements it's looking for, it stops [consumeEach] by making an early return.
  */
-public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit =
-    consume {
-        for (e in this) action(e)
-    }
+public suspend inline fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit = consume {
+    for (e in this) action(e)
+}
 
 /**
  * [Consumes][consume] the elements of this channel into a list, preserving their order.
  *
- * This is a convenience function equivalent to calling [consumeAsFlow] followed by [kotlinx.coroutines.flow.toList].
- * It is useful for testing code that uses channels to observe the elements the channel contains at the end of the test.
+ * This is a convenience function equivalent to calling [consumeAsFlow] followed by [kotlinx.coroutines.flow.toList]. It is useful for
+ * testing code that uses channels to observe the elements the channel contains at the end of the test.
  *
- * There is no way to recover channel elements if the channel gets closed with an exception
- * or to apply additional transformations to the elements before building the resulting collection.
- * Please use [consumeAsFlow] and [kotlinx.coroutines.flow.toCollection] for such advanced use-cases.
+ * There is no way to recover channel elements if the channel gets closed with an exception or to apply additional transformations to the
+ * elements before building the resulting collection. Please use [consumeAsFlow] and [kotlinx.coroutines.flow.toCollection] for such
+ * advanced use-cases.
  *
- * [toList] attempts to receive elements and put them into the list until the channel is
- * [closed][SendChannel.close].
- * Calling [toList] on channels that are not eventually closed is always incorrect:
+ * [toList] attempts to receive elements and put them into the list until the channel is [closed][SendChannel.close]. Calling [toList] on
+ * channels that are not eventually closed is always incorrect:
  * - It will suspend indefinitely if the channel is not closed, but no new elements arrive.
- * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory
- *   until exhausting it.
+ * - If new elements do arrive and the channel is not eventually closed, [toList] will use more and more memory until exhausting it.
  *
  * If the channel is [closed][SendChannel.close] with a cause, [toList] will rethrow that cause.
  *
- * Since this function is implemented using [consume], it is _terminal_,
- * meaning that [toList] will [cancel][ReceiveChannel.cancel] the channel before exiting.
- * A [toList] call can finish before the sender closes the channel
- * if it gets cancelled while waiting for the next element,
- * or if [MutableList.add] fails with an exception.
- * In both cases, the exception will be used for cancelling the channel and then rethrown.
+ * Since this function is implemented using [consume], it is _terminal_, meaning that [toList] will [cancel][ReceiveChannel.cancel] the
+ * channel before exiting. A [toList] call can finish before the sender closes the channel if it gets cancelled while waiting for the next
+ * element, or if [MutableList.add] fails with an exception. In both cases, the exception will be used for cancelling the channel and then
+ * rethrown.
  *
  * Example:
  * ```
@@ -202,26 +184,21 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
 /**
  * [Consumes][consume] the elements of this channel into the provided mutable collection.
  *
- * This is a convenience function equivalent to calling [consumeAsFlow]
- * followed by [kotlinx.coroutines.flow.toCollection].
- * Please use [consumeAsFlow] directly in scenarios where elements should undergo additional transformations
- * before being added to the resulting collection.
+ * This is a convenience function equivalent to calling [consumeAsFlow] followed by [kotlinx.coroutines.flow.toCollection]. Please use
+ * [consumeAsFlow] directly in scenarios where elements should undergo additional transformations before being added to the resulting
+ * collection.
  *
- * [consumeTo] attempts to receive elements and put them into the collection until the channel is
- * [closed][SendChannel.close].
+ * [consumeTo] attempts to receive elements and put them into the collection until the channel is [closed][SendChannel.close].
  *
- * If the channel is [closed][SendChannel.close] with a cause, [consumeTo] will rethrow that cause.
- * However, the elements already received up to that point will remain in the collection.
+ * If the channel is [closed][SendChannel.close] with a cause, [consumeTo] will rethrow that cause. However, the elements already received
+ * up to that point will remain in the collection.
  *
- * Since this function is implemented using [consume], it is _terminal_,
- * meaning that [consumeTo] will [cancel][ReceiveChannel.cancel] the channel before exiting.
- * A [consumeTo] call can finish before the sender closes the channel
- * if it gets cancelled while waiting for the next element,
- * or if [MutableCollection.add] fails with an exception.
- * In both cases, the exception will be used for cancelling the channel and then rethrown.
+ * Since this function is implemented using [consume], it is _terminal_, meaning that [consumeTo] will [cancel][ReceiveChannel.cancel] the
+ * channel before exiting. A [consumeTo] call can finish before the sender closes the channel if it gets cancelled while waiting for the
+ * next element, or if [MutableCollection.add] fails with an exception. In both cases, the exception will be used for cancelling the channel
+ * and then rethrown.
  *
- * The intended use case for this function is collecting the remaining elements of a closed channel
- * and processing them in a single batch.
+ * The intended use case for this function is collecting the remaining elements of a closed channel and processing them in a single batch.
  *
  * Example:
  * ```
@@ -258,14 +235,14 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * }
  * ```
  */
-public suspend fun <E, C: MutableCollection<E>> ReceiveChannel<E>.consumeTo(collection: C): C =
+public suspend fun <E, C : MutableCollection<E>> ReceiveChannel<E>.consumeTo(collection: C): C =
     consumeEach(collection::add).let { collection }
-
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
-    cancel(cause?.let {
-        it as? CancellationException ?: CancellationException("Channel was consumed, consumer had failed", it)
-    })
+    cancel(
+        cause?.let {
+            it as? CancellationException ?: CancellationException("Channel was consumed, consumer had failed", it)
+        }
+    )
 }
-

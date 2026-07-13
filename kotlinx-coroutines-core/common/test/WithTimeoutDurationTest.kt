@@ -7,39 +7,35 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class WithTimeoutDurationTest : TestBase() {
-    /**
-     * Tests a case of no timeout and no suspension inside.
-     */
+    /** Tests a case of no timeout and no suspension inside. */
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
-            expect(2)
-            "OK"
-        }
+        val result =
+            withTimeout(10.seconds) {
+                expect(2)
+                "OK"
+            }
         assertEquals("OK", result)
         finish(3)
     }
 
-    /**
-     * Tests a case of no timeout and one suspension inside.
-     */
+    /** Tests a case of no timeout and one suspension inside. */
     @Test
     fun testBasicSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
-            expect(2)
-            yield()
-            expect(3)
-            "OK"
-        }
+        val result =
+            withTimeout(10.seconds) {
+                expect(2)
+                yield()
+                expect(3)
+                "OK"
+            }
         assertEquals("OK", result)
         finish(4)
     }
 
-    /**
-     * Tests proper dispatching of `withTimeout` blocks
-     */
+    /** Tests proper dispatching of `withTimeout` blocks */
     @Test
     fun testDispatch() = runTest {
         expect(1)
@@ -50,36 +46,31 @@ class WithTimeoutDurationTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeout(1.seconds) {
-            expect(3)
-            yield() // yield only now
-            expect(5)
-            "OK"
-        }
+        val result =
+            withTimeout(1.seconds) {
+                expect(3)
+                yield() // yield only now
+                expect(5)
+                "OK"
+            }
         assertEquals("OK", result)
         expect(6)
         yield() // back to launch
         finish(8)
     }
 
-
-    /**
-     * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
-     */
+    /** Tests that a 100% CPU-consuming loop will react on timeout if it has yields. */
     @Test
-    fun testYieldBlockingWithTimeout() = runTest(
-            expected = { it is CancellationException }
-    ) {
-        withTimeout(100.milliseconds) {
-            while (true) {
-                yield()
+    fun testYieldBlockingWithTimeout() =
+        runTest(expected = { it is CancellationException }) {
+            withTimeout(100.milliseconds) {
+                while (true) {
+                    yield()
+                }
             }
         }
-    }
 
-    /**
-     * Tests that [withTimeout] waits for children coroutines to complete.
-     */
+    /** Tests that [withTimeout] waits for children coroutines to complete. */
     @Test
     fun testWithTimeoutChildWait() = runTest {
         expect(1)
@@ -98,15 +89,18 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100.milliseconds) {
-            bad
-        }
+        val result =
+            withTimeout(100.milliseconds) {
+                bad
+            }
         assertSame(bad, result)
     }
 
     class BadClass {
         override fun equals(other: Any?): Boolean = error("Should not be called")
+
         override fun hashCode(): Int = error("Should not be called")
+
         override fun toString(): String = error("Should not be called")
     }
 
@@ -127,21 +121,20 @@ class WithTimeoutDurationTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithResult() = runTest(
-            expected = { it is CancellationException }
-    ) {
-        expect(1)
-        withTimeout(100.milliseconds) {
-            expect(2)
-            try {
-                delay(1000.milliseconds)
-            } catch (_: CancellationException) {
-                finish(3)
+    fun testSuppressExceptionWithResult() =
+        runTest(expected = { it is CancellationException }) {
+            expect(1)
+            withTimeout(100.milliseconds) {
+                expect(2)
+                try {
+                    delay(1000.milliseconds)
+                } catch (_: CancellationException) {
+                    finish(3)
+                }
+                "OK"
             }
-            "OK"
+            expectUnreached()
         }
-        expectUnreached()
-    }
 
     @Test
     fun testSuppressExceptionWithAnotherException() = runTest {
@@ -197,10 +190,11 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testIncompleteWithTimeoutState() = runTest {
         lateinit var timeoutJob: Job
-        val handle = withTimeout(Duration.INFINITE) {
-            timeoutJob = coroutineContext[Job]!!
-            timeoutJob.invokeOnCompletion { }
-        }
+        val handle =
+            withTimeout(Duration.INFINITE) {
+                timeoutJob = coroutineContext[Job]!!
+                timeoutJob.invokeOnCompletion {}
+            }
 
         handle.dispose()
         timeoutJob.join()

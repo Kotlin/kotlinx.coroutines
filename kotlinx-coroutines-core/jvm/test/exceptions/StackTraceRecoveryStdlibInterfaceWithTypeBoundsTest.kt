@@ -36,9 +36,8 @@ class StackTraceRecoveryStdlibInterfaceWithTypeBoundsTest : TestBase() {
 
     class CopyableWithCustomMessage(
         message: String?,
-        cause: Throwable? = null
-    ) : RuntimeException(message, cause),
-        StackTraceRecoverableWithTypeBounds<CopyableWithCustomMessage> {
+        cause: Throwable? = null,
+    ) : RuntimeException(message, cause), StackTraceRecoverableWithTypeBounds<CopyableWithCustomMessage> {
 
         override fun copyForStackTraceRecovery(): CopyableWithCustomMessage {
             return CopyableWithCustomMessage("Recovered: [$message]", cause)
@@ -77,19 +76,17 @@ class StackTraceRecoveryStdlibInterfaceWithTypeBoundsTest : TestBase() {
 
     @Test
     fun testImplementationOverriding() = runTest {
-        open class FailingException(
-            val data: String
-        ) : Exception(), StackTraceRecoverableWithTypeBounds<FailingException> {
+        open class FailingException(val data: String) : Exception(), StackTraceRecoverableWithTypeBounds<FailingException> {
             override fun copyForStackTraceRecovery(): FailingException? {
                 return FailingException("This will not be invoked")
             }
         }
-        open class FailingExceptionChild(data: String): FailingException(data) {
+        open class FailingExceptionChild(data: String) : FailingException(data) {
             override fun copyForStackTraceRecovery(): FailingExceptionChild? {
                 return FailingExceptionChild("This will be the result")
             }
         }
-        class FailingExceptionGrandchild: FailingExceptionChild("Something")
+        class FailingExceptionGrandchild : FailingExceptionChild("Something")
         val result = runCatching {
             coroutineScope<Unit> {
                 throw FailingExceptionGrandchild()
@@ -101,8 +98,6 @@ class StackTraceRecoveryStdlibInterfaceWithTypeBoundsTest : TestBase() {
     }
 }
 
-private interface StackTraceRecoverableWithTypeBounds<E>
-    where E : Throwable, E : StackTraceRecoverableWithTypeBounds<E>
-{
+private interface StackTraceRecoverableWithTypeBounds<E> where E : Throwable, E : StackTraceRecoverableWithTypeBounds<E> {
     fun copyForStackTraceRecovery(): E?
 }

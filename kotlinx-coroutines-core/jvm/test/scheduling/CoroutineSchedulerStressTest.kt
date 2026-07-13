@@ -34,21 +34,27 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     @Test
     fun testInternalTasksSubmissionProgress() {
-      /*
-       * Run a lot of tasks and validate that
-       * 1) All of them are completed successfully
-       * 2) Every thread executed task at least once
-       */
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-            for (i in 1..tasksNum) {
-                dispatcher.dispatch(EmptyCoroutineContext, ValidatingRunnable())
-            }
-        })
+        /*
+         * Run a lot of tasks and validate that
+         * 1) All of them are completed successfully
+         * 2) Every thread executed task at least once
+         */
+        dispatcher.dispatch(
+            EmptyCoroutineContext,
+            Runnable {
+                for (i in 1..tasksNum) {
+                    dispatcher.dispatch(EmptyCoroutineContext, ValidatingRunnable())
+                }
+            },
+        )
 
         finishLatch.await()
         val observed = observedThreads.size
         // on slow machines not all threads can be observed
-        assertTrue(observed in (AVAILABLE_PROCESSORS - 1)..(AVAILABLE_PROCESSORS + 1), "Observed $observed threads with $AVAILABLE_PROCESSORS available processors")
+        assertTrue(
+            observed in (AVAILABLE_PROCESSORS - 1)..(AVAILABLE_PROCESSORS + 1),
+            "Observed $observed threads with $AVAILABLE_PROCESSORS available processors",
+        )
         validateResults()
     }
 
@@ -60,21 +66,24 @@ class CoroutineSchedulerStressTest : TestBase() {
          * and then repeats, thus never executing its own tasks and relying only on work stealing.
          */
         var blockingThread: Thread? = null
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-            // Submit million tasks
-            blockingThread = Thread.currentThread()
-            var submittedTasks = 0
-            while (submittedTasks < tasksNum) {
+        dispatcher.dispatch(
+            EmptyCoroutineContext,
+            Runnable {
+                // Submit million tasks
+                blockingThread = Thread.currentThread()
+                var submittedTasks = 0
+                while (submittedTasks < tasksNum) {
 
-                ++submittedTasks
-                dispatcher.dispatch(EmptyCoroutineContext, ValidatingRunnable())
-                while (submittedTasks - processed.get() > 100) {
-                    Thread.yield()
+                    ++submittedTasks
+                    dispatcher.dispatch(EmptyCoroutineContext, ValidatingRunnable())
+                    while (submittedTasks - processed.get() > 100) {
+                        Thread.yield()
+                    }
                 }
-            }
-            // Block current thread
-            finishLatch.await()
-        })
+                // Block current thread
+                finishLatch.await()
+            },
+        )
 
         finishLatch.await()
 
@@ -97,6 +106,7 @@ class CoroutineSchedulerStressTest : TestBase() {
 
     private inner class ValidatingRunnable : Runnable {
         private val invoked = atomic(false)
+
         override fun run() {
             if (!invoked.compareAndSet(false, true)) error("The same runnable was invoked twice")
             processTask()

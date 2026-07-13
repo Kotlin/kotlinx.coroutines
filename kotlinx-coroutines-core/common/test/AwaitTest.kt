@@ -33,14 +33,16 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllLazy() = runTest {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) {
-            expect(2)
-            1
-        }
-        val d2 = async(start = CoroutineStart.LAZY) {
-            expect(3)
-            2
-        }
+        val d =
+            async(start = CoroutineStart.LAZY) {
+                expect(2)
+                1
+            }
+        val d2 =
+            async(start = CoroutineStart.LAZY) {
+                expect(3)
+                2
+            }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
         finish(4)
     }
@@ -49,7 +51,7 @@ class AwaitTest : TestBase() {
     fun testAwaitAllTyped() = runTest {
         val d1 = async { 1L }
         val d2 = async { "" }
-        val d3 = async { }
+        val d3 = async {}
 
         assertEquals(listOf(1L, ""), listOf(d1, d2).awaitAll())
         assertEquals(listOf(1L, Unit), listOf(d1, d3).awaitAll())
@@ -64,10 +66,11 @@ class AwaitTest : TestBase() {
             "OK"
         }
 
-        val d2 = async(NonCancellable) {
-            yield()
-            throw TestException()
-        }
+        val d2 =
+            async(NonCancellable) {
+                yield()
+                throw TestException()
+            }
 
         val d3 = async {
             expect(4)
@@ -90,15 +93,17 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
-        val d = async(NonCancellable) {
-            expect(2)
-            throw TestException()
-        }
+        val d =
+            async(NonCancellable) {
+                expect(2)
+                throw TestException()
+            }
 
-        val d2 = async(NonCancellable) {
-            yield()
-            throw TestException()
-        }
+        val d2 =
+            async(NonCancellable) {
+                yield()
+                throw TestException()
+            }
 
         val d3 = async {
             yield()
@@ -117,7 +122,6 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllCancellation() = runTest {
         val outer = async {
-
             expect(1)
             val inner = async {
                 expect(4)
@@ -140,9 +144,15 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompleted() = runTest {
-        val d1 = async { expect(1); 1 }
+        val d1 = async {
+            expect(1)
+            1
+        }
         d1.await()
-        val d2 = async { expect(3); 2 }
+        val d2 = async {
+            expect(3)
+            2
+        }
         expect(2)
         assertEquals(listOf(1, 2), awaitAll(d1, d2))
         require(d1.isCompleted && d2.isCompleted)
@@ -151,10 +161,11 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompletedExceptionally() = runTest {
-        val d1 = async(NonCancellable) {
-            expect(1)
-            throw TestException()
-        }
+        val d1 =
+            async(NonCancellable) {
+                expect(1)
+                throw TestException()
+            }
 
         yield()
 
@@ -199,10 +210,8 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllFullyCompletedExceptionally() = runTest {
-        val d1 = CompletableDeferred<Unit>(parent = null)
-            .apply { completeExceptionally(TestException()) }
-        val d2 = CompletableDeferred<Unit>(parent = null)
-            .apply { completeExceptionally(TestException()) }
+        val d1 = CompletableDeferred<Unit>(parent = null).apply { completeExceptionally(TestException()) }
+        val d2 = CompletableDeferred<Unit>(parent = null).apply { completeExceptionally(TestException()) }
         val job = async { expect(3) }
         expect(1)
         try {
@@ -224,9 +233,8 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllSameThrowingJobMultipleTimes() = runTest {
-        val d1 =
-            async(NonCancellable) { throw TestException() }
-        val d2 = async { } // do nothing
+        val d1 = async(NonCancellable) { throw TestException() }
+        val d2 = async {} // do nothing
 
         try {
             expect(1)
@@ -265,12 +273,14 @@ class AwaitTest : TestBase() {
     @Test
     fun testJoinAllLazy() = runTest {
         expect(1)
-        val d = async(start = CoroutineStart.LAZY) {
-            expect(2)
-        }
-        val d2 = launch(start = CoroutineStart.LAZY) {
-            expect(3)
-        }
+        val d =
+            async(start = CoroutineStart.LAZY) {
+                expect(2)
+            }
+        val d2 =
+            launch(start = CoroutineStart.LAZY) {
+                expect(3)
+            }
         joinAll(d, d2)
         finish(4)
     }
@@ -280,10 +290,11 @@ class AwaitTest : TestBase() {
         val d1 = launch {
             expect(2)
         }
-        val d2 = async(NonCancellable) {
-            expect(3)
-            throw TestException()
-        }
+        val d2 =
+            async(NonCancellable) {
+                expect(3)
+                throw TestException()
+            }
         val d3 = async {
             expect(4)
         }
@@ -338,14 +349,13 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testJoinAllSameJob() = runTest {
-        val job = launch { }
+        val job = launch {}
         joinAll(job, job, job)
     }
 
     @Test
     fun testJoinAllSameJobExceptionally() = runTest {
-        val job =
-            async(NonCancellable) { throw TestException() }
+        val job = async(NonCancellable) { throw TestException() }
         joinAll(job, job, job)
     }
 
@@ -353,8 +363,7 @@ class AwaitTest : TestBase() {
     fun testAwaitAllDelegates() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
-        @OptIn(InternalForInheritanceCoroutinesApi::class)
-        val delegate = object : Deferred<String> by deferred {}
+        @OptIn(InternalForInheritanceCoroutinesApi::class) val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
             deferred.complete("OK")
@@ -368,8 +377,7 @@ class AwaitTest : TestBase() {
     fun testCancelAwaitAllDelegate() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
-        @OptIn(InternalForInheritanceCoroutinesApi::class)
-        val delegate = object : Deferred<String> by deferred {}
+        @OptIn(InternalForInheritanceCoroutinesApi::class) val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
             deferred.cancel()

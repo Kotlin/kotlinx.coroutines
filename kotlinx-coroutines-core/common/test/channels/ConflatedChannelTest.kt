@@ -5,9 +5,8 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 open class ConflatedChannelTest : TestBase() {
-    protected open fun <T> createConflatedChannel() =
-        Channel<T>(Channel.CONFLATED)
-    
+    protected open fun <T> createConflatedChannel() = Channel<T>(Channel.CONFLATED)
+
     @Test
     fun testBasicConflationOfferTryReceive() {
         val q = createConflatedChannel<Int>()
@@ -84,9 +83,10 @@ open class ConflatedChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
-        val channel = createConflatedChannel<Int>()
-        channel.cancel(TestCancellationException())
-        channel.receive()
-    }
+    fun testCancelWithCause() =
+        runTest({ it is TestCancellationException }) {
+            val channel = createConflatedChannel<Int>()
+            channel.cancel(TestCancellationException())
+            channel.receive()
+        }
 }

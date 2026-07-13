@@ -6,24 +6,25 @@ class MessageQueueTest {
     private var scheduled = false
     private val processed = mutableListOf<Int>()
 
-    private val queue = object : MessageQueue() {
-        override fun schedule() {
-            assertFalse(scheduled)
-            scheduled = true
+    private val queue =
+        object : MessageQueue() {
+            override fun schedule() {
+                assertFalse(scheduled)
+                scheduled = true
+            }
+
+            override fun reschedule() {
+                schedule()
+            }
         }
 
-        override fun reschedule() {
-            schedule()
-        }
-    }
-
-    inner class Box(val i: Int): Runnable {
+    inner class Box(val i: Int) : Runnable {
         override fun run() {
             processed += i
         }
     }
 
-    inner class ReBox(val i: Int): Runnable {
+    inner class ReBox(val i: Int) : Runnable {
         override fun run() {
             processed += i
             queue.enqueue(Box(10 + i))
@@ -45,7 +46,8 @@ class MessageQueueTest {
         assertTrue(queue.isEmpty())
     }
 
-    @Test fun testRescheduleFromProcess()  {
+    @Test
+    fun testRescheduleFromProcess() {
         assertTrue(queue.isEmpty())
         queue.enqueue(ReBox(1))
         assertFalse(queue.isEmpty())

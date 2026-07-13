@@ -13,6 +13,7 @@ internal const val TASK_STOLEN = -1L
 internal const val NOTHING_TO_STEAL = -2L
 
 internal typealias StealingMode = Int
+
 internal const val STEAL_ANY: StealingMode = 3
 internal const val STEAL_CPU_ONLY: StealingMode = 2
 internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
@@ -21,23 +22,22 @@ internal inline val Task.maskForStealingMode: Int
     get() = if (isBlocking) STEAL_BLOCKING_ONLY else STEAL_CPU_ONLY
 
 /**
- * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity.
- * At any moment queue is used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue)
- * and any amount of consumers, other pool workers which are trying to steal work.
+ * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity. At any moment queue is
+ * used only by [CoroutineScheduler.Worker] threads, has only one producer (worker owning this queue) and any amount of consumers, other
+ * pool workers which are trying to steal work.
  *
  * ### Fairness
  *
- * [WorkQueue] provides semi-FIFO order, but with priority for most recently submitted task assuming
- * that these two (current one and submitted) are communicating and sharing state thus making such communication extremely fast.
- * E.g. submitted jobs [1, 2, 3, 4] will be executed in [4, 1, 2, 3] order.
+ * [WorkQueue] provides semi-FIFO order, but with priority for most recently submitted task assuming that these two (current one and
+ * submitted) are communicating and sharing state thus making such communication extremely fast. E.g. submitted jobs [1, 2, 3, 4] will be
+ * executed in [4, 1, 2, 3] order.
  *
  * ### Algorithm and implementation details
- * This is a regular SPMC bounded queue with the additional property that tasks can be removed from the middle of the queue
- * (scheduler workers without a CPU permit steal blocking tasks via this mechanism). Such property enforces us to use CAS in
- * order to properly claim value from the buffer.
- * Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem.
- * Indeed, it formally has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless.
- * I have discovered a truly marvelous proof of this, which this KDoc is too narrow to contain.
+ * This is a regular SPMC bounded queue with the additional property that tasks can be removed from the middle of the queue (scheduler
+ * workers without a CPU permit steal blocking tasks via this mechanism). Such property enforces us to use CAS in order to properly claim
+ * value from the buffer. Moreover, [Task] objects are reusable, so it may seem that this queue is prone to ABA problem. Indeed, it formally
+ * has ABA-problem, but the whole processing logic is written in the way that such ABA is harmless. I have discovered a truly marvelous
+ * proof of this, which this KDoc is too narrow to contain.
  */
 internal class WorkQueue {
 
@@ -56,8 +56,12 @@ internal class WorkQueue {
      * Negative sizes can be observed only when non-owner reads the size, which happens only
      * for diagnostic toString().
      */
-    private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
-    internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
+    private val bufferSize: Int
+        get() = producerIndex.value - consumerIndex.value
+
+    internal val size: Int
+        get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
+
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
 
@@ -66,26 +70,17 @@ internal class WorkQueue {
     // Shortcut to avoid scanning queue without blocking tasks
     private val blockingTasksInBuffer = atomic(0)
 
-    /**
-     * Retrieves and removes task from the head of the queue
-     * Invariant: this method is called only by the owner of the queue.
-     */
+    /** Retrieves and removes task from the head of the queue Invariant: this method is called only by the owner of the queue. */
     fun poll(): Task? = lastScheduledTask.getAndSet(null) ?: pollBuffer()
 
-    /**
-     * Invariant: Called only by the owner of the queue, returns
-     * `null` if task was added, task that wasn't added otherwise.
-     */
+    /** Invariant: Called only by the owner of the queue, returns `null` if task was added, task that wasn't added otherwise. */
     fun add(task: Task, fair: Boolean = false): Task? {
         if (fair) return addLast(task)
         val previous = lastScheduledTask.getAndSet(task) ?: return null
         return addLast(previous)
     }
 
-    /**
-     * Invariant: Called only by the owner of the queue, returns
-     * `null` if task was added, task that wasn't added otherwise.
-     */
+    /** Invariant: Called only by the owner of the queue, returns `null` if task was added, task that wasn't added otherwise. */
     private fun addLast(task: Task): Task? {
         if (bufferSize == BUFFER_CAPACITY - 1) return task
         if (task.isBlocking) blockingTasksInBuffer.incrementAndGet()
@@ -109,19 +104,21 @@ internal class WorkQueue {
     /**
      * Tries stealing from this queue into the [stolenTaskRef] argument.
      *
-     * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen
-     * or positive value of how many nanoseconds should pass until the head of this queue will be available to steal.
+     * Returns [NOTHING_TO_STEAL] if queue has nothing to steal, [TASK_STOLEN] if at least task was stolen or positive value of how many
+     * nanoseconds should pass until the head of this queue will be available to steal.
      *
      * [StealingMode] controls what tasks to steal:
      * - [STEAL_ANY] is default mode for scheduler, task from the head (in FIFO order) is stolen
-     * - [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in Dispatchers.IO mode
+     * - [STEAL_BLOCKING_ONLY] is mode for stealing *an arbitrary* blocking task, which is used by the scheduler when helping in
+     *   Dispatchers.IO mode
      * - [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
-        val task = when (stealingMode) {
-            STEAL_ANY -> pollBuffer()
-            else -> stealWithExclusiveMode(onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY)
-        }
+        val task =
+            when (stealingMode) {
+                STEAL_ANY -> pollBuffer()
+                else -> stealWithExclusiveMode(onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY)
+            }
 
         if (task != null) {
             stolenTaskRef.element = task
@@ -187,9 +184,7 @@ internal class WorkQueue {
         }
     }
 
-    /**
-     * Contract on return value is the same as for [trySteal]
-     */
+    /** Contract on return value is the same as for [trySteal] */
     private fun tryStealLastScheduled(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
         while (true) {
             val lastScheduled = lastScheduledTask.value ?: return NOTHING_TO_STEAL

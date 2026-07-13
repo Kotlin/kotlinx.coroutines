@@ -14,8 +14,8 @@ abstract class SchedulerTestBase : TestBase() {
         val CORES_COUNT = AVAILABLE_PROCESSORS
 
         /**
-         * Asserts that [expectedThreadsCount] pool worker threads were created.
-         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
+         * Asserts that [expectedThreadsCount] pool worker threads were created. Note that 'created' doesn't mean 'exists' because pool
+         * supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(expectedThreadsCount: Int = CORES_COUNT) {
             val threadsCount = maxSequenceNumber()!!
@@ -23,21 +23,25 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         /**
-         * Asserts that any number of pool worker threads in [range] were created.
-         * Note that 'created' doesn't mean 'exists' because pool supports dynamic shrinking
+         * Asserts that any number of pool worker threads in [range] were created. Note that 'created' doesn't mean 'exists' because pool
+         * supports dynamic shrinking
          */
         fun checkPoolThreadsCreated(range: IntRange, base: Int = CORES_COUNT) {
             val maxSequenceNumber = maxSequenceNumber()!!
             val r = (range.first)..(range.last + base)
             assertTrue(
                 maxSequenceNumber in r,
-                "Expected pool threads to be in interval $r, but has $maxSequenceNumber"
+                "Expected pool threads to be in interval $r, but has $maxSequenceNumber",
             )
         }
 
         private fun maxSequenceNumber(): Int? {
-            return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.maxOrNull()
+            return Thread.getAllStackTraces()
+                .keys
+                .asSequence()
+                .filter { it is CoroutineScheduler.Worker }
+                .map { sequenceNumber(it.name) }
+                .maxOrNull()
         }
 
         private fun sequenceNumber(threadName: String): Int {
@@ -61,11 +65,12 @@ abstract class SchedulerTestBase : TestBase() {
     protected val dispatcher: CoroutineDispatcher
         get() {
             if (_dispatcher == null) {
-                _dispatcher = SchedulerCoroutineDispatcher(
-                    corePoolSize,
-                    maxPoolSize,
-                    idleWorkerKeepAliveNs
-                )
+                _dispatcher =
+                    SchedulerCoroutineDispatcher(
+                        corePoolSize,
+                        maxPoolSize,
+                        idleWorkerKeepAliveNs,
+                    )
             }
 
             return _dispatcher!!
@@ -96,21 +101,21 @@ abstract class SchedulerTestBase : TestBase() {
 }
 
 /**
- * Implementation note:
- * Our [Dispatchers.IO] is a [limitedParallelism][CoroutineDispatcher.limitedParallelism] dispatcher
- * on top of unbounded scheduler. We want to test this scenario, but on top of non-singleton
- * scheduler so we can control the number of threads, thus this method.
+ * Implementation note: Our [Dispatchers.IO] is a [limitedParallelism][CoroutineDispatcher.limitedParallelism] dispatcher on top of
+ * unbounded scheduler. We want to test this scenario, but on top of non-singleton scheduler so we can control the number of threads, thus
+ * this method.
  */
 internal fun SchedulerCoroutineDispatcher.blocking(parallelism: Int = 16): CoroutineDispatcher {
     return object : CoroutineDispatcher() {
 
-        @InternalCoroutinesApi
-        override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-            this@blocking.dispatchWithContext(block, BlockingContext, true)
-        }
+            @InternalCoroutinesApi
+            override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+                this@blocking.dispatchWithContext(block, BlockingContext, true)
+            }
 
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-            this@blocking.dispatchWithContext(block, BlockingContext, false)
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                this@blocking.dispatchWithContext(block, BlockingContext, false)
+            }
         }
-    }.limitedParallelism(parallelism)
+        .limitedParallelism(parallelism)
 }

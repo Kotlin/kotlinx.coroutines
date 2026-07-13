@@ -11,7 +11,7 @@ internal class ChannelFlowTransformLatest<T, R>(
     flow: Flow<T>,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = Channel.BUFFERED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : ChannelFlowOperator<T, R>(flow, context, capacity, onBufferOverflow) {
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<R> =
         ChannelFlowTransformLatest(transform, flow, context, capacity, onBufferOverflow)
@@ -26,9 +26,10 @@ internal class ChannelFlowTransformLatest<T, R>(
                     join()
                 }
                 // Do not pay for dispatch here, it's never necessary
-                previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
-                    collector.transform(value)
-                }
+                previousFlow =
+                    launch(start = CoroutineStart.UNDISPATCHED) {
+                        collector.transform(value)
+                    }
             }
         }
     }
@@ -39,7 +40,7 @@ internal class ChannelFlowMerge<T>(
     private val concurrency: Int,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = Channel.BUFFERED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelFlowMerge(flow, concurrency, context, capacity, onBufferOverflow)
@@ -77,7 +78,7 @@ internal class ChannelLimitedFlowMerge<T>(
     private val flows: Iterable<Flow<T>>,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = Channel.BUFFERED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelLimitedFlowMerge(flows, context, capacity, onBufferOverflow)

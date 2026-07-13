@@ -13,36 +13,41 @@ class CancellableContinuationJvmTest : TestBase() {
     private suspend fun checkToString() {
         suspendCancellableCoroutine<Unit> {
             it.resume(Unit)
-            assertTrue(it.toString().contains("kotlinx.coroutines.CancellableContinuationJvmTest.checkToString(CancellableContinuationJvmTest.kt"))
+            assertTrue(
+                it.toString().contains("kotlinx.coroutines.CancellableContinuationJvmTest.checkToString(CancellableContinuationJvmTest.kt")
+            )
         }
         yield() // Eliminate tail-call optimization
     }
 
     @Test
-    fun testExceptionIsNotReported() = runTest({ it is CancellationException }) {
-        val ctx = coroutineContext
-        suspendCancellableCoroutine<Unit> {
-            ctx.cancel()
-            it.resumeWith(Result.failure(TestException()))
+    fun testExceptionIsNotReported() =
+        runTest({ it is CancellationException }) {
+            val ctx = coroutineContext
+            suspendCancellableCoroutine<Unit> {
+                ctx.cancel()
+                it.resumeWith(Result.failure(TestException()))
+            }
         }
-    }
 
     @Test
     fun testBlockingIntegration() = runTest {
         val source = BlockingSource()
-        val job = launch(Dispatchers.Default) {
-            source.await()
-        }
+        val job =
+            launch(Dispatchers.Default) {
+                source.await()
+            }
         source.cancelAndJoin(job)
     }
 
     @Test
     fun testBlockingIntegrationAlreadyCancelled() = runTest {
         val source = BlockingSource()
-        val job = launch(Dispatchers.Default) {
-            cancel()
-            source.await()
-        }
+        val job =
+            launch(Dispatchers.Default) {
+                cancel()
+                source.await()
+            }
         source.cancelAndJoin(job)
     }
 
@@ -53,17 +58,16 @@ class CancellableContinuationJvmTest : TestBase() {
         job.cancelAndJoin()
     }
 
-    private suspend fun BlockingSource.await() = suspendCancellableCoroutine<Unit> {
-        it.invokeOnCancellation { this.cancel() }
-        subscribe()
-    }
+    private suspend fun BlockingSource.await() =
+        suspendCancellableCoroutine<Unit> {
+            it.invokeOnCancellation { this.cancel() }
+            subscribe()
+        }
 
     private class BlockingSource {
-        @Volatile
-        private var isCancelled = false
+        @Volatile private var isCancelled = false
 
-        @Volatile
-        var hasSubscriber = false
+        @Volatile var hasSubscriber = false
 
         fun subscribe() {
             hasSubscriber = true

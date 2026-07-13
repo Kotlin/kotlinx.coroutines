@@ -7,10 +7,11 @@ fun main() = runBlocking {
     val supervisor = SupervisorJob()
     with(CoroutineScope(coroutineContext + supervisor)) {
         // launch the first child -- its exception is ignored for this example (don't do this in practice!)
-        val firstChild = launch(CoroutineExceptionHandler { _, _ ->  }) {
-            println("The first child is failing")
-            throw AssertionError("The first child is cancelled")
-        }
+        val firstChild =
+            launch(CoroutineExceptionHandler { _, _ -> }) {
+                println("The first child is failing")
+                throw AssertionError("The first child is cancelled")
+            }
         // launch the second child
         val secondChild = launch {
             firstChild.join()

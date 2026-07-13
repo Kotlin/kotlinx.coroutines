@@ -30,12 +30,14 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
          */
         val pub = { error(42) }.asFlow().asPublisher()
         return Publisher { subscriber ->
-            pub.subscribe(object : Subscriber<Long> by subscriber as Subscriber<Long> {
-                override fun onSubscribe(s: Subscription) {
-                    subscriber.onSubscribe(s)
-                    s.request(1)
+            pub.subscribe(
+                object : Subscriber<Long> by subscriber as Subscriber<Long> {
+                    override fun onSubscribe(s: Subscription) {
+                        subscriber.onSubscribe(s)
+                        s.request(1)
+                    }
                 }
-            })
+            )
         }
     }
 
@@ -47,28 +49,28 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
         val array = generate(toRequest)
         val publisher = array.asIterable().asFlow().asPublisher()
 
-        publisher.subscribe(object : Subscriber<Long> {
-            private lateinit var s: Subscription
+        publisher.subscribe(
+            object : Subscriber<Long> {
+                private lateinit var s: Subscription
 
-            override fun onSubscribe(s: Subscription) {
-                this.s = s
-                s.request(1)
+                override fun onSubscribe(s: Subscription) {
+                    this.s = s
+                    s.request(1)
+                }
+
+                override fun onNext(aLong: Long) {
+                    collected.add(aLong)
+
+                    s.request(1)
+                }
+
+                override fun onError(t: Throwable) {}
+
+                override fun onComplete() {
+                    latch.countDown()
+                }
             }
-
-            override fun onNext(aLong: Long) {
-                collected.add(aLong)
-
-                s.request(1)
-            }
-
-            override fun onError(t: Throwable) {
-
-            }
-
-            override fun onComplete() {
-                latch.countDown()
-            }
-        })
+        )
 
         latch.await(5, TimeUnit.SECONDS)
         assertEquals(collected, array.toList())
@@ -82,40 +84,36 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
         val array = generate(n)
         val publisher = array.asIterable().asFlow().asPublisher()
 
-        publisher.subscribe(object : Subscriber<Long> {
-            private var s: Subscription? = null
+        publisher.subscribe(
+            object : Subscriber<Long> {
+                private var s: Subscription? = null
 
-            override fun onSubscribe(s: Subscription) {
-                this.s = s
-                for (i in 0..n) {
-                    commonPool().execute { s.request(1) }
+                override fun onSubscribe(s: Subscription) {
+                    this.s = s
+                    for (i in 0..n) {
+                        commonPool().execute { s.request(1) }
+                    }
+                }
+
+                override fun onNext(aLong: Long) {
+                    collected.add(aLong)
+                }
+
+                override fun onError(t: Throwable) {}
+
+                override fun onComplete() {
+                    latch.countDown()
                 }
             }
-
-            override fun onNext(aLong: Long) {
-                collected.add(aLong)
-            }
-
-            override fun onError(t: Throwable) {
-
-            }
-
-            override fun onComplete() {
-                latch.countDown()
-            }
-        })
+        )
 
         latch.await()
         assertEquals(array.toList(), collected)
     }
 
-    @Ignore
-    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {
-    }
+    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore
-    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {
-    }
+    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 
     @Ignore
     override fun required_spec312_cancelMustMakeThePublisherToEventuallyStopSignaling() {

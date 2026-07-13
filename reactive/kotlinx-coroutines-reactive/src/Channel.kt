@@ -8,11 +8,10 @@ import org.reactivestreams.*
 /**
  * Subscribes to this [Publisher] and performs the specified action for each received element.
  *
- * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from
- * [collect]. Also, if the publisher signals an error, that error is rethrown from [collect].
+ * If [action] throws an exception at some point, the subscription is cancelled, and the exception is rethrown from [collect]. Also, if the
+ * publisher signals an error, that error is rethrown from [collect].
  */
-public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit =
-    toChannel().consumeEach(action)
+public suspend inline fun <T> Publisher<T>.collect(action: (T) -> Unit): Unit = toChannel().consumeEach(action)
 
 @PublishedApi
 internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
@@ -22,9 +21,7 @@ internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
 }
 
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
-private class SubscriptionChannel<T>(
-    private val request: Int
-) : BufferedChannel<T>(capacity = Channel.UNLIMITED), Subscriber<T> {
+private class SubscriptionChannel<T>(private val request: Int) : BufferedChannel<T>(capacity = Channel.UNLIMITED), Subscriber<T> {
     init {
         require(request >= 0) { "Invalid request size: $request" }
     }
@@ -43,8 +40,7 @@ private class SubscriptionChannel<T>(
             val needRequested = wasRequested - 1
             if (subscription != null && needRequested < 0) { // need to request more from subscription
                 // try to fixup by making request
-                if (wasRequested != request && !_requested.compareAndSet(wasRequested, request))
-                    return@loop // continue looping if failed
+                if (wasRequested != request && !_requested.compareAndSet(wasRequested, request)) return@loop // continue looping if failed
                 subscription.request((request - needRequested).toLong())
                 return
             }
@@ -98,7 +94,8 @@ private class SubscriptionChannel<T>(
 /** @suppress */
 @Deprecated(
     message = "Transforming publisher to channel is deprecated, use asFlow() instead",
-    level = DeprecationLevel.HIDDEN) // ERROR in 1.4, HIDDEN in 1.6.0
+    level = DeprecationLevel.HIDDEN,
+) // ERROR in 1.4, HIDDEN in 1.6.0
 public fun <T> Publisher<T>.openSubscription(request: Int = 1): ReceiveChannel<T> {
     val channel = SubscriptionChannel<T>(request)
     subscribe(channel)

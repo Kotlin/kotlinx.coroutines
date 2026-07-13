@@ -3,9 +3,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-/**
- * Properties stay the same regardless of whether the channel was closed with or without exception.
- */
+/** Properties stay the same regardless of whether the channel was closed with or without exception. */
 class ChannelPropertiesAfterClosingTest : TestBase() {
     @Test
     fun testClosedIsClosedForReceive() = runTest {

@@ -37,6 +37,5 @@ class LastTest : TestBase() {
         val flow = flowOf(instance)
         assertSame(instance, flow.last())
         assertSame(instance, flow.lastOrNull())
-
     }
 }

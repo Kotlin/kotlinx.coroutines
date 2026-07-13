@@ -14,7 +14,8 @@ internal fun throwAsyncJsError(message: String?, className: String?, stack: Stri
     // It is also implemented in some non-browser JS runtimes (Node.js alternatives)
     // Deno https://docs.deno.com/api/web/~/reportError
     // Bun https://bun.sh/reference/globals/reportError#globals.reportError
-    js("""
+    js(
+        """
         var error = new Error();
         error.message = message;
         error.name = className;
@@ -26,9 +27,11 @@ internal fun throwAsyncJsError(message: String?, className: String?, stack: Stri
             // Fallback for old browsers (pre-2022), Node.js
             setTimeout(function () { throw error }, 0);
         }
-    """)
+    """
+    )
 }
 
-internal actual fun propagateExceptionFinalResort(exception: Throwable) = with(exception) {
-    throwAsyncJsError(message, this::class.simpleName, stackTraceToString())
-}
+internal actual fun propagateExceptionFinalResort(exception: Throwable) =
+    with(exception) {
+        throwAsyncJsError(message, this::class.simpleName, stackTraceToString())
+    }

@@ -10,6 +10,8 @@ package kotlinx.coroutines.internal
  */
 internal expect class LocalAtomicInt(value: Int) {
     fun get(): Int
+
     fun set(value: Int)
+
     fun decrementAndGet(): Int
 }

@@ -4,28 +4,34 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 internal expect abstract class W3CWindow
+
 internal expect fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int
+
 internal expect fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int
+
 internal expect fun w3cClearTimeout(handle: Int)
+
 internal expect fun w3cClearTimeout(window: W3CWindow, handle: Int)
 
 internal expect class ScheduledMessageQueue(dispatcher: SetTimeoutBasedDispatcher) : MessageQueue {
     override fun schedule()
+
     override fun reschedule()
+
     internal fun setTimeout(timeout: Int)
 }
 
 internal expect class WindowMessageQueue(window: W3CWindow) : MessageQueue {
     override fun schedule()
+
     override fun reschedule()
 }
 
 private const val MAX_DELAY = Int.MAX_VALUE.toLong()
 
-private fun delayToInt(timeMillis: Long): Int =
-    timeMillis.coerceIn(0, MAX_DELAY).toInt()
+private fun delayToInt(timeMillis: Long): Int = timeMillis.coerceIn(0, MAX_DELAY).toInt()
 
-internal abstract class SetTimeoutBasedDispatcher: CoroutineDispatcher(), Delay {
+internal abstract class SetTimeoutBasedDispatcher : CoroutineDispatcher(), Delay {
     internal val messageQueue = ScheduledMessageQueue(this)
 
     abstract fun scheduleQueueProcessing()
@@ -90,16 +96,15 @@ private open class ClearTimeout(protected val handle: Int) : CancelHandler, Disp
     override fun toString(): String = "ClearTimeout[$handle]"
 }
 
-
 /**
- * An abstraction over JS scheduling mechanism that leverages micro-batching of dispatched blocks without
- * paying the cost of JS callbacks scheduling on every dispatch.
+ * An abstraction over JS scheduling mechanism that leverages micro-batching of dispatched blocks without paying the cost of JS callbacks
+ * scheduling on every dispatch.
  *
  * Queue uses two scheduling mechanisms:
- * 1) [schedule] is used to schedule the initial processing of the message queue.
- *    JS engine-specific microtask mechanism is used in order to boost performance on short runs and a dispatch batch
- * 2) [reschedule] is used to schedule processing of the queue after yield to the JS event loop.
- *    JS engine-specific macrotask mechanism is used not to starve animations and non-coroutines macrotasks.
+ * 1) [schedule] is used to schedule the initial processing of the message queue. JS engine-specific microtask mechanism is used in order to
+ *    boost performance on short runs and a dispatch batch
+ * 2) [reschedule] is used to schedule processing of the queue after yield to the JS event loop. JS engine-specific macrotask mechanism is
+ *    used not to starve animations and non-coroutines macrotasks.
  *
  * Yet there could be a long tail of "slow" reschedules, but it should be amortized by the queue size.
  */

@@ -26,8 +26,7 @@ class ImmediateYieldTest : TestBase() {
 
         override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
-        override fun dispatch(context: CoroutineContext, block: Runnable) =
-            delegate.dispatch(context, block)
+        override fun dispatch(context: CoroutineContext, block: Runnable) = delegate.dispatch(context, block)
     }
 
     @Test

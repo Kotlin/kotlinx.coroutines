@@ -7,10 +7,12 @@ import java.util.*
 import java.util.concurrent.*
 
 class BlockingCoroutineDispatcherTerminationStressTest : TestBase() {
-    private val baseDispatcher = SchedulerCoroutineDispatcher(
-        2, 20,
-        TimeUnit.MILLISECONDS.toNanos(10)
-    )
+    private val baseDispatcher =
+        SchedulerCoroutineDispatcher(
+            2,
+            20,
+            TimeUnit.MILLISECONDS.toNanos(10),
+        )
     private val ioDispatcher = baseDispatcher.blocking()
     private val TEST_SECONDS = 3L * stressTestMultiplier
 
@@ -20,8 +22,8 @@ class BlockingCoroutineDispatcherTerminationStressTest : TestBase() {
     }
 
     /**
-     * Tests that when threads are created to accommodate the new tasks, but then don't receive any tasks for the
-     * duration of their terminate-on-idling timeout, liveness does not suffer.
+     * Tests that when threads are created to accommodate the new tasks, but then don't receive any tasks for the duration of their
+     * terminate-on-idling timeout, liveness does not suffer.
      */
     @Test
     fun testTermination() = runTest {

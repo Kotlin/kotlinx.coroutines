@@ -5,9 +5,7 @@ import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class CancelledChannelLeakTest : TestBase() {
-    /**
-     * Tests that cancellation removes the elements from the channel's buffer.
-     */
+    /** Tests that cancellation removes the elements from the channel's buffer. */
     @Test
     fun testBufferedChannelLeak() = runTest {
         for (capacity in listOf(Channel.CONFLATED, Channel.RENDEZVOUS, 1, 2, 5, 10)) {

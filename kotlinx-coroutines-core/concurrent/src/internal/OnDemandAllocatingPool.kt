@@ -5,26 +5,21 @@ import kotlinx.atomicfu.*
 /**
  * A thread-safe resource pool.
  *
- * [maxCapacity] is the maximum amount of elements.
- * [create] is the function that creates a new element.
+ * [maxCapacity] is the maximum amount of elements. [create] is the function that creates a new element.
  *
- * This is only used in the Native implementation,
- * but is part of the `concurrent` source set in order to test it on the JVM.
+ * This is only used in the Native implementation, but is part of the `concurrent` source set in order to test it on the JVM.
  */
 internal class OnDemandAllocatingPool<T>(
     private val maxCapacity: Int,
-    private val create: (Int) -> T
+    private val create: (Int) -> T,
 ) {
     /**
-     * Number of existing elements + isClosed flag in the highest bit.
-     * Once the flag is set, the value is guaranteed not to change anymore.
+     * Number of existing elements + isClosed flag in the highest bit. Once the flag is set, the value is guaranteed not to change anymore.
      */
     private val controlState = atomic(0)
     private val elements = atomicArrayOfNulls<T>(maxCapacity)
 
-    /**
-     * Returns the number of elements that need to be cleaned up due to the pool being closed.
-     */
+    /** Returns the number of elements that need to be cleaned up due to the pool being closed. */
     @Suppress("NOTHING_TO_INLINE")
     private inline fun tryForbidNewElements(): Int {
         controlState.loop {
@@ -33,8 +28,7 @@ internal class OnDemandAllocatingPool<T>(
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    private inline fun Int.isClosed(): Boolean = this and IS_CLOSED_MASK != 0
+    @Suppress("NOTHING_TO_INLINE") private inline fun Int.isClosed(): Boolean = this and IS_CLOSED_MASK != 0
 
     /**
      * Request that a new element is created.
@@ -59,14 +53,12 @@ internal class OnDemandAllocatingPool<T>(
     /**
      * Close the pool.
      *
-     * This will prevent any new elements from being created.
-     * All the elements present in the pool will be returned.
+     * This will prevent any new elements from being created. All the elements present in the pool will be returned.
      *
      * The function is thread-safe.
      *
-     * [close] can be called multiple times, but only a single call will return a non-empty list.
-     * This is due to the elements being cleaned out from the pool on the first invocation to avoid memory leaks,
-     * and no new elements being created after.
+     * [close] can be called multiple times, but only a single call will return a non-empty list. This is due to the elements being cleaned
+     * out from the pool on the first invocation to avoid memory leaks, and no new elements being created after.
      */
     fun close(): List<T> {
         val elementsExisting = tryForbidNewElements()

@@ -23,11 +23,10 @@ internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () ->
 private const val NOT_PARKED = -1L
 
 private class ThreadStatus {
-    @Volatile @JvmField
-    var parkedTill = NOT_PARKED
-    @Volatile @JvmField
-    var permit = false
+    @Volatile @JvmField var parkedTill = NOT_PARKED
+    @Volatile @JvmField var permit = false
     var registered = 0
+
     override fun toString(): String = "parkedTill = ${TimeUnit.NANOSECONDS.toMillis(parkedTill)} ms, permit = $permit"
 }
 
@@ -36,30 +35,30 @@ private const val REAL_TIME_STEP_NANOS = 200_000_000L // 200 ms
 private const val REAL_PARK_NANOS = 10_000_000L // 10 ms -- park for a little to better track real-time
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-internal class VirtualTimeSource(
-    private val log: PrintStream?
-) : AbstractTimeSource() {
+internal class VirtualTimeSource(private val log: PrintStream?) : AbstractTimeSource() {
     private val mainThread: Thread = Thread.currentThread()
     private var checkpointNanos: Long = System.nanoTime()
 
-    @Volatile
-    private var isShutdown = false
+    @Volatile private var isShutdown = false
 
-    @Volatile
-    private var time: Long = 0
+    @Volatile private var time: Long = 0
 
     private var trackedTasks = 0
 
     private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
 
     override fun currentTimeMillis(): Long = TimeUnit.NANOSECONDS.toMillis(time)
+
     override fun nanoTime(): Long = time
 
     override fun wrapTask(block: Runnable): Runnable {
         trackTask()
         return Runnable {
-            try { block.run() }
-            finally { unTrackTask() }
+            try {
+                block.run()
+            } finally {
+                unTrackTask()
+            }
         }
     }
 
@@ -137,8 +136,7 @@ internal class VirtualTimeSource(
         log?.println("[$s: Time = ${TimeUnit.NANOSECONDS.toMillis(time)} ms]")
     }
 
-    private fun minParkedTill(): Long =
-        threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.minOrNull() ?: NOT_PARKED
+    private fun minParkedTill(): Long = threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.minOrNull() ?: NOT_PARKED
 
     @Synchronized
     fun shutdown() {

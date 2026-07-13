@@ -7,11 +7,12 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testLaunchAndYieldJoin() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.LAZY) {
-            expect(4)
-            yield() // does nothing -- main waits
-            expect(5)
-        }
+        val job =
+            launch(start = CoroutineStart.LAZY) {
+                expect(4)
+                yield() // does nothing -- main waits
+                expect(5)
+            }
         expect(2)
         yield() // does nothing, was not started yet
         expect(3)
@@ -24,11 +25,12 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testStart() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.LAZY) {
-            expect(5)
-            yield() // yields back to main
-            expect(7)
-        }
+        val job =
+            launch(start = CoroutineStart.LAZY) {
+                expect(5)
+                yield() // yields back to main
+                expect(7)
+            }
         expect(2)
         yield() // does nothing, was not started yet
         expect(3)
@@ -51,9 +53,10 @@ class LaunchLazyTest : TestBase() {
     @Test
     fun testInvokeOnCompletionAndStart() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.LAZY) {
-            expect(5)
-        }
+        val job =
+            launch(start = CoroutineStart.LAZY) {
+                expect(5)
+            }
         yield() // no started yet!
         expect(2)
         job.invokeOnCompletion {

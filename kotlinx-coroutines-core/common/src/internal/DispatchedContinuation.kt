@@ -6,26 +6,26 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 private val UNDEFINED = Symbol("UNDEFINED")
-@JvmField
-internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
+@JvmField internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 
 internal class DispatchedContinuation<in T>(
     @JvmField internal val dispatcher: CoroutineDispatcher,
-    @JvmField val continuation: Continuation<T>
+    @JvmField val continuation: Continuation<T>,
 ) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
-    @JvmField
-    @Suppress("PropertyName")
-    internal var _state: Any? = UNDEFINED
-    override val callerFrame: CoroutineStackFrame? get() = continuation as? CoroutineStackFrame
+    @JvmField @Suppress("PropertyName") internal var _state: Any? = UNDEFINED
+    override val callerFrame: CoroutineStackFrame?
+        get() = continuation as? CoroutineStackFrame
+
     override fun getStackTraceElement(): StackTraceElement? = null
+
     @JvmField // pre-cached value to avoid ctx.fold on every resumption
     internal val countOrElement = threadContextElements(context)
 
     /**
      * Possible states of reusability:
      *
-     * 1) `null`. Cancellable continuation wasn't yet attempted to be reused or
-     *     was used and then invalidated (e.g. because of the cancellation).
+     * 1) `null`. Cancellable continuation wasn't yet attempted to be reused or was used and then invalidated (e.g. because of the
+     *    cancellation).
      * 2) [CancellableContinuation]. Continuation to be/that is being reused.
      * 3) [REUSABLE_CLAIMED]. CC is currently being reused and its owner executes `suspend` block:
      *    ```
@@ -39,8 +39,8 @@ internal class DispatchedContinuation<in T>(
      * 4) [Throwable] continuation was cancelled with this cause while being in [suspendCancellableCoroutineReusable],
      *    [CancellableContinuationImpl.getResult] will check for cancellation later.
      *
-     * [REUSABLE_CLAIMED] state is required to prevent double-use of the reused continuation.
-     * In the `getResult`, we have the following code:
+     * [REUSABLE_CLAIMED] state is required to prevent double-use of the reused continuation. In the `getResult`, we have the following
+     * code:
      * ```
      * if (trySuspend()) {
      *     // <- at this moment current continuation can be redispatched and claimed again.
@@ -64,10 +64,7 @@ internal class DispatchedContinuation<in T>(
         return _reusableCancellableContinuation.value != null
     }
 
-    /**
-     * Awaits until previous call to `suspendCancellableCoroutineReusable` will
-     * stop mutating cached instance
-     */
+    /** Awaits until previous call to `suspendCancellableCoroutineReusable` will stop mutating cached instance */
     internal fun awaitReusability() {
         _reusableCancellableContinuation.loop {
             if (it !== REUSABLE_CLAIMED) return
@@ -84,10 +81,7 @@ internal class DispatchedContinuation<in T>(
         reusableCancellableContinuation?.detachChild()
     }
 
-    /**
-     * Claims the continuation for [suspendCancellableCoroutineReusable] block,
-     * so all cancellations will be postponed.
-     */
+    /** Claims the continuation for [suspendCancellableCoroutineReusable] block, so all cancellations will be postponed. */
     @Suppress("UNCHECKED_CAST")
     internal fun claimReusableCancellableContinuation(): CancellableContinuationImpl<T>? {
         /*
@@ -125,9 +119,8 @@ internal class DispatchedContinuation<in T>(
     }
 
     /**
-     * Checks whether there were any attempts to cancel reusable CC while it was in [REUSABLE_CLAIMED] state
-     * and returns cancellation cause if so, `null` otherwise.
-     * If continuation was cancelled, it becomes non-reusable.
+     * Checks whether there were any attempts to cancel reusable CC while it was in [REUSABLE_CLAIMED] state and returns cancellation cause
+     * if so, `null` otherwise. If continuation was cancelled, it becomes non-reusable.
      *
      * ```
      * suspendCancellableCoroutineReusable { // <- claimed
@@ -155,21 +148,19 @@ internal class DispatchedContinuation<in T>(
     }
 
     /**
-     * Tries to postpone cancellation if reusable CC is currently in [REUSABLE_CLAIMED] state.
-     * Returns `true` if cancellation is (or previously was) postponed, `false` otherwise.
+     * Tries to postpone cancellation if reusable CC is currently in [REUSABLE_CLAIMED] state. Returns `true` if cancellation is (or
+     * previously was) postponed, `false` otherwise.
      */
     internal fun postponeCancellation(cause: Throwable): Boolean {
         _reusableCancellableContinuation.loop { state ->
             when (state) {
                 REUSABLE_CLAIMED -> {
-                    if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, cause))
-                        return true
+                    if (_reusableCancellableContinuation.compareAndSet(REUSABLE_CLAIMED, cause)) return true
                 }
                 is Throwable -> return true
                 else -> {
                     // Invalidate
-                    if (_reusableCancellableContinuation.compareAndSet(state, null))
-                        return false
+                    if (_reusableCancellableContinuation.compareAndSet(state, null)) return false
                 }
             }
         }
@@ -245,8 +236,7 @@ internal class DispatchedContinuation<in T>(
         dispatcher.dispatchYield(context, this)
     }
 
-    override fun toString(): String =
-        "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
+    override fun toString(): String = "DispatchedContinuation[$dispatcher, ${continuation.toDebugString()}]"
 }
 
 internal fun CoroutineDispatcher.safeDispatch(context: CoroutineContext, runnable: Runnable) {
@@ -266,27 +256,24 @@ internal fun CoroutineDispatcher.safeIsDispatchNeeded(context: CoroutineContext)
 }
 
 /**
- * It is not inline to save bytecode (it is pretty big and used in many places)
- * and we leave it public so that its name is not mangled in use stack traces if it shows there.
- * It may appear in stack traces when coroutines are started/resumed with unconfined dispatcher.
+ * It is not inline to save bytecode (it is pretty big and used in many places) and we leave it public so that its name is not mangled in
+ * use stack traces if it shows there. It may appear in stack traces when coroutines are started/resumed with unconfined dispatcher.
+ *
  * @suppress **This an internal API and should not be used from general code.**
  */
-internal fun <T> Continuation<T>.resumeCancellableWithInternal(
-    result: Result<T>,
-): Unit = when (this) {
-    is DispatchedContinuation -> resumeCancellableWith(result)
-    else -> resumeWith(result)
-}
+internal fun <T> Continuation<T>.resumeCancellableWithInternal(result: Result<T>): Unit =
+    when (this) {
+        is DispatchedContinuation -> resumeCancellableWith(result)
+        else -> resumeWith(result)
+    }
 
 @InternalCoroutinesApi
 @Deprecated(
     "This function was intended for internal use only and will be removed. " +
         "If you have a use case for it, please file an issue in the issue tracker.",
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.WARNING,
 ) // WARNING in 1.11, ERROR in 1.12, REMOVE in 1.13, was @InternalCoroutinesApi
-public fun <T> Continuation<T>.resumeCancellableWith(
-    result: Result<T>,
-): Unit = resumeCancellableWithInternal(result)
+public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = resumeCancellableWithInternal(result)
 
 internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
     executeUnconfined(Unit, MODE_CANCELLABLE, doYield = true) {
@@ -294,14 +281,15 @@ internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
     }
 
 /**
- * Executes given [block] as part of current event loop, updating current continuation
- * mode and state if continuation is not resumed immediately.
- * [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty).
- * Returns `true` if execution of continuation was queued (trampolined) or `false` otherwise.
+ * Executes given [block] as part of current event loop, updating current continuation mode and state if continuation is not resumed
+ * immediately. [doYield] indicates whether current continuation is yielding (to provide fast-path if event-loop is empty). Returns `true`
+ * if execution of continuation was queued (trampolined) or `false` otherwise.
  */
 private inline fun DispatchedContinuation<*>.executeUnconfined(
-    contState: Any?, mode: Int, doYield: Boolean = false,
-    block: () -> Unit
+    contState: Any?,
+    mode: Int,
+    doYield: Boolean = false,
+    block: () -> Unit,
 ): Boolean {
     assert { mode != MODE_UNINITIALIZED } // invalid execution mode
     val eventLoop = ThreadLocalEventLoop.eventLoop

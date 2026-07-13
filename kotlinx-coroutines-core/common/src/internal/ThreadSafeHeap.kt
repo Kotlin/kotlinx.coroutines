@@ -3,9 +3,7 @@ package kotlinx.coroutines.internal
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 
-/**
- * @suppress **This an internal API and should not be used from general code.**
- */
+/** @suppress **This an internal API and should not be used from general code.** */
 @InternalCoroutinesApi
 public interface ThreadSafeHeapNode {
     public var heap: ThreadSafeHeap<*>?
@@ -14,74 +12,80 @@ public interface ThreadSafeHeapNode {
 
 /**
  * Synchronized binary heap.
+ *
  * @suppress **This an internal API and should not be used from general code.**
  */
 @InternalCoroutinesApi
-public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHeapNode, T: Comparable<T> {
+public open class ThreadSafeHeap<T> : SynchronizedObject() where T : ThreadSafeHeapNode, T : Comparable<T> {
     private var a: Array<T?>? = null
 
     private val _size = atomic(0)
 
     public var size: Int
         get() = _size.value
-        private set(value) { _size.value = value }
-
-    public val isEmpty: Boolean get() = size == 0
-
-    public fun find(
-        predicate: (value: T) -> Boolean
-    ): T? = synchronized(this) block@{
-        for (i in 0 until size) {
-            val value = a?.get(i)!!
-            if (predicate(value)) return@block value
+        private set(value) {
+            _size.value = value
         }
-        null
-    }
+
+    public val isEmpty: Boolean
+        get() = size == 0
+
+    public fun find(predicate: (value: T) -> Boolean): T? =
+        synchronized(this) block@{
+            for (i in 0 until size) {
+                val value = a?.get(i)!!
+                if (predicate(value)) return@block value
+            }
+            null
+        }
 
     public fun peek(): T? = synchronized(this) { firstImpl() }
 
-    public fun removeFirstOrNull(): T? = synchronized(this) {
-        if (size > 0) {
-            removeAtImpl(0)
-        } else {
-            null
+    public fun removeFirstOrNull(): T? =
+        synchronized(this) {
+            if (size > 0) {
+                removeAtImpl(0)
+            } else {
+                null
+            }
         }
-    }
 
-    public inline fun removeFirstIf(predicate: (T) -> Boolean): T? = synchronized(this) {
-        val first = firstImpl() ?: return null
-        if (predicate(first)) {
-            removeAtImpl(0)
-        } else {
-            null
+    public inline fun removeFirstIf(predicate: (T) -> Boolean): T? =
+        synchronized(this) {
+            val first = firstImpl() ?: return null
+            if (predicate(first)) {
+                removeAtImpl(0)
+            } else {
+                null
+            }
         }
-    }
 
     public fun addLast(node: T): Unit = synchronized(this) { addImpl(node) }
 
     // Condition also receives current first node in the heap
-    public inline fun addLastIf(node: T, cond: (T?) -> Boolean): Boolean = synchronized(this) {
-        if (cond(firstImpl())) {
-            addImpl(node)
-            true
-        } else {
-            false
+    public inline fun addLastIf(node: T, cond: (T?) -> Boolean): Boolean =
+        synchronized(this) {
+            if (cond(firstImpl())) {
+                addImpl(node)
+                true
+            } else {
+                false
+            }
         }
-    }
 
-    public fun remove(node: T): Boolean = synchronized(this) {
-        return if (node.heap == null) {
-            false
-        } else {
-            val index = node.index
-            assert { index >= 0 }
-            removeAtImpl(index)
-            true
+    public fun remove(node: T): Boolean =
+        synchronized(this) {
+            return if (node.heap == null) {
+                false
+            } else {
+                val index = node.index
+                assert { index >= 0 }
+                removeAtImpl(index)
+                true
+            }
         }
-    }
 
-    @PublishedApi
-    internal fun firstImpl(): T? = a?.get(0)
+    @PublishedApi internal fun firstImpl(): T? = a?.get(0)
 
     @PublishedApi
     internal fun removeAtImpl(index: Int): T {

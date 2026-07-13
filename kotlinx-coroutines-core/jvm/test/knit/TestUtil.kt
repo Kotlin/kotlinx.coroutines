@@ -10,8 +10,9 @@ import kotlin.test.*
 
 // helper function to dump exception to stdout for ease of debugging failed tests
 private inline fun <T> outputException(name: String, block: () -> T): T =
-    try { block() }
-    catch (e: Throwable) {
+    try {
+        block()
+    } catch (e: Throwable) {
         println("--- Failed test$name")
         e.printStackTrace(System.out)
         throw e
@@ -20,31 +21,32 @@ private inline fun <T> outputException(name: String, block: () -> T): T =
 private const val SHUTDOWN_TIMEOUT = 5000L // 5 sec at most to wait
 private val OUT_ENABLED = systemProp("guide.tests.sout", false)
 
-fun <R> test(name: String, block: () -> R): List<String> = outputException(name) {
-    try {
-        captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
-            DefaultScheduler.usePrivateScheduler()
-            DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
-            resetCoroutineId()
-            val threadsBefore = currentThreads()
-            try {
-                withVirtualTimeSource(log) {
-                    val result = block()
-                    require(result === Unit) { "Test 'main' shall return Unit" }
+fun <R> test(name: String, block: () -> R): List<String> =
+    outputException(name) {
+        try {
+            captureOutput(name, stdoutEnabled = OUT_ENABLED) { log ->
+                DefaultScheduler.usePrivateScheduler()
+                DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)
+                resetCoroutineId()
+                val threadsBefore = currentThreads()
+                try {
+                    withVirtualTimeSource(log) {
+                        val result = block()
+                        require(result === Unit) { "Test 'main' shall return Unit" }
+                    }
+                } finally {
+                    // the shutdown
+                    log.println("--- shutting down")
+                    DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
+                    shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
+                    DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
                 }
-            } finally {
-                // the shutdown
-                log.println("--- shutting down")
-                DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
-                shutdownDispatcherPools(SHUTDOWN_TIMEOUT)
-                DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT) // the last man standing -- cleanup all pending tasks
+                checkTestThreads(threadsBefore) // check thread if the main completed successfully
             }
-            checkTestThreads(threadsBefore) // check thread if the main completed successfully
+        } finally {
+            DefaultScheduler.restore()
         }
-    } finally {
-        DefaultScheduler.restore()
     }
-}
 
 private fun shutdownDispatcherPools(timeout: Long) {
     val threads = arrayOfNulls<Thread>(Thread.activeCount())
@@ -63,7 +65,7 @@ private fun shutdownDispatcherPools(timeout: Long) {
 enum class SanitizeMode {
     NONE,
     ARBITRARY_TIME,
-    FLEXIBLE_THREAD
+    FLEXIBLE_THREAD,
 }
 
 private fun sanitize(s: String, mode: SanitizeMode): String {
@@ -96,10 +98,8 @@ private fun List<String>.verifyCommonLines(expected: Array<out String>, mode: Sa
 }
 
 private fun List<String>.checkEqualNumberOfLines(expected: Array<out String>) {
-    if (size > expected.size)
-        error("Expected ${expected.size} lines, but found $size. Unexpected line '${get(expected.size)}'")
-    else if (size < expected.size)
-        error("Expected ${expected.size} lines, but found $size")
+    if (size > expected.size) error("Expected ${expected.size} lines, but found $size. Unexpected line '${get(expected.size)}'")
+    else if (size < expected.size) error("Expected ${expected.size} lines, but found $size")
 }
 
 fun List<String>.verifyLines(vararg expected: String) = verify {
@@ -129,16 +129,17 @@ fun List<String>.verifyLinesStartUnordered(vararg expected: String) = verify {
 
 fun List<String>.verifyExceptions(vararg expected: String) {
     val original = this
-    val actual = ArrayList<String>().apply {
-        var except = false
-        for (line in original) {
-            when {
-                !except && line.startsWith("\tat") -> except = true
-                except && !line.startsWith("\t") && !line.startsWith("Caused by: ") -> except = false
+    val actual =
+        ArrayList<String>().apply {
+            var except = false
+            for (line in original) {
+                when {
+                    !except && line.startsWith("\tat") -> except = true
+                    except && !line.startsWith("\t") && !line.startsWith("Caused by: ") -> except = false
+                }
+                if (!except) add(line)
             }
-            if (!except) add(line)
         }
-    }
     val n = minOf(actual.size, expected.size)
     for (i in 0 until n) {
         val exp = sanitize(expected[i], SanitizeMode.FLEXIBLE_THREAD)
@@ -146,7 +147,6 @@ fun List<String>.verifyExceptions(vararg expected: String) {
         assertEquals(exp, act, "Line ${i + 1}")
     }
 }
-
 
 fun List<String>.verifyLinesStart(vararg expected: String) = verify {
     val n = minOf(size, expected.size)

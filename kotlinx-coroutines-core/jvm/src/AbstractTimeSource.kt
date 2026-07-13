@@ -8,13 +8,21 @@ import kotlin.internal.InlineOnly
 
 internal abstract class AbstractTimeSource {
     abstract fun currentTimeMillis(): Long
+
     abstract fun nanoTime(): Long
+
     abstract fun wrapTask(block: Runnable): Runnable
+
     abstract fun trackTask()
+
     abstract fun unTrackTask()
+
     abstract fun registerTimeLoopThread()
+
     abstract fun unregisterTimeLoopThread()
+
     abstract fun parkNanos(blocker: Any, nanos: Long) // should return immediately when nanos <= 0
+
     abstract fun unpark(thread: Thread)
 }
 
@@ -27,17 +35,11 @@ internal inline fun mockTimeSource(source: AbstractTimeSource?) {
     timeSource = source
 }
 
-@InlineOnly
-internal inline fun currentTimeMillis(): Long =
-    timeSource?.currentTimeMillis() ?: System.currentTimeMillis()
+@InlineOnly internal inline fun currentTimeMillis(): Long = timeSource?.currentTimeMillis() ?: System.currentTimeMillis()
 
-@InlineOnly
-internal actual inline fun nanoTime(): Long =
-    timeSource?.nanoTime() ?: System.nanoTime()
+@InlineOnly internal actual inline fun nanoTime(): Long = timeSource?.nanoTime() ?: System.nanoTime()
 
-@InlineOnly
-internal inline fun wrapTask(block: Runnable): Runnable =
-    timeSource?.wrapTask(block) ?: block
+@InlineOnly internal inline fun wrapTask(block: Runnable): Runnable = timeSource?.wrapTask(block) ?: block
 
 @InlineOnly
 internal inline fun trackTask() {

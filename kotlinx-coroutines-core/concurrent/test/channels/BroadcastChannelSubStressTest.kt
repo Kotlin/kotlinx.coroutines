@@ -6,11 +6,10 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 /**
- * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it,
- * to stress test the logic of opening the subscription
- * to broadcast channel while events are being concurrently sent to it.
+ * Creates a broadcast channel and repeatedly opens new subscription, receives event, closes it, to stress test the logic of opening the
+ * subscription to broadcast channel while events are being concurrently sent to it.
  */
-class BroadcastChannelSubStressTest: TestBase() {
+class BroadcastChannelSubStressTest : TestBase() {
 
     private val nSeconds = maxOf(5, stressTestMultiplier)
     private val sentTotal = atomic(0L)

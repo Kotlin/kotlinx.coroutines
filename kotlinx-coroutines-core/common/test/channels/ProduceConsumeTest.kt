@@ -40,12 +40,13 @@ class ProduceConsumeTest : TestBase() {
 
     private suspend fun testProducer(messages: Int, producerCapacity: Int) {
         var sentAll = false
-        val producer = GlobalScope.produce(coroutineContext, capacity = producerCapacity) {
-            for (i in 1..messages) {
-                send(i)
+        val producer =
+            GlobalScope.produce(coroutineContext, capacity = producerCapacity) {
+                for (i in 1..messages) {
+                    send(i)
+                }
+                sentAll = true
             }
-            sentAll = true
-        }
         var consumed = 0
         for (x in producer) {
             consumed++

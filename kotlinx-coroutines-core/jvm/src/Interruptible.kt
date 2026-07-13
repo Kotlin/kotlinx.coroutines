@@ -5,12 +5,10 @@ import kotlin.coroutines.*
 
 /**
  * Calls the specified [block] with a given coroutine context in
- * [an interruptible manner](https://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html).
- * The blocking code block will be interrupted and this function will throw [CancellationException]
- * if the coroutine is cancelled.
+ * [an interruptible manner](https://docs.oracle.com/javase/tutorial/essential/concurrency/interrupt.html). The blocking code block will be
+ * interrupted and this function will throw [CancellationException] if the coroutine is cancelled.
  *
  * Example:
- *
  * ```
  * withTimeout(500L) {            // Cancels coroutine on timeout
  *     runInterruptible {         // Throws CancellationException if interrupted
@@ -19,26 +17,25 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * There is an optional [context] parameter to this function working just like [withContext].
- * It enables single-call conversion of interruptible Java methods into suspending functions.
- * With one call here we are moving the call to [Dispatchers.IO] and supporting interruption:
- *
+ * There is an optional [context] parameter to this function working just like [withContext]. It enables single-call conversion of
+ * interruptible Java methods into suspending functions. With one call here we are moving the call to [Dispatchers.IO] and supporting
+ * interruption:
  * ```
  * suspend fun <T> BlockingQueue<T>.awaitTake(): T =
  *         runInterruptible(Dispatchers.IO) { queue.take() }
  * ```
  *
- * `runInterruptible` uses [withContext] as an underlying mechanism for switching context,
- * meaning that the supplied [block] is invoked in an [undispatched][CoroutineStart.UNDISPATCHED]
- * manner directly by the caller if [CoroutineDispatcher] from the current [coroutineContext][currentCoroutineContext]
- * is the same as the one supplied in [context].
+ * `runInterruptible` uses [withContext] as an underlying mechanism for switching context, meaning that the supplied [block] is invoked in
+ * an [undispatched][CoroutineStart.UNDISPATCHED] manner directly by the caller if [CoroutineDispatcher] from the current
+ * [coroutineContext][currentCoroutineContext] is the same as the one supplied in [context].
  */
 public suspend fun <T> runInterruptible(
     context: CoroutineContext = EmptyCoroutineContext,
-    block: () -> T
-): T = withContext(context) {
-    runInterruptibleInExpectedContext(coroutineContext, block)
-}
+    block: () -> T,
+): T =
+    withContext(context) {
+        runInterruptibleInExpectedContext(coroutineContext, block)
+    }
 
 private fun <T> runInterruptibleInExpectedContext(coroutineContext: CoroutineContext, block: () -> T): T {
     try {
@@ -95,7 +92,8 @@ private class ThreadState : JobNode() {
     // Registered cancellation handler
     private var cancelHandle: DisposableHandle? = null
 
-    override val onCancelling get() = true
+    override val onCancelling
+        get() = true
 
     fun setup(job: Job) {
         cancelHandle = job.invokeOnCompletion(handler = this)
@@ -105,7 +103,8 @@ private class ThreadState : JobNode() {
                 // Happy-path, move forward
                 WORKING -> if (_state.compareAndSet(state, WORKING)) return
                 // Immediately cancelled, just continue
-                INTERRUPTING, INTERRUPTED -> return
+                INTERRUPTING,
+                INTERRUPTED -> return
                 else -> invalidState(state)
             }
         }
@@ -117,15 +116,16 @@ private class ThreadState : JobNode() {
          */
         _state.loop { state ->
             when (state) {
-                WORKING -> if (_state.compareAndSet(state, FINISHED)) {
-                    cancelHandle?.dispose()
-                    return
-                }
+                WORKING ->
+                    if (_state.compareAndSet(state, FINISHED)) {
+                        cancelHandle?.dispose()
+                        return
+                    }
                 INTERRUPTING -> {
-                   /*
-                    * Spin, cancellation mechanism is interrupting our thread right now
-                    * and we have to wait it and then clear interrupt status
-                    */
+                    /*
+                     * Spin, cancellation mechanism is interrupting our thread right now
+                     * and we have to wait it and then clear interrupt status
+                     */
                 }
                 INTERRUPTED -> {
                     // Clear it and bail out
@@ -150,7 +150,9 @@ private class ThreadState : JobNode() {
                     }
                 }
                 // Finished -- runInterruptible is already complete, INTERRUPTING - ignore
-                FINISHED, INTERRUPTING, INTERRUPTED -> return
+                FINISHED,
+                INTERRUPTING,
+                INTERRUPTED -> return
                 else -> invalidState(state)
             }
         }

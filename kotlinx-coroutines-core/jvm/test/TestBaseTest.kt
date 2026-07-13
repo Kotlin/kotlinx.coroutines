@@ -19,6 +19,5 @@ class TestBaseTest : TestBase() {
             shutdownPoolsAfterTest()
             checkTestThreads(threadsBefore)
         }
-
     }
 }

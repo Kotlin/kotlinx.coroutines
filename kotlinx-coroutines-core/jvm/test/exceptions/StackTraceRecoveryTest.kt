@@ -6,7 +6,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.intrinsics.*
 import kotlinx.coroutines.testing.exceptions.*
 import org.junit.Test
-import java.lang.RuntimeException
 import java.util.concurrent.*
 import kotlin.concurrent.*
 import kotlin.coroutines.*
@@ -30,39 +29,42 @@ class StackTraceRecoveryTest : TestBase() {
         }
 
         val deferred = createDeferred(3)
-        val traces = listOf(
-            "java.util.concurrent.ExecutionException\n" +
+        val traces =
+            listOf(
+                "java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testAsync\$1\$createDeferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:99)\n" +
                     "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:49)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:44)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:17)\n",
-            "Caused by: java.util.concurrent.ExecutionException\n" +
+                "Caused by: java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testAsync\$1\$createDeferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:21)\n" +
-                    "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n"
-        )
+                    "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n",
+            )
         nestedMethod(deferred, *traces.toTypedArray())
         deferred.join()
     }
 
     @Test
     fun testCompletedAsync() = runTest {
-        val deferred = async<Unit>(coroutineContext + NonCancellable) {
-            throw ExecutionException(null)
-        }
+        val deferred =
+            async<Unit>(coroutineContext + NonCancellable) {
+                throw ExecutionException(null)
+            }
 
         deferred.join()
-        val stacktrace = listOf(
-            "java.util.concurrent.ExecutionException\n" +
+        val stacktrace =
+            listOf(
+                "java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCompletedAsync\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:44)\n" +
                     "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.oneMoreNestedMethod(StackTraceRecoveryTest.kt:81)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.nestedMethod(StackTraceRecoveryTest.kt:75)\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCompletedAsync\$1.invokeSuspend(StackTraceRecoveryTest.kt:71)",
-            "Caused by: java.util.concurrent.ExecutionException\n" +
+                "Caused by: java.util.concurrent.ExecutionException\n" +
                     "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCompletedAsync\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:44)\n" +
-                    "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)"
-        )
+                    "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)",
+            )
         nestedMethod(deferred, *stacktrace.toTypedArray())
     }
 
@@ -82,11 +84,13 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testWithContext() = runTest {
-        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
-            throw RecoverableTestException()
-        }
+        val deferred =
+            async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
+                throw RecoverableTestException()
+            }
 
-        outerMethod(deferred,
+        outerMethod(
+            deferred,
             "kotlinx.coroutines.testing.RecoverableTestException\n" +
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testWithContext\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
                 "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
@@ -96,7 +100,8 @@ class StackTraceRecoveryTest : TestBase() {
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testWithContext\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
             "Caused by: kotlinx.coroutines.testing.RecoverableTestException\n" +
                 "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testWithContext\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
-                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
+                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n",
+        )
         deferred.join()
     }
 
@@ -119,28 +124,31 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testCoroutineScope() = runTest {
-        val deferred = async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
-            throw RecoverableTestException()
-        }
+        val deferred =
+            async<Unit>(NonCancellable, start = CoroutineStart.LAZY) {
+                throw RecoverableTestException()
+            }
 
-        outerScopedMethod(deferred,
+        outerScopedMethod(
+            deferred,
             "kotlinx.coroutines.testing.RecoverableTestException\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
-                    "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2\$1.invokeSuspend(StackTraceRecoveryTest.kt:193)\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
+                "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.innerMethod(StackTraceRecoveryTest.kt:158)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2\$1.invokeSuspend(StackTraceRecoveryTest.kt:193)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$outerScopedMethod\$2.invokeSuspend(StackTraceRecoveryTest.kt:151)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1.invokeSuspend(StackTraceRecoveryTest.kt:141)\n",
             "Caused by: kotlinx.coroutines.testing.RecoverableTestException\n" +
-                    "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
-                    "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n")
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCoroutineScope\$1\$deferred\$1.invokeSuspend(StackTraceRecoveryTest.kt:143)\n" +
+                "\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:32)\n",
+        )
         deferred.join()
     }
 
     class TrickyException() : Throwable() {
         // To be sure ctor is never invoked
         @Suppress("UNUSED", "UNUSED_PARAMETER")
-        private constructor(message: String, cause: Throwable): this() {
+        private constructor(message: String, cause: Throwable) : this() {
             error("Should never be called")
         }
 
@@ -151,10 +159,11 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testThrowingInitCause() = runTest {
-        val deferred = async<Unit>(NonCancellable) {
-            expect(2)
-            throw TrickyException()
-        }
+        val deferred =
+            async<Unit>(NonCancellable) {
+                expect(2)
+                throw TrickyException()
+            }
 
         try {
             expect(1)
@@ -192,7 +201,6 @@ class StackTraceRecoveryTest : TestBase() {
         }
     }
 
-
     private suspend fun throws() {
         yield() // TCE
         throw RecoverableTestException()
@@ -212,23 +220,28 @@ class StackTraceRecoveryTest : TestBase() {
         var exception: Throwable? = null
 
         thread {
-            await.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) {
-                exception = it.exceptionOrNull()
-                barrier.await()
-            })
+            await.startCoroutineUnintercepted(
+                Continuation(EmptyCoroutineContext) {
+                    exception = it.exceptionOrNull()
+                    barrier.await()
+                }
+            )
         }
 
         barrier.await()
         val e = exception
         assertNotNull(e)
-        verifyStackTrace(e, "kotlinx.coroutines.testing.RecoverableTestException\n" +
-            "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.throws(StackTraceRecoveryTest.kt:280)\n" +
-            "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.access\$throws(StackTraceRecoveryTest.kt:20)\n" +
-            "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$throws\$1.invokeSuspend(StackTraceRecoveryTest.kt)\n" +
-            "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
-            "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaiter(StackTraceRecoveryTest.kt:285)\n" +
-            "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testNonDispatchedRecovery\$await\$1.invokeSuspend(StackTraceRecoveryTest.kt:291)\n" +
-            "Caused by: kotlinx.coroutines.testing.RecoverableTestException")
+        verifyStackTrace(
+            e,
+            "kotlinx.coroutines.testing.RecoverableTestException\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.throws(StackTraceRecoveryTest.kt:280)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.access\$throws(StackTraceRecoveryTest.kt:20)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$throws\$1.invokeSuspend(StackTraceRecoveryTest.kt)\n" +
+                "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaiter(StackTraceRecoveryTest.kt:285)\n" +
+                "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testNonDispatchedRecovery\$await\$1.invokeSuspend(StackTraceRecoveryTest.kt:291)\n" +
+                "Caused by: kotlinx.coroutines.testing.RecoverableTestException",
+        )
     }
 
     private class Callback(val cont: CancellableContinuation<*>)
@@ -240,13 +253,16 @@ class StackTraceRecoveryTest : TestBase() {
             try {
                 awaitCallback(channel)
             } catch (e: Throwable) {
-                verifyStackTrace(e, "kotlinx.coroutines.testing.RecoverableTestException\n" +
+                verifyStackTrace(
+                    e,
+                    "kotlinx.coroutines.testing.RecoverableTestException\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1.invokeSuspend(StackTraceRecoveryTest.kt:329)\n" +
                         "\tat _COROUTINE._BOUNDARY._(CoroutineDebugging.kt)\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest.awaitCallback(StackTraceRecoveryTest.kt:348)\n" +
                         "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1\$1.invokeSuspend(StackTraceRecoveryTest.kt:322)\n" +
                         "Caused by: kotlinx.coroutines.testing.RecoverableTestException\n" +
-                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1.invokeSuspend(StackTraceRecoveryTest.kt:329)")
+                        "\tat kotlinx.coroutines.exceptions.StackTraceRecoveryTest\$testCancellableContinuation\$1.invokeSuspend(StackTraceRecoveryTest.kt:329)",
+                )
             }
         }
         val callback = channel.receive()

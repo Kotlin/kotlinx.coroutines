@@ -6,18 +6,16 @@ import kotlin.coroutines.*
 /**
  * Defines start options for coroutines builders.
  *
- * It is used in the `start` parameter of coroutine builder functions like
- * [launch][CoroutineScope.launch] and [async][CoroutineScope.async]
+ * It is used in the `start` parameter of coroutine builder functions like [launch][CoroutineScope.launch] and [async][CoroutineScope.async]
  * to describe when and how the coroutine should be dispatched initially.
  *
- * This parameter only affects how the coroutine behaves until the code of its body starts executing.
- * After that, cancellability and dispatching are defined by the behavior of the invoked suspending functions.
+ * This parameter only affects how the coroutine behaves until the code of its body starts executing. After that, cancellability and
+ * dispatching are defined by the behavior of the invoked suspending functions.
  *
  * The summary of coroutine start options is:
  * - [DEFAULT] immediately schedules the coroutine for execution according to its context.
  * - [LAZY] delays the moment of the initial dispatch until the result of the coroutine is needed.
- * - [ATOMIC] prevents the coroutine from being cancelled before it starts, ensuring that its code will start
- *   executing in any case.
+ * - [ATOMIC] prevents the coroutine from being cancelled before it starts, ensuring that its code will start executing in any case.
  * - [UNDISPATCHED] immediately executes the coroutine until its first suspension point _in the current thread_.
  */
 public enum class CoroutineStart {
@@ -26,11 +24,10 @@ public enum class CoroutineStart {
      *
      * [DEFAULT] uses the default dispatch procedure described in the [CoroutineDispatcher] documentation.
      *
-     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
-     * execution at all and will be considered [cancelled][Job.isCancelled].
+     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its execution at all and will be considered
+     * [cancelled][Job.isCancelled].
      *
      * Examples:
-     *
      * ```
      * // Example of starting a new coroutine that goes through a dispatch
      * runBlocking {
@@ -44,7 +41,6 @@ public enum class CoroutineStart {
      *     println("2. The thread keeps doing other work after launching the coroutine")
      * }
      * ```
-     *
      * ```
      * // Example of starting a new coroutine that doesn't go through a dispatch initially
      * runBlocking {
@@ -59,7 +55,6 @@ public enum class CoroutineStart {
      *     println("3. After the initial suspension, the thread does other work.")
      * }
      * ```
-     *
      * ```
      * // Example of cancelling coroutines before they start executing.
      * runBlocking {
@@ -80,22 +75,19 @@ public enum class CoroutineStart {
     /**
      * Starts the coroutine lazily, only when it is needed.
      *
-     * Starting a coroutine with [LAZY] only creates the coroutine, but does not schedule it for execution.
-     * When the completion of the coroutine is first awaited
-     * (for example, via [Job.join]) or explicitly [started][Job.start],
-     * the dispatch procedure described in the [CoroutineDispatcher] documentation is performed in the thread
-     * that did it.
+     * Starting a coroutine with [LAZY] only creates the coroutine, but does not schedule it for execution. When the completion of the
+     * coroutine is first awaited (for example, via [Job.join]) or explicitly [started][Job.start], the dispatch procedure described in the
+     * [CoroutineDispatcher] documentation is performed in the thread that did it.
      *
-     * The details of what counts as waiting can be found in the documentation of the corresponding coroutine builders
-     * like [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
+     * The details of what counts as waiting can be found in the documentation of the corresponding coroutine builders like
+     * [launch][CoroutineScope.launch] and [async][CoroutineScope.async].
      *
-     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its
-     * execution at all and will be considered [cancelled][Job.isCancelled].
+     * If the coroutine's [Job] is cancelled before it started executing, then it will not start its execution at all and will be considered
+     * [cancelled][Job.isCancelled].
      *
-     * **Pitfall**: launching a coroutine with [LAZY] without awaiting or cancelling it at any point means that it will
-     * never be completed, leading to deadlocks and resource leaks.
-     * For example, the following code will deadlock, since [coroutineScope] waits for all of its child coroutines to
-     * complete:
+     * **Pitfall**: launching a coroutine with [LAZY] without awaiting or cancelling it at any point means that it will never be completed,
+     * leading to deadlocks and resource leaks. For example, the following code will deadlock, since [coroutineScope] waits for all of its
+     * child coroutines to complete:
      * ```
      * // This code hangs!
      * coroutineScope {
@@ -104,7 +96,6 @@ public enum class CoroutineStart {
      * ```
      *
      * The behavior of [LAZY] can be described with the following examples:
-     *
      * ```
      * // Example of lazily starting a new coroutine that goes through a dispatch
      * runBlocking {
@@ -118,7 +109,6 @@ public enum class CoroutineStart {
      *     job.join()
      * }
      * ```
-     *
      * ```
      * // Example of lazily starting a new coroutine that doesn't go through a dispatch initially
      * runBlocking {
@@ -140,21 +130,17 @@ public enum class CoroutineStart {
      *
      * The effects of [LAZY] can usually be achieved more idiomatically without it.
      *
-     * When a coroutine is started with [LAZY] and is stored in a property,
-     * it may be a better choice to use [lazy] instead:
-     *
+     * When a coroutine is started with [LAZY] and is stored in a property, it may be a better choice to use [lazy] instead:
      * ```
      * // instead of `val page = scope.async(start = CoroutineStart.LAZY) { getPage() }`, do
      * val page by lazy { scope.async { getPage() } }
      * ```
      *
-     * This way, the child coroutine is not created at all unless it is needed.
-     * Note that with this, any access to this variable will start the coroutine,
-     * even something like `page.invokeOnCompletion { }` or `page.isActive`.
+     * This way, the child coroutine is not created at all unless it is needed. Note that with this, any access to this variable will start
+     * the coroutine, even something like `page.invokeOnCompletion { }` or `page.isActive`.
      *
-     * If a coroutine is started with [LAZY] and then unconditionally started,
-     * it is more idiomatic to create the coroutine in the exact place where it is started:
-     *
+     * If a coroutine is started with [LAZY] and then unconditionally started, it is more idiomatic to create the coroutine in the exact
+     * place where it is started:
      * ```
      * // instead of `val job = scope.launch(start = CoroutineStart.LAZY) { }; job.start()`, do
      * scope.launch { }
@@ -165,16 +151,14 @@ public enum class CoroutineStart {
     /**
      * Atomically (i.e., in a non-cancellable way) schedules the coroutine for execution according to its context.
      *
-     * This is similar to [DEFAULT], but the coroutine is guaranteed to start executing even if it was cancelled.
-     * This only affects the behavior until the body of the coroutine starts executing;
-     * inside the body, cancellation will work as usual.
+     * This is similar to [DEFAULT], but the coroutine is guaranteed to start executing even if it was cancelled. This only affects the
+     * behavior until the body of the coroutine starts executing; inside the body, cancellation will work as usual.
      *
-     * Like [ATOMIC], [UNDISPATCHED], too, ensures that coroutines will be started in any case.
-     * The difference is that, instead of immediately starting them on the same thread,
-     * [ATOMIC] performs the full dispatch procedure just as [DEFAULT] does.
+     * Like [ATOMIC], [UNDISPATCHED], too, ensures that coroutines will be started in any case. The difference is that, instead of
+     * immediately starting them on the same thread, [ATOMIC] performs the full dispatch procedure just as [DEFAULT] does.
      *
-     * Because of this, we can use [ATOMIC] in cases where we want to be certain that some code eventually runs
-     * and uses a specific dispatcher to do that.
+     * Because of this, we can use [ATOMIC] in cases where we want to be certain that some code eventually runs and uses a specific
+     * dispatcher to do that.
      *
      * Example:
      * ```
@@ -201,12 +185,10 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Here, we used [ATOMIC] to ensure that a mutex that was acquired outside the coroutine does get released
-     * even if cancellation happens between `lock()` and `launch`.
-     * As a result, the mutex will always be released.
+     * Here, we used [ATOMIC] to ensure that a mutex that was acquired outside the coroutine does get released even if cancellation happens
+     * between `lock()` and `launch`. As a result, the mutex will always be released.
      *
      * The behavior of [ATOMIC] can be described with the following examples:
-     *
      * ```
      * // Example of cancelling atomically started coroutines
      * runBlocking {
@@ -232,25 +214,24 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * This is a **delicate** API. The coroutine starts execution even if its [Job] is cancelled before starting.
-     * However, the resources used within a coroutine may rely on the cancellation mechanism,
-     * and cannot be used after the [Job] cancellation. For instance, in Android development, updating a UI element
-     * is not allowed if the coroutine's scope, which is tied to the element's lifecycle, has been cancelled.
+     * This is a **delicate** API. The coroutine starts execution even if its [Job] is cancelled before starting. However, the resources
+     * used within a coroutine may rely on the cancellation mechanism, and cannot be used after the [Job] cancellation. For instance, in
+     * Android development, updating a UI element is not allowed if the coroutine's scope, which is tied to the element's lifecycle, has
+     * been cancelled.
      */
-    @DelicateCoroutinesApi
-    ATOMIC,
+    @DelicateCoroutinesApi ATOMIC,
 
     /**
      * Immediately executes the coroutine until its first suspension point _in the current thread_.
      *
      * Starting a coroutine using [UNDISPATCHED] is similar to using [Dispatchers.Unconfined] with [DEFAULT], except:
-     * - Resumptions from later suspensions will properly use the actual dispatcher from the coroutine's context.
-     *   Only the code until the first suspension point will be executed immediately.
+     * - Resumptions from later suspensions will properly use the actual dispatcher from the coroutine's context. Only the code until the
+     *   first suspension point will be executed immediately.
      * - Even if the coroutine was cancelled already, its code will still start running, similar to [ATOMIC].
      * - The coroutine will not form an event loop. See [Dispatchers.Unconfined] for an explanation of event loops.
      *
-     * This set of behaviors makes [UNDISPATCHED] well-suited for cases where the coroutine has a distinct
-     * initialization phase whose side effects we want to rely on later.
+     * This set of behaviors makes [UNDISPATCHED] well-suited for cases where the coroutine has a distinct initialization phase whose side
+     * effects we want to rely on later.
      *
      * Example:
      * ```
@@ -276,9 +257,8 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * Here, we implement a publisher-subscriber interaction, where [UNDISPATCHED] ensures that the
-     * subscribers do get registered before the publisher first checks if it can stop emitting values due to
-     * the lack of subscribers.
+     * Here, we implement a publisher-subscriber interaction, where [UNDISPATCHED] ensures that the subscribers do get registered before the
+     * publisher first checks if it can stop emitting values due to the lack of subscribers.
      *
      * ```
      * // Constant usage of stack space
@@ -302,12 +282,10 @@ public enum class CoroutineStart {
      *     }
      * ```
      *
-     * Calling `factorialWithUnconfined` from this example will result in a constant-size stack,
-     * whereas `factorialWithUndispatched` will lead to `n` recursively nested calls,
-     * resulting in a stack overflow for large values of `n`.
+     * Calling `factorialWithUnconfined` from this example will result in a constant-size stack, whereas `factorialWithUndispatched` will
+     * lead to `n` recursively nested calls, resulting in a stack overflow for large values of `n`.
      *
      * The behavior of [UNDISPATCHED] can be described with the following examples:
-     *
      * ```
      * runBlocking {
      *     println("1. About to start a new coroutine.")
@@ -319,7 +297,6 @@ public enum class CoroutineStart {
      *     println("3. Execution of the outer coroutine only continues later.")
      * }
      * ```
-     *
      * ```
      * // Cancellation does not prevent the coroutine from being started
      * runBlocking {
@@ -334,11 +311,9 @@ public enum class CoroutineStart {
      * }
      * ```
      *
-     * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched
-     * coroutines do not form an event loop that otherwise prevents potential stack overflow in case of unlimited
-     * nesting. This property is necessary for the use case of guaranteed initialization, but may be undesirable in
-     * other cases.
-     * See [Dispatchers.Unconfined] for an explanation of event loops.
+     * **Pitfall**: unlike [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate], nested undispatched coroutines do not form an
+     * event loop that otherwise prevents potential stack overflow in case of unlimited nesting. This property is necessary for the use case
+     * of guaranteed initialization, but may be undesirable in other cases. See [Dispatchers.Unconfined] for an explanation of event loops.
      */
     UNDISPATCHED;
 
@@ -367,5 +342,6 @@ public enum class CoroutineStart {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public val isLazy: Boolean get() = this === LAZY
+    public val isLazy: Boolean
+        get() = this === LAZY
 }

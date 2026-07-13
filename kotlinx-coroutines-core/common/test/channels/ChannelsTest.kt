@@ -8,7 +8,7 @@ import kotlin.coroutines.*
 import kotlin.math.*
 import kotlin.test.*
 
-class ChannelsTest: TestBase() {
+class ChannelsTest : TestBase() {
     private val testList = listOf(1, 2, 3)
 
     @Test
@@ -138,7 +138,6 @@ class ChannelsTest: TestBase() {
 
     private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
         GlobalScope.produce(context) {
-            for (element in this@asReceiveChannel)
-                send(element)
+            for (element in this@asReceiveChannel) send(element)
         }
 }

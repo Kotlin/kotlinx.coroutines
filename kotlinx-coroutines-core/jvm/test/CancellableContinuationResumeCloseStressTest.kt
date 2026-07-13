@@ -8,8 +8,7 @@ import kotlin.test.*
 import kotlin.test.Test
 
 class CancellableContinuationResumeCloseStressTest : TestBase() {
-    @get:Rule
-    val dispatcher = ExecutorRule(2)
+    @get:Rule val dispatcher = ExecutorRule(2)
 
     private val startBarrier = CyclicBarrier(3)
     private val doneBarrier = CyclicBarrier(2)
@@ -38,22 +37,24 @@ class CancellableContinuationResumeCloseStressTest : TestBase() {
         }
     }
 
-    private fun CoroutineScope.testJob(): Job = launch(dispatcher, start = CoroutineStart.ATOMIC) {
-        val ok = resumeClose() // might be cancelled
-        assertEquals("OK", ok)
-        returnedOk = true
-    }
-
-    private suspend fun resumeClose() = suspendCancellableCoroutine<String> { cont ->
-        dispatcher.executor.execute {
-            startBarrier.await() // (2) resume at the same time
-            cont.resume("OK") { _, _, _ ->
-                close()
-            }
-            doneBarrier.await()
+    private fun CoroutineScope.testJob(): Job =
+        launch(dispatcher, start = CoroutineStart.ATOMIC) {
+            val ok = resumeClose() // might be cancelled
+            assertEquals("OK", ok)
+            returnedOk = true
         }
-        startBarrier.await() // (3) return at the same time
-    }
+
+    private suspend fun resumeClose() =
+        suspendCancellableCoroutine<String> { cont ->
+            dispatcher.executor.execute {
+                startBarrier.await() // (2) resume at the same time
+                cont.resume("OK") { _, _, _ ->
+                    close()
+                }
+                doneBarrier.await()
+            }
+            startBarrier.await() // (3) return at the same time
+        }
 
     fun close() {
         assertFalse(closed.getAndSet(true))

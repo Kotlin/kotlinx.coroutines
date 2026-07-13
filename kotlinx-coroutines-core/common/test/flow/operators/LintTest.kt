@@ -4,19 +4,20 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class LintTest: TestBase() {
+class LintTest : TestBase() {
     /**
-     * Tests that using [SharedFlow.toList] and similar functions by passing a mutable collection does add values
-     * to the provided collection.
+     * Tests that using [SharedFlow.toList] and similar functions by passing a mutable collection does add values to the provided
+     * collection.
      */
     @Test
     fun testSharedFlowToCollection() = runTest {
         val sharedFlow = MutableSharedFlow<Int>()
         val list = mutableListOf<Int>()
         val set = mutableSetOf<Int>()
-        val jobs = listOf(suspend { sharedFlow.toList(list) }, { sharedFlow.toSet(set) }).map {
-            launch(Dispatchers.Unconfined) { it() }
-        }
+        val jobs =
+            listOf(suspend { sharedFlow.toList(list) }, { sharedFlow.toSet(set) }).map {
+                launch(Dispatchers.Unconfined) { it() }
+            }
         repeat(10) {
             sharedFlow.emit(it)
         }

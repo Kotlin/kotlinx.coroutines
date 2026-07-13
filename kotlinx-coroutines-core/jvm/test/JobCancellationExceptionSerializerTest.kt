@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import org.junit.*
 import java.io.*
 
-
 @Suppress("BlockingMethodInNonBlockingContext")
 class JobCancellationExceptionSerializerTest : TestBase() {
 
@@ -56,8 +55,8 @@ class JobCancellationExceptionSerializerTest : TestBase() {
             }
             val deserializedException =
                 ObjectInputStream(outputStream.toByteArray().inputStream()).use {
-                it.readObject() as JobCancellationException
-            }
+                    it.readObject() as JobCancellationException
+                }
             // verify hashCode does not fail even though Job is transient
             assert(deserializedException.hashCode() != 0)
         }

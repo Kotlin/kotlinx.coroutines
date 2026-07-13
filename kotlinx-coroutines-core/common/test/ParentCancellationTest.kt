@@ -4,9 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
-/**
- * Systematically tests that various builders cancel parent on failure.
- */
+/** Systematically tests that various builders cancel parent on failure. */
 class ParentCancellationTest : TestBase() {
     @Test
     fun testJobChild() = runTest {
@@ -94,7 +92,7 @@ class ParentCancellationTest : TestBase() {
         expectRethrows: Boolean = false,
         expectUnhandled: Boolean = false,
         runsInScopeContext: Boolean = false,
-        child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
+        child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit,
     ) {
         testWithException(
             expectParentActive,
@@ -102,7 +100,7 @@ class ParentCancellationTest : TestBase() {
             expectUnhandled,
             runsInScopeContext,
             TestException(),
-            child
+            child,
         )
         testWithException(
             true,
@@ -110,7 +108,7 @@ class ParentCancellationTest : TestBase() {
             false,
             runsInScopeContext,
             CancellationException("Test"),
-            child
+            child,
         )
     }
 
@@ -120,7 +118,7 @@ class ParentCancellationTest : TestBase() {
         expectUnhandled: Boolean,
         runsInScopeContext: Boolean,
         throwException: Throwable,
-        child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit
+        child: suspend CoroutineScope.(block: suspend CoroutineScope.() -> Unit) -> Unit,
     ) {
         reset()
         expect(1)
@@ -131,9 +129,10 @@ class ParentCancellationTest : TestBase() {
                 // launch failing grandchild
                 var unhandledException: Throwable? = null
                 val handler = CoroutineExceptionHandler { _, e -> unhandledException = e }
-                val grandchild = launch(handler) {
-                    throw throwException
-                }
+                val grandchild =
+                    launch(handler) {
+                        throw throwException
+                    }
                 grandchild.join()
                 when {
                     !expectParentActive && runsInScopeContext -> expectUnreached()

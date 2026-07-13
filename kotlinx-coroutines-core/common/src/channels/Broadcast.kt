@@ -3,20 +3,19 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
-/**
- * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
- */
+/** @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0 */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported",
+)
 public fun <E> ReceiveChannel<E>.broadcast(
     capacity: Int = 1,
-    start: CoroutineStart = CoroutineStart.LAZY
+    start: CoroutineStart = CoroutineStart.LAZY,
 ): BroadcastChannel<E> {
     val scope = GlobalScope + Dispatchers.Unconfined + CoroutineExceptionHandler { _, _ -> }
     val channel = this
@@ -29,23 +28,23 @@ public fun <E> ReceiveChannel<E>.broadcast(
     }
 }
 
-/**
- * @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0
- */
+/** @suppress obsolete since 1.5.0, WARNING since 1.7.0, ERROR since 1.9.0 */
 @ObsoleteCoroutinesApi
-@Deprecated(level = DeprecationLevel.ERROR, message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported")
+@Deprecated(
+    level = DeprecationLevel.ERROR,
+    message = "BroadcastChannel is deprecated in the favour of SharedFlow and is no longer supported",
+)
 public fun <E> CoroutineScope.broadcast(
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = 1,
     start: CoroutineStart = CoroutineStart.LAZY,
     onCompletion: CompletionHandler? = null,
-    block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit,
 ): BroadcastChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)
-    val coroutine = if (start.isLazy)
-        LazyBroadcastCoroutine(newContext, channel, block) else
-        BroadcastCoroutine(newContext, channel, active = true)
+    val coroutine =
+        if (start.isLazy) LazyBroadcastCoroutine(newContext, channel, block) else BroadcastCoroutine(newContext, channel, active = true)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
     coroutine.start(start, coroutine, block)
     return coroutine
@@ -54,27 +53,31 @@ public fun <E> CoroutineScope.broadcast(
 private open class BroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     protected val _channel: BroadcastChannel<E>,
-    active: Boolean
-) : AbstractCoroutine<Unit>(parentContext, initParentJob = false, active = active),
-    ProducerScope<E>, BroadcastChannel<E> by _channel {
+    active: Boolean,
+) : AbstractCoroutine<Unit>(parentContext, initParentJob = false, active = active), ProducerScope<E>, BroadcastChannel<E> by _channel {
 
     init {
         initParentJob(parentContext[Job])
     }
 
-    override val isActive: Boolean get() = super.isActive
+    override val isActive: Boolean
+        get() = super.isActive
 
     override val channel: SendChannel<E>
         get() = this
 
-    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
+    @Suppress(
+        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING"
+    ) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     final override fun cancel(cause: Throwable?): Boolean {
         cancelInternal(cause ?: defaultCancellationException())
         return true
     }
 
-    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
+    @Suppress(
+        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING"
+    ) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     final override fun cancel(cause: CancellationException?) {
         cancelInternal(cause ?: defaultCancellationException())
     }
@@ -105,7 +108,7 @@ private open class BroadcastCoroutine<E>(
 private class LazyBroadcastCoroutine<E>(
     parentContext: CoroutineContext,
     channel: BroadcastChannel<E>,
-    block: suspend ProducerScope<E>.() -> Unit
+    block: suspend ProducerScope<E>.() -> Unit,
 ) : BroadcastCoroutine<E>(parentContext, channel, active = false) {
     private val continuation = block.createCoroutineUnintercepted(this, this)
 

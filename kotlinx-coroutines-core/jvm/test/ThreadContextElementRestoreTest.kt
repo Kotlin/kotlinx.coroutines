@@ -84,9 +84,7 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
     }
 
-    @Test
-    fun testSimpleNoSuspend() =
-        check {}
+    @Test fun testSimpleNoSuspend() = check {}
 
     @Test
     fun testSimpleDelay() = check {
@@ -99,11 +97,13 @@ class ThreadContextElementRestoreTest : TestBase() {
     }
 
     private suspend fun deepDelay() {
-        deepDelay2(); deepDelay2()
+        deepDelay2()
+        deepDelay2()
     }
 
     private suspend fun deepDelay2() {
-        delay(1); delay(1)
+        delay(1)
+        delay(1)
     }
 
     @Test
@@ -112,11 +112,13 @@ class ThreadContextElementRestoreTest : TestBase() {
     }
 
     private suspend fun deepYield() {
-        deepYield2(); deepYield2()
+        deepYield2()
+        deepYield2()
     }
 
     private suspend fun deepYield2() {
-        yield(); yield()
+        yield()
+        yield()
     }
 
     @Test
@@ -186,6 +188,7 @@ class ThreadContextElementRestoreTest : TestBase() {
             delay(1)
         }
     }
+
     @Test
     fun testWithUnconfinedContextYield() = check {
         withContext(Dispatchers.Unconfined) {

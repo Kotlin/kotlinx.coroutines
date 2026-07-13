@@ -11,31 +11,35 @@ class WorkerTest : TestBase() {
     @Test
     fun testLaunchInWorker() {
         val worker = Worker.start()
-        worker.execute(TransferMode.SAFE, { }) {
-            runBlocking {
-                launch { }.join()
-                delay(1)
+        worker
+            .execute(TransferMode.SAFE, {}) {
+                runBlocking {
+                    launch {}.join()
+                    delay(1)
+                }
             }
-        }.result
+            .result
         worker.requestTermination()
     }
 
     @Test
     fun testLaunchInWorkerThroughGlobalScope() {
         val worker = Worker.start()
-        worker.execute(TransferMode.SAFE, { }) {
-            runBlocking {
-                CoroutineScope(EmptyCoroutineContext).launch {
-                    delay(10)
-                }.join()
+        worker
+            .execute(TransferMode.SAFE, {}) {
+                runBlocking {
+                    CoroutineScope(EmptyCoroutineContext)
+                        .launch {
+                            delay(10)
+                        }
+                        .join()
+                }
             }
-        }.result
+            .result
         worker.requestTermination()
     }
 
-    /**
-     * Test that [runBlocking] does not crash after [Worker.requestTermination] is called on the worker that runs it.
-     */
+    /** Test that [runBlocking] does not crash after [Worker.requestTermination] is called on the worker that runs it. */
     @Test
     fun testRunBlockingInTerminatedWorker() {
         val workerInRunBlocking = Channel<Unit>()

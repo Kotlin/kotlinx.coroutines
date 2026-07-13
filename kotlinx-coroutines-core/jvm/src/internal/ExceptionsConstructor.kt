@@ -7,15 +7,16 @@ import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 
 private val throwableFields = Throwable::class.java.fieldsCountOrDefault(-1)
+
 private typealias Ctor = (Throwable) -> Throwable?
 
-private val ctorCache = try {
-    if (ANDROID_DETECTED) WeakMapCtorCache
-    else ClassValueCtorCache
-} catch (e: Throwable) {
-    // Fallback on Java 6 or exotic setups
-    WeakMapCtorCache
-}
+private val ctorCache =
+    try {
+        if (ANDROID_DETECTED) WeakMapCtorCache else ClassValueCtorCache
+    } catch (e: Throwable) {
+        // Fallback on Java 6 or exotic setups
+        WeakMapCtorCache
+    }
 
 @Suppress("UNCHECKED_CAST")
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
@@ -42,8 +43,9 @@ private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
         val copyForStackTraceRecovery = clz.getMethod("copyForStackTraceRecovery")
         return { e ->
             runCatching {
-                (copyForStackTraceRecovery.invoke(e) as Throwable?)
-            }.getOrNull()
+                    (copyForStackTraceRecovery.invoke(e) as Throwable?)
+                }
+                .getOrNull()
         }
     } catch (_: NoSuchMethodException) {
         // Expected: there simply was no implementation of `StackTraceRecoverable`
@@ -62,41 +64,44 @@ private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
      * By default, Java's reflection iterates over ctors in the source-code order and the sorting is stable, so we can
      * not rely on the order of iteration. Instead, we assign a unique priority to each ctor type.
      */
-    return clz.constructors.map { constructor ->
-        val p = constructor.parameterTypes
-        when (p.size) {
-            2 -> when {
-                p[0] == String::class.java && p[1] == Throwable::class.java ->
-                    safeCtor { e -> constructor.newInstance(e.message, e) as Throwable } to 3
+    return clz.constructors
+        .map { constructor ->
+            val p = constructor.parameterTypes
+            when (p.size) {
+                2 ->
+                    when {
+                        p[0] == String::class.java && p[1] == Throwable::class.java ->
+                            safeCtor { e -> constructor.newInstance(e.message, e) as Throwable } to 3
+                        else -> null to -1
+                    }
+                1 ->
+                    when (p[0]) {
+                        String::class.java ->
+                            safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } } to 2
+                        Throwable::class.java -> safeCtor { e -> constructor.newInstance(e) as Throwable } to 1
+                        else -> null to -1
+                    }
+                0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } } to 0
                 else -> null to -1
             }
-            1 -> when (p[0]) {
-                String::class.java ->
-                    safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } } to 2
-                Throwable::class.java ->
-                    safeCtor { e -> constructor.newInstance(e) as Throwable } to 1
-                else -> null to -1
-            }
-            0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } } to 0
-            else -> null to -1
         }
-    }.maxByOrNull(Pair<*, Int>::second)?.first ?: nullResult
+        .maxByOrNull(Pair<*, Int>::second)
+        ?.first ?: nullResult
 }
 
 private fun safeCtor(block: (Throwable) -> Throwable): Ctor = { e ->
     runCatching {
-        val result = block(e)
-        /*
-         * Verify that the new exception has the same message as the original one (bail out if not, see #1631)
-         * or if the new message complies the contract from `Throwable(cause).message` contract.
-         */
-        if (e.message != result.message && result.message != e.toString()) null
-        else result
-    }.getOrNull()
+            val result = block(e)
+            /*
+             * Verify that the new exception has the same message as the original one (bail out if not, see #1631)
+             * or if the new message complies the contract from `Throwable(cause).message` contract.
+             */
+            if (e.message != result.message && result.message != e.toString()) null else result
+        }
+        .getOrNull()
 }
 
-private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) =
-    kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
+private fun Class<*>.fieldsCountOrDefault(defaultValue: Int) = kotlin.runCatching { fieldsCount() }.getOrDefault(defaultValue)
 
 private tailrec fun Class<*>.fieldsCount(accumulator: Int = 0): Int {
     val fieldsCount = declaredFields.count { !Modifier.isStatic(it.modifiers) }
@@ -114,9 +119,15 @@ private object WeakMapCtorCache : CtorCache() {
     private val exceptionCtors: WeakHashMap<Class<out Throwable>, Ctor> = WeakHashMap()
 
     override fun get(key: Class<out Throwable>): Ctor {
-        cacheLock.read { exceptionCtors[key]?.let { return it } }
+        cacheLock.read {
+            exceptionCtors[key]?.let {
+                return it
+            }
+        }
         cacheLock.write {
-            exceptionCtors[key]?.let { return it }
+            exceptionCtors[key]?.let {
+                return it
+            }
             return createConstructor(key).also { exceptionCtors[key] = it }
         }
     }
@@ -124,12 +135,13 @@ private object WeakMapCtorCache : CtorCache() {
 
 @IgnoreJreRequirement
 private object ClassValueCtorCache : CtorCache() {
-    private val cache = object : ClassValue<Ctor>() {
-        override fun computeValue(type: Class<*>?): Ctor {
-            @Suppress("UNCHECKED_CAST")
-            return createConstructor(type as Class<out Throwable>)
+    private val cache =
+        object : ClassValue<Ctor>() {
+            override fun computeValue(type: Class<*>?): Ctor {
+                @Suppress("UNCHECKED_CAST")
+                return createConstructor(type as Class<out Throwable>)
+            }
         }
-    }
 
     override fun get(key: Class<out Throwable>): Ctor = cache.get(key)
 }

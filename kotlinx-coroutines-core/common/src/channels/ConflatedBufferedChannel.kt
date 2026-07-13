@@ -1,21 +1,19 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.channels.BufferOverflow.*
-import kotlinx.coroutines.channels.ChannelResult.Companion.closed
 import kotlinx.coroutines.channels.ChannelResult.Companion.success
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 
 /**
- * This is a special [BufferedChannel] extension that supports [DROP_OLDEST] and [DROP_LATEST]
- * strategies for buffer overflowing. This implementation ensures that `send(e)` never suspends,
- * either extracting the first element ([DROP_OLDEST]) or dropping the sending one ([DROP_LATEST])
- * when the channel capacity exceeds.
+ * This is a special [BufferedChannel] extension that supports [DROP_OLDEST] and [DROP_LATEST] strategies for buffer overflowing. This
+ * implementation ensures that `send(e)` never suspends, either extracting the first element ([DROP_OLDEST]) or dropping the sending one
+ * ([DROP_LATEST]) when the channel capacity exceeds.
  */
 internal open class ConflatedBufferedChannel<E>(
     private val capacity: Int,
     private val onBufferOverflow: BufferOverflow,
-    onUndeliveredElement: OnUndeliveredElement<E>? = null
+    onUndeliveredElement: OnUndeliveredElement<E>? = null,
 ) : BufferedChannel<E>(capacity = capacity, onUndeliveredElement = onUndeliveredElement) {
     init {
         require(onBufferOverflow !== SUSPEND) {
@@ -43,15 +41,16 @@ internal open class ConflatedBufferedChannel<E>(
     override suspend fun sendBroadcast(element: E): Boolean {
         // Should never suspend, implement via `trySend(..)`.
         trySendImpl(element, isSendOp = true) // fails only when this channel is closed.
-            .onSuccess { return true }
+            .onSuccess {
+                return true
+            }
         return false
     }
 
     override fun trySend(element: E): ChannelResult<Unit> = trySendImpl(element, isSendOp = false)
 
     private fun trySendImpl(element: E, isSendOp: Boolean) =
-        if (onBufferOverflow === DROP_LATEST) trySendDropLatest(element, isSendOp)
-        else trySendDropOldest(element)
+        if (onBufferOverflow === DROP_LATEST) trySendDropLatest(element, isSendOp) else trySendDropOldest(element)
 
     private fun trySendDropLatest(element: E, isSendOp: Boolean): ChannelResult<Unit> {
         // Try to send the element without suspension.
@@ -76,12 +75,13 @@ internal open class ConflatedBufferedChannel<E>(
         // In any case, complete this `select` in the registration phase.
         trySend(element as E).let {
             it.onSuccess {
-                select.selectInRegistrationPhase(Unit)
-                return
-            }.onClosed {
-                select.selectInRegistrationPhase(CHANNEL_CLOSED)
-                return
-            }
+                    select.selectInRegistrationPhase(Unit)
+                    return
+                }
+                .onClosed {
+                    select.selectInRegistrationPhase(CHANNEL_CLOSED)
+                    return
+                }
         }
         error("unreachable")
     }

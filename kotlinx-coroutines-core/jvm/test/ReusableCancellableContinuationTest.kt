@@ -21,7 +21,7 @@ class ReusableCancellableContinuationTest : TestBase() {
     private suspend inline fun CoroutineScope.testContinuationsCount(
         iterations: Int,
         expectedInstances: Int,
-        suspender: suspend ((CancellableContinuation<Unit>) -> Unit) -> Unit
+        suspender: suspend ((CancellableContinuation<Unit>) -> Unit) -> Unit,
     ) {
         val result = mutableSetOf<CancellableContinuation<*>>()
         val job = coroutineContext[Job]!!
@@ -57,33 +57,34 @@ class ReusableCancellableContinuationTest : TestBase() {
     }
 
     @Test
-    fun testNotCancelledOnClaimedResume() = runTest({ it is CancellationException }) {
-        expect(1)
-        // Bind child at first
-        var continuation: Continuation<*>? = null
-        suspendCancellableCoroutineReusable<Unit> {
-            expect(2)
-            continuation = it
-            launch {  // Attach to the parent, avoid fast path
-                expect(3)
-                it.resume(Unit)
-            }
-        }
-        expect(4)
-        ensureActive()
-        // Verify child was bound
-        FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
-        try {
+    fun testNotCancelledOnClaimedResume() =
+        runTest({ it is CancellationException }) {
+            expect(1)
+            // Bind child at first
+            var continuation: Continuation<*>? = null
             suspendCancellableCoroutineReusable<Unit> {
-                expect(5)
-                coroutineContext[Job]!!.cancel()
-                it.resume(Unit) // will not dispatch, will get CancellationException
+                expect(2)
+                continuation = it
+                launch { // Attach to the parent, avoid fast path
+                    expect(3)
+                    it.resume(Unit)
+                }
             }
-        } catch (e: CancellationException) {
-            assertFalse(isActive)
-            finish(6)
+            expect(4)
+            ensureActive()
+            // Verify child was bound
+            FieldWalker.assertReachableCount(1, coroutineContext[Job]) { it === continuation }
+            try {
+                suspendCancellableCoroutineReusable<Unit> {
+                    expect(5)
+                    coroutineContext[Job]!!.cancel()
+                    it.resume(Unit) // will not dispatch, will get CancellationException
+                }
+            } catch (e: CancellationException) {
+                assertFalse(isActive)
+                finish(6)
+            }
         }
-    }
 
     @Test
     fun testResumeReusablePreservesReference() = runTest {
@@ -132,45 +133,46 @@ class ReusableCancellableContinuationTest : TestBase() {
     }
 
     @Test
-    fun testPropagatedCancel() = runTest({it is CancellationException}) {
-        val currentJob = coroutineContext[Job]!!
-        expect(1)
-        // Bind child at first
-        suspendCancellableCoroutineReusable<Unit> {
-            expect(2)
-            // Attach to the parent, avoid fast path
-            launch {
-                expect(3)
-                it.resume(Unit)
-            }
-        }
-        expect(4)
-        ensureActive()
-        // Verify child was bound
-        FieldWalker.assertReachableCount(1, currentJob) { it is CancellableContinuation<*> }
-        currentJob.cancel()
-        assertFalse(isActive)
-        // Child detached
-        FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-        expect(5)
-        try {
-            // Resume is non-atomic, so it throws cancellation exception
+    fun testPropagatedCancel() =
+        runTest({ it is CancellationException }) {
+            val currentJob = coroutineContext[Job]!!
+            expect(1)
+            // Bind child at first
             suspendCancellableCoroutineReusable<Unit> {
-                expect(6) // but the code inside the block is executed
-                it.resume(Unit)
+                expect(2)
+                // Attach to the parent, avoid fast path
+                launch {
+                    expect(3)
+                    it.resume(Unit)
+                }
             }
-        } catch (e: CancellationException) {
+            expect(4)
+            ensureActive()
+            // Verify child was bound
+            FieldWalker.assertReachableCount(1, currentJob) { it is CancellableContinuation<*> }
+            currentJob.cancel()
+            assertFalse(isActive)
+            // Child detached
             FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-            expect(7)
+            expect(5)
+            try {
+                // Resume is non-atomic, so it throws cancellation exception
+                suspendCancellableCoroutineReusable<Unit> {
+                    expect(6) // but the code inside the block is executed
+                    it.resume(Unit)
+                }
+            } catch (e: CancellationException) {
+                FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
+                expect(7)
+            }
+            try {
+                // No resume -- still cancellation exception
+                suspendCancellableCoroutineReusable<Unit> {}
+            } catch (e: CancellationException) {
+                FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
+                finish(8)
+            }
         }
-        try {
-            // No resume -- still cancellation exception
-            suspendCancellableCoroutineReusable<Unit> {}
-        } catch (e: CancellationException) {
-            FieldWalker.assertReachableCount(0, currentJob) { it is CancellableContinuation<*> }
-            finish(8)
-        }
-    }
 
     @Test
     fun testChannelMemoryLeak() = runTest {
@@ -202,7 +204,7 @@ class ReusableCancellableContinuationTest : TestBase() {
 
     @Test
     fun testReusableAndRegularSuspendCancellableCoroutineMemoryLeak() = runTest {
-        val channel =  produce {
+        val channel = produce {
             repeat(10) {
                 send(Unit)
             }

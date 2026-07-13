@@ -20,7 +20,13 @@ class MapNotNullTest : TestBase() {
 
     @Test
     fun testEmptyFlow() = runTest {
-        val sum = emptyFlow<Int>().mapNotNull { expectUnreached(); it }.sum()
+        val sum =
+            emptyFlow<Int>()
+                .mapNotNull {
+                    expectUnreached()
+                    it
+                }
+                .sum()
         assertEquals(0, sum)
     }
 
@@ -28,18 +34,21 @@ class MapNotNullTest : TestBase() {
     fun testErrorCancelsUpstream() = runTest {
         var cancelled = false
         val latch = Channel<Unit>()
-        val flow = flow {
-            coroutineScope {
-                launch {
-                    latch.send(Unit)
-                    hang { cancelled = true }
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch {
+                            latch.send(Unit)
+                            hang { cancelled = true }
+                        }
+                        emit(1)
+                    }
                 }
-                emit(1)
-            }
-        }.mapNotNull<Int, Int> {
-            latch.receive()
-            throw TestException()
-        }.catch { emit(42) }
+                .mapNotNull<Int, Int> {
+                    latch.receive()
+                    throw TestException()
+                }
+                .catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

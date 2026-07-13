@@ -8,8 +8,8 @@ import org.junit.Test
 import kotlin.test.*
 
 /**
- * A simple stress-test that does select sending/receiving into opposite channels to ensure that they
- * don't deadlock. See https://github.com/Kotlin/kotlinx.coroutines/issues/504
+ * A simple stress-test that does select sending/receiving into opposite channels to ensure that they don't deadlock. See
+ * https://github.com/Kotlin/kotlinx.coroutines/issues/504
  */
 class SelectDeadlockStressTest : TestBase() {
     private val pool = newFixedThreadPoolContext(2, "SelectDeadlockStressTest")
@@ -42,18 +42,19 @@ class SelectDeadlockStressTest : TestBase() {
         override fun toString(): String = "send=$sendIndex, received=$receiveIndex"
     }
 
-    private fun CoroutineScope.launchSendReceive(c1: Channel<Long>, c2: Channel<Long>, s: Stats) = launch(pool) {
-        while (true) {
-            if (s.sendIndex % 1000 == 0L) yield()
-            select<Unit> {
-                c1.onSend(s.sendIndex) {
-                    s.sendIndex++
-                }
-                c2.onReceive { i ->
-                    assertEquals(s.receiveIndex, i)
-                    s.receiveIndex++
+    private fun CoroutineScope.launchSendReceive(c1: Channel<Long>, c2: Channel<Long>, s: Stats) =
+        launch(pool) {
+            while (true) {
+                if (s.sendIndex % 1000 == 0L) yield()
+                select<Unit> {
+                    c1.onSend(s.sendIndex) {
+                        s.sendIndex++
+                    }
+                    c2.onReceive { i ->
+                        assertEquals(s.receiveIndex, i)
+                        s.receiveIndex++
+                    }
                 }
             }
         }
-    }
 }

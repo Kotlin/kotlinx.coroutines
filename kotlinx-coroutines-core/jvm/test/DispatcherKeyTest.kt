@@ -8,8 +8,7 @@ import kotlin.test.*
 @OptIn(ExperimentalStdlibApi::class)
 class DispatcherKeyTest : TestBase() {
 
-    companion object CustomInterceptor : AbstractCoroutineContextElement(ContinuationInterceptor),
-        ContinuationInterceptor {
+    companion object CustomInterceptor : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
         override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
             return continuation
         }

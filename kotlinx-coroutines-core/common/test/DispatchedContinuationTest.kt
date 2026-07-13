@@ -5,8 +5,8 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 /**
- * When using [suspendCoroutine] from the standard library the continuation must be dispatched atomically,
- * without checking for cancellation at any point in time.
+ * When using [suspendCoroutine] from the standard library the continuation must be dispatched atomically, without checking for cancellation
+ * at any point in time.
  */
 class DispatchedContinuationTest : TestBase() {
     private lateinit var cont: Continuation<String>
@@ -18,10 +18,11 @@ class DispatchedContinuationTest : TestBase() {
             expect(2)
             coroutineContext[Job]!!.cancel()
             // a regular suspendCoroutine will still suspend despite the fact that coroutine was cancelled
-            val value = suspendCoroutine<String> {
-                expect(3)
-                cont = it
-            }
+            val value =
+                suspendCoroutine<String> {
+                    expect(3)
+                    cont = it
+                }
             expect(6)
             assertEquals("OK", value)
         }
@@ -39,10 +40,11 @@ class DispatchedContinuationTest : TestBase() {
             expect(2)
             coroutineContext[Job]!!.cancel()
             // a regular suspendCoroutine will still suspend despite the fact that coroutine was cancelled
-            val value = suspendCoroutine<String> {
-                expect(3)
-                cont = it
-            }
+            val value =
+                suspendCoroutine<String> {
+                    expect(3)
+                    cont = it
+                }
             expect(5)
             assertEquals("OK", value)
         }
@@ -54,15 +56,17 @@ class DispatchedContinuationTest : TestBase() {
     @Test
     fun testResumeThenCancel() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            val value = suspendCoroutine<String> {
-                expect(3)
-                cont = it
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                val value =
+                    suspendCoroutine<String> {
+                        expect(3)
+                        cont = it
+                    }
+                expect(7)
+                assertEquals("OK", value)
             }
-            expect(7)
-            assertEquals("OK", value)
-        }
         expect(4)
         cont.resume("OK")
         expect(5)

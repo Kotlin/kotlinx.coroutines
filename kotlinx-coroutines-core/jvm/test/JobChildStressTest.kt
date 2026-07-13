@@ -5,9 +5,7 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.*
 import kotlin.test.*
 
-/**
- * Testing the procedure of attaching a child to the parent job.
- */
+/** Testing the procedure of attaching a child to the parent job. */
 class JobChildStressTest : TestBase() {
     private val N_ITERATIONS = 10_000 * stressTestMultiplier
     private val pool = newFixedThreadPoolContext(3, "JobChildStressTest")
@@ -23,10 +21,8 @@ class JobChildStressTest : TestBase() {
      * Checks the following interleavings:
      * - A child attaches before the parent is cancelled.
      * - A child attaches after the parent is cancelled, but before the parent notifies anyone about it.
-     * - A child attaches after the parent notifies the children about being cancelled,
-     *   but before it starts waiting for its children.
-     * - A child attempts to attach after the parent stops waiting for its children,
-     *   which immediately cancels the child.
+     * - A child attaches after the parent notifies the children about being cancelled, but before it starts waiting for its children.
+     * - A child attempts to attach after the parent stops waiting for its children, which immediately cancels the child.
      */
     @Test
     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -70,8 +66,7 @@ class JobChildStressTest : TestBase() {
      *
      * Checks the following interleavings:
      * - A child attaches while the parent is already completing, but is waiting for its children.
-     * - A child attempts to attach after the parent stops waiting for its children,
-     *   which immediately cancels the child.
+     * - A child attempts to attach after the parent stops waiting for its children, which immediately cancels the child.
      */
     @Test
     fun testChildAttachmentRacingWithLastChildCompletion() {
@@ -85,15 +80,17 @@ class JobChildStressTest : TestBase() {
                 // optionally, add a completion handler to the parent job, so that the child tries to enter a list with
                 // multiple elements, not just one.
                 if (it.mod(2) == 0) {
-                    deferred.invokeOnCompletion { }
+                    deferred.invokeOnCompletion {}
                 }
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
                     pool.executor.execute {
-                        rogueJob.set(launch(pool + deferred) {
-                            throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
-                        })
+                        rogueJob.set(
+                            launch(pool + deferred) {
+                                throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
+                            }
+                        )
                         canCloseThePool.countDown()
                     }
                 }
@@ -101,7 +98,9 @@ class JobChildStressTest : TestBase() {
                 deferred.join()
                 val rogue = rogueJob.get()
                 if (rogue?.isActive == true) {
-                    throw TestException("Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList())
+                    throw TestException(
+                        "Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList()
+                    )
                 } else {
                     canCloseThePool.await()
                     rogueJob.get().let {

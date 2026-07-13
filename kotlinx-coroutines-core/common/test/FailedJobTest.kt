@@ -20,38 +20,38 @@ class FailedJobTest : TestBase() {
     }
 
     @Test
-    fun testFailedJob() = runTest(
-        unhandled = listOf({it -> it is TestException })
-    ) {
-        expect(1)
-        val job = launch(NonCancellable) {
-            expect(3)
-            throw TestException()
+    fun testFailedJob() =
+        runTest(unhandled = listOf({ it -> it is TestException })) {
+            expect(1)
+            val job =
+                launch(NonCancellable) {
+                    expect(3)
+                    throw TestException()
+                }
+            expect(2)
+            job.join()
+            finish(4)
+            assertTrue(job.isCompleted)
+            assertTrue(!job.isActive)
+            assertTrue(job.isCancelled)
         }
-        expect(2)
-        job.join()
-        finish(4)
-        assertTrue(job.isCompleted)
-        assertTrue(!job.isActive)
-        assertTrue(job.isCancelled)
-    }
 
     @Test
-    fun testFailedChildJob() = runTest(
-        unhandled = listOf({it -> it is TestException })
-    ) {
-        expect(1)
-        val job = launch(NonCancellable) {
-            expect(3)
-            launch {
-                throw TestException()
-            }
+    fun testFailedChildJob() =
+        runTest(unhandled = listOf({ it -> it is TestException })) {
+            expect(1)
+            val job =
+                launch(NonCancellable) {
+                    expect(3)
+                    launch {
+                        throw TestException()
+                    }
+                }
+            expect(2)
+            job.join()
+            finish(4)
+            assertTrue(job.isCompleted)
+            assertTrue(!job.isActive)
+            assertTrue(job.isCancelled)
         }
-        expect(2)
-        job.join()
-        finish(4)
-        assertTrue(job.isCompleted)
-        assertTrue(!job.isActive)
-        assertTrue(job.isCancelled)
-    }
 }

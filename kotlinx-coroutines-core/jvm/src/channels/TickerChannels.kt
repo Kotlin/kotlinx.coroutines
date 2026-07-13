@@ -11,8 +11,7 @@ import kotlin.coroutines.*
 @ObsoleteCoroutinesApi
 public enum class TickerMode {
     /**
-     * Adjust delay to maintain fixed period if consumer cannot keep up or is otherwise slow.
-     * **This is a default mode.**
+     * Adjust delay to maintain fixed period if consumer cannot keep up or is otherwise slow. **This is a default mode.**
      *
      * ```
      * val channel = ticker(delay = 100)
@@ -28,27 +27,23 @@ public enum class TickerMode {
      */
     FIXED_PERIOD,
 
-    /**
-     * Maintains fixed delay between produced elements if consumer cannot keep up or it otherwise slow.
-     */
-    FIXED_DELAY
+    /** Maintains fixed delay between produced elements if consumer cannot keep up or it otherwise slow. */
+    FIXED_DELAY,
 }
 
 /**
- * Creates a channel that produces the first item after the given initial delay and subsequent items with the
- * given delay between them.
+ * Creates a channel that produces the first item after the given initial delay and subsequent items with the given delay between them.
  *
- * The resulting channel is a _rendezvous channel_. When receiver from this channel does not keep
- * up with receiving the elements from this channel, they are not being sent due to backpressure. The actual
- * timing behavior of ticker in this case is controlled by [mode] parameter which
- * is set to [TickerMode.FIXED_PERIOD] by default. See [TickerMode] for other details.
+ * The resulting channel is a _rendezvous channel_. When receiver from this channel does not keep up with receiving the elements from this
+ * channel, they are not being sent due to backpressure. The actual timing behavior of ticker in this case is controlled by [mode] parameter
+ * which is set to [TickerMode.FIXED_PERIOD] by default. See [TickerMode] for other details.
  *
  * This channel stops producing elements immediately after [ReceiveChannel.cancel] invocation.
  *
  * **Note** producer to this channel is dispatched via [Dispatchers.Unconfined] by default and started eagerly.
  *
  * **Note: Ticker channels are not currently integrated with structured concurrency and their api will change in the future.**
- *           
+ *
  * @param delayMillis delay between each element in milliseconds.
  * @param initialDelayMillis delay after which the first element will be produced (it is equal to [delayMillis] by default) in milliseconds.
  * @param context context of the producing coroutine.
@@ -59,7 +54,7 @@ public fun ticker(
     delayMillis: Long,
     initialDelayMillis: Long = delayMillis,
     context: CoroutineContext = EmptyCoroutineContext,
-    mode: TickerMode = TickerMode.FIXED_PERIOD
+    mode: TickerMode = TickerMode.FIXED_PERIOD,
 ): ReceiveChannel<Unit> {
     require(delayMillis >= 0) { "Expected non-negative delay, but has $delayMillis ms" }
     require(initialDelayMillis >= 0) { "Expected non-negative initial delay, but has $initialDelayMillis ms" }
@@ -74,7 +69,7 @@ public fun ticker(
 private suspend fun fixedPeriodTicker(
     delayMillis: Long,
     initialDelayMillis: Long,
-    channel: SendChannel<Unit>
+    channel: SendChannel<Unit>,
 ) {
     var deadline = nanoTime() + delayToNanos(initialDelayMillis)
     delay(initialDelayMillis)
@@ -97,7 +92,7 @@ private suspend fun fixedPeriodTicker(
 private suspend fun fixedDelayTicker(
     delayMillis: Long,
     initialDelayMillis: Long,
-    channel: SendChannel<Unit>
+    channel: SendChannel<Unit>,
 ) {
     delay(initialDelayMillis)
     while (true) {

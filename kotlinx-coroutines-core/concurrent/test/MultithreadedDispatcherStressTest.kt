@@ -7,9 +7,7 @@ import kotlin.test.*
 class MultithreadedDispatcherStressTest {
     private val shared = atomic(0)
 
-    /**
-     * Tests that [newFixedThreadPoolContext] will not drop tasks when closed.
-     */
+    /** Tests that [newFixedThreadPoolContext] will not drop tasks when closed. */
     @Test
     fun testClosingNotDroppingTasks() {
         repeat(7) {
@@ -17,9 +15,12 @@ class MultithreadedDispatcherStressTest {
             val nThreads = it + 1
             val dispatcher = newFixedThreadPoolContext(nThreads, "testMultiThreadedContext")
             repeat(1_000) {
-                dispatcher.dispatch(EmptyCoroutineContext, Runnable {
-                    shared.incrementAndGet()
-                })
+                dispatcher.dispatch(
+                    EmptyCoroutineContext,
+                    Runnable {
+                        shared.incrementAndGet()
+                    },
+                )
             }
             dispatcher.close()
             while (shared.value < 1_000) {

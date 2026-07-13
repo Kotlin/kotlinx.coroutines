@@ -9,15 +9,15 @@ class CancellableTest : TestBase() {
     @Test
     fun testCancellable() = runTest {
         var sum = 0
-        val flow = (0..1000).asFlow()
-            .onEach {
+        val flow =
+            (0..1000).asFlow().onEach {
                 if (it != 0) currentCoroutineContext().cancel()
                 sum += it
             }
 
         flow.launchIn(this).join()
         assertEquals(500500, sum)
-        
+
         sum = 0
         flow.cancellable().launchIn(this).join()
         assertEquals(1, sum)

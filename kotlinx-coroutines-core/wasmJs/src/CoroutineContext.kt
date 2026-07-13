@@ -16,6 +16,4 @@ internal fun tryGetWindow(): W3CWindow? =
     js("(typeof(window) !== 'undefined' && window != null && typeof(window.addEventListener) === 'function') ? window : null")
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher =
-    tryGetProcess()?.let(::NodeDispatcher)
-        ?: tryGetWindow()?.let(::WindowDispatcher)
-        ?: SetTimeoutDispatcher
+    tryGetProcess()?.let(::NodeDispatcher) ?: tryGetWindow()?.let(::WindowDispatcher) ?: SetTimeoutDispatcher

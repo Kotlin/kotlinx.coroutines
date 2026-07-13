@@ -12,18 +12,15 @@ import kotlin.random.Random
 import kotlin.test.*
 
 /**
- * Tests resource transfer via channel send & receive operations, including their select versions,
- * using `onUndeliveredElement` to detect lost resources and close them properly.
+ * Tests resource transfer via channel send & receive operations, including their select versions, using `onUndeliveredElement` to detect
+ * lost resources and close them properly.
  */
 @RunWith(Parameterized::class)
 class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannelKind) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            TestChannelKind.values()
-                .filter { !it.viaBroadcast }
-                .map { arrayOf<Any>(it) }
+        fun params(): Collection<Array<Any>> = TestChannelKind.values().filter { !it.viaBroadcast }.map { arrayOf<Any>(it) }
     }
 
     private val iterationDurationMs = 100L
@@ -36,8 +33,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
-    @Volatile
-    private var lastReceived = -1L
+    @Volatile private var lastReceived = -1L
 
     private var stoppedSender = 0L
     private var stoppedReceiver = 0L
@@ -65,8 +61,7 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         try {
             block()
         } finally {
-            if (!done.trySend(true).isSuccess)
-                error(IllegalStateException("failed to offer to done channel"))
+            if (!done.trySend(true).isSuccess) error(IllegalStateException("failed to offer to done channel"))
         }
     }
 
@@ -136,34 +131,35 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
             val receivedCnt = if (receivedStatus[x] != 0) 1 else 0
             val failedToDeliverCnt = failedStatus[x]
             if (sentCnt - failedToDeliverCnt != receivedCnt) {
-                println("!!! Error for value $x: " +
-                    "sentStatus=${sentStatus[x]}, " +
-                    "receivedStatus=${receivedStatus[x]}, " +
-                    "failedStatus=${failedStatus[x]}"
+                println(
+                    "!!! Error for value $x: " +
+                        "sentStatus=${sentStatus[x]}, " +
+                        "receivedStatus=${receivedStatus[x]}, " +
+                        "failedStatus=${failedStatus[x]}"
                 )
             }
         }
     }
 
-
     private fun launchSender() {
-        sender = scope.launch(start = CoroutineStart.ATOMIC) {
-            cancellable(senderDone) {
-                var counter = 0
-                while (true) {
-                    val trySendData = Data(sentCnt++)
-                    sentStatus[trySendData.x] = 1
-                    selectOld<Unit> { channel.onSend(trySendData) {} }
-                    sentStatus[trySendData.x] = 3
-                    when {
-                        // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
-                        kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 100) yield()
-                        // yield periodically to check cancellation on conflated channels
-                        kind.isConflated -> if (counter++ % 100 == 0) yield()
+        sender =
+            scope.launch(start = CoroutineStart.ATOMIC) {
+                cancellable(senderDone) {
+                    var counter = 0
+                    while (true) {
+                        val trySendData = Data(sentCnt++)
+                        sentStatus[trySendData.x] = 1
+                        selectOld<Unit> { channel.onSend(trySendData) {} }
+                        sentStatus[trySendData.x] = 3
+                        when {
+                            // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
+                            kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 100) yield()
+                            // yield periodically to check cancellation on conflated channels
+                            kind.isConflated -> if (counter++ % 100 == 0) yield()
+                        }
                     }
                 }
             }
-        }
     }
 
     private suspend fun stopSender() {
@@ -173,23 +169,23 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
     }
 
     private fun launchReceiver() {
-        receiver = scope.launch(start = CoroutineStart.ATOMIC) {
-            cancellable(receiverDone) {
-                while (true) {
-                   selectOld<Unit> {
-                        channel.onReceive { receivedData ->
-                            receivedData.onReceived()
-                            receivedCnt++
-                            val received = receivedData.x
-                            if (received <= lastReceived)
-                                dupCnt++
-                            lastReceived = received
-                            receivedStatus[received] = 1
+        receiver =
+            scope.launch(start = CoroutineStart.ATOMIC) {
+                cancellable(receiverDone) {
+                    while (true) {
+                        selectOld<Unit> {
+                            channel.onReceive { receivedData ->
+                                receivedData.onReceived()
+                                receivedCnt++
+                                val received = receivedData.x
+                                if (received <= lastReceived) dupCnt++
+                                lastReceived = received
+                                receivedStatus[received] = 1
+                            }
                         }
                     }
                 }
             }
-        }
     }
 
     private suspend fun drainReceiver() {
@@ -212,13 +208,19 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
                 failedStatus[x] = 1
                 return
             }
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!,
+            )
         }
 
         fun onReceived() {
             val trace = if (TRACING_ENABLED) Exception("First onReceived() call") else DUMMY_TRACE_EXCEPTION
             if (firstFailedToDeliverOrReceivedCallTrace.compareAndSet(null, trace)) return
-            throw IllegalStateException("onUndeliveredElement()/onReceived() notified twice", firstFailedToDeliverOrReceivedCallTrace.value!!)
+            throw IllegalStateException(
+                "onUndeliveredElement()/onReceived() notified twice",
+                firstFailedToDeliverOrReceivedCallTrace.value!!,
+            )
         }
     }
 
@@ -227,8 +229,11 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
         private val _min = atomic(Long.MAX_VALUE)
         private val _max = atomic(-1L)
 
-        val min: Long get() = _min.value
-        val max: Long get() = _max.value
+        val min: Long
+            get() = _min.value
+
+        val max: Long
+            get() = _max.value
 
         operator fun set(x: Long, value: Int) {
             a[(x and mask).toInt()] = value.toByte()
@@ -248,4 +253,5 @@ class ChannelUndeliveredElementSelectOldStressTest(private val kind: TestChannel
 }
 
 private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
-private val DUMMY_TRACE_EXCEPTION = Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
+private val DUMMY_TRACE_EXCEPTION =
+    Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")

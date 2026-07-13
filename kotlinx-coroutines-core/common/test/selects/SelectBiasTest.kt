@@ -13,10 +13,11 @@ class SelectBiasTest : TestBase() {
         val d1 = async { 1 }
         val counter = IntArray(2)
         repeat(n) {
-            val selected = select<Int> {
-                d0.onAwait { 0 }
-                d1.onAwait { 1 }
-            }
+            val selected =
+                select<Int> {
+                    d0.onAwait { 0 }
+                    d1.onAwait { 1 }
+                }
             counter[selected]++
         }
         assertEquals(n, counter[0])
@@ -29,10 +30,11 @@ class SelectBiasTest : TestBase() {
         val d1 = async { 1 }
         val counter = IntArray(2)
         repeat(n) {
-            val selected = selectUnbiased<Int> {
-                d0.onAwait { 0 }
-                d1.onAwait { 1 }
-            }
+            val selected =
+                selectUnbiased<Int> {
+                    d0.onAwait { 0 }
+                    d1.onAwait { 1 }
+                }
             counter[selected]++
         }
         assertTrue(counter[0] >= n / 4)

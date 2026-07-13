@@ -7,7 +7,7 @@ import kotlin.test.*
 class JobExtensionsTest : TestBase() {
 
     private val job = Job()
-    private val scope = CoroutineScope(job + CoroutineExceptionHandler { _, _ ->  })
+    private val scope = CoroutineScope(job + CoroutineExceptionHandler { _, _ -> })
 
     @Test
     fun testIsActive() = runTest {
@@ -46,7 +46,6 @@ class JobExtensionsTest : TestBase() {
         assertFailsWith<JobCancellationException> { scope.coroutineContext.ensureActive() }
         finish(4)
     }
-
 
     @Test
     fun testIsCancelled() = runTest {

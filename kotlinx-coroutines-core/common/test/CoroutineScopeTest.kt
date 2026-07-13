@@ -23,7 +23,6 @@ class CoroutineScopeTest : TestBase() {
                 }
 
                 expect(6)
-
             }
             expect(3)
             42
@@ -112,21 +111,22 @@ class CoroutineScopeTest : TestBase() {
             42
         }
 
-        val outerJob = launch(NonCancellable) {
-            expect(1)
-            try {
-                callJobScoped()
-                expectUnreached()
-            } catch (e: JobCancellationException) {
-                expect(5)
-                if (RECOVER_STACK_TRACES) {
-                    val cause = e.cause as JobCancellationException // shall be recovered JCE
-                    assertNull(cause.cause)
-                } else {
-                    assertNull(e.cause)
+        val outerJob =
+            launch(NonCancellable) {
+                expect(1)
+                try {
+                    callJobScoped()
+                    expectUnreached()
+                } catch (e: JobCancellationException) {
+                    expect(5)
+                    if (RECOVER_STACK_TRACES) {
+                        val cause = e.cause as JobCancellationException // shall be recovered JCE
+                        assertNull(cause.cause)
+                    } else {
+                        assertNull(e.cause)
+                    }
                 }
             }
-        }
         repeat(3) { yield() } // let everything to start properly
         outerJob.cancel()
         outerJob.join()
@@ -146,19 +146,21 @@ class CoroutineScopeTest : TestBase() {
 
     // First async child fails -> second is cancelled
     private suspend fun failedConcurrentSumFirst(): Int = coroutineScope {
-        val one = async<Int> {
-            expect(3)
-            throw TestException1()
-        }
-        val two = async(start = CoroutineStart.ATOMIC) {
-            try {
-                expect(4)
-                delay(Long.MAX_VALUE) // Emulates very long computation
-                42
-            } finally {
-                expect(5)
+        val one =
+            async<Int> {
+                expect(3)
+                throw TestException1()
             }
-        }
+        val two =
+            async(start = CoroutineStart.ATOMIC) {
+                try {
+                    expect(4)
+                    delay(Long.MAX_VALUE) // Emulates very long computation
+                    42
+                } finally {
+                    expect(5)
+                }
+            }
         expect(2)
         one.await() + two.await()
     }
@@ -176,19 +178,21 @@ class CoroutineScopeTest : TestBase() {
 
     // Second async child fails -> fist is cancelled
     private suspend fun failedConcurrentSumSecond(): Int = coroutineScope {
-        val one = async<Int> {
-            try {
-                expect(3)
-                delay(Long.MAX_VALUE) // Emulates very long computation
-                42
-            } finally {
-                expect(5)
+        val one =
+            async<Int> {
+                try {
+                    expect(3)
+                    delay(Long.MAX_VALUE) // Emulates very long computation
+                    42
+                } finally {
+                    expect(5)
+                }
             }
-        }
-        val two = async<Int>(start = CoroutineStart.ATOMIC) {
-            expect(4)
-            throw TestException1()
-        }
+        val two =
+            async<Int>(start = CoroutineStart.ATOMIC) {
+                expect(4)
+                throw TestException1()
+            }
         expect(2)
         one.await() + two.await()
     }
@@ -227,21 +231,22 @@ class CoroutineScopeTest : TestBase() {
     fun testCoroutineScopeCancellationVsException() = runTest {
         expect(1)
         var job: Job? = null
-        job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                coroutineScope {
-                    expect(3)
-                    yield() // must suspend
-                    expect(5)
-                    job!!.cancel() // cancel this job _before_ it throws
-                    throw TestException1()
+        job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                try {
+                    coroutineScope {
+                        expect(3)
+                        yield() // must suspend
+                        expect(5)
+                        job!!.cancel() // cancel this job _before_ it throws
+                        throw TestException1()
+                    }
+                } catch (e: TestException1) {
+                    // must have caught TextException
+                    expect(6)
                 }
-            } catch (e: TestException1) {
-                // must have caught TextException
-                expect(6)
             }
-        }
         expect(4)
         yield() // to coroutineScope
         finish(7)
@@ -250,12 +255,16 @@ class CoroutineScopeTest : TestBase() {
     @Test
     fun testLaunchContainsDefaultDispatcher() = runTest {
         val scopeWithoutDispatcher = CoroutineScope(coroutineContext.minusKey(ContinuationInterceptor))
-        scopeWithoutDispatcher.launch(Dispatchers.Default) {
-            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
-        }.join()
-        scopeWithoutDispatcher.launch {
-            assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
-        }.join()
+        scopeWithoutDispatcher
+            .launch(Dispatchers.Default) {
+                assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+            }
+            .join()
+        scopeWithoutDispatcher
+            .launch {
+                assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+            }
+            .join()
     }
 
     @Test
@@ -288,7 +297,7 @@ class CoroutineScopeTest : TestBase() {
         lateinit var scopeJob: Job
         coroutineScope {
             scopeJob = coroutineContext[Job]!!
-            scopeJob.invokeOnCompletion { }
+            scopeJob.invokeOnCompletion {}
         }
 
         scopeJob.join()
@@ -297,8 +306,7 @@ class CoroutineScopeTest : TestBase() {
         assertFalse(scopeJob.isCancelled)
     }
 
-    private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) =
-        (ContextScope(c1) + c2).coroutineContext
+    private fun scopePlusContext(c1: CoroutineContext, c2: CoroutineContext) = (ContextScope(c1) + c2).coroutineContext
 
     @Test
     fun testIsActiveWithoutJob() {
@@ -307,7 +315,7 @@ class CoroutineScopeTest : TestBase() {
             assertTrue(coroutineContext.isActive)
             invoked = true
         }
-        ::testIsActive.startCoroutine(Continuation(EmptyCoroutineContext){})
+        ::testIsActive.startCoroutine(Continuation(EmptyCoroutineContext) {})
         assertTrue(invoked)
     }
 }

@@ -16,7 +16,11 @@ class BroadcastChannelLeakTest : TestBase() {
         checkLeak { ConflatedBroadcastChannel() }
     }
 
-    enum class TestKind { BROADCAST_CLOSE, SUB_CANCEL, BOTH }
+    enum class TestKind {
+        BROADCAST_CLOSE,
+        SUB_CANCEL,
+        BOTH,
+    }
 
     private fun checkLeak(factory: () -> BroadcastChannel<String>) = runTest {
         for (kind in TestKind.entries) {

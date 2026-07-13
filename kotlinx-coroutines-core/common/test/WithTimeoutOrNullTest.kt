@@ -5,39 +5,35 @@ import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
 class WithTimeoutOrNullTest : TestBase() {
-    /**
-     * Tests a case of no timeout and no suspension inside.
-     */
+    /** Tests a case of no timeout and no suspension inside. */
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(10_000) {
-            expect(2)
-            "OK"
-        }
+        val result =
+            withTimeoutOrNull(10_000) {
+                expect(2)
+                "OK"
+            }
         assertEquals("OK", result)
         finish(3)
     }
 
-    /**
-     * Tests a case of no timeout and one suspension inside.
-     */
+    /** Tests a case of no timeout and one suspension inside. */
     @Test
     fun testBasicSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(10_000) {
-            expect(2)
-            yield()
-            expect(3)
-            "OK"
-        }
+        val result =
+            withTimeoutOrNull(10_000) {
+                expect(2)
+                yield()
+                expect(3)
+                "OK"
+            }
         assertEquals("OK", result)
         finish(4)
     }
 
-    /**
-     * Tests property dispatching of `withTimeoutOrNull` blocks
-     */
+    /** Tests property dispatching of `withTimeoutOrNull` blocks */
     @Test
     fun testDispatch() = runTest {
         expect(1)
@@ -48,29 +44,29 @@ class WithTimeoutOrNullTest : TestBase() {
         }
         expect(2)
         // test that it does not yield to the above job when started
-        val result = withTimeoutOrNull(1000) {
-            expect(3)
-            yield() // yield only now
-            expect(5)
-            "OK"
-        }
+        val result =
+            withTimeoutOrNull(1000) {
+                expect(3)
+                yield() // yield only now
+                expect(5)
+                "OK"
+            }
         assertEquals("OK", result)
         expect(6)
         yield() // back to launch
         finish(8)
     }
 
-    /**
-     * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
-     */
+    /** Tests that a 100% CPU-consuming loop will react on timeout if it has yields. */
     @Test
     fun testYieldBlockingWithTimeout() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(100) {
-            while (true) {
-                yield()
+        val result =
+            withTimeoutOrNull(100) {
+                while (true) {
+                    yield()
+                }
             }
-        }
         assertNull(result)
         finish(2)
     }
@@ -78,85 +74,90 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testSmallTimeout() = runTest {
         val channel = Channel<Int>(1)
-        val value = withTimeoutOrNull(1) {
-            channel.receive()
-        }
+        val value =
+            withTimeoutOrNull(1) {
+                channel.receive()
+            }
         assertNull(value)
     }
 
     @Test
-    fun testThrowException() = runTest(expected = {it is AssertionError}) {
-        withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
-            throw AssertionError()
+    fun testThrowException() =
+        runTest(expected = { it is AssertionError }) {
+            withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
+                throw AssertionError()
+            }
         }
-    }
 
     @Test
-    fun testInnerTimeout() = runTest(
-        expected = { it is CancellationException }
-    ) {
-        withTimeoutOrNull(1000) {
-            withTimeout(10) {
-                while (true) {
-                    yield()
+    fun testInnerTimeout() =
+        runTest(expected = { it is CancellationException }) {
+            withTimeoutOrNull(1000) {
+                withTimeout(10) {
+                    while (true) {
+                        yield()
+                    }
                 }
+                @Suppress("UNREACHABLE_CODE") expectUnreached() // will timeout
             }
-            @Suppress("UNREACHABLE_CODE")
             expectUnreached() // will timeout
         }
-        expectUnreached() // will timeout
-    }
 
     @Test
-    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
-        withTimeoutOrNull(Long.MAX_VALUE) {
-            // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(10) {
-                delay(Long.MAX_VALUE)
-                1
+    fun testNestedTimeout() =
+        runTest(expected = { it is TimeoutCancellationException }) {
+            withTimeoutOrNull(Long.MAX_VALUE) {
+                // Exception from this withTimeout is not suppressed by withTimeoutOrNull
+                withTimeout(10) {
+                    delay(Long.MAX_VALUE)
+                    1
+                }
             }
-        }
 
-        expectUnreached()
-    }
+            expectUnreached()
+        }
 
     @Test
     fun testOuterTimeout() = runTest {
         if (isJavaAndWindows) return@runTest
         var counter = 0
-        val result = withTimeoutOrNull(320) {
-            while (true) {
-                val inner = withTimeoutOrNull(150) {
-                    while (true) {
-                        yield()
-                    }
+        val result =
+            withTimeoutOrNull(320) {
+                while (true) {
+                    val inner =
+                        withTimeoutOrNull(150) {
+                            while (true) {
+                                yield()
+                            }
+                        }
+                    assertNull(inner)
+                    counter++
                 }
-                assertNull(inner)
-                counter++
             }
-        }
         assertNull(result)
-        check(counter in 1..2) {"Executed: $counter times"}
+        check(counter in 1..2) { "Executed: $counter times" }
     }
 
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeoutOrNull(100) {
-            bad
-        }
+        val result =
+            withTimeoutOrNull(100) {
+                bad
+            }
         assertSame(bad, result)
     }
 
     @Test
     fun testNullOnTimeout() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(100) {
-            expect(2)
-            delay(1000)
-            expectUnreached()
-            "OK"
-        }
+        val result =
+            withTimeoutOrNull(100) {
+                expect(2)
+                delay(1000)
+                expectUnreached()
+                "OK"
+            }
         assertNull(result)
         finish(3)
     }
@@ -164,15 +165,16 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(100) {
-            expect(2)
-            try {
-                delay(1000)
-            } catch (_: CancellationException) {
-                expect(3)
+        val result =
+            withTimeoutOrNull(100) {
+                expect(2)
+                try {
+                    delay(1000)
+                } catch (_: CancellationException) {
+                    expect(3)
+                }
+                "OK"
             }
-            "OK"
-        }
         assertNull(result)
         finish(4)
     }
@@ -196,20 +198,21 @@ class WithTimeoutOrNullTest : TestBase() {
         } catch (_: TestException) {
             // catches TestException
             finish(4)
-
         }
     }
 
     @Test
     fun testNegativeTimeout() = runTest {
         expect(1)
-        var result = withTimeoutOrNull(-1) {
-            expectUnreached()
-        }
+        var result =
+            withTimeoutOrNull(-1) {
+                expectUnreached()
+            }
         assertNull(result)
-        result = withTimeoutOrNull(0) {
-            expectUnreached()
-        }
+        result =
+            withTimeoutOrNull(0) {
+                expectUnreached()
+            }
         assertNull(result)
         finish(2)
     }

@@ -9,22 +9,26 @@ class PropagateExceptionFinalResortTest : TestBase() {
     private fun removeListeners() {
         // Remove a Node.js's internal listener, which prints the exception to stdout.
         // https://nodejs.org/api/process.html#event-uncaughtexception
-        js("""
+        js(
+            """
             globalThis.originalListeners = process.listeners('uncaughtException');
             process.removeAllListeners('uncaughtException');
-        """)
+        """
+        )
     }
 
     @AfterTest
     private fun restoreListeners() {
-        js("""
+        js(
+            """
             if (globalThis.originalListeners) {
                 process.removeAllListeners('uncaughtException');
                 globalThis.originalListeners.forEach(function(listener) {
                     process.on('uncaughtException', listener);
                 });
             }
-        """)
+        """
+        )
     }
 
     /*
@@ -34,12 +38,14 @@ class PropagateExceptionFinalResortTest : TestBase() {
      */
     @Test
     fun testPropagateExceptionFinalResortReThrowsOnNodeJS() = runTest {
-        js("""
+        js(
+            """
             globalThis.exceptionCaught = false;
             process.on('uncaughtException', function(e) {
                 globalThis.exceptionCaught = true;
             });
-        """)
+        """
+        )
         val job = GlobalScope.launch {
             throw IllegalStateException("My ISE")
         }

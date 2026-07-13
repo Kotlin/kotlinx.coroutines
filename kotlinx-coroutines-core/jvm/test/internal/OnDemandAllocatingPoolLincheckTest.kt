@@ -14,36 +14,42 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
  */
 abstract class OnDemandAllocatingPoolLincheckTest(maxCapacity: Int) : AbstractLincheckTest() {
     private val counter = atomic(0)
-    private val pool = OnDemandAllocatingPool(maxCapacity = maxCapacity, create = {
-        counter.getAndIncrement()
-    })
+    private val pool =
+        OnDemandAllocatingPool(
+            maxCapacity = maxCapacity,
+            create = {
+                counter.getAndIncrement()
+            },
+        )
 
-    @Operation
-    fun allocate(): Boolean = pool.allocate()
+    @Operation fun allocate(): Boolean = pool.allocate()
 
-    @Operation
-    fun close(): String = pool.close().sorted().toString()
+    @Operation fun close(): String = pool.close().sorted().toString()
 }
 
 abstract class OnDemandAllocatingSequentialPool(private val maxCapacity: Int) {
     var closed = false
     var elements = 0
 
-    fun allocate() = if (closed) {
-        false
-    } else {
-        if (elements < maxCapacity) {
-            elements++
+    fun allocate() =
+        if (closed) {
+            false
+        } else {
+            if (elements < maxCapacity) {
+                elements++
+            }
+            true
         }
-        true
-    }
 
-    fun close(): String = if (closed) {
-        emptyList()
-    } else {
-        closed = true
-        (0 until elements)
-    }.sorted().toString()
+    fun close(): String =
+        if (closed) {
+                emptyList()
+            } else {
+                closed = true
+                (0 until elements)
+            }
+            .sorted()
+            .toString()
 }
 
 class OnDemandAllocatingPool3LincheckTest : OnDemandAllocatingPoolLincheckTest(3) {

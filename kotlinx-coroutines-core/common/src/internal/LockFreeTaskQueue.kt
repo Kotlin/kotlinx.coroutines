@@ -9,19 +9,17 @@ private typealias Core<E> = LockFreeTaskQueueCore<E>
 /**
  * Lock-free Multiply-Producer xxx-Consumer Queue for task scheduling purposes.
  *
- * **Note 1: This queue is NOT linearizable. It provides only quiescent consistency for its operations.**
- * However, this guarantee is strong enough for task-scheduling purposes.
- * In particular, the following execution is permitted for this queue, but is not permitted for a linearizable queue:
- *
+ * **Note 1: This queue is NOT linearizable. It provides only quiescent consistency for its operations.** However, this guarantee is strong
+ * enough for task-scheduling purposes. In particular, the following execution is permitted for this queue, but is not permitted for a
+ * linearizable queue:
  * ```
  * Thread 1: addLast(1) = true, removeFirstOrNull() = null
  * Thread 2: addLast(2) = 2 // this operation is concurrent with both operations in the first thread
  * ```
  *
- * **Note 2: When this queue is used with multiple consumers (`singleConsumer == false`) this it is NOT lock-free.**
- * In particular, consumer spins until producer finishes its operation in the case of near-empty queue.
- * It is a very short window that could manifest itself rarely and only under specific load conditions,
- * but it still deprives this algorithm of its lock-freedom.
+ * **Note 2: When this queue is used with multiple consumers (`singleConsumer == false`) this it is NOT lock-free.** In particular, consumer
+ * spins until producer finishes its operation in the case of near-empty queue. It is a very short window that could manifest itself rarely
+ * and only under specific load conditions, but it still deprives this algorithm of its lock-freedom.
  */
 internal open class LockFreeTaskQueue<E : Any>(
     singleConsumer: Boolean // true when there is only a single consumer (slightly faster & lock-free)
@@ -29,8 +27,11 @@ internal open class LockFreeTaskQueue<E : Any>(
     private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY, singleConsumer))
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
-    val isEmpty: Boolean get() = _cur.value.isEmpty
-    val size: Int get() = _cur.value.size
+    val isEmpty: Boolean
+        get() = _cur.value.isEmpty
+
+    val size: Int
+        get() = _cur.value.size
 
     fun close() {
         _cur.loop { cur ->
@@ -67,11 +68,12 @@ internal open class LockFreeTaskQueue<E : Any>(
 
 /**
  * Lock-free Multiply-Producer xxx-Consumer Queue core.
+ *
  * @see LockFreeTaskQueue
  */
 internal class LockFreeTaskQueueCore<E : Any>(
     private val capacity: Int,
-    private val singleConsumer: Boolean // true when there is only a single consumer (slightly faster)
+    private val singleConsumer: Boolean, // true when there is only a single consumer (slightly faster)
 ) {
     private val mask = capacity - 1
     private val _next = atomic<Core<E>?>(null)
@@ -84,8 +86,11 @@ internal class LockFreeTaskQueueCore<E : Any>(
     }
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
-    val isEmpty: Boolean get() = _state.value.withState { head, tail -> head == tail }
-    val size: Int get() = _state.value.withState { head, tail -> (tail - head) and MAX_CAPACITY_MASK }
+    val isEmpty: Boolean
+        get() = _state.value.withState { head, tail -> head == tail }
+
+    val size: Int
+        get() = _state.value.withState { head, tail -> (tail - head) and MAX_CAPACITY_MASK }
 
     fun close(): Boolean {
         _state.update { state ->
@@ -125,7 +130,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
                     array[tail and mask].value = element
                     // could have been frozen & copied before this item was set -- correct it by filling placeholder
                     var cur = this
-                    while(true) {
+                    while (true) {
                         if (cur._state.value and FROZEN_MASK == 0L) break // all fine -- not frozen yet
                         cur = cur.next().fillPlaceholder(tail, element) ?: break
                     }
@@ -209,11 +214,10 @@ internal class LockFreeTaskQueueCore<E : Any>(
 
     fun next(): LockFreeTaskQueueCore<E> = allocateOrGetNextCopy(markFrozen())
 
-    private fun markFrozen(): Long =
-        _state.updateAndGet { state ->
-            if (state and FROZEN_MASK != 0L) return state // already marked
-            state or FROZEN_MASK
-        }
+    private fun markFrozen(): Long = _state.updateAndGet { state ->
+        if (state and FROZEN_MASK != 0L) return state // already marked
+        state or FROZEN_MASK
+    }
 
     private fun allocateOrGetNextCopy(state: Long): Core<E> {
         _next.loop { next ->
@@ -245,8 +249,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
             while (index and mask != tail and mask) {
                 // replace nulls with placeholders on copy
                 val element = array[index and mask].value
-                @Suppress("UNCHECKED_CAST")
-                if (element != null && element !is Placeholder) res.add(transform(element as E))
+                @Suppress("UNCHECKED_CAST") if (element != null && element !is Placeholder) res.add(transform(element as E))
                 index++
             }
         }
@@ -255,7 +258,6 @@ internal class LockFreeTaskQueueCore<E : Any>(
 
     // Used for validation in tests only
     fun isClosed(): Boolean = _state.value and CLOSED_MASK != 0L
-
 
     // Instance of this class is placed into array when we have to copy array, but addLast is in progress --
     // it had already reserved a slot in the array (with null) and have not yet put its value there.
@@ -288,7 +290,9 @@ internal class LockFreeTaskQueueCore<E : Any>(
         const val ADD_CLOSED = 2
 
         infix fun Long.wo(other: Long) = this and other.inv()
+
         fun Long.updateHead(newHead: Int) = (this wo HEAD_MASK) or (newHead.toLong() shl HEAD_SHIFT)
+
         fun Long.updateTail(newTail: Int) = (this wo TAIL_MASK) or (newTail.toLong() shl TAIL_SHIFT)
 
         inline fun <T> Long.withState(block: (head: Int, tail: Int) -> T): T {

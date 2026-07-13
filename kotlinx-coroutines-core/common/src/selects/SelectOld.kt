@@ -35,12 +35,13 @@ internal class SelectBuilderImpl<R>(
         // 5) use CancellableContinuationImpl.getResult() as a result of this function.
         if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result = try {
-                doSelect()
-            } catch (e: Throwable) {
-                cont.resumeUndispatchedWithException(e)
-                return@launch
-            }
+            val result =
+                try {
+                    doSelect()
+                } catch (e: Throwable) {
+                    cont.resumeUndispatchedWithException(e)
+                    return@launch
+                }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()
@@ -63,12 +64,13 @@ internal class UnbiasedSelectBuilderImpl<R>(
         // Here, we do the same trick as in [SelectBuilderImpl].
         if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result = try {
-                doSelect()
-            } catch (e: Throwable) {
-                cont.resumeUndispatchedWithException(e)
-                return@launch
-            }
+            val result =
+                try {
+                    doSelect()
+                } catch (e: Throwable) {
+                    cont.resumeUndispatchedWithException(e)
+                    return@launch
+                }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()

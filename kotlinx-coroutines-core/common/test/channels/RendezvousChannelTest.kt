@@ -60,8 +60,9 @@ class RendezvousChannelTest : TestBase() {
         expect(1)
         launch {
             expect(4)
-            try { q.receive() }
-            catch (e: ClosedReceiveChannelException) {
+            try {
+                q.receive()
+            } catch (e: ClosedReceiveChannelException) {
                 expect(5)
             }
         }
@@ -70,8 +71,9 @@ class RendezvousChannelTest : TestBase() {
         expect(3)
         yield()
         expect(6)
-        try { q.send(42) }
-        catch (e: ClosedSendChannelException) {
+        try {
+            q.send(42)
+        } catch (e: ClosedSendChannelException) {
             finish(7)
         }
     }
@@ -268,11 +270,12 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
-        val channel = Channel<Int>(Channel.RENDEZVOUS)
-        channel.cancel(TestCancellationException())
-        channel.receiveCatching().getOrThrow()
-    }
+    fun testCancelWithCause() =
+        runTest({ it is TestCancellationException }) {
+            val channel = Channel<Int>(Channel.RENDEZVOUS)
+            channel.cancel(TestCancellationException())
+            channel.receiveCatching().getOrThrow()
+        }
 
     /** Tests that [BufferOverflow.DROP_OLDEST] takes precedence over [Channel.RENDEZVOUS]. */
     @Test

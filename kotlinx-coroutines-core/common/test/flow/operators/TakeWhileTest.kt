@@ -46,16 +46,18 @@ class TakeWhileTest : TestBase() {
     @Test
     fun testErrorCancelsUpstream() = runTest {
         var cancelled = false
-        val flow = flow {
-            coroutineScope {
-                launch(start = CoroutineStart.ATOMIC) {
-                    hang { cancelled = true }
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch(start = CoroutineStart.ATOMIC) {
+                            hang { cancelled = true }
+                        }
+                        emit(1)
+                    }
                 }
-                emit(1)
-            }
-        }.takeWhile {
-            throw TestException()
-        }
+                .takeWhile {
+                    throw TestException()
+                }
 
         assertFailsWith<TestException>(flow)
         assertTrue(cancelled)

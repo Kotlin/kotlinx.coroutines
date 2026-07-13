@@ -6,29 +6,28 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 
 /**
- * Use this function to start coroutine in a cancellable way, so that it can be cancelled
- * while waiting to be dispatched.
+ * Use this function to start coroutine in a cancellable way, so that it can be cancelled while waiting to be dispatched.
  *
  * @suppress **This is internal API and it is subject to change.**
  */
 @InternalCoroutinesApi
-public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>): Unit = runSafely(completion) {
-    createCoroutineUnintercepted(completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
-}
+public fun <T> (suspend () -> T).startCoroutineCancellable(completion: Continuation<T>): Unit =
+    runSafely(completion) {
+        createCoroutineUnintercepted(completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
+    }
 
-/**
- * Use this function to start coroutine in a cancellable way, so that it can be cancelled
- * while waiting to be dispatched.
- */
+/** Use this function to start coroutine in a cancellable way, so that it can be cancelled while waiting to be dispatched. */
 internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
-    receiver: R, completion: Continuation<T>,
-) = runSafely(completion) {
-    createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
-}
+    receiver: R,
+    completion: Continuation<T>,
+) =
+    runSafely(completion) {
+        createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
+    }
 
 /**
- * Similar to [startCoroutineCancellable], but for already created coroutine.
- * [fatalCompletion] is used only when interception machinery throws an exception
+ * Similar to [startCoroutineCancellable], but for already created coroutine. [fatalCompletion] is used only when interception machinery
+ * throws an exception
  */
 internal fun Continuation<Unit>.startCoroutineCancellable(fatalCompletion: Continuation<*>) =
     runSafely(fatalCompletion) {
@@ -36,10 +35,9 @@ internal fun Continuation<Unit>.startCoroutineCancellable(fatalCompletion: Conti
     }
 
 /**
- * Runs given block and completes completion with its exception if it occurs.
- * Rationale: [startCoroutineCancellable] is invoked when we are about to run coroutine asynchronously in its own dispatcher.
- * Thus if dispatcher throws an exception during coroutine start, coroutine never completes, so we should treat dispatcher exception
- * as its cause and resume completion.
+ * Runs given block and completes completion with its exception if it occurs. Rationale: [startCoroutineCancellable] is invoked when we are
+ * about to run coroutine asynchronously in its own dispatcher. Thus if dispatcher throws an exception during coroutine start, coroutine
+ * never completes, so we should treat dispatcher exception as its cause and resume completion.
  */
 private inline fun runSafely(completion: Continuation<*>, block: () -> Unit) {
     try {

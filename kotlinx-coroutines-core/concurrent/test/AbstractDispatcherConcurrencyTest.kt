@@ -4,19 +4,19 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
 
-
 abstract class AbstractDispatcherConcurrencyTest : TestBase() {
 
-   abstract val dispatcher: CoroutineDispatcher
+    abstract val dispatcher: CoroutineDispatcher
 
     @Test
     fun testLaunchAndJoin() = runTest {
         expect(1)
         var capturedMutableState = 0
-        val job = GlobalScope.launch(dispatcher) {
-            ++capturedMutableState
-            expect(2)
-        }
+        val job =
+            GlobalScope.launch(dispatcher) {
+                ++capturedMutableState
+                expect(2)
+            }
         runBlocking { job.join() }
         assertEquals(1, capturedMutableState)
         finish(3)
@@ -41,11 +41,12 @@ abstract class AbstractDispatcherConcurrencyTest : TestBase() {
     @Test
     fun testDelayInDispatcher() = runTest {
         expect(1)
-        val job = GlobalScope.launch(dispatcher) {
-            expect(2)
-            delay(100)
-            expect(3)
-        }
+        val job =
+            GlobalScope.launch(dispatcher) {
+                expect(2)
+                delay(100)
+                expect(3)
+            }
         runBlocking { job.join() }
         finish(4)
     }

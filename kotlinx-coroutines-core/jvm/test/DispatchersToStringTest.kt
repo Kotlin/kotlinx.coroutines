@@ -20,11 +20,11 @@ class DispatchersToStringTest {
         for (parallelism in 1..100) {
             assertEquals(
                 "Dispatchers.IO" + if (parallelism < MAX_POOL_SIZE) ".limitedParallelism($parallelism)" else "",
-                Dispatchers.IO.limitedParallelism(parallelism).toString()
+                Dispatchers.IO.limitedParallelism(parallelism).toString(),
             )
             assertEquals(
                 "Dispatchers.Default" + if (parallelism < CORE_POOL_SIZE) ".limitedParallelism($parallelism)" else "",
-                Dispatchers.Default.limitedParallelism(parallelism).toString()
+                Dispatchers.Default.limitedParallelism(parallelism).toString(),
             )
         }
         // Not overridden at all, limited parallelism returns `this`

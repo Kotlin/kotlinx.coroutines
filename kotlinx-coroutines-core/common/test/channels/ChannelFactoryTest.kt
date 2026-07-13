@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-
 class ChannelFactoryTest : TestBase() {
     @Test
     fun testRendezvousChannel() {
@@ -36,7 +35,7 @@ class ChannelFactoryTest : TestBase() {
     fun testInvalidCapacityNotSupported() {
         assertFailsWith<IllegalArgumentException> { Channel<Int>(-3) }
     }
-    
+
     @Test
     fun testUnsupportedBufferOverflow() {
         assertFailsWith<IllegalArgumentException> { Channel<Int>(Channel.CONFLATED, BufferOverflow.DROP_OLDEST) }

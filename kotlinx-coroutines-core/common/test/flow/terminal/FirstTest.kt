@@ -45,7 +45,6 @@ class FirstTest : TestBase() {
             }
         }
 
-
         val result = flow.first {
             latch.receive()
             true
@@ -112,7 +111,6 @@ class FirstTest : TestBase() {
             }
         }
 
-
         val result = flow.firstOrNull {
             latch.receive()
             true
@@ -169,26 +167,29 @@ class FirstTest : TestBase() {
 
     @Test
     fun testAbortFlowException() = runTest {
-        val flow = flow<Int> {
-            throw AbortFlowException(NopCollector) // Emulate cancellation
-        }
+        val flow =
+            flow<Int> {
+                throw AbortFlowException(NopCollector) // Emulate cancellation
+            }
 
         assertFailsWith<CancellationException> { flow.first() }
     }
 
     @Test
     fun testFirstThrowOnCancellation() = runTest {
-        val job = launch(start = UNDISPATCHED) {
-            flow {
-                try {
-                    emit(Unit)
-                } finally {
-                    runCatching { yield() }
-                    finish(2)
-                }
-            }.first()
-            expectUnreached()
-        }
+        val job =
+            launch(start = UNDISPATCHED) {
+                flow {
+                        try {
+                            emit(Unit)
+                        } finally {
+                            runCatching { yield() }
+                            finish(2)
+                        }
+                    }
+                    .first()
+                expectUnreached()
+            }
         expect(1)
         job.cancel()
     }

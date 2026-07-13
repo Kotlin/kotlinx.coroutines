@@ -50,11 +50,12 @@ class RunInterruptibleTest : TestBase() {
         }
 
         launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(1)
-            latch.receive()
-            expect(3)
-            job.cancelAndJoin()
-        }.join()
+                expect(1)
+                latch.receive()
+                expect(3)
+                job.cancelAndJoin()
+            }
+            .join()
         finish(5)
     }
 }

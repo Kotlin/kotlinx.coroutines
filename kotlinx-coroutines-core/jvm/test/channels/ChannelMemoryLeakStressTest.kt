@@ -4,7 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.Test
 
-class ChannelMemoryLeakStressTest : TestBase()  {
+class ChannelMemoryLeakStressTest : TestBase() {
     private val nRepeat = 1_000_000 * stressTestMultiplier
 
     @Test

@@ -12,11 +12,10 @@ import kotlin.jvm.*
 import kotlinx.coroutines.flow.internal.unsafeFlow as flow
 
 /**
- * Creates a _cold_ flow from the given suspendable [block].
- * The flow being _cold_ means that the [block] is called every time a terminal operator is applied to the resulting flow.
+ * Creates a _cold_ flow from the given suspendable [block]. The flow being _cold_ means that the [block] is called every time a terminal
+ * operator is applied to the resulting flow.
  *
  * Example of usage:
- *
  * ```
  * fun fibonacci(): Flow<BigInteger> = flow {
  *     var x = BigInteger.ZERO
@@ -32,12 +31,11 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * fibonacci().take(100).collect { println(it) }
  * ```
  *
- * Emissions from [flow] builder are [cancellable] by default &mdash; each call to [emit][FlowCollector.emit]
- * also calls [ensureActive][CoroutineContext.ensureActive].
+ * Emissions from [flow] builder are [cancellable] by default &mdash; each call to [emit][FlowCollector.emit] also calls
+ * [ensureActive][CoroutineContext.ensureActive].
  *
- * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context.
- * For example, the following code will result in an [IllegalStateException]:
- *
+ * `emit` should happen strictly in the dispatchers of the [block] in order to preserve the flow context. For example, the following code
+ * will result in an [IllegalStateException]:
  * ```
  * flow {
  *     emit(1) // Ok
@@ -58,9 +56,7 @@ private class SafeFlow<T>(private val block: suspend FlowCollector<T>.() -> Unit
     }
 }
 
-/**
- * Creates a _cold_ flow that produces a single value from the given functional type.
- */
+/** Creates a _cold_ flow that produces a single value from the given functional type. */
 public fun <T> (() -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }
@@ -69,7 +65,6 @@ public fun <T> (() -> T).asFlow(): Flow<T> = flow {
  * Creates a _cold_ flow that produces a single value from the given functional type.
  *
  * Example of usage:
- *
  * ```
  * suspend fun remoteCall(): R = ...
  * fun remoteCallFlow(): Flow<R> = ::remoteCall.asFlow()
@@ -79,27 +74,21 @@ public fun <T> (suspend () -> T).asFlow(): Flow<T> = flow {
     emit(invoke())
 }
 
-/**
- * Creates a _cold_ flow that produces values from the given iterable.
- */
+/** Creates a _cold_ flow that produces values from the given iterable. */
 public fun <T> Iterable<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
 }
 
-/**
- * Creates a _cold_ flow that produces values from the given iterator.
- */
+/** Creates a _cold_ flow that produces values from the given iterator. */
 public fun <T> Iterator<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
     }
 }
 
-/**
- * Creates a _cold_ flow that produces values from the given sequence.
- */
+/** Creates a _cold_ flow that produces values from the given sequence. */
 public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
         emit(value)
@@ -110,7 +99,6 @@ public fun <T> Sequence<T>.asFlow(): Flow<T> = flow {
  * Creates a flow that produces values from the specified `vararg`-arguments.
  *
  * Example of usage:
- *
  * ```
  * flowOf(1, 2, 3)
  * ```
@@ -121,9 +109,7 @@ public fun <T> flowOf(vararg elements: T): Flow<T> = flow {
     }
 }
 
-/**
- * Creates a flow that produces the given [value].
- */
+/** Creates a flow that produces the given [value]. */
 public fun <T> flowOf(value: T): Flow<T> = flow {
     /*
      * Implementation note: this is just an "optimized" overload of flowOf(vararg)
@@ -132,9 +118,7 @@ public fun <T> flowOf(value: T): Flow<T> = flow {
     emit(value)
 }
 
-/**
- * Returns an empty flow.
- */
+/** Returns an empty flow. */
 public fun <T> emptyFlow(): Flow<T> = EmptyFlow
 
 private object EmptyFlow : Flow<Nothing> {
@@ -142,9 +126,8 @@ private object EmptyFlow : Flow<Nothing> {
 }
 
 /**
- * Creates a _cold_ flow that produces values from the given array.
- * The flow being _cold_ means that the array components are read every time a terminal operator is applied
- * to the resulting flow.
+ * Creates a _cold_ flow that produces values from the given array. The flow being _cold_ means that the array components are read every
+ * time a terminal operator is applied to the resulting flow.
  */
 public fun <T> Array<T>.asFlow(): Flow<T> = flow {
     forEach { value ->
@@ -153,9 +136,8 @@ public fun <T> Array<T>.asFlow(): Flow<T> = flow {
 }
 
 /**
- * Creates a _cold_ flow that produces values from the array.
- * The flow being _cold_ means that the array components are read every time a terminal operator is applied
- * to the resulting flow.
+ * Creates a _cold_ flow that produces values from the array. The flow being _cold_ means that the array components are read every time a
+ * terminal operator is applied to the resulting flow.
  */
 public fun IntArray.asFlow(): Flow<Int> = flow {
     forEach { value ->
@@ -164,9 +146,8 @@ public fun IntArray.asFlow(): Flow<Int> = flow {
 }
 
 /**
- * Creates a _cold_ flow that produces values from the given array.
- * The flow being _cold_ means that the array components are read every time a terminal operator is applied
- * to the resulting flow.
+ * Creates a _cold_ flow that produces values from the given array. The flow being _cold_ means that the array components are read every
+ * time a terminal operator is applied to the resulting flow.
  */
 public fun LongArray.asFlow(): Flow<Long> = flow {
     forEach { value ->
@@ -174,18 +155,14 @@ public fun LongArray.asFlow(): Flow<Long> = flow {
     }
 }
 
-/**
- * Creates a flow that produces values from the range.
- */
+/** Creates a flow that produces values from the range. */
 public fun IntRange.asFlow(): Flow<Int> = flow {
     forEach { value ->
         emit(value)
     }
 }
 
-/**
- * Creates a flow that produces values from the range.
- */
+/** Creates a flow that produces values from the range. */
 public fun LongRange.asFlow(): Flow<Long> = flow {
     forEach { value ->
         emit(value)
@@ -193,27 +170,21 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
 }
 
 /**
- * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
- * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by code that is running in a different context or concurrently.
- * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
- * is applied to the resulting flow.
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel] provided to the builder's [block] of code via
+ * [ProducerScope]. It allows elements to be produced by code that is running in a different context or concurrently. The resulting flow is
+ * _cold_, which means that [block] is called every time a terminal operator is applied to the resulting flow.
  *
- * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
- * concurrently from different contexts.
- * The resulting flow completes as soon as the code in the [block] and all its children completes.
- * Use [awaitClose] as the last statement to keep it running.
- * A more detailed example is provided in the documentation of [callbackFlow].
+ * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used concurrently from different
+ * contexts. The resulting flow completes as soon as the code in the [block] and all its children completes. Use [awaitClose] as the last
+ * statement to keep it running. A more detailed example is provided in the documentation of [callbackFlow].
  *
- * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
- * resulting flow to specify a user-defined value and to control what happens when data is produced faster
- * than consumed, i.e. to control the back-pressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the resulting flow to specify a
+ * user-defined value and to control what happens when data is produced faster than consumed, i.e. to control the back-pressure behavior.
  *
- * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are
- * always fused so that only one properly configured channel is used for execution.
+ * Adjacent applications of [channelFlow], [flowOn], [buffer], and [produceIn] are always fused so that only one properly configured channel
+ * is used for execution.
  *
  * Examples of usage:
- *
  * ```
  * fun <T> Flow<T>.merge(other: Flow<T>): Flow<T> = channelFlow {
  *     // collect from one coroutine and send it
@@ -236,39 +207,29 @@ public fun LongRange.asFlow(): Flow<Long> = flow {
  * }
  * ```
  */
-public fun <T> channelFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> =
-    ChannelFlowBuilder(block)
+public fun <T> channelFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> = ChannelFlowBuilder(block)
 
 /**
- * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel]
- * provided to the builder's [block] of code via [ProducerScope]. It allows elements to be
- * produced by code that is running in a different context or concurrently.
+ * Creates an instance of a _cold_ [Flow] with elements that are sent to a [SendChannel] provided to the builder's [block] of code via
+ * [ProducerScope]. It allows elements to be produced by code that is running in a different context or concurrently.
  *
- * The resulting flow is _cold_, which means that [block] is called every time a terminal operator
- * is applied to the resulting flow.
+ * The resulting flow is _cold_, which means that [block] is called every time a terminal operator is applied to the resulting flow.
  *
- * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used
- * from any context, e.g. from a callback-based API.
- * The resulting flow completes as soon as the code in the [block] completes.
- * [awaitClose] should be used to keep the flow running, otherwise the channel will be closed immediately
- * when block completes.
- * [awaitClose] argument is called either when a flow consumer cancels the flow collection
- * or when a callback-based API invokes [SendChannel.close] manually and is typically used
- * to cleanup the resources after the completion, e.g. unregister a callback.
- * Using [awaitClose] is mandatory in order to prevent memory leaks when the flow collection is cancelled,
- * otherwise the callback may keep running even when the flow collector is already completed.
- * To avoid such leaks, this method throws [IllegalStateException] if block returns, but the channel
- * is not closed yet.
+ * This builder ensures thread-safety and context preservation, thus the provided [ProducerScope] can be used from any context, e.g. from a
+ * callback-based API. The resulting flow completes as soon as the code in the [block] completes. [awaitClose] should be used to keep the
+ * flow running, otherwise the channel will be closed immediately when block completes. [awaitClose] argument is called either when a flow
+ * consumer cancels the flow collection or when a callback-based API invokes [SendChannel.close] manually and is typically used to cleanup
+ * the resources after the completion, e.g. unregister a callback. Using [awaitClose] is mandatory in order to prevent memory leaks when the
+ * flow collection is cancelled, otherwise the callback may keep running even when the flow collector is already completed. To avoid such
+ * leaks, this method throws [IllegalStateException] if block returns, but the channel is not closed yet.
  *
- * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the
- * resulting flow to specify a user-defined value and to control what happens when data is produced faster
- * than consumed, i.e. to control the back-pressure behavior.
+ * A channel with the [default][Channel.BUFFERED] buffer size is used. Use the [buffer] operator on the resulting flow to specify a
+ * user-defined value and to control what happens when data is produced faster than consumed, i.e. to control the back-pressure behavior.
  *
- * Adjacent applications of [callbackFlow], [flowOn], [buffer], and [produceIn] are
- * always fused so that only one properly configured channel is used for execution.
+ * Adjacent applications of [callbackFlow], [flowOn], [buffer], and [produceIn] are always fused so that only one properly configured
+ * channel is used for execution.
  *
- * Example of usage that converts a multi-shot callback API to a flow.
- * For single-shot callbacks use [suspendCancellableCoroutine].
+ * Example of usage that converts a multi-shot callback API to a flow. For single-shot callbacks use [suspendCancellableCoroutine].
  *
  * ```
  * fun flowFrom(api: CallbackBasedApi): Flow<T> = callbackFlow {
@@ -296,9 +257,8 @@ public fun <T> channelFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> 
  * }
  * ```
  *
- * > The callback `register`/`unregister` methods provided by an external API must be thread-safe, because
- * > `awaitClose` block can be called at any time due to asynchronous nature of cancellation, even
- * > concurrently with the call of the callback.
+ * > The callback `register`/`unregister` methods provided by an external API must be thread-safe, because `awaitClose` block can be called
+ * > at any time due to asynchronous nature of cancellation, even concurrently with the call of the callback.
  */
 public fun <T> callbackFlow(block: suspend ProducerScope<T>.() -> Unit): Flow<T> = CallbackFlowBuilder(block)
 
@@ -307,23 +267,21 @@ private open class ChannelFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = BUFFERED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelFlowBuilder(block, context, capacity, onBufferOverflow)
 
-    override suspend fun collectTo(scope: ProducerScope<T>) =
-        block(scope)
+    override suspend fun collectTo(scope: ProducerScope<T>) = block(scope)
 
-    override fun toString(): String =
-        "block[$block] -> ${super.toString()}"
+    override fun toString(): String = "block[$block] -> ${super.toString()}"
 }
 
 private class CallbackFlowBuilder<T>(
     private val block: suspend ProducerScope<T>.() -> Unit,
     context: CoroutineContext = EmptyCoroutineContext,
     capacity: Int = BUFFERED,
-    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
 ) : ChannelFlowBuilder<T>(block, context, capacity, onBufferOverflow) {
 
     override suspend fun collectTo(scope: ProducerScope<T>) {
@@ -336,10 +294,11 @@ private class CallbackFlowBuilder<T>(
         if (!scope.isClosedForSend) {
             throw IllegalStateException(
                 """
-                    'awaitClose { yourCallbackOrListener.cancel() }' should be used in the end of callbackFlow block.
-                    Otherwise, a callback/listener may leak in case of external cancellation.
-                    See callbackFlow API documentation for the details.
-                """.trimIndent()
+                'awaitClose { yourCallbackOrListener.cancel() }' should be used in the end of callbackFlow block.
+                Otherwise, a callback/listener may leak in case of external cancellation.
+                See callbackFlow API documentation for the details.
+                """
+                    .trimIndent()
             )
         }
     }

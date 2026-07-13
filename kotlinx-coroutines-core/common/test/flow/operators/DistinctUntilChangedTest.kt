@@ -53,15 +53,17 @@ class DistinctUntilChangedTest : TestBase() {
 
     @Test
     fun testThrowingKeySelector() = runTest {
-        val flow = flow {
-            coroutineScope {
-                launch(start = CoroutineStart.ATOMIC) {
-                    hang { expect(3) }
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch(start = CoroutineStart.ATOMIC) {
+                            hang { expect(3) }
+                        }
+                        expect(2)
+                        emit(1)
+                    }
                 }
-                expect(2)
-                emit(1)
-            }
-        }.distinctUntilChangedBy { throw TestException() }
+                .distinctUntilChangedBy { throw TestException() }
 
         expect(1)
         assertFailsWith<TestException>(flow)
@@ -70,16 +72,18 @@ class DistinctUntilChangedTest : TestBase() {
 
     @Test
     fun testThrowingAreEquivalent() = runTest {
-        val flow = flow {
-            coroutineScope {
-                launch(start = CoroutineStart.ATOMIC) {
-                    hang { expect(3) }
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch(start = CoroutineStart.ATOMIC) {
+                            hang { expect(3) }
+                        }
+                        expect(2)
+                        emit(1)
+                        emit(2)
+                    }
                 }
-                expect(2)
-                emit(1)
-                emit(2)
-            }
-        }.distinctUntilChanged { _, _ -> throw TestException() }
+                .distinctUntilChanged { _, _ -> throw TestException() }
 
         expect(1)
         assertFailsWith<TestException>(flow)

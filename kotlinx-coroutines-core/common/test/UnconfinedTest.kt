@@ -71,15 +71,16 @@ class UnconfinedTest : TestBase() {
     fun testYield() = runTest {
         expect(1)
         launch(Dispatchers.Unconfined) {
-            expect(2)
-            yield()
-            launch {
-                expect(4)
+                expect(2)
+                yield()
+                launch {
+                    expect(4)
+                }
+                expect(3)
+                yield()
+                expect(5)
             }
-            expect(3)
-            yield()
-            expect(5)
-        }.join()
+            .join()
 
         finish(6)
     }

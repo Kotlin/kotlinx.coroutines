@@ -6,19 +6,22 @@ import kotlin.test.*
 class DelayTest : TestBase() {
 
     @Test
-    fun testCancellation() = runTest(expected = {it is CancellationException }) {
-        runAndCancel(1000)
-    }
+    fun testCancellation() =
+        runTest(expected = { it is CancellationException }) {
+            runAndCancel(1000)
+        }
 
     @Test
-    fun testMaxLongValue()= runTest(expected = {it is CancellationException }) {
-        runAndCancel(Long.MAX_VALUE)
-    }
+    fun testMaxLongValue() =
+        runTest(expected = { it is CancellationException }) {
+            runAndCancel(Long.MAX_VALUE)
+        }
 
     @Test
-    fun testMaxIntValue()= runTest(expected = {it is CancellationException }) {
-        runAndCancel(Int.MAX_VALUE.toLong())
-    }
+    fun testMaxIntValue() =
+        runTest(expected = { it is CancellationException }) {
+            runAndCancel(Int.MAX_VALUE.toLong())
+        }
 
     @Test
     fun testRegularDelay() = runTest {

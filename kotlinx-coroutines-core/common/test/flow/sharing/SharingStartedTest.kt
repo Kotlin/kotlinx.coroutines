@@ -6,8 +6,8 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 /**
- * Functional tests for [SharingStarted] using [withVirtualTime] and a DSL to describe
- * testing scenarios and expected behavior for different implementations.
+ * Functional tests for [SharingStarted] using [withVirtualTime] and a DSL to describe testing scenarios and expected behavior for different
+ * implementations.
  */
 class SharingStartedTest : TestBase() {
     @Test
@@ -107,7 +107,7 @@ class SharingStartedTest : TestBase() {
     private fun testSharingStarted(
         started: SharingStarted,
         initialCommand: SharingCommand? = null,
-        scenario: suspend SharingStartedDsl.() -> Unit
+        scenario: suspend SharingStartedDsl.() -> Unit,
     ) = withVirtualTime {
         expect(1)
         val dsl = SharingStartedDsl(started, initialCommand, coroutineContext)
@@ -124,7 +124,7 @@ class SharingStartedTest : TestBase() {
     private class SharingStartedDsl(
         val started: SharingStarted,
         initialCommand: SharingCommand?,
-        coroutineContext: CoroutineContext
+        coroutineContext: CoroutineContext,
     ) {
         val subscriptionCount = MutableStateFlow(0)
         var previousCommand: SharingCommand? = null
@@ -135,10 +135,7 @@ class SharingStartedTest : TestBase() {
         val scope = CoroutineScope(coroutineContext + Job())
 
         suspend fun launch() {
-            started
-                .command(subscriptionCount.asStateFlow())
-                .onEach { checkCommand(it) }
-                .launchIn(scope)
+            started.command(subscriptionCount.asStateFlow()).onEach { checkCommand(it) }.launchIn(scope)
             letItRun()
         }
 

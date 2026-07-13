@@ -14,9 +14,13 @@ class ConflateTest : TestBase() {
                 emit(i)
             }
         }
-        val result = flow.conflate().onEach {
-            delay(1000)
-        }.toList()
+        val result =
+            flow
+                .conflate()
+                .onEach {
+                    delay(1000)
+                }
+                .toList()
         assertEquals(listOf(1, 10, 20, 30), result)
         finish(2)
     }

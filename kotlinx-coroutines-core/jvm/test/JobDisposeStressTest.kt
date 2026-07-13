@@ -4,21 +4,15 @@ import kotlinx.coroutines.testing.*
 import org.junit.Test
 import kotlin.concurrent.thread
 
-/**
- * Tests concurrent cancel & dispose of the jobs.
- */
-class JobDisposeStressTest: TestBase() {
+/** Tests concurrent cancel & dispose of the jobs. */
+class JobDisposeStressTest : TestBase() {
     private val TEST_DURATION = 3 * stressTestMultiplier // seconds
 
-    @Volatile
-    private var done = false
-    @Volatile
-    private var job: TestJob? = null
-    @Volatile
-    private var handle: DisposableHandle? = null
+    @Volatile private var done = false
+    @Volatile private var job: TestJob? = null
+    @Volatile private var handle: DisposableHandle? = null
 
-    @Volatile
-    private var exception: Throwable? = null
+    @Volatile private var exception: Throwable? = null
 
     private fun testThread(name: String, block: () -> Unit): Thread =
         thread(start = false, name = name, block = block).apply {
@@ -33,29 +27,32 @@ class JobDisposeStressTest: TestBase() {
     fun testConcurrentDispose() {
         // create threads
         val threads = mutableListOf<Thread>()
-        threads += testThread("creator") {
-            while (!done) {
-                val job = TestJob()
-                val handle = job.invokeOnCompletion(onCancelling = true) { /* nothing */ }
-                this.job = job // post job to cancelling thread
-                this.handle = handle // post handle to concurrent disposer thread
-                handle.dispose() // dispose of handle from this thread (concurrently with other disposer)
+        threads +=
+            testThread("creator") {
+                while (!done) {
+                    val job = TestJob()
+                    val handle = job.invokeOnCompletion(onCancelling = true) { /* nothing */ }
+                    this.job = job // post job to cancelling thread
+                    this.handle = handle // post handle to concurrent disposer thread
+                    handle.dispose() // dispose of handle from this thread (concurrently with other disposer)
+                }
             }
-        }
 
-        threads += testThread("canceller") {
-            while (!done) {
-                val job = this.job ?: continue
-                job.cancel()
-                // Always returns true, TestJob never completes
+        threads +=
+            testThread("canceller") {
+                while (!done) {
+                    val job = this.job ?: continue
+                    job.cancel()
+                    // Always returns true, TestJob never completes
+                }
             }
-        }
 
-        threads += testThread("disposer") {
-            while (!done) {
-                handle?.dispose()
+        threads +=
+            testThread("disposer") {
+                while (!done) {
+                    handle?.dispose()
+                }
             }
-        }
 
         // start threads
         threads.forEach { it.start() }
@@ -72,6 +69,5 @@ class JobDisposeStressTest: TestBase() {
         // rethrow exception if any
     }
 
-    @Suppress("DEPRECATION_ERROR")
-    private class TestJob : JobSupport(active = true)
+    @Suppress("DEPRECATION_ERROR") private class TestJob : JobSupport(active = true)
 }

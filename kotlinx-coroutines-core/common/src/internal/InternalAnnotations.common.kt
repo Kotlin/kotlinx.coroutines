@@ -7,7 +7,7 @@ package kotlinx.coroutines.internal
     AnnotationTarget.PROPERTY_SETTER,
     AnnotationTarget.CONSTRUCTOR,
     AnnotationTarget.CLASS,
-    AnnotationTarget.FILE
+    AnnotationTarget.FILE,
 )
 @OptionalExpectation
 internal expect annotation class IgnoreJreRequirement()

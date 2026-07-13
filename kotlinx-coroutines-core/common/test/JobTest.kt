@@ -191,10 +191,11 @@ class JobTest : TestBase() {
     @Test
     fun testOverriddenParent() = runTest {
         val parent = Job()
-        val deferred = launch(parent, CoroutineStart.ATOMIC) {
-            expect(2)
-            delay(Long.MAX_VALUE)
-        }
+        val deferred =
+            launch(parent, CoroutineStart.ATOMIC) {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            }
 
         parent.cancel()
         expect(1)
@@ -224,7 +225,7 @@ class JobTest : TestBase() {
     fun testIncompleteJobState() = runTest {
         val parent = coroutineContext.job
         val job = launch {
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            coroutineContext[Job]!!.invokeOnCompletion {}
         }
         assertSame(parent, job.parent)
         job.join()
@@ -243,7 +244,8 @@ class JobTest : TestBase() {
 
     private class Wrapper : Incomplete {
         override val isActive: Boolean
-            get() =  error("")
+            get() = error("")
+
         override val list: NodeList?
             get() = error("")
     }

@@ -7,13 +7,11 @@ import java.util.concurrent.atomic.*
 import kotlin.test.*
 
 /**
- * Stress test for [runInterruptible].
- * It does not pass on JDK 1.6 on Windows: [Thread.sleep] times out without being interrupted despite the
- * fact that thread interruption flag is set.
+ * Stress test for [runInterruptible]. It does not pass on JDK 1.6 on Windows: [Thread.sleep] times out without being interrupted despite
+ * the fact that thread interruption flag is set.
  */
 class RunInterruptibleStressTest : TestBase() {
-    @get:Rule
-    val dispatcher = ExecutorRule(4)
+    @get:Rule val dispatcher = ExecutorRule(4)
     private val repeatTimes = 1000 * stressTestMultiplier
 
     @Test
@@ -22,28 +20,30 @@ class RunInterruptibleStressTest : TestBase() {
         val interruptedCount = AtomicInteger(0)
 
         repeat(repeatTimes) {
-            val job = launch(dispatcher) {
-                try {
-                    runInterruptible {
-                        enterCount.incrementAndGet()
-                        try {
-                            Thread.sleep(10_000)
-                            error("Sleep was not interrupted, Thread.isInterrupted=${Thread.currentThread().isInterrupted}")
-                        } catch (e: InterruptedException) {
-                            interruptedCount.incrementAndGet()
-                            throw e
+            val job =
+                launch(dispatcher) {
+                    try {
+                        runInterruptible {
+                            enterCount.incrementAndGet()
+                            try {
+                                Thread.sleep(10_000)
+                                error("Sleep was not interrupted, Thread.isInterrupted=${Thread.currentThread().isInterrupted}")
+                            } catch (e: InterruptedException) {
+                                interruptedCount.incrementAndGet()
+                                throw e
+                            }
                         }
+                    } catch (e: CancellationException) {
+                        // Expected
+                    } finally {
+                        assertFalse(Thread.currentThread().isInterrupted, "Interrupt flag should not leak")
                     }
-                } catch (e: CancellationException) {
-                    // Expected
-                } finally {
-                    assertFalse(Thread.currentThread().isInterrupted, "Interrupt flag should not leak")
                 }
-            }
             // Add dispatch delay
-            val cancelJob = launch(dispatcher) {
-                job.cancel()
-            }
+            val cancelJob =
+                launch(dispatcher) {
+                    job.cancel()
+                }
             joinAll(job, cancelJob)
         }
         println("Entered runInterruptible ${enterCount.get()} times")

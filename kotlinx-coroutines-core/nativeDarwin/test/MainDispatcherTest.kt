@@ -10,8 +10,7 @@ import kotlin.test.*
 
 class MainDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
 
-    @OptIn(ExperimentalForeignApi::class)
-    override fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
+    @OptIn(ExperimentalForeignApi::class) override fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
 
     // skip if already on the main thread, run blocking doesn't really work well with that
     override fun shouldSkipTesting(): Boolean = isMainThread()

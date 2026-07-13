@@ -12,17 +12,14 @@ import kotlin.coroutines.*
 import kotlin.random.*
 
 /**
- * This stress-test is self-contained reproducer for the race in [Flow.asPublisher] extension
- * that was originally reported in the issue
- * [#2109](https://github.com/Kotlin/kotlinx.coroutines/issues/2109).
- * The original reproducer used a flow that loads a file using AsynchronousFileChannel
- * (that issues completion callbacks from multiple threads)
- * and uploads it to S3 via Amazon SDK, which internally uses netty for I/O
- * (which uses a single thread for connection-related callbacks).
+ * This stress-test is self-contained reproducer for the race in [Flow.asPublisher] extension that was originally reported in the issue
+ * [#2109](https://github.com/Kotlin/kotlinx.coroutines/issues/2109). The original reproducer used a flow that loads a file using
+ * AsynchronousFileChannel (that issues completion callbacks from multiple threads) and uploads it to S3 via Amazon SDK, which internally
+ * uses netty for I/O (which uses a single thread for connection-related callbacks).
  *
- * This stress-test essentially mimics the logic in multiple interacting threads: several emitter threads that form
- * the flow and a single requesting thread works on the subscriber's side to periodically request more
- * values when the number of items requested drops below the threshold.
+ * This stress-test essentially mimics the logic in multiple interacting threads: several emitter threads that form the flow and a single
+ * requesting thread works on the subscriber's side to periodically request more values when the number of items requested drops below the
+ * threshold.
  */
 @Suppress("ReactiveStreamsSubscriberImplementation")
 class PublisherRequestStressTest : TestBase() {
@@ -38,9 +35,10 @@ class PublisherRequestStressTest : TestBase() {
 
     private val emitThreadNo = AtomicInteger()
 
-    private val emitPool = Executors.newFixedThreadPool(nEmitThreads) { r ->
-        Thread(r, "PublisherRequestStressTest-emit-${emitThreadNo.incrementAndGet()}")
-    }
+    private val emitPool =
+        Executors.newFixedThreadPool(nEmitThreads) { r ->
+            Thread(r, "PublisherRequestStressTest-emit-${emitThreadNo.incrementAndGet()}")
+        }
 
     private val reqPool = Executors.newSingleThreadExecutor { r ->
         Thread(r, "PublisherRequestStressTest-req")
@@ -66,49 +64,51 @@ class PublisherRequestStressTest : TestBase() {
 
         val publisher = mtFlow().asPublisher()
         var error = false
-        
-        publisher.subscribe(object : Subscriber<Long> {
-            private var demand = 0L // only updated from reqPool
 
-            override fun onComplete() {
-                // Typically unreached, but, rarely, `emitPool` may shut down before the cancellation is performed.
-            }
+        publisher.subscribe(
+            object : Subscriber<Long> {
+                private var demand = 0L // only updated from reqPool
 
-            override fun onSubscribe(sub: Subscription) {
-                subscription = sub
-                maybeRequestMore()
-            }
+                override fun onComplete() {
+                    // Typically unreached, but, rarely, `emitPool` may shut down before the cancellation is performed.
+                }
 
-            private fun maybeRequestMore() {
-                if (demand >= minDemand) return
-                val nextDemand = Random.nextLong(minDemand + 1..maxDemand)
-                val more = nextDemand - demand
-                demand = nextDemand
-                requestedTill.addAndGet(more)
-                subscription.request(more)
-            }
-
-            override fun onNext(value: Long) {
-                check(callingOnNext.getAndIncrement() == 0) // make sure it is not concurrent
-                // check for expected value
-                check(value == expectedValue.get())
-                // check that it does not exceed requested values
-                check(value < requestedTill.get())
-                val nextExpected = value + 1
-                expectedValue.set(nextExpected)
-                // send more requests from request thread
-                reqPool.execute {
-                    demand-- // processed an item
+                override fun onSubscribe(sub: Subscription) {
+                    subscription = sub
                     maybeRequestMore()
                 }
-                callingOnNext.decrementAndGet()
-            }
 
-            override fun onError(ex: Throwable?) {
-                error = true
-                error("Failed", ex)
+                private fun maybeRequestMore() {
+                    if (demand >= minDemand) return
+                    val nextDemand = Random.nextLong(minDemand + 1..maxDemand)
+                    val more = nextDemand - demand
+                    demand = nextDemand
+                    requestedTill.addAndGet(more)
+                    subscription.request(more)
+                }
+
+                override fun onNext(value: Long) {
+                    check(callingOnNext.getAndIncrement() == 0) // make sure it is not concurrent
+                    // check for expected value
+                    check(value == expectedValue.get())
+                    // check that it does not exceed requested values
+                    check(value < requestedTill.get())
+                    val nextExpected = value + 1
+                    expectedValue.set(nextExpected)
+                    // send more requests from request thread
+                    reqPool.execute {
+                        demand-- // processed an item
+                        maybeRequestMore()
+                    }
+                    callingOnNext.decrementAndGet()
+                }
+
+                override fun onError(ex: Throwable?) {
+                    error = true
+                    error("Failed", ex)
+                }
             }
-        })
+        )
         var prevExpected = -1L
         for (second in 1..testDurationSec) {
             if (error) break
@@ -133,8 +133,10 @@ class PublisherRequestStressTest : TestBase() {
     }
 
     private suspend fun aWait(): Long = suspendCancellableCoroutine { cont ->
-        emitPool.execute(Runnable {
-            cont.resume(nextValue.getAndIncrement())
-        })
+        emitPool.execute(
+            Runnable {
+                cont.resume(nextValue.getAndIncrement())
+            }
+        )
     }
 }

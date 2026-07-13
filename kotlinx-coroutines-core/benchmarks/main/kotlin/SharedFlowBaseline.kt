@@ -19,6 +19,6 @@ open class SharedFlowBaseline {
             repeat(size) { flow.emit(Unit) }
         }
 
-        flow.take(size).collect {  }
+        flow.take(size).collect {}
     }
 }

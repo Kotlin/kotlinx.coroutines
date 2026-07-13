@@ -14,11 +14,12 @@ class LimitedParallelismSharedTest : TestBase() {
         // For more specific and concurrent tests, see 'concurrent' package.
         val view = Dispatchers.Default.limitedParallelism(1)
         val view2 = Dispatchers.Default.limitedParallelism(1)
-        val j1 = launch(view) {
-            while (true) {
-                yield()
+        val j1 =
+            launch(view) {
+                while (true) {
+                    yield()
+                }
             }
-        }
         val j2 = launch(view2) { j1.cancel() }
         joinAll(j1, j2)
     }
@@ -32,20 +33,21 @@ class LimitedParallelismSharedTest : TestBase() {
     }
 
     /**
-     * Checks that even if the dispatcher sporadically fails, the limited dispatcher will still allow reaching the
-     * target parallelism level.
+     * Checks that even if the dispatcher sporadically fails, the limited dispatcher will still allow reaching the target parallelism level.
      */
     @Test
     fun testLimitedParallelismOfOccasionallyFailingDispatcher() {
         val limit = 5
         var doFail = false
         val workerQueue = mutableListOf<Runnable>()
-        val limited = object: CoroutineDispatcher() {
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                if (doFail) throw TestException()
-                workerQueue.add(block)
-            }
-        }.limitedParallelism(limit)
+        val limited =
+            object : CoroutineDispatcher() {
+                    override fun dispatch(context: CoroutineContext, block: Runnable) {
+                        if (doFail) throw TestException()
+                        workerQueue.add(block)
+                    }
+                }
+                .limitedParallelism(limit)
         repeat(6 * limit) {
             try {
                 limited.dispatch(EmptyCoroutineContext, Runnable { /* do nothing */ })

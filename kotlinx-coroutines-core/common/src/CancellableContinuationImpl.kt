@@ -14,22 +14,21 @@ private const val DECISION_SHIFT = 29
 private const val INDEX_MASK = (1 shl DECISION_SHIFT) - 1
 private const val NO_INDEX = INDEX_MASK
 
-private inline val Int.decision get() = this shr DECISION_SHIFT
-private inline val Int.index get() = this and INDEX_MASK
-@Suppress("NOTHING_TO_INLINE")
-private inline fun decisionAndIndex(decision: Int, index: Int) = (decision shl DECISION_SHIFT) + index
+private inline val Int.decision
+    get() = this shr DECISION_SHIFT
+private inline val Int.index
+    get() = this and INDEX_MASK
 
-@JvmField
-internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
+@Suppress("NOTHING_TO_INLINE") private inline fun decisionAndIndex(decision: Int, index: Int) = (decision shl DECISION_SHIFT) + index
 
-/**
- * @suppress **This is unstable API and it is subject to change.**
- */
+@JvmField internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
+
+/** @suppress **This is unstable API and it is subject to change.** */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 @PublishedApi
 internal open class CancellableContinuationImpl<in T>(
     final override val delegate: Continuation<T>,
-    resumeMode: Int
+    resumeMode: Int,
 ) : DispatchedTask<T>(resumeMode), CancellableContinuation<T>, CoroutineStackFrame, Waiter {
     init {
         assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
@@ -49,34 +48,27 @@ internal open class CancellableContinuationImpl<in T>(
      * less dependencies.
      */
 
-    /** decision state machine
-
-        +-----------+   trySuspend   +-----------+
-        | UNDECIDED | -------------> | SUSPENDED |
-        +-----------+                +-----------+
-              |
-              | tryResume
-              V
-        +-----------+
-        |  RESUMED  |
-        +-----------+
-
-        Note: both tryResume and trySuspend can be invoked at most once, first invocation wins.
-        If the cancellation handler is specified via a [Segment] instance and the index in it
-        (so [Segment.onCancellation] should be called), the [_decisionAndIndex] field may store
-        this index additionally to the "decision" value.
+    /**
+     * decision state machine
+     *
+     * +-----------+ trySuspend +-----------+ | UNDECIDED | -------------> | SUSPENDED | +-----------+ +-----------+ | | tryResume V
+     * +-----------+ | RESUMED | +-----------+
+     *
+     * Note: both tryResume and trySuspend can be invoked at most once, first invocation wins. If the cancellation handler is specified via
+     * a [Segment] instance and the index in it (so [Segment.onCancellation] should be called), the [_decisionAndIndex] field may store this
+     * index additionally to the "decision" value.
      */
     private val _decisionAndIndex = atomic(decisionAndIndex(UNDECIDED, NO_INDEX))
 
     /*
-       === Internal states ===
-       name        state class          public state    description
-       ------      ------------         ------------    -----------
-       ACTIVE      Active               : Active        active, no listeners
-       SINGLE_A    CancelHandler        : Active        active, one cancellation listener
-       CANCELLED   CancelledContinuation: Cancelled     cancelled (final state)
-       COMPLETED   any                  : Completed     produced some result or threw an exception (final state)
-     */
+      === Internal states ===
+      name        state class          public state    description
+      ------      ------------         ------------    -----------
+      ACTIVE      Active               : Active        active, no listeners
+      SINGLE_A    CancelHandler        : Active        active, one cancellation listener
+      CANCELLED   CancelledContinuation: Cancelled     cancelled (final state)
+      COMPLETED   any                  : Completed     produced some result or threw an exception (final state)
+    */
     private val _state = atomic<Any?>(Active)
 
     /*
@@ -102,29 +94,34 @@ internal open class CancellableContinuationImpl<in T>(
     private val parentHandle: DisposableHandle?
         get() = _parentHandle.value
 
-    internal val state: Any? get() = _state.value
+    internal val state: Any?
+        get() = _state.value
 
-    public override val isActive: Boolean get() = state is NotCompleted
+    public override val isActive: Boolean
+        get() = state is NotCompleted
 
-    public override val isCompleted: Boolean get() = state !is NotCompleted
+    public override val isCompleted: Boolean
+        get() = state !is NotCompleted
 
-    public override val isCancelled: Boolean get() = state is CancelledContinuation
+    public override val isCancelled: Boolean
+        get() = state is CancelledContinuation
 
     // We cannot invoke `state.toString()` since it may cause a circular dependency
-    private val stateDebugRepresentation get() = when(state) {
-        is NotCompleted -> "Active"
-        is CancelledContinuation -> "Cancelled"
-        else -> "Completed"
-    }
+    private val stateDebugRepresentation
+        get() =
+            when (state) {
+                is NotCompleted -> "Active"
+                is CancelledContinuation -> "Cancelled"
+                else -> "Completed"
+            }
 
     public override fun initCancellability() {
         /*
-        * Invariant: at the moment of invocation, `this` has not yet
-        * leaked to user code and no one is able to invoke `resume` or `cancel`
-        * on it yet. Also, this function is not invoked for reusable continuations.
-        */
-        val handle = installParentHandle()
-            ?: return // fast path -- don't do anything without parent
+         * Invariant: at the moment of invocation, `this` has not yet
+         * leaked to user code and no one is able to invoke `resume` or `cancel`
+         * on it yet. Also, this function is not invoked for reusable continuations.
+         */
+        val handle = installParentHandle() ?: return // fast path -- don't do anything without parent
         // now check our state _after_ registering, could have completed while we were registering,
         // but only if parent was cancelled. Parent could be in a "cancelling" state for a while,
         // so we are helping it and cleaning the node ourselves
@@ -138,8 +135,8 @@ internal open class CancellableContinuationImpl<in T>(
     private fun isReusable(): Boolean = resumeMode.isReusableMode && (delegate as DispatchedContinuation<*>).isReusable()
 
     /**
-     * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work.
-     * Invariant: used only by [suspendCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
+     * Resets cancellability state in order to [suspendCancellableCoroutineReusable] to work. Invariant: used only by
+     * [suspendCancellableCoroutineReusable] in [REUSABLE_CLAIMED] state.
      */
     @JvmName("resetStateReusable") // Prettier stack traces
     internal fun resetStateReusable(): Boolean {
@@ -230,13 +227,12 @@ internal open class CancellableContinuationImpl<in T>(
             // Handler should never fail, if it does -- it is an unhandled exception
             handleCoroutineException(
                 context,
-                CompletionHandlerException("Exception in invokeOnCancellation handler for $this", ex)
+                CompletionHandlerException("Exception in invokeOnCancellation handler for $this", ex),
             )
         }
     }
 
-    fun callCancelHandler(handler: CancelHandler, cause: Throwable?) =
-        callCancelHandlerSafely { handler.invoke(cause) }
+    fun callCancelHandler(handler: CancelHandler, cause: Throwable?) = callCancelHandlerSafely { handler.invoke(cause) }
 
     private fun callSegmentOnCancellation(segment: Segment<*>, cause: Throwable?) {
         val index = _decisionAndIndex.value.index
@@ -247,7 +243,7 @@ internal open class CancellableContinuationImpl<in T>(
     fun <R> callOnCancellation(
         onCancellation: (cause: Throwable, value: R, context: CoroutineContext) -> Unit,
         cause: Throwable,
-        value: R
+        value: R,
     ) {
         try {
             onCancellation.invoke(cause, value, context)
@@ -255,16 +251,13 @@ internal open class CancellableContinuationImpl<in T>(
             // Handler should never fail, if it does -- it is an unhandled exception
             handleCoroutineException(
                 context,
-                CompletionHandlerException("Exception in resume onCancellation handler for $this", ex)
+                CompletionHandlerException("Exception in resume onCancellation handler for $this", ex),
             )
         }
     }
 
-    /**
-     * It is used when parent is cancelled to get the cancellation cause for this continuation.
-     */
-    open fun getContinuationCancellationCause(parent: Job): Throwable =
-        parent.getCancellationException()
+    /** It is used when parent is cancelled to get the cancellation cause for this continuation. */
+    open fun getContinuationCancellationCause(parent: Job): Throwable = parent.getCancellationException()
 
     private fun trySuspend(): Boolean {
         _decisionAndIndex.loop { cur ->
@@ -308,7 +301,7 @@ internal open class CancellableContinuationImpl<in T>(
              * Release the continuation after installing the handle (if needed).
              * If we were successful, then do nothing, it's ok to reuse the instance now.
              * Otherwise, dispose the handle by ourselves.
-            */
+             */
             if (isReusable) {
                 releaseClaimedReusableContinuation()
             }
@@ -345,8 +338,8 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     /**
-     * Tries to release reusable continuation. It can fail is there was an asynchronous cancellation,
-     * in which case it detaches from the parent and cancels this continuation.
+     * Tries to release reusable continuation. It can fail is there was an asynchronous cancellation, in which case it detaches from the
+     * parent and cancels this continuation.
      */
     internal fun releaseClaimedReusableContinuation() {
         // Cannot be cast if e.g. invoked from `installParentHandleReusable` for context without dispatchers, but with Job in it
@@ -355,8 +348,7 @@ internal open class CancellableContinuationImpl<in T>(
         cancel(cancellationCause)
     }
 
-    override fun resumeWith(result: Result<T>) =
-        resumeImpl(result.toState(this), resumeMode)
+    override fun resumeWith(result: Result<T>) = resumeImpl(result.toState(this), resumeMode)
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
@@ -364,17 +356,14 @@ internal open class CancellableContinuationImpl<in T>(
 
     override fun <R : T> resume(
         value: R,
-        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
-    ) =
-        resumeImpl(value, resumeMode, onCancellation)
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
+    ) = resumeImpl(value, resumeMode, onCancellation)
 
     /**
-     * An optimized version for the code below that does not allocate
-     * a cancellation handler object and efficiently stores the specified
+     * An optimized version for the code below that does not allocate a cancellation handler object and efficiently stores the specified
      * [segment] and [index] in this [CancellableContinuationImpl].
      *
-     * The only difference is that `segment.onCancellation(..)` is never
-     * called if this continuation is already completed;
+     * The only difference is that `segment.onCancellation(..)` is never called if this continuation is already completed;
      *
      * ```
      * invokeOnCancellation { cause ->
@@ -392,8 +381,7 @@ internal open class CancellableContinuationImpl<in T>(
         invokeOnCancellationImpl(segment)
     }
 
-    override fun invokeOnCancellation(handler: CompletionHandler) =
-        invokeOnCancellation(CancelHandler.UserSupplied(handler))
+    override fun invokeOnCancellation(handler: CompletionHandler) = invokeOnCancellation(CancelHandler.UserSupplied(handler))
 
     internal fun invokeOnCancellationInternal(handler: CancelHandler) = invokeOnCancellationImpl(handler)
 
@@ -404,7 +392,8 @@ internal open class CancellableContinuationImpl<in T>(
                 is Active -> {
                     if (_state.compareAndSet(state, handler)) return // quit on cas success
                 }
-                is CancelHandler, is Segment<*> -> multipleHandlersError(handler, state)
+                is CancelHandler,
+                is Segment<*> -> multipleHandlersError(handler, state)
                 is CompletedExceptionally -> {
                     /*
                      * Continuation was already cancelled or completed exceptionally.
@@ -475,25 +464,26 @@ internal open class CancellableContinuationImpl<in T>(
         proposedUpdate: R,
         resumeMode: Int,
         onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
-        idempotent: Any?
-    ): Any? = when {
-        proposedUpdate is CompletedExceptionally -> {
-            assert { idempotent == null } // there are no idempotent exceptional resumes
-            assert { onCancellation == null } // only successful results can be cancelled
-            proposedUpdate
+        idempotent: Any?,
+    ): Any? =
+        when {
+            proposedUpdate is CompletedExceptionally -> {
+                assert { idempotent == null } // there are no idempotent exceptional resumes
+                assert { onCancellation == null } // only successful results can be cancelled
+                proposedUpdate
+            }
+            !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
+            onCancellation != null || state is CancelHandler || idempotent != null ->
+                // mark as CompletedContinuation if special cases are present:
+                // Cancellation handlers that shall be called after resume or idempotent resume
+                CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
+            else -> proposedUpdate // simple case -- use the value directly
         }
-        !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
-        onCancellation != null || state is CancelHandler || idempotent != null ->
-            // mark as CompletedContinuation if special cases are present:
-            // Cancellation handlers that shall be called after resume or idempotent resume
-            CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
-        else -> proposedUpdate // simple case -- use the value directly
-    }
 
     internal fun <R> resumeImpl(
         proposedUpdate: R,
         resumeMode: Int,
-        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)? = null
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)? = null,
     ) {
         _state.loop { state ->
             when (state) {
@@ -523,13 +513,13 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     /**
-     * Similar to [tryResume], but does not actually completes resume (needs [completeResume] call).
-     * Returns [RESUME_TOKEN] when resumed, `null` when it was already resumed or cancelled.
+     * Similar to [tryResume], but does not actually completes resume (needs [completeResume] call). Returns [RESUME_TOKEN] when resumed,
+     * `null` when it was already resumed or cancelled.
      */
     private fun <R> tryResumeImpl(
         proposedUpdate: R,
         idempotent: Any?,
-        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
     ): Symbol? {
         _state.loop { state ->
             when (state) {
@@ -562,9 +552,7 @@ internal open class CancellableContinuationImpl<in T>(
         if (!isReusable()) detachChild()
     }
 
-    /**
-     * Detaches from the parent.
-     */
+    /** Detaches from the parent. */
     internal fun detachChild() {
         val handle = parentHandle ?: return
         handle.dispose()
@@ -572,15 +560,13 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     // Note: Always returns RESUME_TOKEN | null
-    override fun tryResume(value: T, idempotent: Any?): Any? =
-        tryResumeImpl(value, idempotent, onCancellation = null)
+    override fun tryResume(value: T, idempotent: Any?): Any? = tryResumeImpl(value, idempotent, onCancellation = null)
 
     override fun <R : T> tryResume(
         value: R,
         idempotent: Any?,
-        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?
-    ): Any? =
-        tryResumeImpl(value, idempotent, onCancellation)
+        onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
+    ): Any? = tryResumeImpl(value, idempotent, onCancellation)
 
     override fun tryResumeWithException(exception: Throwable): Any? =
         tryResumeImpl(CompletedExceptionally(exception), idempotent = null, onCancellation = null)
@@ -610,16 +596,12 @@ internal open class CancellableContinuationImpl<in T>(
 
     // The exceptional state in CancellableContinuationImpl is stored directly and it is not recovered yet.
     // The stacktrace recovery is invoked here.
-    override fun getExceptionalResult(state: Any?): Throwable? =
-        super.getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
+    override fun getExceptionalResult(state: Any?): Throwable? = super.getExceptionalResult(state)?.let { recoverStackTrace(it, delegate) }
 
     // For nicer debugging
-    public override fun toString(): String =
-        "${nameString()}(${delegate.toDebugString()}){$stateDebugRepresentation}@$hexAddress"
+    public override fun toString(): String = "${nameString()}(${delegate.toDebugString()}){$stateDebugRepresentation}@$hexAddress"
 
-    protected open fun nameString(): String =
-        "CancellableContinuation"
-
+    protected open fun nameString(): String = "CancellableContinuation"
 }
 
 // Marker for active continuation
@@ -630,29 +612,26 @@ private object Active : NotCompleted {
 }
 
 /**
- * Essentially the same as just a function from `Throwable?` to `Unit`.
- * The only thing implementors can do is call [invoke].
- * The reason this abstraction exists is to allow providing a readable [toString] in the list of completion handlers
- * as seen from the debugger.
- * Use [UserSupplied] to create an instance from a lambda.
- * We can't avoid defining a separate type, because on JS, you can't inherit from a function type.
+ * Essentially the same as just a function from `Throwable?` to `Unit`. The only thing implementors can do is call [invoke]. The reason this
+ * abstraction exists is to allow providing a readable [toString] in the list of completion handlers as seen from the debugger. Use
+ * [UserSupplied] to create an instance from a lambda. We can't avoid defining a separate type, because on JS, you can't inherit from a
+ * function type.
  */
 internal interface CancelHandler : NotCompleted {
     /**
      * Signals cancellation.
      *
      * This function:
-     * - Does not throw any exceptions.
-     *   Violating this rule in an implementation leads to [handleUncaughtCoroutineException] being called with a
-     *   [CompletionHandlerException] wrapping the thrown exception.
+     * - Does not throw any exceptions. Violating this rule in an implementation leads to [handleUncaughtCoroutineException] being called
+     *   with a [CompletionHandlerException] wrapping the thrown exception.
      * - Is fast, non-blocking, and thread-safe.
      * - Can be invoked concurrently with the surrounding code.
      * - Can be invoked from any context.
      *
      * The meaning of `cause` that is passed to the handler is:
      * - It is `null` if the continuation was cancelled directly via [CancellableContinuation.cancel] without a `cause`.
-     * - It is an instance of [CancellationException] if the continuation was _normally_ cancelled from the outside.
-     *   **It should not be treated as an error**. In particular, it should not be reported to error logs.
+     * - It is an instance of [CancellationException] if the continuation was _normally_ cancelled from the outside. **It should not be
+     *   treated as an error**. In particular, it should not be reported to error logs.
      * - Otherwise, the continuation had cancelled with an _error_.
      */
     fun invoke(cause: Throwable?)
@@ -664,7 +643,9 @@ internal interface CancelHandler : NotCompleted {
      */
     class UserSupplied(private val handler: (cause: Throwable?) -> Unit) : CancelHandler {
         /** @suppress */
-        override fun invoke(cause: Throwable?) { handler(cause) }
+        override fun invoke(cause: Throwable?) {
+            handler(cause)
+        }
 
         override fun toString() = "CancelHandler.UserSupplied[${handler.classSimpleName}@$hexAddress]"
     }
@@ -678,9 +659,10 @@ private data class CompletedContinuation<R>(
     // installed via the `resume` block
     @JvmField val onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)? = null,
     @JvmField val idempotentResume: Any? = null,
-    @JvmField val cancelCause: Throwable? = null
+    @JvmField val cancelCause: Throwable? = null,
 ) {
-    val cancelled: Boolean get() = cancelCause != null
+    val cancelled: Boolean
+        get() = cancelCause != null
 
     fun invokeHandlers(cont: CancellableContinuationImpl<*>, cause: Throwable) {
         cancelHandler?.let { cont.callCancelHandler(it, cause) }
@@ -689,10 +671,9 @@ private data class CompletedContinuation<R>(
 }
 
 // Same as ChildHandleNode, but for cancellable continuation
-private class ChildContinuation(
-    @JvmField val child: CancellableContinuationImpl<*>
-) : JobNode() {
-    override val onCancelling get() = true
+private class ChildContinuation(@JvmField val child: CancellableContinuationImpl<*>) : JobNode() {
+    override val onCancelling
+        get() = true
 
     override fun invoke(cause: Throwable?) {
         child.parentCancelled(child.getContinuationCancellationCause(job))

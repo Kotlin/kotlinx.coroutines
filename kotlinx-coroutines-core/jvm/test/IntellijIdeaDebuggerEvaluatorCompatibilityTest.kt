@@ -28,22 +28,22 @@ class IntellijIdeaDebuggerEvaluatorCompatibilityTest {
      */
 
     @Test
-    fun testScopeIsAccessible() = runBlocking<Unit> {
-        verify()
-
-        withContext(Job()) {
+    fun testScopeIsAccessible() =
+        runBlocking<Unit> {
             verify()
-        }
 
-        coroutineScope {
-            verify()
-        }
+            withContext(Job()) {
+                verify()
+            }
 
-        supervisorScope {
-            verify()
-        }
+            coroutineScope {
+                verify()
+            }
 
-    }
+            supervisorScope {
+                verify()
+            }
+        }
 
     private suspend fun verify() {
         val ctx = coroutineContext

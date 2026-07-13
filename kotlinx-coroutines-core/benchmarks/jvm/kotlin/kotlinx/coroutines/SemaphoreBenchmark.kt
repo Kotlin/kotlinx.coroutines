@@ -14,17 +14,14 @@ import java.util.concurrent.*
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class SemaphoreBenchmark {
-    @Param
-    private var _1_dispatcher: SemaphoreBenchDispatcherCreator = SemaphoreBenchDispatcherCreator.DEFAULT
+    @Param private var _1_dispatcher: SemaphoreBenchDispatcherCreator = SemaphoreBenchDispatcherCreator.DEFAULT
 
-    @Param("0", "1000")
-    private var _2_coroutines: Int = 0
+    @Param("0", "1000") private var _2_coroutines: Int = 0
 
-    @Param("1", "2", "4", "8", "32", "128", "100000")
-    private var _3_maxPermits: Int = 0
+    @Param("1", "2", "4", "8", "32", "128", "100000") private var _3_maxPermits: Int = 0
 
     @Param("1", "2", "4", "8", "16") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
+    //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
     private var _4_parallelism: Int = 0
 
     private lateinit var dispatcher: CoroutineDispatcher
@@ -76,7 +73,7 @@ open class SemaphoreBenchmark {
 
 enum class SemaphoreBenchDispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
     FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    DEFAULT({ parallelism -> CoroutineScheduler(corePoolSize = parallelism, maxPoolSize = parallelism).asCoroutineDispatcher() })
+    DEFAULT({ parallelism -> CoroutineScheduler(corePoolSize = parallelism, maxPoolSize = parallelism).asCoroutineDispatcher() }),
 }
 
 private const val WORK_INSIDE = 50

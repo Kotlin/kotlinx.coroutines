@@ -14,8 +14,7 @@ open class SimpleChannelBenchmark {
 
     private val iterations = 10_000
 
-    @Volatile
-    private var sink: Int = 0
+    @Volatile private var sink: Int = 0
 
     @Benchmark
     fun cancellable() = runBlocking {

@@ -12,18 +12,17 @@ class FlowContextOptimizationsTest : TestBase() {
         val flowDispatcher = wrapperDispatcher(currentContext)
         val collectContext = currentContext
         flow {
-            assertSame(flowDispatcher, currentContext[ContinuationInterceptor] as CoroutineContext)
-            expect(1)
-            emit(1)
-            expect(2)
-            emit(2)
-            expect(3)
-        }
+                assertSame(flowDispatcher, currentContext[ContinuationInterceptor] as CoroutineContext)
+                expect(1)
+                emit(1)
+                expect(2)
+                emit(2)
+                expect(3)
+            }
             .flowOn(flowDispatcher)
             .collect { value ->
                 assertEquals(collectContext.minusKey(Job), currentContext.minusKey(Job))
-                if (value == 1) expect(4)
-                else expect(5)
+                if (value == 1) expect(4) else expect(5)
             }
 
         finish(6)
@@ -32,16 +31,15 @@ class FlowContextOptimizationsTest : TestBase() {
     @Test
     fun testFusedSameContext() = runTest {
         flow {
-            expect(1)
-            emit(1)
-            expect(3)
-            emit(2)
-            expect(5)
-        }
+                expect(1)
+                emit(1)
+                expect(3)
+                emit(2)
+                expect(5)
+            }
             .flowOn(currentContext.minusKey(Job))
             .collect { value ->
-                if (value == 1) expect(2)
-                else expect(4)
+                if (value == 1) expect(2) else expect(4)
             }
         finish(6)
     }
@@ -49,18 +47,17 @@ class FlowContextOptimizationsTest : TestBase() {
     @Test
     fun testFusedSameContextWithIntermediateOperators() = runTest {
         flow {
-            expect(1)
-            emit(1)
-            expect(3)
-            emit(2)
-            expect(5)
-        }
+                expect(1)
+                emit(1)
+                expect(3)
+                emit(2)
+                expect(5)
+            }
             .flowOn(currentContext.minusKey(Job))
             .map { it }
             .flowOn(currentContext.minusKey(Job))
             .collect { value ->
-                if (value == 1) expect(2)
-                else expect(4)
+                if (value == 1) expect(2) else expect(4)
             }
         finish(6)
     }
@@ -68,18 +65,17 @@ class FlowContextOptimizationsTest : TestBase() {
     @Test
     fun testFusedSameDispatcher() = runTest {
         flow {
-            assertEquals("Name", currentContext[CoroutineName]?.name)
-            expect(1)
-            emit(1)
-            expect(3)
-            emit(2)
-            expect(5)
-        }
+                assertEquals("Name", currentContext[CoroutineName]?.name)
+                expect(1)
+                emit(1)
+                expect(3)
+                emit(2)
+                expect(5)
+            }
             .flowOn(CoroutineName("Name"))
             .collect { value ->
                 assertNull(currentContext[CoroutineName]?.name)
-                if (value == 1) expect(2)
-                else expect(4)
+                if (value == 1) expect(2) else expect(4)
             }
         finish(6)
     }
@@ -87,22 +83,21 @@ class FlowContextOptimizationsTest : TestBase() {
     @Test
     fun testFusedManySameDispatcher() = runTest {
         flow {
-            assertEquals("Name1", currentContext[CoroutineName]?.name)
-            assertEquals("OK", currentContext[CustomContextElement]?.str)
-            expect(1)
-            emit(1)
-            expect(3)
-            emit(2)
-            expect(5)
-        }
+                assertEquals("Name1", currentContext[CoroutineName]?.name)
+                assertEquals("OK", currentContext[CustomContextElement]?.str)
+                expect(1)
+                emit(1)
+                expect(3)
+                emit(2)
+                expect(5)
+            }
             .flowOn(CoroutineName("Name1")) // the first one works
             .flowOn(CoroutineName("Name2"))
             .flowOn(CoroutineName("Name3") + CustomContextElement("OK")) // but this is not lost
             .collect { value ->
                 assertNull(currentContext[CoroutineName]?.name)
                 assertNull(currentContext[CustomContextElement]?.str)
-                if (value == 1) expect(2)
-                else expect(4)
+                if (value == 1) expect(2) else expect(4)
             }
         finish(6)
     }

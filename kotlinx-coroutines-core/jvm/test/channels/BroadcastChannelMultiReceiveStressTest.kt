@@ -8,20 +8,15 @@ import org.junit.runner.*
 import org.junit.runners.*
 import java.util.concurrent.atomic.*
 
-/**
- * Tests delivery of events to multiple broadcast channel subscribers.
- */
+/** Tests delivery of events to multiple broadcast channel subscribers. */
 @RunWith(Parameterized::class)
-class BroadcastChannelMultiReceiveStressTest(
-    private val kind: TestBroadcastChannelKind
-) : TestBase() {
+class BroadcastChannelMultiReceiveStressTest(private val kind: TestBroadcastChannelKind) : TestBase() {
 
     // Stressed by lincheck
     companion object {
         @Parameterized.Parameters(name = "{0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            TestBroadcastChannelKind.entries.map { arrayOf<Any>(it) }
+        fun params(): Collection<Array<Any>> = TestBroadcastChannelKind.entries.map { arrayOf<Any>(it) }
     }
 
     private val nReceivers = if (isStressTest) 10 else 5
@@ -62,17 +57,18 @@ class BroadcastChannelMultiReceiveStressTest(
             val receiverIndex = receivers.size
             val name = "Receiver$receiverIndex"
             println("Launching $name")
-            receivers += launch(pool + CoroutineName(name)) {
-                val channel = broadcast.openSubscription()
-                when (receiverIndex % 5) {
-                    0 -> doReceive(channel, receiverIndex)
-                    1 -> doReceiveCatching(channel, receiverIndex)
-                    2 -> doIterator(channel, receiverIndex)
-                    3 -> doReceiveSelect(channel, receiverIndex)
-                    4 -> doReceiveCatchingSelect(channel, receiverIndex)
+            receivers +=
+                launch(pool + CoroutineName(name)) {
+                    val channel = broadcast.openSubscription()
+                    when (receiverIndex % 5) {
+                        0 -> doReceive(channel, receiverIndex)
+                        1 -> doReceiveCatching(channel, receiverIndex)
+                        2 -> doIterator(channel, receiverIndex)
+                        3 -> doReceiveSelect(channel, receiverIndex)
+                        4 -> doReceiveCatchingSelect(channel, receiverIndex)
+                    }
+                    channel.cancel()
                 }
-                channel.cancel()
-            }
             printProgress()
         }
         // wait
@@ -106,8 +102,7 @@ class BroadcastChannelMultiReceiveStressTest(
     private fun doReceived(receiverIndex: Int, i: Long): Boolean {
         val last = lastReceived[receiverIndex].get()
         check(i > last) { "Last was $last, got $i" }
-        if (last != -1L && !kind.isConflated)
-            check(i == last + 1) { "Last was $last, got $i" }
+        if (last != -1L && !kind.isConflated) check(i == last + 1) { "Last was $last, got $i" }
         receivedTotal.incrementAndGet()
         lastReceived[receiverIndex].set(i)
         return i >= stopOnReceive.get()
@@ -161,6 +156,6 @@ class BroadcastChannelMultiReceiveStressTest(
     @Suppress("UNUSED_PARAMETER")
     private fun println(debugMessage: String) {
         // Uncomment for local debugging
-        //println(debugMessage as Any?)
+        // println(debugMessage as Any?)
     }
 }

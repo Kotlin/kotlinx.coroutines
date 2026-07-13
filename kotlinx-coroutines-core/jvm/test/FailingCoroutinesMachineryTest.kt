@@ -12,7 +12,7 @@ import kotlin.test.*
 @RunWith(Parameterized::class)
 class FailingCoroutinesMachineryTest(
     private val element: CoroutineContext.Element,
-    private val dispatcher: TestDispatcher
+    private val dispatcher: TestDispatcher,
 ) : TestBase() {
     class TestDispatcher(val name: String, val block: () -> CoroutineDispatcher) {
         private var _value: CoroutineDispatcher? = null
@@ -30,16 +30,19 @@ class FailingCoroutinesMachineryTest(
 
     private var caught: Throwable? = null
     private val latch = CountDownLatch(1)
-    private var exceptionHandler = CoroutineExceptionHandler { _, t -> caught = t; latch.countDown() }
+    private var exceptionHandler = CoroutineExceptionHandler { _, t ->
+        caught = t
+        latch.countDown()
+    }
     private val lazyOuterDispatcher = lazy { newFixedThreadPoolContext(1, "") }
 
     private object FailingUpdate : ThreadContextElement<Unit> {
         private object Key : CoroutineContext.Key<MyElement>
 
-        override val key: CoroutineContext.Key<*> get() = Key
+        override val key: CoroutineContext.Key<*>
+            get() = Key
 
-        override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
-        }
+        override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {}
 
         override fun updateThreadContext(context: CoroutineContext) {
             throw TestException("Prevent a coroutine from starting right here for some reason")
@@ -51,14 +54,14 @@ class FailingCoroutinesMachineryTest(
     private object FailingRestore : ThreadContextElement<Unit> {
         private object Key : CoroutineContext.Key<MyElement>
 
-        override val key: CoroutineContext.Key<*> get() = Key
+        override val key: CoroutineContext.Key<*>
+            get() = Key
 
         override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
             throw TestException("Prevent a coroutine from starting right here for some reason")
         }
 
-        override fun updateThreadContext(context: CoroutineContext) {
-        }
+        override fun updateThreadContext(context: CoroutineContext) {}
 
         override fun toString() = "FailingRestore"
     }
@@ -94,14 +97,15 @@ class FailingCoroutinesMachineryTest(
         @Parameterized.Parameters(name = "Element: {0}, dispatcher: {1}")
         fun dispatchers(): List<Array<Any>> {
             val elements = listOf<Any>(FailingRestore, FailingUpdate)
-            val dispatchers = listOf<TestDispatcher>(
-                TestDispatcher("Dispatchers.Unconfined") { Dispatchers.Unconfined },
-                TestDispatcher("Dispatchers.Default") { Dispatchers.Default },
-                TestDispatcher("Executors.newFixedThreadPool(1)") { Executors.newFixedThreadPool(1).asCoroutineDispatcher() },
-                TestDispatcher("Executors.newScheduledThreadPool(1)") { Executors.newScheduledThreadPool(1).asCoroutineDispatcher() },
-                TestDispatcher("ThrowingDispatcher") { ThrowingDispatcher },
-                TestDispatcher("ThrowingDispatcher2") { ThrowingDispatcher2 }
-            )
+            val dispatchers =
+                listOf<TestDispatcher>(
+                    TestDispatcher("Dispatchers.Unconfined") { Dispatchers.Unconfined },
+                    TestDispatcher("Dispatchers.Default") { Dispatchers.Default },
+                    TestDispatcher("Executors.newFixedThreadPool(1)") { Executors.newFixedThreadPool(1).asCoroutineDispatcher() },
+                    TestDispatcher("Executors.newScheduledThreadPool(1)") { Executors.newScheduledThreadPool(1).asCoroutineDispatcher() },
+                    TestDispatcher("ThrowingDispatcher") { ThrowingDispatcher },
+                    TestDispatcher("ThrowingDispatcher2") { ThrowingDispatcher2 },
+                )
             return elements.flatMap { element ->
                 dispatchers.map { dispatcher ->
                     arrayOf(element, dispatcher)
@@ -124,7 +128,7 @@ class FailingCoroutinesMachineryTest(
         // Top-level throwing dispatcher may rethrow an exception right here
         runCatching {
             launch(NonCancellable + dispatcher.value + exceptionHandler) {
-                launch(element) { }
+                launch(element) {}
             }
         }
         checkException()
@@ -133,7 +137,7 @@ class FailingCoroutinesMachineryTest(
     @Test
     fun testNestedDispatcherAndElement() = runTest {
         launch(lazyOuterDispatcher.value + NonCancellable + exceptionHandler) {
-            launch(element + dispatcher.value) {  }
+            launch(element + dispatcher.value) {}
         }
         checkException()
     }

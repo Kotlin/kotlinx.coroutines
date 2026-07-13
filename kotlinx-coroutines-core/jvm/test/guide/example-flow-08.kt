@@ -9,8 +9,10 @@ suspend fun performRequest(request: Int): String {
     return "response $request"
 }
 
-fun main() = runBlocking<Unit> {
-    (1..3).asFlow() // a flow of requests
-        .map { request -> performRequest(request) }
-        .collect { response -> println(response) }
-}
+fun main() =
+    runBlocking<Unit> {
+        (1..3)
+            .asFlow() // a flow of requests
+            .map { request -> performRequest(request) }
+            .collect { response -> println(response) }
+    }

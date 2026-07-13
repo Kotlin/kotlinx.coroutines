@@ -19,14 +19,15 @@ class ReusableCancellableContinuationLeakStressTest : TestBase() {
 
     @Test // Simplified version of #2564
     fun testReusableContinuationLeak() = runTest {
-        val channel = produce(capacity = 1) { // from the main thread
-            (0 until iterations).forEach {
-                send(Leak(it))
+        val channel =
+            produce(capacity = 1) { // from the main thread
+                (0 until iterations).forEach {
+                    send(Leak(it))
+                }
             }
-        }
 
         launch(Dispatchers.Default) {
-            repeat (iterations) {
+            repeat(iterations) {
                 val value = channel.receiveBatch()
                 assertEquals(it, value.i)
             }

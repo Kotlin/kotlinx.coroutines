@@ -28,12 +28,13 @@ class SelectJobTest : TestBase() {
         val job = Job()
         launch { // makes sure we don't yield to it earlier
             expect(3)
-            val res = select<String> {
-                job.onJoin {
-                    expect(6)
-                    "OK"
+            val res =
+                select<String> {
+                    job.onJoin {
+                        expect(6)
+                        "OK"
+                    }
                 }
-            }
             expect(7)
             assertEquals("OK", res)
         }
@@ -49,15 +50,17 @@ class SelectJobTest : TestBase() {
     @Test
     fun testSelectLazy() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.LAZY) {
-            expect(2)
-        }
-        val res = select<String> {
-            job.onJoin {
-                expect(3)
-                "OK"
+        val job =
+            launch(start = CoroutineStart.LAZY) {
+                expect(2)
             }
-        }
+        val res =
+            select<String> {
+                job.onJoin {
+                    expect(3)
+                    "OK"
+                }
+            }
         finish(4)
         assertEquals("OK", res)
     }

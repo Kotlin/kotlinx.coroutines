@@ -9,8 +9,7 @@ import kotlin.coroutines.*
 
 class StackTraceRecoveryChannelsTest : TestBase() {
 
-    @get:Rule
-    val name = TestName()
+    @get:Rule val name = TestName()
 
     @Test
     fun testReceiveFromChannel() = runTest {
@@ -134,10 +133,11 @@ class StackTraceRecoveryChannelsTest : TestBase() {
         deferred.await()
     }
 
-    private suspend fun Channel<Int>.sendWithContext(ctx: CoroutineContext) = withContext(ctx) {
-        sendInChannel()
-        yield() // TCE
-    }
+    private suspend fun Channel<Int>.sendWithContext(ctx: CoroutineContext) =
+        withContext(ctx) {
+            sendInChannel()
+            yield() // TCE
+        }
 
     private suspend fun Channel<Int>.sendInChannel() {
         send(42)

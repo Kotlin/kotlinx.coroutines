@@ -1,7 +1,6 @@
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.scheduling.*
 import kotlinx.coroutines.selects.select
 import org.openjdk.jmh.annotations.*
@@ -10,13 +9,11 @@ import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 
-
 /**
- * Benchmark to measure channel algorithm performance in terms of average time per `send-receive` pair;
- * actually, it measures the time for a batch of such operations separated into the specified number of consumers/producers.
- * It uses different channels (rendezvous, buffered, unlimited; see [ChannelCreator]) and different dispatchers
- * (see [DispatcherCreator]). If the [_3_withSelect] property is set, it invokes `send` and
- * `receive` via [select], waiting on a local dummy channel simultaneously, simulating a "cancellation" channel.
+ * Benchmark to measure channel algorithm performance in terms of average time per `send-receive` pair; actually, it measures the time for a
+ * batch of such operations separated into the specified number of consumers/producers. It uses different channels (rendezvous, buffered,
+ * unlimited; see [ChannelCreator]) and different dispatchers (see [DispatcherCreator]). If the [_3_withSelect] property is set, it invokes
+ * `send` and `receive` via [select], waiting on a local dummy channel simultaneously, simulating a "cancellation" channel.
  *
  * Please, be patient, this benchmark takes quite a lot of time to complete.
  */
@@ -27,24 +24,19 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
-    @Param
-    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
+    @Param private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
 
-    @Param
-    private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
+    @Param private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
 
-    @Param("0", "1000")
-    private var _2_coroutines: Int = 0
+    @Param("0", "1000") private var _2_coroutines: Int = 0
 
-    @Param("false", "true")
-    private var _3_withSelect: Boolean = false
+    @Param("false", "true") private var _3_withSelect: Boolean = false
 
     @Param("1", "2", "4", "8", "16") // local machine
-//    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
+    //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
     private var _4_parallelism: Int = 0
 
-    @Param("50")
-    private var _5_workSize: Int = 0
+    @Param("50") private var _5_workSize: Int = 0
 
     private lateinit var dispatcher: CoroutineDispatcher
     private lateinit var channel: Channel<Int>
@@ -132,8 +124,8 @@ open class ChannelProducerConsumerBenchmark {
 }
 
 enum class DispatcherCreator(val create: (parallelism: Int) -> CoroutineDispatcher) {
-    FORK_JOIN({ parallelism ->  ForkJoinPool(parallelism).asCoroutineDispatcher() }),
-    DEFAULT({ parallelism -> CoroutineScheduler(corePoolSize = parallelism, maxPoolSize = parallelism).asCoroutineDispatcher() })
+    FORK_JOIN({ parallelism -> ForkJoinPool(parallelism).asCoroutineDispatcher() }),
+    DEFAULT({ parallelism -> CoroutineScheduler(corePoolSize = parallelism, maxPoolSize = parallelism).asCoroutineDispatcher() }),
 }
 
 enum class ChannelCreator(private val capacity: Int) {

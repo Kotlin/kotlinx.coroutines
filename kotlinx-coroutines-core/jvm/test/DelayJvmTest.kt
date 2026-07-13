@@ -7,35 +7,37 @@ import kotlin.coroutines.*
 import kotlin.test.assertEquals
 
 class DelayJvmTest : TestBase() {
-    /**
-     * Test that delay works properly in contexts with custom [ContinuationInterceptor]
-     */
+    /** Test that delay works properly in contexts with custom [ContinuationInterceptor] */
     @Test
     fun testDelayInArbitraryContext() = runBlocking {
         var thread: Thread? = null
-        val pool = Executors.newFixedThreadPool(1) { runnable ->
-            Thread(runnable).also { thread = it }
-        }
+        val pool =
+            Executors.newFixedThreadPool(1) { runnable ->
+                Thread(runnable).also { thread = it }
+            }
         val context = CustomInterceptor(pool)
-        val c = async(context) {
-            assertEquals(thread, Thread.currentThread())
-            delay(100)
-            assertEquals(thread, Thread.currentThread())
-            42
-        }
+        val c =
+            async(context) {
+                assertEquals(thread, Thread.currentThread())
+                delay(100)
+                assertEquals(thread, Thread.currentThread())
+                42
+            }
         assertEquals(42, c.await())
         pool.shutdown()
     }
 
     @Test
-    fun testDelayWithoutDispatcher() = runBlocking(CoroutineName("testNoDispatcher.main")) {
-        // launch w/o a specified dispatcher
-        val c = async(CoroutineName("testNoDispatcher.inner")) {
-            delay(100)
-            42
+    fun testDelayWithoutDispatcher() =
+        runBlocking(CoroutineName("testNoDispatcher.main")) {
+            // launch w/o a specified dispatcher
+            val c =
+                async(CoroutineName("testNoDispatcher.inner")) {
+                    delay(100)
+                    42
+                }
+            assertEquals(42, c.await())
         }
-        assertEquals(42, c.await())
-    }
 
     @Test
     fun testNegativeDelay() = runBlocking {
@@ -53,8 +55,7 @@ class DelayJvmTest : TestBase() {
     }
 
     class CustomInterceptor(val pool: Executor) : AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
-        override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> =
-            Wrapper(pool, continuation)
+        override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> = Wrapper(pool, continuation)
     }
 
     class Wrapper<T>(val pool: Executor, private val cont: Continuation<T>) : Continuation<T> {

@@ -7,25 +7,27 @@ class SetTimeoutDispatcherTest : TestBase() {
     @Test
     fun testDispatch() = runTest {
         launch(SetTimeoutDispatcher) {
-            expect(1)
-            launch {
-                expect(3)
+                expect(1)
+                launch {
+                    expect(3)
+                }
+                expect(2)
+                yield()
+                expect(4)
             }
-            expect(2)
-            yield()
-            expect(4)
-        }.join()
+            .join()
         finish(5)
     }
 
     @Test
     fun testDelay() = runTest {
         withContext(SetTimeoutDispatcher) {
-            val job = launch(SetTimeoutDispatcher) {
-                expect(2)
-                delay(100)
-                expect(4)
-            }
+            val job =
+                launch(SetTimeoutDispatcher) {
+                    expect(2)
+                    delay(100)
+                    expect(4)
+                }
             expect(1)
             yield() // Yield uses microtask, so should be in the same context
             expect(3)
@@ -37,12 +39,13 @@ class SetTimeoutDispatcherTest : TestBase() {
     @Test
     fun testWithTimeout() = runTest {
         withContext(SetTimeoutDispatcher) {
-            val result = withTimeoutOrNull(10) {
-                expect(1)
-                delay(100)
-                expectUnreached()
-                42
-            }
+            val result =
+                withTimeoutOrNull(10) {
+                    expect(1)
+                    delay(100)
+                    expectUnreached()
+                    42
+                }
             assertNull(result)
             finish(2)
         }

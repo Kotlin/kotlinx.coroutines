@@ -34,20 +34,26 @@ class FlatMapStressTest : TestBase() {
         withContext(Dispatchers.Default) {
             val inFlightElements = AtomicLong(0L)
             var result = 0L
-            (1..iterations step 4).asFlow().flatMapMerge { value ->
-                unsafeFlow {
-                    repeat(4) {
-                        emit(value + it)
-                        inFlightElements.incrementAndGet()
+            (1..iterations step 4)
+                .asFlow()
+                .flatMapMerge { value ->
+                    unsafeFlow {
+                        repeat(4) {
+                            emit(value + it)
+                            inFlightElements.incrementAndGet()
+                        }
                     }
                 }
-            }.buffer(bufferSize).collect { value ->
-                val inFlight = inFlightElements.get()
-                assertTrue(inFlight <= bufferSize + 1,
-                    "Expected less in flight elements than ${bufferSize + 1}, but had $inFlight")
-                inFlightElements.decrementAndGet()
-                result += value
-            }
+                .buffer(bufferSize)
+                .collect { value ->
+                    val inFlight = inFlightElements.get()
+                    assertTrue(
+                        inFlight <= bufferSize + 1,
+                        "Expected less in flight elements than ${bufferSize + 1}, but had $inFlight",
+                    )
+                    inFlightElements.decrementAndGet()
+                    result += value
+                }
 
             assertEquals(0, inFlightElements.get())
             assertEquals(expectedSum, result)
@@ -57,11 +63,15 @@ class FlatMapStressTest : TestBase() {
     @Test
     fun testDelivery() = runTest {
         withContext(Dispatchers.Default) {
-            val result = (1L..iterations step 4).asFlow().flatMapMerge { value ->
-                unsafeFlow {
-                    repeat(4) { emit(value + it) }
-                }
-            }.longSum()
+            val result =
+                (1L..iterations step 4)
+                    .asFlow()
+                    .flatMapMerge { value ->
+                        unsafeFlow {
+                            repeat(4) { emit(value + it) }
+                        }
+                    }
+                    .longSum()
             assertEquals(expectedSum, result)
         }
     }
@@ -70,12 +80,16 @@ class FlatMapStressTest : TestBase() {
     fun testIndependentShortBursts() = runTest {
         withContext(Dispatchers.Default) {
             repeat(iterations) {
-                val result = (1L..4L).asFlow().flatMapMerge { value ->
-                    unsafeFlow {
-                        emit(value)
-                        emit(value)
-                    }
-                }.longSum()
+                val result =
+                    (1L..4L)
+                        .asFlow()
+                        .flatMapMerge { value ->
+                            unsafeFlow {
+                                emit(value)
+                                emit(value)
+                            }
+                        }
+                        .longSum()
                 assertEquals(20, result)
             }
         }
@@ -84,14 +98,18 @@ class FlatMapStressTest : TestBase() {
     private suspend fun testConcurrencyLevel(maxConcurrency: Int) {
         assumeTrue(maxConcurrency <= CORE_POOL_SIZE)
         val concurrency = AtomicLong()
-        val result = (1L..iterations).asFlow().flatMapMerge(concurrency = maxConcurrency) { value ->
-            unsafeFlow {
-                val current = concurrency.incrementAndGet()
-                assertTrue(current in 1..maxConcurrency)
-                emit(value)
-                concurrency.decrementAndGet()
-            }
-        }.longSum()
+        val result =
+            (1L..iterations)
+                .asFlow()
+                .flatMapMerge(concurrency = maxConcurrency) { value ->
+                    unsafeFlow {
+                        val current = concurrency.incrementAndGet()
+                        assertTrue(current in 1..maxConcurrency)
+                        emit(value)
+                        concurrency.decrementAndGet()
+                    }
+                }
+                .longSum()
 
         assertEquals(0, concurrency.get())
         assertEquals(expectedSum, result)

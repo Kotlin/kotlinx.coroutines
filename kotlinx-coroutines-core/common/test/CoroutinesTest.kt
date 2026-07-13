@@ -36,11 +36,12 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testLaunchUndispatched() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            yield()
-            expect(4)
-        }
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                yield()
+                expect(4)
+            }
         expect(3)
         assertTrue(job.isActive && !job.isCompleted)
         job.join()
@@ -126,7 +127,7 @@ class CoroutinesTest : TestBase() {
             expect(4)
             yield()
             expect(7)
-            yield()  // to parent
+            yield() // to parent
             finish(10) // the last one to complete
         }
         expect(2)
@@ -138,46 +139,47 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testExceptionPropagation() = runTest(
-        expected = { it is TestException }
-    ) {
-        finish(1)
-        throw TestException()
-    }
-
-    @Test
-    fun testCancelParentOnChildException() = runTest(expected = { it is TestException }) {
-        expect(1)
-        launch {
-            finish(3)
-            throwTestException() // does not propagate exception to launch, but cancels parent (!)
-            expectUnreached()
+    fun testExceptionPropagation() =
+        runTest(expected = { it is TestException }) {
+            finish(1)
+            throw TestException()
         }
-        expect(2)
-        yield()
-        expectUnreached() // because of exception in child
-    }
 
     @Test
-    fun testCancelParentOnNestedException() = runTest(expected = { it is TestException }) {
-        expect(1)
-        launch {
-            expect(3)
+    fun testCancelParentOnChildException() =
+        runTest(expected = { it is TestException }) {
+            expect(1)
             launch {
-                finish(6)
-                throwTestException() // unhandled exception kills all parents
+                finish(3)
+                throwTestException() // does not propagate exception to launch, but cancels parent (!)
                 expectUnreached()
             }
-            expect(4)
+            expect(2)
             yield()
             expectUnreached() // because of exception in child
         }
-        expect(2)
-        yield()
-        expect(5)
-        yield()
-        expectUnreached() // because of exception in child
-    }
+
+    @Test
+    fun testCancelParentOnNestedException() =
+        runTest(expected = { it is TestException }) {
+            expect(1)
+            launch {
+                expect(3)
+                launch {
+                    finish(6)
+                    throwTestException() // unhandled exception kills all parents
+                    expectUnreached()
+                }
+                expect(4)
+                yield()
+                expectUnreached() // because of exception in child
+            }
+            expect(2)
+            yield()
+            expect(5)
+            yield()
+            expectUnreached() // because of exception in child
+        }
 
     @Test
     fun testJoinWithFinally() = runTest {
@@ -194,7 +196,7 @@ class CoroutinesTest : TestBase() {
         yield() // to job
         expect(4)
         assertTrue(job.isActive && !job.isCompleted)
-        job.cancel()  // cancels job
+        job.cancel() // cancels job
         expect(5) // still here
         assertTrue(!job.isActive && !job.isCompleted)
         expect(6) // we're still here
@@ -207,55 +209,57 @@ class CoroutinesTest : TestBase() {
     @Test
     fun testCancelAndJoin() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
-                yield()
-                expectUnreached() // will get cancelled
-            } finally {
-                expect(4)
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    expect(2)
+                    yield()
+                    expectUnreached() // will get cancelled
+                } finally {
+                    expect(4)
+                }
             }
-        }
         expect(3)
         job.cancelAndJoin()
         finish(5)
     }
 
     @Test
-    fun testCancelAndJoinChildCrash() = runTest(expected = { it is TestException }) {
-        expect(1)
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            throwTestException()
+    fun testCancelAndJoinChildCrash() =
+        runTest(expected = { it is TestException }) {
+            expect(1)
+            val job =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    throwTestException()
+                    expectUnreached()
+                }
+            // now we have a failed job with TestException
+            finish(3)
+            try {
+                job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into CancellationException
+            } catch (e: Throwable) {
+                e as CancellationException // type assertion
+                assertIs<TestException>(e.cause)
+                throw e
+            }
             expectUnreached()
         }
-        // now we have a failed job with TestException
-        finish(3)
-        try {
-            job.cancelAndJoin() // join should crash on child's exception but it will be wrapped into CancellationException
-        } catch (e: Throwable) {
-            e as CancellationException // type assertion
-            assertIs<TestException>(e.cause)
-            throw e
-        }
-        expectUnreached()
-    }
 
     @Test
-    fun testYieldInFinally() = runTest(
-        expected = { it is TestException }
-    ) {
-        expect(1)
-        try {
-            expect(2)
-            throwTestException()
-        } finally {
-            expect(3)
-            yield()
-            finish(4)
+    fun testYieldInFinally() =
+        runTest(expected = { it is TestException }) {
+            expect(1)
+            try {
+                expect(2)
+                throwTestException()
+            } finally {
+                expect(3)
+                yield()
+                finish(4)
+            }
+            expectUnreached()
         }
-        expectUnreached()
-    }
 
     @Test
     fun testCancelAndJoinChildren() = runTest {
@@ -279,52 +283,55 @@ class CoroutinesTest : TestBase() {
     }
 
     @Test
-    fun testParentCrashCancelsChildren() = runTest(
-        unhandled = listOf({ it -> it is TestException })
-    ) {
-        expect(1)
-        val parent = launch(Job()) {
-            expect(4)
-            throw TestException("Crashed")
+    fun testParentCrashCancelsChildren() =
+        runTest(unhandled = listOf({ it -> it is TestException })) {
+            expect(1)
+            val parent =
+                launch(Job()) {
+                    expect(4)
+                    throw TestException("Crashed")
+                }
+            val child =
+                launch(parent, CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    try {
+                        yield() // to test
+                    } finally {
+                        expect(5)
+                        withContext(NonCancellable) { yield() } // to test
+                        expect(7)
+                    }
+                    expectUnreached() // will get cancelled, because parent crashes
+                }
+            expect(3)
+            yield() // to parent
+            expect(6)
+            parent.join() // make sure crashed parent still waits for its child
+            finish(8)
+            // make sure is cancelled
+            assertTrue(child.isCancelled)
         }
-        val child = launch(parent, CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                yield() // to test
-            } finally {
-                expect(5)
-                withContext(NonCancellable) { yield() } // to test
-                expect(7)
-            }
-            expectUnreached() // will get cancelled, because parent crashes
-        }
-        expect(3)
-        yield() // to parent
-        expect(6)
-        parent.join() // make sure crashed parent still waits for its child
-        finish(8)
-        // make sure is cancelled
-        assertTrue(child.isCancelled)
-    }
 
     @Test
-    fun testNotCancellableChildWithExceptionCancelled() = runTest(
-        expected = { it is TestException }
-    ) {
-        expect(1)
-        // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
-        val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            finish(4)
-            throwTestException() // will throw
-            expectUnreached()
+    fun testNotCancellableChildWithExceptionCancelled() =
+        runTest(expected = { it is TestException }) {
+            expect(1)
+            // CoroutineStart.ATOMIC makes sure it will not get cancelled for it starts executing
+            val d =
+                async(NonCancellable, start = CoroutineStart.ATOMIC) {
+                    finish(4)
+                    throwTestException() // will throw
+                    expectUnreached()
+                }
+            expect(2)
+            // now cancel with some other exception
+            d.cancel(TestCancellationException())
+            // now await to see how it got crashed -- TestCancellationException should have been suppressed by TestException
+            expect(3)
+            d.await()
         }
-        expect(2)
-        // now cancel with some other exception
-        d.cancel(TestCancellationException())
-        // now await to see how it got crashed -- TestCancellationException should have been suppressed by TestException
-        expect(3)
-        d.await()
-    }
 
-    private fun throwTestException() { throw TestException() }
+    private fun throwTestException() {
+        throw TestException()
+    }
 }

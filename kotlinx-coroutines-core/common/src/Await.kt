@@ -4,56 +4,55 @@ import kotlinx.atomicfu.*
 import kotlin.coroutines.*
 
 /**
- * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
- * when all deferred computations are complete or resumes with the first thrown exception if any of computations
- * complete exceptionally including cancellation.
+ * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values when all deferred
+ * computations are complete or resumes with the first thrown exception if any of computations complete exceptionally including
+ * cancellation.
  *
- * This function is **not** equivalent to `deferreds.map { it.await() }` which fails only when it sequentially
- * gets to wait for the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
+ * This function is **not** equivalent to `deferreds.map { it.await() }` which fails only when it sequentially gets to wait for the failing
+ * deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this suspending function is waiting,
+ * this function immediately resumes with [CancellationException]. There is a **prompt cancellation guarantee**: even if this function is
+ * ready to return the result, but was cancelled while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine]
+ * for low-level details.
  */
 public suspend fun <T> awaitAll(vararg deferreds: Deferred<T>): List<T> =
     if (deferreds.isEmpty()) emptyList() else AwaitAll(deferreds).await()
 
 /**
- * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values
- * when all deferred computations are complete or resumes with the first thrown exception if any of computations
- * complete exceptionally including cancellation.
+ * Awaits for completion of given deferred values without blocking a thread and resumes normally with the list of values when all deferred
+ * computations are complete or resumes with the first thrown exception if any of computations complete exceptionally including
+ * cancellation.
  *
- * This function is **not** equivalent to `this.map { it.await() }` which fails only when it sequentially
- * gets to wait for the failing deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
+ * This function is **not** equivalent to `this.map { it.await() }` which fails only when it sequentially gets to wait for the failing
+ * deferred, while this `awaitAll` fails immediately as soon as any of the deferreds fail.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this suspending function is waiting,
+ * this function immediately resumes with [CancellationException]. There is a **prompt cancellation guarantee**: even if this function is
+ * ready to return the result, but was cancelled while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine]
+ * for low-level details.
  */
-public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> =
-    if (isEmpty()) emptyList() else AwaitAll(toTypedArray()).await()
+public suspend fun <T> Collection<Deferred<T>>.awaitAll(): List<T> = if (isEmpty()) emptyList() else AwaitAll(toTypedArray()).await()
 
 /**
- * Suspends current coroutine until all given jobs are complete.
- * This method is semantically equivalent to joining all given jobs one by one with `jobs.forEach { it.join() }`.
+ * Suspends current coroutine until all given jobs are complete. This method is semantically equivalent to joining all given jobs one by one
+ * with `jobs.forEach { it.join() }`.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this suspending function is waiting,
+ * this function immediately resumes with [CancellationException]. There is a **prompt cancellation guarantee**: even if this function is
+ * ready to return the result, but was cancelled while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine]
+ * for low-level details.
  */
 public suspend fun joinAll(vararg jobs: Job): Unit = jobs.forEach { it.join() }
 
 /**
- * Suspends current coroutine until all given jobs are complete.
- * This method is semantically equivalent to joining all given jobs one by one with `forEach { it.join() }`.
+ * Suspends current coroutine until all given jobs are complete. This method is semantically equivalent to joining all given jobs one by one
+ * with `forEach { it.join() }`.
  *
- * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
- * suspending function is waiting, this function immediately resumes with [CancellationException].
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this suspending function is waiting,
+ * this function immediately resumes with [CancellationException]. There is a **prompt cancellation guarantee**: even if this function is
+ * ready to return the result, but was cancelled while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine]
+ * for low-level details.
  */
 public suspend fun Collection<Job>.joinAll(): Unit = forEach { it.join() }
 
@@ -63,13 +62,14 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     suspend fun await(): List<T> = suspendCancellableCoroutine { cont ->
         // Intricate dance here
         // Step 1: Create nodes and install them as completion handlers, they may fire!
-        val nodes = Array(deferreds.size) { i ->
-            val deferred = deferreds[i]
-            deferred.start() // To properly await lazily started deferreds
-            AwaitAllNode(cont).apply {
-                handle = deferred.invokeOnCompletion(handler = this)
+        val nodes =
+            Array(deferreds.size) { i ->
+                val deferred = deferreds[i]
+                deferred.start() // To properly await lazily started deferreds
+                AwaitAllNode(cont).apply {
+                    handle = deferred.invokeOnCompletion(handler = this)
+                }
             }
-        }
         val disposer = DisposeHandlersOnCancel(nodes)
         // Step 2: Set disposer to each node
         nodes.forEach { it.disposer = disposer }
@@ -88,7 +88,10 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
             nodes.forEach { it.handle.dispose() }
         }
 
-        override fun invoke(cause: Throwable?) { disposeAll() }
+        override fun invoke(cause: Throwable?) {
+            disposeAll()
+        }
+
         override fun toString(): String = "DisposeHandlersOnCancel[$nodes]"
     }
 
@@ -98,10 +101,13 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
         private val _disposer = atomic<DisposeHandlersOnCancel?>(null)
         var disposer: DisposeHandlersOnCancel?
             get() = _disposer.value
-            set(value) { _disposer.value = value }
+            set(value) {
+                _disposer.value = value
+            }
 
-        override val onCancelling get() = false
-        
+        override val onCancelling
+            get() = false
+
         override fun invoke(cause: Throwable?) {
             if (cause != null) {
                 val token = continuation.tryResumeWithException(cause)

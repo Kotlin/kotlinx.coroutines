@@ -7,7 +7,6 @@ import org.reactivestreams.tck.*
 import org.testng.*
 import org.testng.annotations.*
 
-
 class ReactiveStreamTckTest : TestBase() {
 
     @Factory(dataProvider = "dispatchers")
@@ -15,13 +14,9 @@ class ReactiveStreamTckTest : TestBase() {
         return arrayOf(ReactiveStreamTckTestSuite(dispatcher))
     }
 
-    @DataProvider(name = "dispatchers")
-    fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
+    @DataProvider(name = "dispatchers") fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
 
-
-    class ReactiveStreamTckTestSuite(
-        private val dispatcher: Dispatcher
-    ) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
+    class ReactiveStreamTckTestSuite(private val dispatcher: Dispatcher) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
 
         override fun createPublisher(elements: Long): Publisher<Long> =
             publish(dispatcher.dispatcher) {
@@ -44,5 +39,5 @@ class ReactiveStreamTckTest : TestBase() {
 
 enum class Dispatcher(val dispatcher: CoroutineDispatcher) {
     DEFAULT(Dispatchers.Default),
-    UNCONFINED(Dispatchers.Unconfined)
+    UNCONFINED(Dispatchers.Unconfined),
 }

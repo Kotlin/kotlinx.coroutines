@@ -10,34 +10,29 @@ import kotlin.js.*
 import kotlin.math.*
 
 /**
- * A counting semaphore for coroutines that logically maintains a number of available permits.
- * Each [acquire] takes a single permit or suspends until it is available.
- * Each [release] adds a permit, potentially releasing a suspended acquirer.
- * Semaphore is fair and maintains a FIFO order of acquirers.
+ * A counting semaphore for coroutines that logically maintains a number of available permits. Each [acquire] takes a single permit or
+ * suspends until it is available. Each [release] adds a permit, potentially releasing a suspended acquirer. Semaphore is fair and maintains
+ * a FIFO order of acquirers.
  *
- * Semaphores are mostly used to limit the number of coroutines that have access to particular resource.
- * Semaphore with `permits = 1` is essentially a [Mutex].
- **/
+ * Semaphores are mostly used to limit the number of coroutines that have access to particular resource. Semaphore with `permits = 1` is
+ * essentially a [Mutex].
+ */
 public interface Semaphore {
-    /**
-     * Returns the current number of permits available in this semaphore.
-     */
+    /** Returns the current number of permits available in this semaphore. */
     public val availablePermits: Int
 
     /**
-     * Acquires a permit from this semaphore, suspending until one is available.
-     * All suspending acquirers are processed in first-in-first-out (FIFO) order.
+     * Acquires a permit from this semaphore, suspending until one is available. All suspending acquirers are processed in
+     * first-in-first-out (FIFO) order.
      *
-     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
-     * suspending function is waiting, this function immediately resumes with [CancellationException].
-     * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
-     * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
-     * This function releases the semaphore if it was already acquired by this function before the [CancellationException]
-     * was thrown.
+     * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this suspending function is
+     * waiting, this function immediately resumes with [CancellationException]. There is a **prompt cancellation guarantee**: even if this
+     * function is ready to return the result, but was cancelled while suspended, [CancellationException] will be thrown. See
+     * [suspendCancellableCoroutine] for low-level details. This function releases the semaphore if it was already acquired by this function
+     * before the [CancellationException] was thrown.
      *
-     * Note that this function does not check for cancellation when it does not suspend.
-     * Use [CoroutineScope.isActive] or [CoroutineScope.ensureActive] to periodically
-     * check for cancellation in tight loops if needed.
+     * Note that this function does not check for cancellation when it does not suspend. Use [CoroutineScope.isActive] or
+     * [CoroutineScope.ensureActive] to periodically check for cancellation in tight loops if needed.
      *
      * Use [tryAcquire] to try to acquire a permit of this semaphore without suspension.
      */
@@ -51,25 +46,22 @@ public interface Semaphore {
     public fun tryAcquire(): Boolean
 
     /**
-     * Releases a permit, returning it into this semaphore. Resumes the first
-     * suspending acquirer if there is one at the point of invocation.
-     * Throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
+     * Releases a permit, returning it into this semaphore. Resumes the first suspending acquirer if there is one at the point of
+     * invocation. Throws [IllegalStateException] if the number of [release] invocations is greater than the number of preceding [acquire].
      */
     public fun release()
 }
 
 /**
  * Creates new [Semaphore] instance.
+ *
  * @param permits the number of permits available in this semaphore.
- * @param acquiredPermits the number of already acquired permits,
- *        should be between `0` and `permits` (inclusively).
+ * @param acquiredPermits the number of already acquired permits, should be between `0` and `permits` (inclusively).
  */
-@Suppress("FunctionName")
-public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = SemaphoreImpl(permits, acquiredPermits)
+@Suppress("FunctionName") public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = SemaphoreImpl(permits, acquiredPermits)
 
 /**
- * Executes the given [action], acquiring a permit from this semaphore at the beginning
- * and releasing it after the [action] is completed.
+ * Executes the given [action], acquiring a permit from this semaphore at the beginning and releasing it after the [action] is completed.
  *
  * @return the return value of the [action].
  */
@@ -137,14 +129,13 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
     }
 
     /**
-     * This counter indicates the number of available permits if it is positive,
-     * or the negated number of waiters on this semaphore otherwise.
-     * Note, that 32-bit counter is enough here since the maximal number of available
-     * permits is [permits] which is [Int], and the maximum number of waiting acquirers
-     * cannot be greater than 2^31 in any real application.
+     * This counter indicates the number of available permits if it is positive, or the negated number of waiters on this semaphore
+     * otherwise. Note, that 32-bit counter is enough here since the maximal number of available permits is [permits] which is [Int], and
+     * the maximum number of waiting acquirers cannot be greater than 2^31 in any real application.
      */
     private val _availablePermits = atomic(permits - acquiredPermits)
-    val availablePermits: Int get() = max(_availablePermits.value, 0)
+    val availablePermits: Int
+        get() = max(_availablePermits.value, 0)
 
     private val onCancellationRelease = { _: Throwable, _: Unit, _: CoroutineContext -> release() }
 
@@ -179,21 +170,23 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
-        // Try to suspend.
-        if (addAcquireToQueue(cont)) return@sc
-        // The suspension has been failed
-        // due to the synchronous resumption mode.
-        // Restart the whole `acquire`.
-        acquire(cont)
-    }
+    private suspend fun acquireSlowPath() =
+        suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
+            // Try to suspend.
+            if (addAcquireToQueue(cont)) return@sc
+            // The suspension has been failed
+            // due to the synchronous resumption mode.
+            // Restart the whole `acquire`.
+            acquire(cont)
+        }
 
     @JsName("acquireCont")
-    protected fun acquire(waiter: CancellableContinuation<Unit>) = acquire(
-        waiter = waiter,
-        suspend = { cont -> addAcquireToQueue(cont as Waiter) },
-        onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) }
-    )
+    protected fun acquire(waiter: CancellableContinuation<Unit>) =
+        acquire(
+            waiter = waiter,
+            suspend = { cont -> addAcquireToQueue(cont as Waiter) },
+            onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) },
+        )
 
     @JsName("acquireInternal")
     private inline fun <W> acquire(waiter: W, suspend: (waiter: W) -> Boolean, onAcquired: (waiter: W) -> Unit) {
@@ -216,15 +209,12 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         acquire(
             waiter = select,
             suspend = { s -> addAcquireToQueue(s as Waiter) },
-            onAcquired = { s -> s.selectInRegistrationPhase(Unit) }
+            onAcquired = { s -> s.selectInRegistrationPhase(Unit) },
         )
 
     /**
-     * Decrements the number of available permits
-     * and ensures that it is not greater than [permits]
-     * at the point of decrement. The last may happen
-     * due to an incorrect `release()` call without
-     * a preceding `acquire()`.
+     * Decrements the number of available permits and ensures that it is not greater than [permits] at the point of decrement. The last may
+     * happen due to an incorrect `release()` call without a preceding `acquire()`.
      */
     private fun decPermits(): Int {
         while (true) {
@@ -261,11 +251,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         }
     }
 
-    /**
-     * Changes the number of available permits to
-     * [permits] if it became greater due to an
-     * incorrect [release] call.
-     */
+    /** Changes the number of available permits to [permits] if it became greater due to an incorrect [release] call. */
     private fun coerceAvailablePermitsAtMaximum() {
         while (true) {
             val cur = _availablePermits.value
@@ -274,15 +260,19 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         }
     }
 
-    /**
-     * Returns `false` if the received permit cannot be used and the calling operation should restart.
-     */
+    /** Returns `false` if the received permit cannot be used and the calling operation should restart. */
     private fun addAcquireToQueue(waiter: Waiter): Boolean {
         val curTail = this.tail.value
         val enqIdx = enqIdx.getAndIncrement()
         val createNewSegment = ::createSegment
-        val segment = this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail,
-            createNewSegment = createNewSegment).segment // cannot be closed
+        val segment =
+            this.tail
+                .findSegmentAndMoveForward(
+                    id = enqIdx / SEGMENT_SIZE,
+                    startFrom = curTail,
+                    createNewSegment = createNewSegment,
+                )
+                .segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // the regular (fast) path -- if the cell is empty, try to install continuation
         if (segment.cas(i, null, waiter)) { // installed continuation successfully
@@ -315,8 +305,14 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         val deqIdx = deqIdx.getAndIncrement()
         val id = deqIdx / SEGMENT_SIZE
         val createNewSegment = ::createSegment
-        val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead,
-            createNewSegment = createNewSegment).segment // cannot be closed
+        val segment =
+            this.head
+                .findSegmentAndMoveForward(
+                    id,
+                    startFrom = curHead,
+                    createNewSegment = createNewSegment,
+                )
+                .segment // cannot be closed
         segment.cleanPrev()
         if (segment.id > id) return false
         val i = (deqIdx % SEGMENT_SIZE).toInt()
@@ -336,34 +332,36 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         }
     }
 
-    private fun Any.tryResumeAcquire(): Boolean = when(this) {
-        is CancellableContinuation<*> -> {
-            this as CancellableContinuation<Unit>
-            val token = tryResume(Unit, null, onCancellationRelease)
-            if (token != null) {
-                completeResume(token)
-                true
-            } else false
+    private fun Any.tryResumeAcquire(): Boolean =
+        when (this) {
+            is CancellableContinuation<*> -> {
+                this as CancellableContinuation<Unit>
+                val token = tryResume(Unit, null, onCancellationRelease)
+                if (token != null) {
+                    completeResume(token)
+                    true
+                } else false
+            }
+            is SelectInstance<*> -> {
+                trySelect(this@SemaphoreAndMutexImpl, Unit)
+            }
+            else -> error("unexpected: $this")
         }
-        is SelectInstance<*> -> {
-            trySelect(this@SemaphoreAndMutexImpl, Unit)
-        }
-        else -> error("unexpected: $this")
-    }
 }
 
 private class SemaphoreImpl(
-    permits: Int, acquiredPermits: Int
-): SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
+    permits: Int,
+    acquiredPermits: Int,
+) : SemaphoreAndMutexImpl(permits, acquiredPermits), Semaphore
 
 private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val numberOfSlots: Int get() = SEGMENT_SIZE
+    override val numberOfSlots: Int
+        get() = SEGMENT_SIZE
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun get(index: Int): Any? = acquirers[index].value
+    @Suppress("NOTHING_TO_INLINE") inline fun get(index: Int): Any? = acquirers[index].value
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun set(index: Int, value: Any?) {
@@ -373,8 +371,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
     @Suppress("NOTHING_TO_INLINE")
     inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
+    @Suppress("NOTHING_TO_INLINE") inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
@@ -387,6 +384,7 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
 
     override fun toString() = "SemaphoreSegment[id=$id, hashCode=${hashCode()}]"
 }
+
 private val MAX_SPIN_CYCLES = systemProp("kotlinx.coroutines.semaphore.maxSpinCycles", 100)
 private val PERMIT = Symbol("PERMIT")
 private val TAKEN = Symbol("TAKEN")

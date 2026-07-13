@@ -34,9 +34,10 @@ fun toStackTrace(t: Throwable): String {
 
 fun String.normalizeStackTrace(): String =
     replace(Regex(":[0-9]+"), "") // remove line numbers
-    .replace("kotlinx_coroutines_core_main", "") // yay source sets
-    .replace("kotlinx_coroutines_core", "")
-    .replace(Regex("@[0-9a-f]+"), "") // remove hex addresses in debug toStrings
-    .lines().joinToString("\n") // normalize line separators
+        .replace("kotlinx_coroutines_core_main", "") // yay source sets
+        .replace("kotlinx_coroutines_core", "")
+        .replace(Regex("@[0-9a-f]+"), "") // remove hex addresses in debug toStrings
+        .lines()
+        .joinToString("\n") // normalize line separators
 
 fun String.count(substring: String): Int = split(substring).size - 1

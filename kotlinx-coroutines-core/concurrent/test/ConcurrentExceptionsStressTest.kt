@@ -20,9 +20,10 @@ class ConcurrentExceptionsStressTest : TestBase() {
 
     @Test
     fun testStress() = runTest {
-        workers = Array(nWorkers) { index ->
-            newSingleThreadContext("JobExceptionsStressTest-$index")
-        }
+        workers =
+            Array(nWorkers) { index ->
+                newSingleThreadContext("JobExceptionsStressTest-$index")
+            }
 
         repeat(nRepeat) {
             testOnce()
@@ -31,24 +32,26 @@ class ConcurrentExceptionsStressTest : TestBase() {
 
     @Suppress("SuspendFunctionOnCoroutineScope") // workaround native inline fun stacktraces
     private suspend fun CoroutineScope.testOnce() {
-        val deferred = async(NonCancellable) {
-            repeat(nWorkers) { index ->
-                // Always launch a coroutine even if parent job was already cancelled (atomic start)
-                launch(workers[index], start = CoroutineStart.ATOMIC) {
-                    randomWait()
-                    throw StressException(index)
+        val deferred =
+            async(NonCancellable) {
+                repeat(nWorkers) { index ->
+                    // Always launch a coroutine even if parent job was already cancelled (atomic start)
+                    launch(workers[index], start = CoroutineStart.ATOMIC) {
+                        randomWait()
+                        throw StressException(index)
+                    }
                 }
             }
-        }
         deferred.join()
         assertTrue(deferred.isCancelled)
         val completionException = deferred.getCompletionExceptionOrNull()
-        val cause = completionException as? StressException
-            ?: unexpectedException("completion", completionException)
+        val cause = completionException as? StressException ?: unexpectedException("completion", completionException)
         val suppressed = cause.suppressedExceptions
-        val indices = listOf(cause.index) + suppressed.mapIndexed { index, e ->
-            (e as? StressException)?.index ?: unexpectedException("suppressed $index", e)
-        }
+        val indices =
+            listOf(cause.index) +
+                suppressed.mapIndexed { index, e ->
+                    (e as? StressException)?.index ?: unexpectedException("suppressed $index", e)
+                }
         repeat(nWorkers) { index ->
             assertTrue(index in indices, "Exception $index is missing: $indices")
         }
@@ -61,4 +64,3 @@ class ConcurrentExceptionsStressTest : TestBase() {
 
     private class StressException(val index: Int) : Throwable()
 }
-

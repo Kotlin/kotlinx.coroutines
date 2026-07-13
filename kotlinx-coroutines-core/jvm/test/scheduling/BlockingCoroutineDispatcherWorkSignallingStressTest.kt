@@ -48,13 +48,12 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
 
     private fun CoroutineScope.blockingAwait(
         blockingDispatcher: CoroutineDispatcher,
-        blockingBarrier: CyclicBarrier
+        blockingBarrier: CyclicBarrier,
     ) = async(blockingDispatcher) { blockingBarrier.await() }
-
 
     private fun CoroutineScope.cpuAwait(
         blockingDispatcher: CoroutineDispatcher,
-        blockingBarrier: CyclicBarrier
+        blockingBarrier: CyclicBarrier,
     ) = async(blockingDispatcher) { blockingBarrier.await() }
 
     @Test

@@ -22,9 +22,10 @@ class RejectedExecutionTest : TestBase() {
     @Test
     fun testRejectOnLaunch() = runTest {
         expect(1)
-        val job = launch(executor.asCoroutineDispatcher()) {
-            expectUnreached()
-        }
+        val job =
+            launch(executor.asCoroutineDispatcher()) {
+                expectUnreached()
+            }
         assertEquals(1, executor.submittedTasks)
         assertTrue(job.isCancelled)
         finish(2)
@@ -33,11 +34,12 @@ class RejectedExecutionTest : TestBase() {
     @Test
     fun testRejectOnLaunchAtomic() = runTest {
         expect(1)
-        val job = launch(executor.asCoroutineDispatcher(), start = CoroutineStart.ATOMIC) {
-            expect(2)
-            assertEquals(true, coroutineContext[Job]?.isCancelled)
-            assertIoThread() // was rejected on start, but start was atomic
-        }
+        val job =
+            launch(executor.asCoroutineDispatcher(), start = CoroutineStart.ATOMIC) {
+                expect(2)
+                assertEquals(true, coroutineContext[Job]?.isCancelled)
+                assertIoThread() // was rejected on start, but start was atomic
+            }
         assertEquals(1, executor.submittedTasks)
         job.join()
         finish(3)
@@ -60,26 +62,26 @@ class RejectedExecutionTest : TestBase() {
         expect(1)
         executor.acceptTasks = 1 // accept one task
         assertFailsWith<CancellationException> {
-                withContext(executor.asCoroutineDispatcher()) {
-                    expect(2)
-                    assertExecutorThread()
-                    try {
-                        withContext(Dispatchers.Default) {
-                            expect(3)
-                            assertDefaultDispatcherThread()
-                            // We have to wait until caller executor thread had already suspended (if not running task),
-                            // so that we resume back to it a new task is posted
-                            executor.awaitNotRunningTask()
-                            expect(4)
-                            assertDefaultDispatcherThread()
-                        }
-                        // cancelled on resume back
-                    } finally {
-                        expect(5)
-                        assertIoThread()
+            withContext(executor.asCoroutineDispatcher()) {
+                expect(2)
+                assertExecutorThread()
+                try {
+                    withContext(Dispatchers.Default) {
+                        expect(3)
+                        assertDefaultDispatcherThread()
+                        // We have to wait until caller executor thread had already suspended (if not running task),
+                        // so that we resume back to it a new task is posted
+                        executor.awaitNotRunningTask()
+                        expect(4)
+                        assertDefaultDispatcherThread()
                     }
-                    expectUnreached()
+                    // cancelled on resume back
+                } finally {
+                    expect(5)
+                    assertIoThread()
                 }
+                expectUnreached()
+            }
         }
         assertEquals(2, executor.submittedTasks)
         finish(6)

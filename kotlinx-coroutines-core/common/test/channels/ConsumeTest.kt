@@ -1,11 +1,12 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlin.test.*
 
-class ConsumeTest: TestBase() {
+class ConsumeTest : TestBase() {
 
     /** Check that [ReceiveChannel.consume] does not suffer from KT-58685 */
     @Test
@@ -24,7 +25,7 @@ class ConsumeTest: TestBase() {
     @Test
     fun testConsumeClosesOnSuccess() = runTest {
         val channel = Channel<Int>()
-        channel.consume { }
+        channel.consume {}
         assertTrue(channel.isClosedForReceive)
     }
 
@@ -46,7 +47,9 @@ class ConsumeTest: TestBase() {
         val channel = Channel<Int>()
         fun f() {
             try {
-                channel.consume { return }
+                channel.consume {
+                    return
+                }
             } catch (e: TestException) {
                 // Expected
             }
@@ -91,14 +94,19 @@ class ConsumeTest: TestBase() {
         assertTrue(channel.isClosedForReceive)
     }
 
-    /** Checks that [ReceiveChannel.consumeEach] reacts to cancellation, but processes the elements that are
-     * readily available in the buffer. */
+    /**
+     * Checks that [ReceiveChannel.consumeEach] reacts to cancellation, but processes the elements that are readily available in the buffer.
+     */
     @Test
     fun testConsumeEachExitsOnCancellation() = runTest {
         val undeliveredElements = mutableListOf<Int>()
-        val channel = Channel<Int>(2, onUndeliveredElement = {
-            undeliveredElements.add(it)
-        })
+        val channel =
+            Channel<Int>(
+                2,
+                onUndeliveredElement = {
+                    undeliveredElements.add(it)
+                },
+            )
         launch {
             // These two elements will be sent and put into the buffer:
             channel.send(0)
@@ -112,11 +120,12 @@ class ConsumeTest: TestBase() {
             fail("unreached")
         }
         launch {
-            channel.consumeEach {
-                cancel()
-                assertTrue(it in 0..2)
+                channel.consumeEach {
+                    cancel()
+                    assertTrue(it in 0..2)
+                }
             }
-        }.join()
+            .join()
         assertTrue(channel.isClosedForReceive)
         assertEquals(listOf(3), undeliveredElements)
     }

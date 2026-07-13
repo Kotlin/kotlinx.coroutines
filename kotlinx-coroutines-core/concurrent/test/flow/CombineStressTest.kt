@@ -10,13 +10,15 @@ class CombineStressTest : TestBase() {
     fun testCancellation() = runTest {
         withContext(Dispatchers.Default + CoroutineExceptionHandler { _, _ -> expectUnreached() }) {
             flow {
-                expect(1)
-                repeat(1_000 * stressTestMultiplier) {
-                    emit(it)
+                    expect(1)
+                    repeat(1_000 * stressTestMultiplier) {
+                        emit(it)
+                    }
                 }
-            }.flatMapLatest {
-                combine(flowOf(it), flowOf(it)) { arr -> arr[0] }
-            }.collect()
+                .flatMapLatest {
+                    combine(flowOf(it), flowOf(it)) { arr -> arr[0] }
+                }
+                .collect()
             finish(2)
             reset()
         }
@@ -30,15 +32,18 @@ class CombineStressTest : TestBase() {
             repeat(outerIterations) {
                 try {
                     flow {
-                        expect(1)
-                        repeat(innerIterations) {
-                            emit(it)
+                            expect(1)
+                            repeat(innerIterations) {
+                                emit(it)
+                            }
                         }
-                    }.flatMapLatest {
-                        combine(flowOf(it), flowOf(it)) { arr -> arr[0] }
-                    }.onEach {
-                        if (it >= innerIterations / 2) throw TestException()
-                    }.collect()
+                        .flatMapLatest {
+                            combine(flowOf(it), flowOf(it)) { arr -> arr[0] }
+                        }
+                        .onEach {
+                            if (it >= innerIterations / 2) throw TestException()
+                        }
+                        .collect()
                 } catch (e: TestException) {
                     expect(2)
                 }

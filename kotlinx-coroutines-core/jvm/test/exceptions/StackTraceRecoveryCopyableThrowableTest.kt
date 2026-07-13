@@ -35,9 +35,8 @@ class StackTraceRecoveryCopyableThrowableTest : TestBase() {
 
     class CopyableWithCustomMessage(
         message: String?,
-        cause: Throwable? = null
-    ) : RuntimeException(message, cause),
-        CopyableThrowable<CopyableWithCustomMessage> {
+        cause: Throwable? = null,
+    ) : RuntimeException(message, cause), CopyableThrowable<CopyableWithCustomMessage> {
 
         override fun createCopy(): CopyableWithCustomMessage {
             return CopyableWithCustomMessage("Recovered: [$message]", cause)

@@ -39,12 +39,13 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testFairScheduling() = runBlocking {
         corePoolSize = 1
         expect(1)
-        val outerJob = launch(dispatcher) {
-            val d1 = launch(dispatcher) { expect(3) }
-            val d2 = launch(dispatcher) { expect(4) }
-            val d3 = launch(dispatcher) { expect(2) }
-            listOf(d1, d2, d3).joinAll()
-        }
+        val outerJob =
+            launch(dispatcher) {
+                val d1 = launch(dispatcher) { expect(3) }
+                val d2 = launch(dispatcher) { expect(4) }
+                val d3 = launch(dispatcher) { expect(2) }
+                listOf(d1, d2, d3).joinAll()
+            }
         outerJob.join()
         finish(5)
     }
@@ -53,19 +54,20 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testStealing() = runBlocking {
         corePoolSize = 2
         val flag = AtomicBoolean(false)
-        val job = async(dispatcher) {
-            expect(1)
-            val innerJob = async {
-                expect(2)
-                flag.set(true)
-            }
-            while (!flag.get()) {
-                Thread.yield() // Block current thread, submitted inner job will be stolen
-            }
+        val job =
+            async(dispatcher) {
+                expect(1)
+                val innerJob = async {
+                    expect(2)
+                    flag.set(true)
+                }
+                while (!flag.get()) {
+                    Thread.yield() // Block current thread, submitted inner job will be stolen
+                }
 
-            innerJob.await()
-            expect(3)
-        }
+                innerJob.await()
+                expect(3)
+            }
         job.await()
         finish(4)
         checkPoolThreadsCreated(2)
@@ -95,21 +97,23 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     fun testYield() = runBlocking {
         corePoolSize = 1
         maxPoolSize = 1
-        val outerJob = launch(dispatcher) {
-            expect(1)
-            val innerJob = launch(dispatcher) {
-                // Do nothing
-                expect(3)
-            }
+        val outerJob =
+            launch(dispatcher) {
+                expect(1)
+                val innerJob =
+                    launch(dispatcher) {
+                        // Do nothing
+                        expect(3)
+                    }
 
-            expect(2)
-            while (innerJob.isActive) {
-                yield()
-            }
+                expect(2)
+                while (innerJob.isActive) {
+                    yield()
+                }
 
-            expect(4)
-            innerJob.join()
-        }
+                expect(4)
+                innerJob.join()
+            }
         outerJob.join()
         finish(5)
     }
@@ -117,10 +121,11 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
     @Test
     fun testUndispatchedYield() = runTest {
         expect(1)
-        val job = launch(dispatcher, CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            yield()
-        }
+        val job =
+            launch(dispatcher, CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                yield()
+            }
         expect(3)
         job.join()
         finish(4)
@@ -128,16 +133,15 @@ class CoroutineDispatcherTest : SchedulerTestBase() {
 
     @Test
     fun testThreadName() = runBlocking {
-        val initialCount = Thread.getAllStackTraces().keys.asSequence()
-            .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
+        val initialCount =
+            Thread.getAllStackTraces().keys.asSequence().count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
         assertEquals(0, initialCount)
         val dispatcher = SchedulerCoroutineDispatcher(1, 1, IDLE_WORKER_KEEP_ALIVE_NS, "SomeTestName")
         dispatcher.use {
-            launch(dispatcher) {
-            }.join()
+            launch(dispatcher) {}.join()
 
-            val count = Thread.getAllStackTraces().keys.asSequence()
-                .count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
+            val count =
+                Thread.getAllStackTraces().keys.asSequence().count { it is CoroutineScheduler.Worker && it.name.contains("SomeTestName") }
             assertEquals(1, count)
         }
     }

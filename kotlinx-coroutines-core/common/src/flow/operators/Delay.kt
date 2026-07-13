@@ -26,12 +26,10 @@ fun main() = runBlocking {
 */
 
 /**
- * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout][timeoutMillis].
- * The latest value is always emitted.
+ * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given
+ * [timeout][timeoutMillis]. The latest value is always emitted.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)
@@ -54,8 +52,8 @@ fun main() = runBlocking {
  * ```
  * <!--- TEST -->
  *
- * Note that the resulting flow does not emit anything as long as the original flow emits
- * items faster than every [timeoutMillis] milliseconds.
+ * Note that the resulting flow does not emit anything as long as the original flow emits items faster than every [timeoutMillis]
+ * milliseconds.
  */
 @FlowPreview
 public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
@@ -65,14 +63,12 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
 }
 
 /**
- * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout][timeoutMillis].
- * The latest value is always emitted.
+ * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given
+ * [timeout][timeoutMillis]. The latest value is always emitted.
  *
  * A variation of [debounce] that allows specifying the timeout value dynamically.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)
@@ -101,23 +97,20 @@ public fun <T> Flow<T>.debounce(timeoutMillis: Long): Flow<T> {
  * ```
  * <!--- TEST -->
  *
- * Note that the resulting flow does not emit anything as long as the original flow emits
- * items faster than every [timeoutMillis] milliseconds.
+ * Note that the resulting flow does not emit anything as long as the original flow emits items faster than every [timeoutMillis]
+ * milliseconds.
  *
  * @param timeoutMillis [T] is the emitted value and the return value is timeout in milliseconds.
  */
 @FlowPreview
 @OverloadResolutionByLambdaReturnType
-public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
-    debounceInternal(timeoutMillis)
+public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> = debounceInternal(timeoutMillis)
 
 /**
- * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout].
+ * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given [timeout].
  * The latest value is always emitted.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)
@@ -140,22 +133,17 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> =
  * ```
  * <!--- TEST -->
  *
- * Note that the resulting flow does not emit anything as long as the original flow emits
- * items faster than every [timeout] milliseconds.
+ * Note that the resulting flow does not emit anything as long as the original flow emits items faster than every [timeout] milliseconds.
  */
-@FlowPreview
-public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
-    debounce(timeout.toDelayMillis())
+@FlowPreview public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
 
 /**
- * Returns a flow that mirrors the original flow, but filters out values
- * that are followed by the newer values within the given [timeout].
+ * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given [timeout].
  * The latest value is always emitted.
  *
  * A variation of [debounce] that allows specifying the timeout value dynamically.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)
@@ -184,68 +172,64 @@ public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> =
  * ```
  * <!--- TEST -->
  *
- * Note that the resulting flow does not emit anything as long as the original flow emits
- * items faster than every [timeout] unit.
+ * Note that the resulting flow does not emit anything as long as the original flow emits items faster than every [timeout] unit.
  *
  * @param timeout [T] is the emitted value and the return value is timeout in [Duration].
  */
 @FlowPreview
 @JvmName("debounceDuration")
 @OverloadResolutionByLambdaReturnType
-public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> =
-    debounceInternal { emittedItem ->
-        timeout(emittedItem).toDelayMillis()
-    }
+public fun <T> Flow<T>.debounce(timeout: (T) -> Duration): Flow<T> = debounceInternal { emittedItem ->
+    timeout(emittedItem).toDelayMillis()
+}
 
-private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Flow<T> =
-    scopedFlow { downstream ->
-        // Produce the values using the default (rendezvous) channel
-        val values = produce {
-            collect { value -> send(value ?: NULL) }
+private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Flow<T> = scopedFlow { downstream ->
+    // Produce the values using the default (rendezvous) channel
+    val values = produce {
+        collect { value -> send(value ?: NULL) }
+    }
+    // Now consume the values
+    var lastValue: Any? = null
+    while (lastValue !== DONE) {
+        var timeoutMillis = 0L // will be always computed when lastValue != null
+        // Compute timeout for this value
+        if (lastValue != null) {
+            timeoutMillis = timeoutMillisSelector(NULL.unbox(lastValue))
+            require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
+            if (timeoutMillis == 0L) {
+                downstream.emit(NULL.unbox(lastValue))
+                lastValue = null // Consume the value
+            }
         }
-        // Now consume the values
-        var lastValue: Any? = null
-        while (lastValue !== DONE) {
-            var timeoutMillis = 0L // will be always computed when lastValue != null
-            // Compute timeout for this value
+        // assert invariant: lastValue != null implies timeoutMillis > 0
+        assert { lastValue == null || timeoutMillis > 0 }
+        // wait for the next value with timeout
+        select<Unit> {
+            // Set timeout when lastValue exists and is not consumed yet
             if (lastValue != null) {
-                timeoutMillis = timeoutMillisSelector(NULL.unbox(lastValue))
-                require(timeoutMillis >= 0L) { "Debounce timeout should not be negative" }
-                if (timeoutMillis == 0L) {
+                onTimeout(timeoutMillis) {
                     downstream.emit(NULL.unbox(lastValue))
                     lastValue = null // Consume the value
                 }
             }
-            // assert invariant: lastValue != null implies timeoutMillis > 0
-            assert { lastValue == null || timeoutMillis > 0 }
-            // wait for the next value with timeout
-            select<Unit> {
-                // Set timeout when lastValue exists and is not consumed yet
-                if (lastValue != null) {
-                    onTimeout(timeoutMillis) {
-                        downstream.emit(NULL.unbox(lastValue))
-                        lastValue = null // Consume the value
+            values.onReceiveCatching { value ->
+                value
+                    .onSuccess { lastValue = it }
+                    .onFailure {
+                        it?.let { throw it }
+                        // If closed normally, emit the latest value
+                        if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
+                        lastValue = DONE
                     }
-                }
-                values.onReceiveCatching { value ->
-                    value
-                        .onSuccess { lastValue = it }
-                        .onFailure {
-                            it?.let { throw it }
-                            // If closed normally, emit the latest value
-                            if (lastValue != null) downstream.emit(NULL.unbox(lastValue))
-                            lastValue = DONE
-                        }
-                }
             }
         }
     }
+}
 
 /**
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period][periodMillis].
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     repeat(10) {
@@ -269,9 +253,10 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Fl
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
     return scopedFlow { downstream ->
-        val values = produce(capacity = Channel.CONFLATED) {
-            collect { value -> send(value ?: NULL) }
-        }
+        val values =
+            produce(capacity = Channel.CONFLATED) {
+                collect { value -> send(value ?: NULL) }
+            }
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
         while (lastValue !== DONE) {
@@ -300,9 +285,7 @@ public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
 /*
  * TODO this design (and design of the corresponding operator) depends on #540
  */
-internal fun CoroutineScope.fixedPeriodTicker(
-    delayMillis: Long,
-): ReceiveChannel<Unit> {
+internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long): ReceiveChannel<Unit> {
     return produce(capacity = 0) {
         delay(delayMillis)
         while (true) {
@@ -316,7 +299,6 @@ internal fun CoroutineScope.fixedPeriodTicker(
  * Returns a flow that emits only the latest value emitted by the original flow during the given sampling [period].
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     repeat(10) {
@@ -336,14 +318,12 @@ internal fun CoroutineScope.fixedPeriodTicker(
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-@FlowPreview
-public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+@FlowPreview public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 
 /**
  * Returns a flow that will emit a [TimeoutCancellationException] if the upstream doesn't emit an item within the given time.
  *
  * Example:
- *
  * ```kotlin
  * flow {
  *     emit(1)
@@ -379,24 +359,21 @@ public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelay
  *
  * @param timeout Timeout duration. If non-positive, the flow is timed out immediately
  */
-@FlowPreview
-public fun <T> Flow<T>.timeout(
-    timeout: Duration
-): Flow<T> = timeoutInternal(timeout)
+@FlowPreview public fun <T> Flow<T>.timeout(timeout: Duration): Flow<T> = timeoutInternal(timeout)
 
-private fun <T> Flow<T>.timeoutInternal(
-    timeout: Duration
-): Flow<T> = scopedFlow { downStream ->
+private fun <T> Flow<T>.timeoutInternal(timeout: Duration): Flow<T> = scopedFlow { downStream ->
     if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")
     val values = buffer(Channel.RENDEZVOUS).produceIn(this)
     whileSelect {
         values.onReceiveCatching { value ->
-            value.onSuccess {
-                downStream.emit(it)
-            }.onClosed {
-                it?.let { throw it }
-                return@onReceiveCatching false
-            }
+            value
+                .onSuccess {
+                    downStream.emit(it)
+                }
+                .onClosed {
+                    it?.let { throw it }
+                    return@onReceiveCatching false
+                }
             return@onReceiveCatching true
         }
         onTimeout(timeout) {

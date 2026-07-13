@@ -7,16 +7,15 @@ import org.junit.runners.*
 import kotlin.test.*
 
 @RunWith(Parameterized::class)
-class LockFreeTaskQueueTest(
-    private val singleConsumer: Boolean
-) : TestBase() {
+class LockFreeTaskQueueTest(private val singleConsumer: Boolean) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "singleConsumer={0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = listOf(
-            arrayOf<Any>(false),
-            arrayOf<Any>(true)
-        )
+        fun params(): Collection<Array<Any>> =
+            listOf(
+                arrayOf<Any>(false),
+                arrayOf<Any>(true),
+            )
     }
 
     @Test

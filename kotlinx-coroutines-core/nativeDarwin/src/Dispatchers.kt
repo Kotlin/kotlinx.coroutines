@@ -25,12 +25,9 @@ private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
     }
 }
 
-private class DarwinMainDispatcher(
-    private val invokeImmediately: Boolean
-) : MainCoroutineDispatcher(), Delay {
-    
-    override val immediate: MainCoroutineDispatcher =
-        if (invokeImmediately) this else DarwinMainDispatcher(true)
+private class DarwinMainDispatcher(private val invokeImmediately: Boolean) : MainCoroutineDispatcher(), Delay {
+
+    override val immediate: MainCoroutineDispatcher = if (invokeImmediately) this else DarwinMainDispatcher(true)
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !(invokeImmediately && isMainThread())
 
@@ -41,7 +38,7 @@ private class DarwinMainDispatcher(
             }
         }
     }
-    
+
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timer = Timer()
         val timerBlock: TimerBlock = {
@@ -62,8 +59,7 @@ private class DarwinMainDispatcher(
         return timer
     }
 
-    override fun toString(): String =
-        if (invokeImmediately) "Dispatchers.Main.immediate" else "Dispatchers.Main"
+    override fun toString(): String = if (invokeImmediately) "Dispatchers.Main.immediate" else "Dispatchers.Main"
 }
 
 private typealias TimerBlock = (CFRunLoopTimerRef?) -> Unit

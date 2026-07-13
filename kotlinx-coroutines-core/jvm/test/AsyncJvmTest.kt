@@ -3,7 +3,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-
 class AsyncJvmTest : TestBase() {
     // We have the same test in common module, but the maintainer uses this particular file
     // and semi-automatically types cmd+N + AsyncJvm in order to duck-tape any JVM samples/repros,

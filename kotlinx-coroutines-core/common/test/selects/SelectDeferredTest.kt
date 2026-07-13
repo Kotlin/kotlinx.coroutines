@@ -54,10 +54,11 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteLazy() = runTest {
         expect(1)
-        val d1 = async(start = CoroutineStart.LAZY) {
-            expect(5)
-            42
-        }
+        val d1 =
+            async(start = CoroutineStart.LAZY) {
+                expect(5)
+                42
+            }
         launch {
             expect(3)
             val res = select {
@@ -113,8 +114,8 @@ class SelectDeferredTest : TestBase() {
     }
 
     /**
-     * Tests that completing a [Deferred] with an exception will cause the [select] that uses [Deferred.onAwait]
-     * to throw the same exception.
+     * Tests that completing a [Deferred] with an exception will cause the [select] that uses [Deferred.onAwait] to throw the same
+     * exception.
      */
     @Test
     fun testSelectFailure() = runTest {
@@ -130,23 +131,22 @@ class SelectDeferredTest : TestBase() {
     }
 
     @Test
-    fun testSelectCancel() = runTest(
-        expected = { it is CancellationException }
-    ) {
-        expect(1)
-        val d = CompletableDeferred<String>()
-        launch {
-            finish(3)
-            d.cancel() // will cancel after select starts
-        }
-        expect(2)
-        select {
-            d.onAwait {
-                expectUnreached() // will not select
+    fun testSelectCancel() =
+        runTest(expected = { it is CancellationException }) {
+            expect(1)
+            val d = CompletableDeferred<String>()
+            launch {
+                finish(3)
+                d.cancel() // will cancel after select starts
             }
+            expect(2)
+            select {
+                d.onAwait {
+                    expectUnreached() // will not select
+                }
+            }
+            expectUnreached()
         }
-        expectUnreached()
-    }
 
     @Test
     fun testSelectIncomplete() = runTest {
@@ -179,6 +179,7 @@ class SelectDeferredTest : TestBase() {
     private class Wrapper(val value: String) : Incomplete {
         override val isActive: Boolean
             get() = error("")
+
         override val list: NodeList?
             get() = error("")
     }

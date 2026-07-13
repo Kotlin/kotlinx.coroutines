@@ -79,6 +79,7 @@ class WorkQueueTest : TestBase() {
 }
 
 internal fun task(n: Long) = Runnable {}.asTask(n, NonBlockingContext)
+
 internal fun blockingTask(n: Long) = Runnable {}.asTask(n, BlockingContext)
 
 internal fun WorkQueue.drain(ref: ObjectRef<Task?>): List<Long> {

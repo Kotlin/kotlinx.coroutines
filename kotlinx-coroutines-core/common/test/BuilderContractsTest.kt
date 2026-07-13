@@ -43,7 +43,6 @@ class BuilderContractsTest : TestBase() {
         }
         consume(s)
 
-
         val ch: Int
         val i = Channel<Int>()
         i.consume {

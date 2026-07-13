@@ -6,10 +6,13 @@ import java.util.concurrent.*
 import kotlin.coroutines.*
 
 // Instance of Dispatchers.Default
-internal object DefaultScheduler : SchedulerCoroutineDispatcher(
-    CORE_POOL_SIZE, MAX_POOL_SIZE,
-    IDLE_WORKER_KEEP_ALIVE_NS, DEFAULT_SCHEDULER_NAME
-) {
+internal object DefaultScheduler :
+    SchedulerCoroutineDispatcher(
+        CORE_POOL_SIZE,
+        MAX_POOL_SIZE,
+        IDLE_WORKER_KEEP_ALIVE_NS,
+        DEFAULT_SCHEDULER_NAME,
+    ) {
 
     override fun limitedParallelism(parallelism: Int, name: String?): CoroutineDispatcher {
         parallelism.checkParallelism()
@@ -61,12 +64,13 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 // Dispatchers.IO
 internal object DefaultIoScheduler : ExecutorCoroutineDispatcher(), Executor {
 
-    private val default = UnlimitedIoScheduler.limitedParallelism(
-        systemProp(
-            IO_PARALLELISM_PROPERTY_NAME,
-            64.coerceAtLeast(AVAILABLE_PROCESSORS)
+    private val default =
+        UnlimitedIoScheduler.limitedParallelism(
+            systemProp(
+                IO_PARALLELISM_PROPERTY_NAME,
+                64.coerceAtLeast(AVAILABLE_PROCESSORS),
+            )
         )
-    )
 
     override val executor: Executor
         get() = this
@@ -108,8 +112,7 @@ internal open class SchedulerCoroutineDispatcher(
     // This is variable for test purposes, so that we can reinitialize from clean state
     private var coroutineScheduler = createScheduler()
 
-    private fun createScheduler() =
-        CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
+    private fun createScheduler() = CoroutineScheduler(corePoolSize, maxPoolSize, idleWorkerKeepAliveNs, schedulerName)
 
     override fun dispatch(context: CoroutineContext, block: Runnable): Unit = coroutineScheduler.dispatch(block)
 

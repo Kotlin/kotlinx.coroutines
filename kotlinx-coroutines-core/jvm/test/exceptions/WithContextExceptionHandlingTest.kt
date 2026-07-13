@@ -10,7 +10,10 @@ import kotlin.test.*
 
 @RunWith(Parameterized::class)
 class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
-    enum class Mode { WITH_CONTEXT, ASYNC_AWAIT }
+    enum class Mode {
+        WITH_CONTEXT,
+        ASYNC_AWAIT,
+    }
 
     companion object {
         @Parameterized.Parameters(name = "mode={0}")
@@ -160,7 +163,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
         val thrown = TestCancellationException()
         thrown.initCause(TestException())
         runThrowing(thrown) { e ->
-           assertSame(thrown, e)
+            assertSame(thrown, e)
         }
     }
 
@@ -205,7 +208,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
     private suspend fun runCancellation(
         cancellationCause: CancellationException?,
         thrownException: Throwable,
-        exceptionChecker: (Throwable) -> Unit
+        exceptionChecker: (Throwable) -> Unit,
     ) {
         expect(1)
 
@@ -227,7 +230,7 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     private suspend fun runThrowing(
         thrownException: Throwable,
-        exceptionChecker: (Throwable) -> Unit
+        exceptionChecker: (Throwable) -> Unit,
     ) {
         expect(1)
         try {
@@ -246,18 +249,22 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     private suspend fun withCtx(context: CoroutineContext, job: Job = Job(), block: suspend CoroutineScope.(Job) -> Nothing) {
         when (mode) {
-            Mode.WITH_CONTEXT -> withContext(context + job) {
-                block(job)
-            }
-            Mode.ASYNC_AWAIT -> CoroutineScope(coroutineContext).async(context + job) {
-                block(job)
-            }.await()
+            Mode.WITH_CONTEXT ->
+                withContext(context + job) {
+                    block(job)
+                }
+            Mode.ASYNC_AWAIT ->
+                CoroutineScope(coroutineContext)
+                    .async(context + job) {
+                        block(job)
+                    }
+                    .await()
         }
     }
 
     private suspend fun runOnlyCancellation(
         cancellationCause: CancellationException?,
-        exceptionChecker: (Throwable) -> Unit
+        exceptionChecker: (Throwable) -> Unit,
     ) {
         expect(1)
         val job = Job()

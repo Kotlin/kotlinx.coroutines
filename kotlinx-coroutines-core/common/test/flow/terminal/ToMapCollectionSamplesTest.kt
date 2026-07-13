@@ -20,7 +20,7 @@ class ToMapCollectionSamplesTest : TestBase() {
         val byLastName = scientists.associateBy { it.lastName }
         assertEquals(
             listOf("Hopper" to Person("Grace", "Hopper"), "Bernoulli" to Person("Johann", "Bernoulli")),
-            byLastName.toList()
+            byLastName.toList(),
         )
     }
 
@@ -44,7 +44,7 @@ class ToMapCollectionSamplesTest : TestBase() {
         assertTrue(byLastName.isNotEmpty())
         assertEquals(
             listOf("Hopper" to Person("Grace", "Hopper"), "Bernoulli" to Person("Johann", "Bernoulli")),
-            byLastName.toList()
+            byLastName.toList(),
         )
     }
 
@@ -90,7 +90,7 @@ class ToMapCollectionSamplesTest : TestBase() {
         assertTrue(withLengthOfNames.isNotEmpty())
         assertEquals(
             listOf(Person("Grace", "Hopper") to 11, Person("Jacob", "Bernoulli") to 14),
-            withLengthOfNames.toList()
+            withLengthOfNames.toList(),
         )
     }
 

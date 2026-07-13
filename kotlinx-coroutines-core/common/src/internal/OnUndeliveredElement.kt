@@ -7,7 +7,7 @@ internal typealias OnUndeliveredElement<E> = (E) -> Unit
 
 internal fun <E> OnUndeliveredElement<E>.callUndeliveredElementCatchingException(
     element: E,
-    undeliveredElementException: UndeliveredElementException? = null
+    undeliveredElementException: UndeliveredElementException? = null,
 ): UndeliveredElementException? {
     try {
         invoke(element)
@@ -29,8 +29,5 @@ internal fun <E> OnUndeliveredElement<E>.callUndeliveredElement(element: E, cont
     }
 }
 
-/**
- * Internal exception that is thrown when [OnUndeliveredElement] handler in
- * a [kotlinx.coroutines.channels.Channel] throws an exception.
- */
+/** Internal exception that is thrown when [OnUndeliveredElement] handler in a [kotlinx.coroutines.channels.Channel] throws an exception. */
 internal class UndeliveredElementException(message: String, cause: Throwable) : RuntimeException(message, cause)

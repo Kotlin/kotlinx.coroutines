@@ -15,13 +15,10 @@ import kotlin.test.*
 class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBase() {
 
     companion object {
-        @Parameterized.Parameters(name = "{0}")
-        @JvmStatic
-        fun params(): Collection<Array<Any>> = listOf(1, 2, 3, 4).map { arrayOf(it) }
+        @Parameterized.Parameters(name = "{0}") @JvmStatic fun params(): Collection<Array<Any>> = listOf(1, 2, 3, 4).map { arrayOf(it) }
     }
 
-    @get:Rule
-    val executor = ExecutorRule(targetParallelism * 2)
+    @get:Rule val executor = ExecutorRule(targetParallelism * 2)
     private val iterations = 100_000
 
     private val parallelism = AtomicInteger(0)
@@ -86,18 +83,18 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
         }
     }
 
-    /**
-     * Checks that dispatcher failures during fairness redispatches don't prevent reaching the target parallelism.
-     */
+    /** Checks that dispatcher failures during fairness redispatches don't prevent reaching the target parallelism. */
     @Test
     fun testLimitedFailingDispatcherReachesTargetParallelism() = runTest {
         val keepFailing = AtomicBoolean(true)
-        val occasionallyFailing = object: CoroutineDispatcher() {
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                if (keepFailing.get() && ThreadLocalRandom.current().nextBoolean()) throw TestException()
-                executor.dispatch(context, block)
-            }
-        }.limitedParallelism(targetParallelism)
+        val occasionallyFailing =
+            object : CoroutineDispatcher() {
+                    override fun dispatch(context: CoroutineContext, block: Runnable) {
+                        if (keepFailing.get() && ThreadLocalRandom.current().nextBoolean()) throw TestException()
+                        executor.dispatch(context, block)
+                    }
+                }
+                .limitedParallelism(targetParallelism)
         doStress {
             repeat(1000) {
                 keepFailing.set(true) // we want the next tasks to sporadically fail
@@ -106,9 +103,12 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
                     // targetParallelism * 16 + 1 because we need at least one worker to go through a fairness yield
                     // with high probability.
                     try {
-                        occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
-                            // do nothing.
-                        })
+                        occasionallyFailing.dispatch(
+                            EmptyCoroutineContext,
+                            Runnable {
+                                // do nothing.
+                            },
+                        )
                     } catch (_: DispatchException) {
                         // ignore
                     }
@@ -120,17 +120,21 @@ class LimitedParallelismStressTest(private val targetParallelism: Int) : TestBas
                         barrier.await()
                     }
                 }
-                val success = launch(Dispatchers.Default) {
-                    // Successfully awaited parallelism + 1
-                    barrier.await()
-                }
+                val success =
+                    launch(Dispatchers.Default) {
+                        // Successfully awaited parallelism + 1
+                        barrier.await()
+                    }
                 // Feed the dispatcher with more tasks to make sure it's not stuck
                 while (success.isActive) {
                     Thread.sleep(1)
                     repeat(targetParallelism) {
-                        occasionallyFailing.dispatch(EmptyCoroutineContext, Runnable {
-                            // do nothing.
-                        })
+                        occasionallyFailing.dispatch(
+                            EmptyCoroutineContext,
+                            Runnable {
+                                // do nothing.
+                            },
+                        )
                     }
                 }
                 coroutineContext.job.children.toList().joinAll()

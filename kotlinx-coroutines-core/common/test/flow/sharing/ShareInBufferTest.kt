@@ -5,9 +5,7 @@ import kotlinx.coroutines.*
 import kotlin.math.*
 import kotlin.test.*
 
-/**
- * Similar to [BufferTest], but tests [shareIn] buffering and its fusion with [buffer] operators.
- */
+/** Similar to [BufferTest], but tests [shareIn] buffering and its fusion with [buffer] operators. */
 class ShareInBufferTest : TestBase() {
     private val n = 200 // number of elements to emit for test
     private val defaultBufferSize = 64 // expected default buffer size (per docs)
@@ -16,9 +14,9 @@ class ShareInBufferTest : TestBase() {
     private fun checkBuffer(capacity: Int, op: suspend Flow<Int>.(CoroutineScope) -> Flow<Int>) = runTest {
         expect(1)
         /*
-           Shared flows do not perform full rendezvous. On buffer overflow emitter always suspends until all
-           subscribers get the value and then resumes. Thus, perceived batch size is +1 from buffer capacity.
-         */
+          Shared flows do not perform full rendezvous. On buffer overflow emitter always suspends until all
+          subscribers get the value and then resumes. Thus, perceived batch size is +1 from buffer capacity.
+        */
         val batchSize = capacity + 1
         val upstream = flow {
             repeat(n) { i ->
@@ -65,7 +63,7 @@ class ShareInBufferTest : TestBase() {
 
     @Test // buffer is padded to default size as needed
     fun testReplay100DefaultBuffer() =
-        checkBuffer( maxOf(100, defaultBufferSize)) {
+        checkBuffer(maxOf(100, defaultBufferSize)) {
             shareIn(it, SharingStarted.Eagerly, 100)
         }
 
@@ -86,7 +84,7 @@ class ShareInBufferTest : TestBase() {
         checkBuffer(10) {
             buffer(10).shareIn(it, SharingStarted.Eagerly)
         }
-                                         
+
     @Test // buffer and replay sizes add up
     fun testBufferReplaySum() =
         checkBuffer(41) {

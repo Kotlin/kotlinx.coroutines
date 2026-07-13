@@ -24,23 +24,25 @@ class FilterTest : TestBase() {
     fun testErrorCancelsUpstream() = runTest {
         var cancelled = false
         val latch = Channel<Unit>()
-        val flow = flow {
-            coroutineScope {
-                launch {
-                    latch.send(Unit)
-                    hang {cancelled = true}
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch {
+                            latch.send(Unit)
+                            hang { cancelled = true }
+                        }
+                        emit(1)
+                    }
                 }
-                emit(1)
-            }
-        }.filter {
-            latch.receive()
-            throw TestException()
-        }.catch { emit(42) }
+                .filter {
+                    latch.receive()
+                    throw TestException()
+                }
+                .catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)
     }
-
 
     @Test
     fun testFilterNot() = runTest {
@@ -59,18 +61,21 @@ class FilterTest : TestBase() {
     fun testErrorCancelsUpstreamwFilterNot() = runTest {
         var cancelled = false
         val latch = Channel<Unit>()
-        val flow = flow {
-            coroutineScope {
-                launch {
-                    latch.send(Unit)
-                    hang {cancelled = true}
+        val flow =
+            flow {
+                    coroutineScope {
+                        launch {
+                            latch.send(Unit)
+                            hang { cancelled = true }
+                        }
+                        emit(1)
+                    }
                 }
-                emit(1)
-            }
-        }.filterNot {
-            latch.receive()
-            throw TestException()
-        }.catch { emit(42) }
+                .filterNot {
+                    latch.receive()
+                    throw TestException()
+                }
+                .catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

@@ -181,36 +181,38 @@ class SelectRendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveClosed() = runTest(expected = { it is ClosedReceiveChannelException }) {
-        expect(1)
-        val channel = Channel<String>(Channel.RENDEZVOUS)
-        channel.close()
-        finish(2)
-        select {
-            channel.onReceive {
-                expectUnreached()
+    fun testSelectReceiveClosed() =
+        runTest(expected = { it is ClosedReceiveChannelException }) {
+            expect(1)
+            val channel = Channel<String>(Channel.RENDEZVOUS)
+            channel.close()
+            finish(2)
+            select {
+                channel.onReceive {
+                    expectUnreached()
+                }
             }
+            expectUnreached()
         }
-        expectUnreached()
-    }
 
     @Test
-    fun testSelectReceiveWaitClosed() = runTest(expected = {it is ClosedReceiveChannelException}) {
-        expect(1)
-        val channel = Channel<String>(Channel.RENDEZVOUS)
-        launch {
-            expect(3)
-            channel.close()
-            finish(4)
-        }
-        expect(2)
-        select {
-            channel.onReceive {
-                expectUnreached()
+    fun testSelectReceiveWaitClosed() =
+        runTest(expected = { it is ClosedReceiveChannelException }) {
+            expect(1)
+            val channel = Channel<String>(Channel.RENDEZVOUS)
+            launch {
+                expect(3)
+                channel.close()
+                finish(4)
             }
+            expect(2)
+            select {
+                channel.onReceive {
+                    expectUnreached()
+                }
+            }
+            expectUnreached()
         }
-        expectUnreached()
-    }
 
     @Test
     fun testSelectSendResourceCleanup() = runTest {

@@ -4,22 +4,23 @@ import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 /**
- * Tests that the transitions to the state of the [Job] correspond to documentation in the
- * table that is presented in the [Job] documentation.
+ * Tests that the transitions to the state of the [Job] correspond to documentation in the table that is presented in the [Job]
+ * documentation.
  */
 class JobStatesTest : TestBase() {
     @Test
     fun testNormalCompletion() = runTest {
         expect(1)
         val parent = coroutineContext.job
-        val job = launch(start = CoroutineStart.LAZY) {
-            expect(2)
-            // launches child
-            launch {
-                expect(4)
+        val job =
+            launch(start = CoroutineStart.LAZY) {
+                expect(2)
+                // launches child
+                launch {
+                    expect(4)
+                }
+                // completes normally
             }
-            // completes normally
-        }
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
@@ -48,90 +49,91 @@ class JobStatesTest : TestBase() {
     }
 
     @Test
-    fun testCompletingFailed() = runTest(
-        unhandled = listOf({ it -> it is TestException })
-    ) {
-        expect(1)
-        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
-            expect(2)
-            // launches child
-            launch {
-                expect(4)
-                throw TestException()
-            }
-            // completes normally
+    fun testCompletingFailed() =
+        runTest(unhandled = listOf({ it -> it is TestException })) {
+            expect(1)
+            val job =
+                launch(NonCancellable, start = CoroutineStart.LAZY) {
+                    expect(2)
+                    // launches child
+                    launch {
+                        expect(4)
+                        throw TestException()
+                    }
+                    // completes normally
+                }
+            // New job
+            assertFalse(job.isActive)
+            assertFalse(job.isCompleted)
+            assertFalse(job.isCancelled)
+            // New -> Active
+            job.start()
+            assertTrue(job.isActive)
+            assertFalse(job.isCompleted)
+            assertFalse(job.isCancelled)
+            // Active -> Completing
+            yield() // scheduled & starts child
+            expect(3)
+            assertTrue(job.isActive)
+            assertFalse(job.isCompleted)
+            assertFalse(job.isCancelled)
+            // Completing -> Cancelled
+            yield()
+            finish(5)
+            assertFalse(job.isActive)
+            assertTrue(job.isCompleted)
+            assertTrue(job.isCancelled)
         }
-        // New job
-        assertFalse(job.isActive)
-        assertFalse(job.isCompleted)
-        assertFalse(job.isCancelled)
-        // New -> Active
-        job.start()
-        assertTrue(job.isActive)
-        assertFalse(job.isCompleted)
-        assertFalse(job.isCancelled)
-        // Active -> Completing
-        yield() // scheduled & starts child
-        expect(3)
-        assertTrue(job.isActive)
-        assertFalse(job.isCompleted)
-        assertFalse(job.isCancelled)
-        // Completing -> Cancelled
-        yield()
-        finish(5)
-        assertFalse(job.isActive)
-        assertTrue(job.isCompleted)
-        assertTrue(job.isCancelled)
-    }
 
     @Test
-    fun testFailed() = runTest(
-        unhandled = listOf({ it -> it is TestException })
-    ) {
-        expect(1)
-        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
-            expect(2)
-            // launches child
-            launch(start = CoroutineStart.ATOMIC) {
-                expect(4)
-            }
-            // failing
-            throw TestException()
+    fun testFailed() =
+        runTest(unhandled = listOf({ it -> it is TestException })) {
+            expect(1)
+            val job =
+                launch(NonCancellable, start = CoroutineStart.LAZY) {
+                    expect(2)
+                    // launches child
+                    launch(start = CoroutineStart.ATOMIC) {
+                        expect(4)
+                    }
+                    // failing
+                    throw TestException()
+                }
+            // New job
+            assertFalse(job.isActive)
+            assertFalse(job.isCompleted)
+            assertFalse(job.isCancelled)
+            // New -> Active
+            job.start()
+            assertTrue(job.isActive)
+            assertFalse(job.isCompleted)
+            assertFalse(job.isCancelled)
+            // Active -> Cancelling
+            yield() // scheduled & starts child
+            expect(3)
+            assertFalse(job.isActive)
+            assertFalse(job.isCompleted)
+            assertTrue(job.isCancelled)
+            // Cancelling -> Cancelled
+            yield()
+            finish(5)
+            assertFalse(job.isActive)
+            assertTrue(job.isCompleted)
+            assertTrue(job.isCancelled)
         }
-        // New job
-        assertFalse(job.isActive)
-        assertFalse(job.isCompleted)
-        assertFalse(job.isCancelled)
-        // New -> Active
-        job.start()
-        assertTrue(job.isActive)
-        assertFalse(job.isCompleted)
-        assertFalse(job.isCancelled)
-        // Active -> Cancelling
-        yield() // scheduled & starts child
-        expect(3)
-        assertFalse(job.isActive)
-        assertFalse(job.isCompleted)
-        assertTrue(job.isCancelled)
-        // Cancelling -> Cancelled
-        yield()
-        finish(5)
-        assertFalse(job.isActive)
-        assertTrue(job.isCompleted)
-        assertTrue(job.isCancelled)
-    }
 
     @Test
     fun testCancelling() = runTest {
         expect(1)
-        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
-            expect(2)
-            // launches child
-            launch(start = CoroutineStart.ATOMIC) {
-                expect(4)
+        val job =
+            launch(NonCancellable, start = CoroutineStart.LAZY) {
+                expect(2)
+                // launches child
+                launch(start = CoroutineStart.ATOMIC) {
+                    expect(4)
+                }
+                // completes normally
             }
-            // completes normally
-        }
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)

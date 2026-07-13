@@ -6,9 +6,7 @@ import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-/**
- * It is mostly covered by [ShareInTest], this just add state-specific checks.
- */
+/** It is mostly covered by [ShareInTest], this just add state-specific checks. */
 class StateInTest : TestBase() {
     @Test
     fun testOperatorFusion() = runTest {
@@ -26,21 +24,13 @@ class StateInTest : TestBase() {
         coroutineContext.cancelChildren()
     }
 
-    @Test
-    fun testUpstreamCompletedNoInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = false)
+    @Test fun testUpstreamCompletedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = false)
 
-    @Test
-    fun testUpstreamFailedNoInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = false)
+    @Test fun testUpstreamFailedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = false)
 
-    @Test
-    fun testUpstreamCompletedWithInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = true)
+    @Test fun testUpstreamCompletedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = true)
 
-    @Test
-    fun testUpstreamFailedWithInitialValue() =
-        testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = true)
+    @Test fun testUpstreamFailedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = true)
 
     private fun testUpstreamCompletedOrFailedReset(failed: Boolean, withInitialValue: Boolean) = runTest {
         val emitted = Job()
@@ -77,17 +67,18 @@ class StateInTest : TestBase() {
     @Test
     fun testUpstreamFailedImmediatelyWithInitialValue() = runTest {
         val ceh = CoroutineExceptionHandler { _, _ -> expect(2) }
-        val flow = flow<Int> {
-            expect(1)
-            throw TestException()
-        }
+        val flow =
+            flow<Int> {
+                expect(1)
+                throw TestException()
+            }
         assertFailsWith<TestException> { flow.stateIn(CoroutineScope(currentCoroutineContext() + Job() + ceh)) }
         finish(3)
     }
 
     @Test
     fun testSubscriptionByFirstSuspensionInStateFlow() = runTest {
-        testSubscriptionByFirstSuspensionInCollect(flowOf(1).stateIn(this@runTest)) { }
+        testSubscriptionByFirstSuspensionInCollect(flowOf(1).stateIn(this@runTest)) {}
     }
 
     @Test

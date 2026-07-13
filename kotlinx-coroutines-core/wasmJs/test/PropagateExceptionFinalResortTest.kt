@@ -32,21 +32,24 @@ class PropagateExceptionFinalResortTest : TestBase() {
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun addUncaughtExceptionHandlerHelper() {
-    js("""
+    js(
+        """
             globalThis.exceptionCaught = false;
             globalThis.exceptionHandler = function(e) {
                 globalThis.exceptionCaught = true;
             };
             process.on('uncaughtException', globalThis.exceptionHandler);
-        """)
+        """
+    )
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun removeHandlerHelper() {
-    js("""
+    js(
+        """
             process.removeListener('uncaughtException', globalThis.exceptionHandler);
-        """)
+        """
+    )
 }
 
-@OptIn(ExperimentalWasmJsInterop::class)
-private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")
+@OptIn(ExperimentalWasmJsInterop::class) private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")

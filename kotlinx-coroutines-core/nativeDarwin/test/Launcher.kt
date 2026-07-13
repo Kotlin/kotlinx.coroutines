@@ -15,4 +15,3 @@ fun mainBackground(args: Array<String>) {
     CFRunLoopRun()
     error("CFRunLoopRun should never return")
 }
-

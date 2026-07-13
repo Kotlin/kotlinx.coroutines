@@ -7,19 +7,15 @@ import java.util.*
 import java.util.jar.*
 import java.util.zip.*
 
-/**
- * Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
- */
+/** Don't use JvmField here to enable R8 optimizations via "assumenosideeffects" */
 internal val ANDROID_DETECTED = runCatching { Class.forName("android.os.Build") }.isSuccess
 
 /**
- * A simplified version of [ServiceLoader].
- * FastServiceLoader locates and instantiates all service providers named in configuration
- * files placed in the resource directory <tt>META-INF/services</tt>.
+ * A simplified version of [ServiceLoader]. FastServiceLoader locates and instantiates all service providers named in configuration files
+ * placed in the resource directory <tt>META-INF/services</tt>.
  *
- * The main difference between this class and classic service loader is in skipping
- * verification JARs. A verification requires reading the whole JAR (and it causes problems and ANRs on Android devices)
- * and prevents only trivial checksum issues. See #878.
+ * The main difference between this class and classic service loader is in skipping verification JARs. A verification requires reading the
+ * whole JAR (and it causes problems and ANRs on Android devices) and prevents only trivial checksum issues. See #878.
  *
  * If any error occurs during loading, it fallbacks to [ServiceLoader], mostly to prevent R8 issues.
  */
@@ -29,21 +25,18 @@ internal object FastServiceLoader {
     /**
      * This method attempts to load [MainDispatcherFactory] in Android-friendly way.
      *
-     * If we are not on Android, this method fallbacks to a regular service loading,
-     * else we attempt to do `Class.forName` lookup for
-     * `AndroidDispatcherFactory` and `TestMainDispatcherFactory`.
-     * If lookups are successful, we return resultinAg instances because we know that
-     * `MainDispatcherFactory` API is internal and this is the only possible classes of `MainDispatcherFactory` Service on Android.
+     * If we are not on Android, this method fallbacks to a regular service loading, else we attempt to do `Class.forName` lookup for
+     * `AndroidDispatcherFactory` and `TestMainDispatcherFactory`. If lookups are successful, we return resultinAg instances because we know
+     * that `MainDispatcherFactory` API is internal and this is the only possible classes of `MainDispatcherFactory` Service on Android.
      *
      * Such an intricate dance is required to avoid calls to `ServiceLoader.load` for multiple reasons:
      * 1) It eliminates disk lookup on potentially slow devices on the Main thread.
-     * 2) Various Android toolchain versions by various vendors don't tend to handle ServiceLoader calls properly.
-     *    Sometimes META-INF is removed from the resulting APK, sometimes class names are mangled, etc.
-     *    While it is not the problem of `kotlinx.coroutines`, it significantly worsens user experience, thus we are workarounding it.
-     *    Examples of such issues are #932, #1072, #1557, #1567
+     * 2) Various Android toolchain versions by various vendors don't tend to handle ServiceLoader calls properly. Sometimes META-INF is
+     *    removed from the resulting APK, sometimes class names are mangled, etc. While it is not the problem of `kotlinx.coroutines`, it
+     *    significantly worsens user experience, thus we are workarounding it. Examples of such issues are #932, #1072, #1557, #1567
      *
-     * We also use SL for [CoroutineExceptionHandler], but we do not experience the same problems and CEH is a public API
-     * that may already be injected vis SL, so we are not using the same technique for it.
+     * We also use SL for [CoroutineExceptionHandler], but we do not experience the same problems and CEH is a public API that may already
+     * be injected vis SL, so we are not using the same technique for it.
      */
     internal fun loadMainDispatcherFactory(): List<MainDispatcherFactory> {
         val clz = MainDispatcherFactory::class.java
@@ -80,7 +73,7 @@ internal object FastServiceLoader {
     @Suppress("NOTHING_TO_INLINE")
     private inline fun createInstanceOf(
         baseClass: Class<MainDispatcherFactory>,
-        serviceClass: String
+        serviceClass: String,
     ): MainDispatcherFactory? {
         return try {
             val clz = Class.forName(serviceClass, true, baseClass.classLoader)
@@ -158,7 +151,9 @@ internal object FastServiceLoader {
         while (true) {
             val line = r.readLine() ?: break
             val serviceName = line.substringBefore("#").trim()
-            require(serviceName.all { it == '.' || Character.isJavaIdentifierPart(it) }) { "Illegal service provider class name: $serviceName" }
+            require(serviceName.all { it == '.' || Character.isJavaIdentifierPart(it) }) {
+                "Illegal service provider class name: $serviceName"
+            }
             if (serviceName.isNotEmpty()) {
                 names.add(serviceName)
             }

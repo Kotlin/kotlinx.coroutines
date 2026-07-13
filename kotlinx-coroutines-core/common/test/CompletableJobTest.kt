@@ -47,18 +47,19 @@ class CompletableJobTest : TestBase() {
     @Test
     fun testExceptionIsNotReportedToChildren() = parametrized { job ->
         expect(1)
-        val child = launch(job) {
-            expect(2)
-            try {
-                // KT-33840
-                hang {}
-            } catch (e: Throwable) {
-                assertIs<CancellationException>(e)
-                assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)
-                expect(4)
-                throw e
+        val child =
+            launch(job) {
+                expect(2)
+                try {
+                    // KT-33840
+                    hang {}
+                } catch (e: Throwable) {
+                    assertIs<CancellationException>(e)
+                    assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)
+                    expect(4)
+                    throw e
+                }
             }
-        }
         yield()
         expect(3)
         job.completeExceptionally(TestException())
@@ -69,18 +70,19 @@ class CompletableJobTest : TestBase() {
     @Test
     fun testCompleteExceptionallyDoesntAffectDeferred() = parametrized { job ->
         expect(1)
-        val child = async(job) {
-            expect(2)
-            try {
-                // KT-33840
-                hang {}
-            } catch (e: Throwable) {
-                assertIs<CancellationException>(e)
-                assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)
-                expect(4)
-                throw e
+        val child =
+            async(job) {
+                expect(2)
+                try {
+                    // KT-33840
+                    hang {}
+                } catch (e: Throwable) {
+                    assertIs<CancellationException>(e)
+                    assertIs<TestException>(if (RECOVER_STACK_TRACES) e.cause?.cause else e.cause)
+                    expect(4)
+                    throw e
+                }
             }
-        }
         yield()
         expect(3)
         job.completeExceptionally(TestException())

@@ -5,10 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import org.junit.*
 
-/**
- * Tests that shared flows keep strong reference to their source flows.
- * See https://github.com/Kotlin/kotlinx.coroutines/issues/2557
- */
+/** Tests that shared flows keep strong reference to their source flows. See https://github.com/Kotlin/kotlinx.coroutines/issues/2557 */
 class SharingReferenceTest : TestBase() {
     private val token = object {}
 
@@ -18,14 +15,13 @@ class SharingReferenceTest : TestBase() {
      * Without that, it's possible to have a situation where target flow is still
      * being strongly referenced (by its dispatcher), but the test already tries to test reachability and fails.
      */
-    @get:Rule
-    val executor = ExecutorRule(1)
+    @get:Rule val executor = ExecutorRule(1)
 
     private val weakEmitter = flow {
         emit(null)
         // suspend forever without keeping a strong reference to continuation -- this is a model of
         // a callback API that does not keep a strong reference it is listeners, but works
-        suspendCancellableCoroutine<Unit> {  }
+        suspendCancellableCoroutine<Unit> {}
         // using the token here to make it easily traceable
         emit(token)
     }
@@ -52,6 +48,6 @@ class SharingReferenceTest : TestBase() {
     }
 
     private fun linearize() {
-        runBlocking(executor) {  }
+        runBlocking(executor) {}
     }
 }

@@ -11,49 +11,47 @@ import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
- * Creates a _supervisor_ job object in an active state.
- * Children of a supervisor job can fail independently of each other.
+ * Creates a _supervisor_ job object in an active state. Children of a supervisor job can fail independently of each other.
  *
- * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children,
- * so a supervisor can implement a custom policy for handling failures of its children:
+ * A failure or cancellation of a child does not cause the supervisor job to fail and does not affect its other children, so a supervisor
+ * can implement a custom policy for handling failures of its children:
  *
- * - A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the context.
- * - A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting deferred value.
+ * - A failure of a child job that was created using [launch][CoroutineScope.launch] can be handled via [CoroutineExceptionHandler] in the
+ *   context.
+ * - A failure of a child job that was created using [async][CoroutineScope.async] can be handled via [Deferred.await] on the resulting
+ *   deferred value.
  *
- * If a [parent] job is specified, then this supervisor job becomes a child job of the [parent] and is cancelled when the
- * parent fails or is cancelled. All this supervisor's children are cancelled in this case, too.
+ * If a [parent] job is specified, then this supervisor job becomes a child job of the [parent] and is cancelled when the parent fails or is
+ * cancelled. All this supervisor's children are cancelled in this case, too.
  */
-@Suppress("FunctionName")
-public fun SupervisorJob(parent: Job? = null) : CompletableJob = SupervisorJobImpl(parent)
+@Suppress("FunctionName") public fun SupervisorJob(parent: Job? = null): CompletableJob = SupervisorJobImpl(parent)
 
 /** @suppress Binary compatibility only */
 @Suppress("FunctionName")
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
 @JvmName("SupervisorJob")
-public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
+public fun SupervisorJob0(parent: Job? = null): Job = SupervisorJob(parent)
 
 /**
- * Runs the given [block] in-place in a new [CoroutineScope] that contains a [SupervisorJob]
- * and is based on the caller coroutine context. The result of [block] is returned.
+ * Runs the given [block] in-place in a new [CoroutineScope] that contains a [SupervisorJob] and is based on the caller coroutine context.
+ * The result of [block] is returned.
  *
- * The lifecycle of the new [SupervisorJob] begins with starting the [block] and completes when both the [block] and
- * all the coroutines launched in the scope complete.
+ * The lifecycle of the new [SupervisorJob] begins with starting the [block] and completes when both the [block] and all the coroutines
+ * launched in the scope complete.
  *
- * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [SupervisorJob]
- * whose parent is the [Job] of the caller [currentCoroutineContext] (if any).
- * This parent-child relationship ensures that whenever the caller gets cancelled, so does the new scope.
+ * The context of the new scope is obtained by combining the [currentCoroutineContext] with a new [SupervisorJob] whose parent is the [Job]
+ * of the caller [currentCoroutineContext] (if any). This parent-child relationship ensures that whenever the caller gets cancelled, so does
+ * the new scope.
  *
- * The [SupervisorJob] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one,
- * meaning that the failure of the [SupervisorJob] will not affect the parent [Job].
- * Instead, the exception leading to the failure will be rethrown to the caller of this function.
+ * The [SupervisorJob] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one, meaning that the
+ * failure of the [SupervisorJob] will not affect the parent [Job]. Instead, the exception leading to the failure will be rethrown to the
+ * caller of this function.
  *
- * If a child coroutine launched in the new scope fails, it will not affect the other children of the scope.
- * However, if the [block] finishes with an exception, it will cancel the scope and all its children.
- * See [coroutineScope] for a similar function that treats every child coroutine as crucial for obtaining the result
- * and cancels the whole computation if one of them fails.
+ * If a child coroutine launched in the new scope fails, it will not affect the other children of the scope. However, if the [block]
+ * finishes with an exception, it will cancel the scope and all its children. See [coroutineScope] for a similar function that treats every
+ * child coroutine as crucial for obtaining the result and cancels the whole computation if one of them fails.
  *
- * [supervisorScope] is a good choice for launching multiple coroutines where some failures
- * are acceptable and should not affect the others.
+ * [supervisorScope] is a good choice for launching multiple coroutines where some failures are acceptable and should not affect the others.
  *
  * ```
  * // cancelling the caller's coroutine will cancel the new scope and all its children
@@ -68,17 +66,15 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  *     } // every download will fail or complete by the time this function returns
  * ```
  *
- * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
- * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled while suspended,
+ * [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  *
  * ## Pitfalls
  *
  * ### Uncaught exceptions in child coroutines
  *
- * [supervisorScope] does not install a [CoroutineExceptionHandler] in the new scope.
- * This means that if a child coroutine started with [launch] fails, its exception will be unhandled,
- * possibly crashing the program. Use the following pattern to avoid this:
- *
+ * [supervisorScope] does not install a [CoroutineExceptionHandler] in the new scope. This means that if a child coroutine started with
+ * [launch] fails, its exception will be unhandled, possibly crashing the program. Use the following pattern to avoid this:
  * ```
  * withContext(CoroutineExceptionHandler { _, exception ->
  *     // handle the exceptions as needed
@@ -93,8 +89,8 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  *
  * ### Returning closeable resources
  *
- * Values returned from [supervisorScope] will be lost if the caller is cancelled.
- * See the corresponding section in the [coroutineScope] documentation for details.
+ * Values returned from [supervisorScope] will be lost if the caller is cancelled. See the corresponding section in the [coroutineScope]
+ * documentation for details.
  */
 public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
     contract {
@@ -112,7 +108,7 @@ private class SupervisorJobImpl(parent: Job?) : JobImpl(parent) {
 
 private class SupervisorCoroutine<in T>(
     context: CoroutineContext,
-    uCont: Continuation<T>
+    uCont: Continuation<T>,
 ) : ScopeCoroutine<T>(context, uCont) {
     override fun childCancelled(cause: Throwable): Boolean = false
 }

@@ -9,9 +9,13 @@ class ThreadSafeHeapTest : TestBase() {
     internal class Node(val value: Int) : ThreadSafeHeapNode, Comparable<Node> {
         override var heap: ThreadSafeHeap<*>? = null
         override var index = -1
+
         override fun compareTo(other: Node): Int = value.compareTo(other.value)
+
         override fun equals(other: Any?): Boolean = other is Node && other.value == value
+
         override fun hashCode(): Int = value
+
         override fun toString(): String = "$value"
     }
 

@@ -14,4 +14,3 @@ internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExce
 
 internal actual class DiagnosticCoroutineContextException actual constructor(context: CoroutineContext) :
     RuntimeException(context.toString())
-

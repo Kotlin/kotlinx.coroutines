@@ -29,25 +29,35 @@ class ChunkedTest : TestBase() {
 
     @Test
     fun testChunkedCancelled() = runTest {
-        val result = flow {
-            expect(1)
-            emit(1)
-            emit(2)
-            expect(2)
-        }.chunked(1).buffer().take(1).toList()
+        val result =
+            flow {
+                    expect(1)
+                    emit(1)
+                    emit(2)
+                    expect(2)
+                }
+                .chunked(1)
+                .buffer()
+                .take(1)
+                .toList()
         assertEquals(listOf(listOf(1)), result)
         finish(3)
     }
 
     @Test
     fun testChunkedCancelledWithSuspension() = runTest {
-        val result = flow {
-            expect(1)
-            emit(1)
-            yield()
-            expectUnreached()
-            emit(2)
-        }.chunked(1).buffer().take(1).toList()
+        val result =
+            flow {
+                    expect(1)
+                    emit(1)
+                    yield()
+                    expectUnreached()
+                    emit(2)
+                }
+                .chunked(1)
+                .buffer()
+                .take(1)
+                .toList()
         assertEquals(listOf(listOf(1)), result)
         finish(2)
     }
@@ -55,16 +65,20 @@ class ChunkedTest : TestBase() {
     @Test
     fun testChunkedDoesNotIgnoreCancellation() = runTest {
         expect(1)
-        val result = flow {
-            coroutineScope {
-                launch {
-                    hang { expect(2) }
+        val result =
+            flow {
+                    coroutineScope {
+                        launch {
+                            hang { expect(2) }
+                        }
+                        yield()
+                        emit(1)
+                        emit(2)
+                    }
                 }
-                yield()
-                emit(1)
-                emit(2)
-            }
-        }.chunked(1).take(1).toList()
+                .chunked(1)
+                .take(1)
+                .toList()
         assertEquals(listOf(listOf(1)), result)
         finish(3)
     }
@@ -79,10 +93,7 @@ class ChunkedTest : TestBase() {
 
     @Test
     fun testSample() = runTest {
-        val result = flowOf("a", "b", "c", "d", "e")
-            .chunked(2)
-            .map { it.joinToString(separator = "") }
-            .toList()
+        val result = flowOf("a", "b", "c", "d", "e").chunked(2).map { it.joinToString(separator = "") }.toList()
         assertEquals(listOf("ab", "cd", "e"), result)
     }
 }

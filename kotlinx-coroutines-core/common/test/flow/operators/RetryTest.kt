@@ -12,14 +12,18 @@ class RetryTest : TestBase() {
             emit(1)
             throw TestException()
         }
-        val sum = flow.retryWhen { cause, attempt ->
-            assertIs<TestException>(cause)
-            expect(2 + attempt.toInt())
-            attempt < 3
-        }.catch { cause ->
-            expect(6)
-            assertIs<TestException>(cause)
-        }.sum()
+        val sum =
+            flow
+                .retryWhen { cause, attempt ->
+                    assertIs<TestException>(cause)
+                    expect(2 + attempt.toInt())
+                    attempt < 3
+                }
+                .catch { cause ->
+                    expect(6)
+                    assertIs<TestException>(cause)
+                }
+                .sum()
         assertEquals(4, sum)
         finish(7)
     }
@@ -43,7 +47,7 @@ class RetryTest : TestBase() {
     fun testRetryPredicate() = runTest {
         var counter = 0
         val flow = flow {
-            emit(1);
+            emit(1)
             if (++counter == 1) throw TestException()
         }
 
@@ -55,12 +59,15 @@ class RetryTest : TestBase() {
     @Test
     fun testRetryExceptionFromDownstream() = runTest {
         var executed = 0
-        val flow = flow {
-            emit(1)
-        }.retry(42).map {
-            ++executed
-            throw TestException()
-        }
+        val flow =
+            flow {
+                    emit(1)
+                }
+                .retry(42)
+                .map {
+                    ++executed
+                    throw TestException()
+                }
 
         assertFailsWith<TestException>(flow)
         assertEquals(1, executed)
@@ -69,17 +76,19 @@ class RetryTest : TestBase() {
     @Test
     fun testWithTimeoutRetried() = runTest {
         var state = 0
-        val flow = flow {
-            if (state++ == 0) {
-                expect(1)
-                withTimeout(1) {
-                    hang { expect(2) }
+        val flow =
+            flow {
+                    if (state++ == 0) {
+                        expect(1)
+                        withTimeout(1) {
+                            hang { expect(2) }
+                        }
+                        expectUnreached()
+                    }
+                    expect(3)
+                    emit(1)
                 }
-                expectUnreached()
-            }
-            expect(3)
-            emit(1)
-        }.retry(1)
+                .retry(1)
 
         assertEquals(1, flow.single())
         finish(4)
@@ -87,13 +96,15 @@ class RetryTest : TestBase() {
 
     @Test
     fun testCancellationFromUpstreamIsNotRetried() = runTest {
-        val flow = flow<Int> {
-            hang {  }
-        }.retry()
+        val flow =
+            flow<Int> {
+                    hang {}
+                }
+                .retry()
 
         val job = launch {
             expect(1)
-            flow.collect {  }
+            flow.collect {}
         }
 
         yield()
@@ -104,18 +115,24 @@ class RetryTest : TestBase() {
 
     @Test
     fun testUpstreamExceptionConcurrentWithDownstream() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-            } finally {
-                expect(3)
-                throw TestException()
-            }
-        }.retry { expectUnreached(); true }.onEach {
-            expect(2)
-            throw TestException2()
-        }
+        val flow =
+            flow {
+                    try {
+                        expect(1)
+                        emit(1)
+                    } finally {
+                        expect(3)
+                        throw TestException()
+                    }
+                }
+                .retry {
+                    expectUnreached()
+                    true
+                }
+                .onEach {
+                    expect(2)
+                    throw TestException2()
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -123,18 +140,24 @@ class RetryTest : TestBase() {
 
     @Test
     fun testUpstreamExceptionConcurrentWithDownstreamCancellation() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-            } finally {
-                expect(3)
-                throw TestException()
-            }
-        }.retry { expectUnreached(); true }.onEach {
-            expect(2)
-            throw CancellationException("")
-        }
+        val flow =
+            flow {
+                    try {
+                        expect(1)
+                        emit(1)
+                    } finally {
+                        expect(3)
+                        throw TestException()
+                    }
+                }
+                .retry {
+                    expectUnreached()
+                    true
+                }
+                .onEach {
+                    expect(2)
+                    throw CancellationException("")
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -142,18 +165,24 @@ class RetryTest : TestBase() {
 
     @Test
     fun testUpstreamCancellationIsIgnoredWhenDownstreamFails() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-            } finally {
-                expect(3)
-                throw CancellationException("")
-            }
-        }.retry { expectUnreached(); true }.onEach {
-            expect(2)
-            throw TestException("")
-        }
+        val flow =
+            flow {
+                    try {
+                        expect(1)
+                        emit(1)
+                    } finally {
+                        expect(3)
+                        throw CancellationException("")
+                    }
+                }
+                .retry {
+                    expectUnreached()
+                    true
+                }
+                .onEach {
+                    expect(2)
+                    throw TestException("")
+                }
 
         assertFailsWith<TestException>(flow)
         finish(4)

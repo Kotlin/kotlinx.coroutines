@@ -20,9 +20,10 @@ class AtomicCancellationCommonTest : TestBase() {
     @Test
     fun testAtomicLaunch() = runTest {
         expect(1)
-        val job = launch(start = CoroutineStart.ATOMIC) {
-            finish(4) // will execute even after it was cancelled
-        }
+        val job =
+            launch(start = CoroutineStart.ATOMIC) {
+                finish(4) // will execute even after it was cancelled
+            }
         expect(2)
         job.cancel()
         expect(3)
@@ -74,15 +75,16 @@ class AtomicCancellationCommonTest : TestBase() {
             assertEquals(true, deferred.isCompleted)
             job!!.cancel()
         }
-        job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                deferred.await() // suspends
-                expectUnreached() // will not execute -- cancelled while dispatched
-            } finally {
-                finish(7) // but will execute finally blocks
+        job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                try {
+                    deferred.await() // suspends
+                    expectUnreached() // will not execute -- cancelled while dispatched
+                } finally {
+                    finish(7) // but will execute finally blocks
+                }
             }
-        }
         expect(3) // continues to execute when the job suspends
         yield() // to deferred & canceller
         expect(6)
@@ -101,15 +103,16 @@ class AtomicCancellationCommonTest : TestBase() {
             assertEquals(true, jobToJoin.isCompleted)
             job!!.cancel()
         }
-        job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                jobToJoin.join() // suspends
-                expectUnreached() // will not execute -- cancelled while dispatched
-            } finally {
-                finish(7) // but will execute finally blocks
+        job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                try {
+                    jobToJoin.join() // suspends
+                    expectUnreached() // will not execute -- cancelled while dispatched
+                } finally {
+                    finish(7) // but will execute finally blocks
+                }
             }
-        }
         expect(3) // continues to execute when the job suspends
         yield() // to jobToJoin & canceller
         expect(6)
@@ -119,11 +122,12 @@ class AtomicCancellationCommonTest : TestBase() {
     fun testLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            mutex.lock() // suspends
-            expectUnreached() // should NOT execute because of cancellation
-        }
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                mutex.lock() // suspends
+                expectUnreached() // should NOT execute because of cancellation
+            }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next
@@ -136,16 +140,17 @@ class AtomicCancellationCommonTest : TestBase() {
     fun testSelectLockCancellable() = runTest {
         expect(1)
         val mutex = Mutex(true) // locked mutex
-        val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            select { // suspends
-                mutex.onLock {
-                    expect(4)
-                    "OK"
+        val job =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                select { // suspends
+                    mutex.onLock {
+                        expect(4)
+                        "OK"
+                    }
                 }
+                expectUnreached() // should NOT execute because of cancellation
             }
-            expectUnreached() // should NOT execute because of cancellation
-        }
         expect(3)
         mutex.unlock() // unlock mutex first
         job.cancel() // cancel the job next

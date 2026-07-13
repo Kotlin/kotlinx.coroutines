@@ -15,13 +15,19 @@ import kotlin.test.*
 @RunWith(Parameterized::class)
 class IntegrationTest(
     private val ctx: Ctx,
-    private val delay: Boolean
+    private val delay: Boolean,
 ) : TestBase() {
 
     enum class Ctx {
-        MAIN        { override fun invoke(context: CoroutineContext): CoroutineContext = context.minusKey(Job) },
-        DEFAULT     { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default },
-        UNCONFINED  { override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined };
+        MAIN {
+            override fun invoke(context: CoroutineContext): CoroutineContext = context.minusKey(Job)
+        },
+        DEFAULT {
+            override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Default
+        },
+        UNCONFINED {
+            override fun invoke(context: CoroutineContext): CoroutineContext = Dispatchers.Unconfined
+        };
 
         abstract operator fun invoke(context: CoroutineContext): CoroutineContext
     }
@@ -29,19 +35,21 @@ class IntegrationTest(
     companion object {
         @Parameterized.Parameters(name = "ctx={0}, delay={1}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = Ctx.values().flatMap { ctx ->
-            listOf(false, true).map { delay ->
-                arrayOf(ctx, delay)
+        fun params(): Collection<Array<Any>> =
+            Ctx.values().flatMap { ctx ->
+                listOf(false, true).map { delay ->
+                    arrayOf(ctx, delay)
+                }
             }
-        }
     }
 
     @Test
     fun testEmpty(): Unit = runBlocking {
-        val pub = publish<String>(ctx(coroutineContext)) {
-            if (delay) delay(1)
-            // does not send anything
-        }
+        val pub =
+            publish<String>(ctx(coroutineContext)) {
+                if (delay) delay(1)
+                // does not send anything
+            }
         assertFailsWith<NoSuchElementException> { pub.awaitFirst() }
         assertEquals("OK", pub.awaitFirstOrDefault("OK"))
         assertNull(pub.awaitFirstOrNull())
@@ -55,10 +63,11 @@ class IntegrationTest(
 
     @Test
     fun testSingle() = runBlocking {
-        val pub = publish(ctx(coroutineContext)) {
-            if (delay) delay(1)
-            send("OK")
-        }
+        val pub =
+            publish(ctx(coroutineContext)) {
+                if (delay) delay(1)
+                send("OK")
+            }
         assertEquals("OK", pub.awaitFirst())
         assertEquals("OK", pub.awaitFirstOrDefault("!"))
         assertEquals("OK", pub.awaitFirstOrNull())
@@ -75,75 +84,79 @@ class IntegrationTest(
 
     @Test
     fun testCancelWithoutValue() = runTest {
-        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
-                hang {}
-            }.awaitFirst()
-        }
+        val job =
+            launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+                publish<String> {
+                        hang {}
+                    }
+                    .awaitFirst()
+            }
 
         job.cancel()
         job.join()
     }
 
     @Test
-    fun testEmptySingle() = runTest(unhandled = listOf { e -> e is NoSuchElementException }) {
-        expect(1)
-        val job = launch(Job(), start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
-                yield()
-                expect(2)
-                // Nothing to emit
-            }.awaitFirst()
+    fun testEmptySingle() =
+        runTest(unhandled = listOf { e -> e is NoSuchElementException }) {
+            expect(1)
+            val job =
+                launch(Job(), start = CoroutineStart.UNDISPATCHED) {
+                    publish<String> {
+                            yield()
+                            expect(2)
+                            // Nothing to emit
+                        }
+                        .awaitFirst()
+                }
+
+            job.join()
+            finish(3)
         }
 
-        job.join()
-        finish(3)
-    }
-
-    /**
-     * Test that the continuation is not being resumed after it has already failed due to there having been too many
-     * values passed.
-     */
+    /** Test that the continuation is not being resumed after it has already failed due to there having been too many values passed. */
     @Test
     fun testNotCompletingFailedAwait() = runTest {
         try {
             expect(1)
             Publisher<Int> { sub ->
-                sub.onSubscribe(object: Subscription {
-                    override fun request(n: Long) {
-                        expect(2)
-                        sub.onNext(1)
-                        sub.onNext(2)
-                        expect(4)
-                        sub.onComplete()
-                    }
+                    sub.onSubscribe(
+                        object : Subscription {
+                            override fun request(n: Long) {
+                                expect(2)
+                                sub.onNext(1)
+                                sub.onNext(2)
+                                expect(4)
+                                sub.onComplete()
+                            }
 
-                    override fun cancel() {
-                        expect(3)
-                    }
-                })
-            }.awaitSingle()
+                            override fun cancel() {
+                                expect(3)
+                            }
+                        }
+                    )
+                }
+                .awaitSingle()
         } catch (e: java.lang.IllegalArgumentException) {
             expect(5)
         }
         finish(6)
     }
 
-    /**
-     * Test the behavior of [awaitOne] on unconforming publishers.
-     */
+    /** Test the behavior of [awaitOne] on unconforming publishers. */
     @Test
     fun testAwaitOnNonconformingPublishers() = runTest {
         fun <T> publisher(block: Subscriber<in T>.(n: Long) -> Unit) =
             Publisher<T> { subscriber ->
-                subscriber.onSubscribe(object: Subscription {
-                    override fun request(n: Long) {
-                        subscriber.block(n)
-                    }
+                subscriber.onSubscribe(
+                    object : Subscription {
+                        override fun request(n: Long) {
+                            subscriber.block(n)
+                        }
 
-                    override fun cancel() {
+                        override fun cancel() {}
                     }
-                })
+                )
             }
         val dummyMessage = "dummy"
         val dummyThrowable = RuntimeException(dummyMessage)
@@ -153,17 +166,17 @@ class IntegrationTest(
             block: Subscriber<in T>.(n: Long) -> Unit,
         ) {
             assertCallsExceptionHandlerWith<IllegalStateException> {
-                try {
-                    publisher(block).operation()
-                } catch (e: Throwable) {
-                    if (e.message != dummyMessage)
-                        throw e
+                    try {
+                        publisher(block).operation()
+                    } catch (e: Throwable) {
+                        if (e.message != dummyMessage) throw e
+                    }
                 }
-            }.let {
-                assertTrue("Expected the message to contain '$message', got '${it.message}'") {
-                    it.message?.contains(message) ?: false
+                .let {
+                    assertTrue("Expected the message to contain '$message', got '${it.message}'") {
+                        it.message?.contains(message) ?: false
+                    }
                 }
-            }
         }
 
         // Rule 1.1 broken: the publisher produces more values than requested.
@@ -195,23 +208,26 @@ class IntegrationTest(
 
         // Rule 1.9 broken (the first signal to the subscriber was not 'onSubscribe')
         assertCallsExceptionHandlerWith<IllegalStateException> {
-            try {
-                Publisher<Int> { subscriber ->
-                    subscriber.onNext(3)
-                    subscriber.onComplete()
-                }.awaitFirst()
-            } catch (e: NoSuchElementException) {
-                // intentionally blank
+                try {
+                    Publisher<Int> { subscriber ->
+                            subscriber.onNext(3)
+                            subscriber.onComplete()
+                        }
+                        .awaitFirst()
+                } catch (e: NoSuchElementException) {
+                    // intentionally blank
+                }
             }
-        }.let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
+            .let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
     }
 
     @Test
     fun testPublishWithTimeout() = runTest {
-        val publisher = publish<Int> {
-            expect(2)
-            withTimeout(1) { delay(100) }
-        }
+        val publisher =
+            publish<Int> {
+                expect(2)
+                withTimeout(1) { delay(100) }
+            }
         try {
             expect(1)
             publisher.awaitFirstOrNull()
@@ -220,6 +236,4 @@ class IntegrationTest(
         }
         finish(4)
     }
-
 }
-

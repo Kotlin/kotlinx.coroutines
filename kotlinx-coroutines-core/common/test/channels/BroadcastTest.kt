@@ -35,9 +35,7 @@ class BroadcastTest : TestBase() {
         finish(11)
     }
 
-    /**
-     * See https://github.com/Kotlin/kotlinx.coroutines/issues/1713
-     */
+    /** See https://github.com/Kotlin/kotlinx.coroutines/issues/1713 */
     @Test
     fun testChannelBroadcastLazyCancel() = runTest {
         expect(1)
@@ -77,11 +75,12 @@ class BroadcastTest : TestBase() {
     @Test
     fun testChannelBroadcastEagerCancel() = runTest {
         expect(1)
-        val a = produce<Unit> {
-            expect(3)
-            yield() // back to main
-            expectUnreached() // will be cancelled
-        }
+        val a =
+            produce<Unit> {
+                expect(3)
+                yield() // back to main
+                expectUnreached() // will be cancelled
+            }
         expect(2)
         val b = a.broadcast(start = CoroutineStart.DEFAULT)
         yield() // to produce
@@ -95,14 +94,17 @@ class BroadcastTest : TestBase() {
     @Test
     fun testChannelBroadcastEagerClose() = runTest {
         expect(1)
-        val a = produce<Unit> {
-            expect(3)
-            yield() // back to main
-            // shall eventually get cancelled
-            assertFailsWith<CancellationException> {
-                while (true) { send(Unit) }
+        val a =
+            produce<Unit> {
+                expect(3)
+                yield() // back to main
+                // shall eventually get cancelled
+                assertFailsWith<CancellationException> {
+                    while (true) {
+                        send(Unit)
+                    }
+                }
             }
-        }
         expect(2)
         val b = a.broadcast(start = CoroutineStart.DEFAULT)
         yield() // to produce
@@ -116,15 +118,16 @@ class BroadcastTest : TestBase() {
     @Test
     fun testBroadcastCloseWithException() = runTest {
         expect(1)
-        val b = broadcast(NonCancellable, capacity = 1) {
-            expect(2)
-            send(1)
-            expect(3)
-            send(2) // suspends
-            expect(5)
-            // additional attempts to send fail
-            assertFailsWith<TestException> { send(3) }
-        }
+        val b =
+            broadcast(NonCancellable, capacity = 1) {
+                expect(2)
+                send(1)
+                expect(3)
+                send(2) // suspends
+                expect(5)
+                // additional attempts to send fail
+                assertFailsWith<TestException> { send(3) }
+            }
         val sub = b.openSubscription()
         yield() // into broadcast
         expect(4)

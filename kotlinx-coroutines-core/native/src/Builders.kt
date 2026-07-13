@@ -6,7 +6,9 @@ import kotlin.coroutines.*
 import kotlin.native.concurrent.*
 
 internal actual fun <T> runBlockingImpl(
-    newContext: CoroutineContext, eventLoop: EventLoop?, block: suspend CoroutineScope.() -> T
+    newContext: CoroutineContext,
+    eventLoop: EventLoop?,
+    block: suspend CoroutineScope.() -> T,
 ): T {
     val coroutine = BlockingCoroutine<T>(newContext, Worker.current, eventLoop)
     ThreadLocalKeepAlive.registerUsage()
@@ -38,8 +40,8 @@ private object ThreadLocalKeepAlive {
     }
 
     /**
-     * Send a ping to the worker to prevent it from terminating while this coroutine is running,
-     * ensuring that continuations don't get dropped and forgotten.
+     * Send a ping to the worker to prevent it from terminating while this coroutine is running, ensuring that continuations don't get
+     * dropped and forgotten.
      */
     private fun keepAlive() {
         // if there are no checks left, we no longer keep the worker alive, it can be terminated
@@ -55,10 +57,11 @@ private object ThreadLocalKeepAlive {
 private class BlockingCoroutine<T>(
     parentContext: CoroutineContext,
     private val joinWorker: Worker,
-    private val eventLoop: EventLoop?
+    private val eventLoop: EventLoop?,
 ) : AbstractCoroutine<T>(parentContext, true, true) {
 
-    override val isScopedCoroutine: Boolean get() = true
+    override val isScopedCoroutine: Boolean
+        get() = true
 
     override fun afterCompletion(state: Any?) {
         // wake up blocked thread

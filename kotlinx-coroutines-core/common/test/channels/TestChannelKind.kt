@@ -6,7 +6,7 @@ import kotlinx.coroutines.selects.*
 enum class TestChannelKind(
     val capacity: Int,
     private val description: String,
-    val viaBroadcast: Boolean = false
+    val viaBroadcast: Boolean = false,
 ) {
     RENDEZVOUS(0, "RendezvousChannel"),
     BUFFERED_1(1, "BufferedChannel(1)"),
@@ -16,31 +16,37 @@ enum class TestChannelKind(
     CONFLATED(Channel.CONFLATED, "ConflatedChannel"),
     BUFFERED_1_BROADCAST(1, "BufferedBroadcastChannel(1)", viaBroadcast = true),
     BUFFERED_10_BROADCAST(10, "BufferedBroadcastChannel(10)", viaBroadcast = true),
-    CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true)
-    ;
+    CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true);
 
-    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> = when {
-        viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
-        viaBroadcast -> @Suppress("DEPRECATION_ERROR") ChannelViaBroadcast(BroadcastChannel(capacity))
-        else -> Channel(capacity, onUndeliveredElement = onUndeliveredElement)
-    }
+    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> =
+        when {
+            viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
+            viaBroadcast -> @Suppress("DEPRECATION_ERROR") ChannelViaBroadcast(BroadcastChannel(capacity))
+            else -> Channel(capacity, onUndeliveredElement = onUndeliveredElement)
+        }
 
-    val isConflated get() = capacity == Channel.CONFLATED
+    val isConflated
+        get() = capacity == Channel.CONFLATED
+
     override fun toString(): String = description
 }
 
-internal class ChannelViaBroadcast<E>(
-    @Suppress("DEPRECATION_ERROR")
-    private val broadcast: BroadcastChannel<E>
-): Channel<E>, SendChannel<E> by broadcast {
+internal class ChannelViaBroadcast<E>(@Suppress("DEPRECATION_ERROR") private val broadcast: BroadcastChannel<E>) :
+    Channel<E>, SendChannel<E> by broadcast {
     val sub = broadcast.openSubscription()
 
-    override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
-    override val isEmpty: Boolean get() = sub.isEmpty
+    override val isClosedForReceive: Boolean
+        get() = sub.isClosedForReceive
+
+    override val isEmpty: Boolean
+        get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
+
     override suspend fun receiveCatching(): ChannelResult<E> = sub.receiveCatching()
+
     override fun iterator(): ChannelIterator<E> = sub.iterator()
+
     override fun tryReceive(): ChannelResult<E> = sub.tryReceive()
 
     override fun cancel(cause: CancellationException?) = broadcast.cancel(cause)
@@ -51,6 +57,7 @@ internal class ChannelViaBroadcast<E>(
 
     override val onReceive: SelectClause1<E>
         get() = sub.onReceive
+
     override val onReceiveCatching: SelectClause1<ChannelResult<E>>
         get() = sub.onReceiveCatching
 }

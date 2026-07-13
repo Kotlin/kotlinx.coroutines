@@ -64,8 +64,8 @@ class CancellableContinuationTest : TestBase() {
     }
 
     /**
-     * Cancelling the outer job may, in practice, race with an attempt to resume continuation and resumes
-     * should be ignored. Here suspended coroutine is cancelled but then resumed with exception.
+     * Cancelling the outer job may, in practice, race with an attempt to resume continuation and resumes should be ignored. Here suspended
+     * coroutine is cancelled but then resumed with exception.
      */
     @Test
     fun testCancelAndResumeWithException() = runTest {
@@ -89,8 +89,8 @@ class CancellableContinuationTest : TestBase() {
     }
 
     /**
-     * Cancelling outer job may, in practise, race with attempt to resume continuation and resumes
-     * should be ignored. Here suspended coroutine is cancelled but then resumed with exception.
+     * Cancelling outer job may, in practise, race with attempt to resume continuation and resumes should be ignored. Here suspended
+     * coroutine is cancelled but then resumed with exception.
      */
     @Test
     fun testCancelAndResume() = runTest {
@@ -128,10 +128,12 @@ class CancellableContinuationTest : TestBase() {
             }
             expect(3)
         }
-        coroutineBlock.startCoroutine(Continuation(completableJob) {
-            assertEquals(Unit, it.getOrNull())
-            expect(4)
-        })
+        coroutineBlock.startCoroutine(
+            Continuation(completableJob) {
+                assertEquals(Unit, it.getOrNull())
+                expect(4)
+            }
+        )
         finish(5)
     }
 

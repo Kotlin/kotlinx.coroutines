@@ -5,17 +5,13 @@ import kotlin.js.Promise
 
 internal actual typealias W3CWindow = Window
 
-internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
-    setTimeout(window, handler, timeout)
+internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int = setTimeout(window, handler, timeout)
 
-internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int =
-    setTimeout(handler, timeout)
+internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int = setTimeout(handler, timeout)
 
-internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
-    window.clearTimeout(handle)
+internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) = window.clearTimeout(handle)
 
-internal actual fun w3cClearTimeout(handle: Int) =
-    clearTimeout(handle)
+internal actual fun w3cClearTimeout(handle: Int) = clearTimeout(handle)
 
 internal actual class ScheduledMessageQueue actual constructor(private val dispatcher: SetTimeoutBasedDispatcher) : MessageQueue() {
     internal val processQueue: dynamic = { process() }
@@ -43,12 +39,16 @@ internal actual class WindowMessageQueue actual constructor(private val window: 
     private val messageName = "dispatchCoroutine"
 
     init {
-        window.addEventListener("message", { event: dynamic ->
-            if (event.source == window && event.data == messageName) {
-                event.stopPropagation()
-                process()
-            }
-        }, true)
+        window.addEventListener(
+            "message",
+            { event: dynamic ->
+                if (event.source == window && event.data == messageName) {
+                    event.stopPropagation()
+                    process()
+                }
+            },
+            true,
+        )
     }
 
     actual override fun schedule() {
@@ -66,5 +66,4 @@ private external fun setTimeout(handler: dynamic, timeout: Int = definedExternal
 
 private external fun clearTimeout(handle: Int = definedExternally)
 
-private fun setTimeout(window: Window, handler: () -> Unit, timeout: Int): Int =
-    window.setTimeout(handler, timeout)
+private fun setTimeout(window: Window, handler: () -> Unit, timeout: Int): Int = window.setTimeout(handler, timeout)

@@ -14,34 +14,38 @@ class FlowAsPublisherTest : TestBase() {
     fun testErrorOnCancellationIsReported() {
         expect(1)
         flow {
-            try {
-                emit(2)
-            } finally {
-                expect(3)
-                throw TestException()
+                try {
+                    emit(2)
+                } finally {
+                    expect(3)
+                    throw TestException()
+                }
             }
-        }.asPublisher().subscribe(object : Subscriber<Int> {
-            private lateinit var subscription: Subscription
+            .asPublisher()
+            .subscribe(
+                object : Subscriber<Int> {
+                    private lateinit var subscription: Subscription
 
-            override fun onComplete() {
-                expectUnreached()
-            }
+                    override fun onComplete() {
+                        expectUnreached()
+                    }
 
-            override fun onSubscribe(s: Subscription?) {
-                subscription = s!!
-                subscription.request(2)
-            }
+                    override fun onSubscribe(s: Subscription?) {
+                        subscription = s!!
+                        subscription.request(2)
+                    }
 
-            override fun onNext(t: Int) {
-                expect(t)
-                subscription.cancel()
-            }
+                    override fun onNext(t: Int) {
+                        expect(t)
+                        subscription.cancel()
+                    }
 
-            override fun onError(t: Throwable?) {
-                assertIs<TestException>(t)
-                expect(4)
-            }
-        })
+                    override fun onError(t: Throwable?) {
+                        assertIs<TestException>(t)
+                        expect(4)
+                    }
+                }
+            )
         finish(5)
     }
 
@@ -49,28 +53,32 @@ class FlowAsPublisherTest : TestBase() {
     fun testCancellationIsNotReported() {
         expect(1)
         flow {
-            emit(2)
-        }.asPublisher().subscribe(object : Subscriber<Int> {
-            private lateinit var subscription: Subscription
-
-            override fun onComplete() {
-                expectUnreached()
+                emit(2)
             }
+            .asPublisher()
+            .subscribe(
+                object : Subscriber<Int> {
+                    private lateinit var subscription: Subscription
 
-            override fun onSubscribe(s: Subscription?) {
-                subscription = s!!
-                subscription.request(2)
-            }
+                    override fun onComplete() {
+                        expectUnreached()
+                    }
 
-            override fun onNext(t: Int) {
-                expect(t)
-                subscription.cancel()
-            }
+                    override fun onSubscribe(s: Subscription?) {
+                        subscription = s!!
+                        subscription.request(2)
+                    }
 
-            override fun onError(t: Throwable?) {
-                expectUnreached()
-            }
-        })
+                    override fun onNext(t: Int) {
+                        expect(t)
+                        subscription.cancel()
+                    }
+
+                    override fun onError(t: Throwable?) {
+                        expectUnreached()
+                    }
+                }
+            )
         finish(3)
     }
 
@@ -81,30 +89,34 @@ class FlowAsPublisherTest : TestBase() {
         fun checkThread() {
             assertSame(thread, Thread.currentThread())
         }
-        flowOf(42).asPublisher().subscribe(object : Subscriber<Int> {
-            private lateinit var subscription: Subscription
+        flowOf(42)
+            .asPublisher()
+            .subscribe(
+                object : Subscriber<Int> {
+                    private lateinit var subscription: Subscription
 
-            override fun onSubscribe(s: Subscription) {
-                expect(2)
-                subscription = s
-                subscription.request(2)
-            }
+                    override fun onSubscribe(s: Subscription) {
+                        expect(2)
+                        subscription = s
+                        subscription.request(2)
+                    }
 
-            override fun onNext(t: Int) {
-                checkThread()
-                expect(3)
-                assertEquals(42, t)
-            }
+                    override fun onNext(t: Int) {
+                        checkThread()
+                        expect(3)
+                        assertEquals(42, t)
+                    }
 
-            override fun onComplete() {
-                checkThread()
-                expect(4)
-            }
+                    override fun onComplete() {
+                        checkThread()
+                        expect(4)
+                    }
 
-            override fun onError(t: Throwable?) {
-                expectUnreached()
-            }
-        })
+                    override fun onError(t: Throwable?) {
+                        expectUnreached()
+                    }
+                }
+            )
         finish(5)
     }
 
@@ -118,31 +130,35 @@ class FlowAsPublisherTest : TestBase() {
         }
         val completed = CountDownLatch(1)
         newSingleThreadContext(threadName).use { dispatcher ->
-            flowOf(42).asPublisher(dispatcher).subscribe(object : Subscriber<Int> {
-                private lateinit var subscription: Subscription
+            flowOf(42)
+                .asPublisher(dispatcher)
+                .subscribe(
+                    object : Subscriber<Int> {
+                        private lateinit var subscription: Subscription
 
-                override fun onSubscribe(s: Subscription) {
-                    expect(2)
-                    subscription = s
-                    subscription.request(2)
-                }
+                        override fun onSubscribe(s: Subscription) {
+                            expect(2)
+                            subscription = s
+                            subscription.request(2)
+                        }
 
-                override fun onNext(t: Int) {
-                    checkThread()
-                    expect(3)
-                    assertEquals(42, t)
-                }
+                        override fun onNext(t: Int) {
+                            checkThread()
+                            expect(3)
+                            assertEquals(42, t)
+                        }
 
-                override fun onComplete() {
-                    checkThread()
-                    expect(4)
-                    completed.countDown()
-                }
+                        override fun onComplete() {
+                            checkThread()
+                            expect(4)
+                            completed.countDown()
+                        }
 
-                override fun onError(t: Throwable?) {
-                    expectUnreached()
-                }
-            })
+                        override fun onError(t: Throwable?) {
+                            expectUnreached()
+                        }
+                    }
+                )
             completed.await()
         }
         finish(5)
@@ -150,10 +166,12 @@ class FlowAsPublisherTest : TestBase() {
 
     @Test
     fun testFlowWithTimeout() = runTest {
-        val publisher = flow<Int> {
-            expect(2)
-            withTimeout(1) { delay(Long.MAX_VALUE) }
-        }.asPublisher()
+        val publisher =
+            flow<Int> {
+                    expect(2)
+                    withTimeout(1) { delay(Long.MAX_VALUE) }
+                }
+                .asPublisher()
         try {
             expect(1)
             publisher.awaitFirstOrNull()

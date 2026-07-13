@@ -26,11 +26,12 @@ class ChannelUndeliveredElementTest : TestBase() {
     fun testRendezvousSendCancelled() = runTest {
         val channel = Channel<Resource> { it.cancel() }
         val res = Resource("OK")
-        val sender = launch(start = CoroutineStart.UNDISPATCHED) {
-            assertFailsWith<CancellationException> {
-                channel.send(res) // suspends & get cancelled
+        val sender =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                assertFailsWith<CancellationException> {
+                    channel.send(res) // suspends & get cancelled
+                }
             }
-        }
         sender.cancelAndJoin()
         assertTrue(res.isCancelled)
     }
@@ -40,12 +41,13 @@ class ChannelUndeliveredElementTest : TestBase() {
         val channel = Channel<Resource>(1) { it.cancel() }
         val resA = Resource("A")
         val resB = Resource("B")
-        val sender = launch(start = CoroutineStart.UNDISPATCHED) {
-            channel.send(resA) // goes to buffer
-            assertFailsWith<CancellationException> {
-                channel.send(resB) // suspends & get cancelled
+        val sender =
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                channel.send(resA) // goes to buffer
+                assertFailsWith<CancellationException> {
+                    channel.send(resB) // suspends & get cancelled
+                }
             }
-        }
         sender.cancelAndJoin()
         assertFalse(resA.isCancelled) // it is in buffer, not cancelled
         assertTrue(resB.isCancelled) // send was cancelled
@@ -104,7 +106,7 @@ class ChannelUndeliveredElementTest : TestBase() {
                 withContext(Job()) {
                     test(kind)
                 }
-            } catch(e: Throwable) {
+            } catch (e: Throwable) {
                 error("$kind: $e", e)
             }
         }
@@ -123,9 +125,10 @@ class ChannelUndeliveredElementTest : TestBase() {
 
     @Test
     fun testHandlerIsNotInvoked() = runTest { // #2826
-        val channel = Channel<Unit> {
-            expectUnreached()
-        }
+        val channel =
+            Channel<Unit> {
+                expectUnreached()
+            }
 
         expect(1)
         launch {
@@ -144,11 +147,12 @@ class ChannelUndeliveredElementTest : TestBase() {
 
     private suspend fun testBufferOverflowStrategy(expectedDroppedElements: List<Int>, strategy: BufferOverflow) {
         val list = ArrayList<Int>()
-        val channel = Channel<Int>(
-            capacity = 2,
-            onBufferOverflow = strategy,
-            onUndeliveredElement = { value -> list.add(value) }
-        )
+        val channel =
+            Channel<Int>(
+                capacity = 2,
+                onBufferOverflow = strategy,
+                onUndeliveredElement = { value -> list.add(value) },
+            )
 
         channel.send(1)
         channel.send(2)
@@ -158,21 +162,28 @@ class ChannelUndeliveredElementTest : TestBase() {
         assertEquals(expectedDroppedElements, list)
     }
 
-
     @Test
     fun testTrySendDoesNotInvokeHandlerOnClosedConflatedChannel() = runTest {
-        val conflated = Channel<Int>(Channel.CONFLATED, onUndeliveredElement = {
-            expectUnreached()
-        })
+        val conflated =
+            Channel<Int>(
+                Channel.CONFLATED,
+                onUndeliveredElement = {
+                    expectUnreached()
+                },
+            )
         conflated.close(IndexOutOfBoundsException())
         conflated.trySend(3)
     }
 
     @Test
     fun testTrySendDoesNotInvokeHandlerOnClosedChannel() = runTest {
-        val conflated = Channel<Int>(3, onUndeliveredElement = {
-            expectUnreached()
-        })
+        val conflated =
+            Channel<Int>(
+                3,
+                onUndeliveredElement = {
+                    expectUnreached()
+                },
+            )
         conflated.close(IndexOutOfBoundsException())
         repeat(10) {
             conflated.trySend(3)
@@ -187,9 +198,14 @@ class ChannelUndeliveredElementTest : TestBase() {
     }
 
     private fun testTrySendDoesNotInvokeHandler(capacity: Int) {
-        val channel = Channel<Int>(capacity, BufferOverflow.DROP_LATEST, onUndeliveredElement = {
-            expectUnreached()
-        })
+        val channel =
+            Channel<Int>(
+                capacity,
+                BufferOverflow.DROP_LATEST,
+                onUndeliveredElement = {
+                    expectUnreached()
+                },
+            )
         repeat(10) {
             channel.trySend(3)
         }

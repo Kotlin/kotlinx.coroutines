@@ -10,6 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 private class BlockingBarrier(val n: Int) {
     val counter = atomic(0)
     val wakeUp = Channel<Unit>(n - 1)
+
     fun await() {
         val count = counter.addAndGet(1)
         if (count == n) {
@@ -28,8 +29,8 @@ private class BlockingBarrier(val n: Int) {
 
 class MultithreadedDispatchersTest {
     /**
-     * Test that [newFixedThreadPoolContext] does not allocate more dispatchers than it needs to.
-     * Incidentally also tests that it will allocate enough workers for its needs. Otherwise, the test will hang.
+     * Test that [newFixedThreadPoolContext] does not allocate more dispatchers than it needs to. Incidentally also tests that it will
+     * allocate enough workers for its needs. Otherwise, the test will hang.
      */
     @Test
     fun testNotAllocatingExtraDispatchers() {
@@ -45,14 +46,16 @@ class MultithreadedDispatchersTest {
         try {
             runBlocking {
                 val encounteredWorkers = mutableSetOf<Worker>()
-                val coroutine1 = launch(dispatcher) {
-                    barrier.await()
-                    spin(encounteredWorkers)
-                }
-                val coroutine2 = launch(dispatcher) {
-                    barrier.await()
-                    spin(encounteredWorkers)
-                }
+                val coroutine1 =
+                    launch(dispatcher) {
+                        barrier.await()
+                        spin(encounteredWorkers)
+                    }
+                val coroutine2 =
+                    launch(dispatcher) {
+                        barrier.await()
+                        spin(encounteredWorkers)
+                    }
                 listOf(coroutine1, coroutine2).joinAll()
                 assertEquals(2, encounteredWorkers.size)
             }
@@ -61,15 +64,12 @@ class MultithreadedDispatchersTest {
         }
     }
 
-    /**
-     * Test that [newSingleThreadContext] will not wait for the cancelled scheduled coroutines before closing.
-     */
+    /** Test that [newSingleThreadContext] will not wait for the cancelled scheduled coroutines before closing. */
     @Test
     fun timeoutsNotPreventingClosing(): Unit = runBlocking {
         val dispatcher = WorkerDispatcher("test")
         withContext(dispatcher) {
-            withTimeout(5.seconds) {
-            }
+            withTimeout(5.seconds) {}
         }
         withTimeout(1.seconds) {
             dispatcher.close() // should not wait for the timeout

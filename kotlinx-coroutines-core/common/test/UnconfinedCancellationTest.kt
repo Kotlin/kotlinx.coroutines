@@ -8,13 +8,13 @@ class UnconfinedCancellationTest : TestBase() {
     fun testUnconfinedCancellation() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            parent.cancel()
-            launch(Dispatchers.Unconfined) {
-                expectUnreached()
+                expect(1)
+                parent.cancel()
+                launch(Dispatchers.Unconfined) {
+                    expectUnreached()
+                }
             }
-
-        }.join()
+            .join()
         finish(2)
     }
 
@@ -22,16 +22,18 @@ class UnconfinedCancellationTest : TestBase() {
     fun testUnconfinedCancellationState() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            parent.cancel()
-            val job = launch(Dispatchers.Unconfined) {
-                expectUnreached()
-            }
+                expect(1)
+                parent.cancel()
+                val job =
+                    launch(Dispatchers.Unconfined) {
+                        expectUnreached()
+                    }
 
-            assertTrue(job.isCancelled)
-            assertTrue(job.isCompleted)
-            assertFalse(job.isActive)
-        }.join()
+                assertTrue(job.isCancelled)
+                assertTrue(job.isCompleted)
+                assertFalse(job.isActive)
+            }
+            .join()
         finish(2)
     }
 
@@ -39,16 +41,18 @@ class UnconfinedCancellationTest : TestBase() {
     fun testUnconfinedCancellationLazy() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            val job = launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
-                expectUnreached()
-            }
-            job.invokeOnCompletion { expect(2) }
-            assertFalse(job.isCompleted)
+                expect(1)
+                val job =
+                    launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+                        expectUnreached()
+                    }
+                job.invokeOnCompletion { expect(2) }
+                assertFalse(job.isCompleted)
 
-            parent.cancel()
-            job.join()
-        }.join()
+                parent.cancel()
+                job.join()
+            }
+            .join()
         finish(3)
     }
 
@@ -56,15 +60,15 @@ class UnconfinedCancellationTest : TestBase() {
     fun testUndispatchedCancellation() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            parent.cancel()
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                expect(2)
-                yield()
-                expectUnreached()
+                expect(1)
+                parent.cancel()
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
             }
-
-        }.join()
+            .join()
         finish(3)
     }
 
@@ -72,28 +76,29 @@ class UnconfinedCancellationTest : TestBase() {
     fun testCancelledAtomicUnconfined() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            parent.cancel()
-            launch(Dispatchers.Unconfined, start = CoroutineStart.ATOMIC) {
-                expect(2)
-                yield()
-                expectUnreached()
+                expect(1)
+                parent.cancel()
+                launch(Dispatchers.Unconfined, start = CoroutineStart.ATOMIC) {
+                    expect(2)
+                    yield()
+                    expectUnreached()
+                }
             }
-        }.join()
+            .join()
         finish(3)
     }
-
 
     @Test
     fun testCancelledWithContextUnconfined() = runTest {
         val parent = Job()
         launch(parent) {
-            expect(1)
-            parent.cancel()
-            withContext(Dispatchers.Unconfined) {
-                expectUnreached()
+                expect(1)
+                parent.cancel()
+                withContext(Dispatchers.Unconfined) {
+                    expectUnreached()
+                }
             }
-        }.join()
+            .join()
         finish(2)
     }
 }

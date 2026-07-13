@@ -14,34 +14,33 @@ import java.util.concurrent.*
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 open class TakeWhileBenchmark {
-    @Param("1", "10", "100", "1000")
-    private var size: Int = 0
+    @Param("1", "10", "100", "1000") private var size: Int = 0
 
-    private suspend inline fun Flow<Long>.consume() =
-        filter { it % 2L != 0L }
-            .map { it * it }.count()
+    private suspend inline fun Flow<Long>.consume() = filter { it % 2L != 0L }.map { it * it }.count()
 
     @Benchmark
-    fun baseline() = runBlocking<Int> {
-        (0L until size).asFlow().consume()
-    }
+    fun baseline() =
+        runBlocking<Int> {
+            (0L until size).asFlow().consume()
+        }
 
     @Benchmark
-    fun takeWhileDirect() = runBlocking<Int> {
-        (0L..Long.MAX_VALUE).asFlow().takeWhileDirect { it < size }.consume()
-    }
+    fun takeWhileDirect() =
+        runBlocking<Int> {
+            (0L..Long.MAX_VALUE).asFlow().takeWhileDirect { it < size }.consume()
+        }
 
     @Benchmark
-    fun takeWhileViaCollectWhile() = runBlocking<Int> {
-        (0L..Long.MAX_VALUE).asFlow().takeWhileViaCollectWhile { it < size }.consume()
-    }
+    fun takeWhileViaCollectWhile() =
+        runBlocking<Int> {
+            (0L..Long.MAX_VALUE).asFlow().takeWhileViaCollectWhile { it < size }.consume()
+        }
 
     // Direct implementation by checking predicate and throwing AbortFlowException
     private fun <T> Flow<T>.takeWhileDirect(predicate: suspend (T) -> Boolean): Flow<T> = unsafeFlow {
         try {
             collect { value ->
-                if (predicate(value)) emit(value)
-                else throw AbortFlowException(this)
+                if (predicate(value)) emit(value) else throw AbortFlowException(this)
             }
         } catch (e: AbortFlowException) {
             e.checkOwnership(owner = this)

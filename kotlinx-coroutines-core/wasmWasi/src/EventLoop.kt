@@ -1,4 +1,5 @@
 @file:OptIn(UnsafeWasmMemoryApi::class)
+
 package kotlinx.coroutines
 
 import kotlin.coroutines.CoroutineContext
@@ -19,24 +20,26 @@ internal actual fun createEventLoop(): EventLoop = DefaultExecutor
 
 internal actual fun nanoTime(): Long = withScopedMemoryAllocator { allocator: MemoryAllocator ->
     val ptrTo8Bytes = allocator.allocate(8)
-    val returnCode = wasiRawClockTimeGet(
-        clockId = CLOCKID_MONOTONIC,
-        precision = 1,
-        resultPtr = ptrTo8Bytes.address.toInt()
-    )
+    val returnCode =
+        wasiRawClockTimeGet(
+            clockId = CLOCKID_MONOTONIC,
+            precision = 1,
+            resultPtr = ptrTo8Bytes.address.toInt(),
+        )
     check(returnCode == 0) { "clock_time_get failed with the return code $returnCode" }
     ptrTo8Bytes.loadLong()
 }
 
 private fun sleep(nanos: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, ptrToSubscription: Pointer) {
-    //__wasi_timestamp_t timeout;
+    // __wasi_timestamp_t timeout;
     (ptrToSubscription + 24).storeLong(nanos)
-    val returnCode = wasiPollOneOff(
-        ptrToSubscription = ptrToSubscription.address.toInt(),
-        eventPtr = ptrTo32Bytes.address.toInt(),
-        nsubscriptions = 1,
-        resultPtr = ptrTo8Bytes.address.toInt()
-    )
+    val returnCode =
+        wasiPollOneOff(
+            ptrToSubscription = ptrToSubscription.address.toInt(),
+            eventPtr = ptrTo32Bytes.address.toInt(),
+            nsubscriptions = 1,
+            resultPtr = ptrTo8Bytes.address.toInt(),
+        )
     check(returnCode == 0) { "poll_oneoff failed with the return code $returnCode" }
 }
 
@@ -47,7 +50,7 @@ internal actual object DefaultExecutor : EventLoopImplBase() {
             kotlin.wasm.internal.onExportedFunctionExit = ::runEventLoop
         }
     }
-    
+
     override fun shutdown() {
         // don't do anything: on WASI, the event loop is the default executor, we can't shut it down
     }
@@ -91,7 +94,7 @@ internal fun runEventLoop() {
                         parkNanos,
                         ptrTo32Bytes = ptrTo32Bytes,
                         ptrTo8Bytes = ptrTo8Bytes,
-                        ptrToSubscription = ptrToSubscription
+                        ptrToSubscription = ptrToSubscription,
                     )
                 }
             }
@@ -103,18 +106,18 @@ internal fun runEventLoop() {
 
 private fun initializeSubscriptionPtr(allocator: MemoryAllocator): Pointer {
     val ptrToSubscription = allocator.allocate(48)
-    //userdata
+    // userdata
     ptrToSubscription.storeLong(0)
-    //uint8_t tag;
-    (ptrToSubscription + 8).storeByte(0) //EVENTTYPE_CLOCK
-    //__wasi_clockid_t id;
-    (ptrToSubscription + 16).storeInt(CLOCKID_MONOTONIC) //CLOCKID_MONOTONIC
-    //__wasi_timestamp_t timeout;
-    //(ptrToSubscription + 24).storeLong(timeout)
-    //__wasi_timestamp_t precision;
+    // uint8_t tag;
+    (ptrToSubscription + 8).storeByte(0) // EVENTTYPE_CLOCK
+    // __wasi_clockid_t id;
+    (ptrToSubscription + 16).storeInt(CLOCKID_MONOTONIC) // CLOCKID_MONOTONIC
+    // __wasi_timestamp_t timeout;
+    // (ptrToSubscription + 24).storeLong(timeout)
+    // __wasi_timestamp_t precision;
     (ptrToSubscription + 32).storeLong(0)
-    //__wasi_subclockflags_t
-    (ptrToSubscription + 40).storeShort(0) //ABSOLUTE_TIME=1/RELATIVE=0
+    // __wasi_subclockflags_t
+    (ptrToSubscription + 40).storeShort(0) // ABSOLUTE_TIME=1/RELATIVE=0
 
     return ptrToSubscription
 }

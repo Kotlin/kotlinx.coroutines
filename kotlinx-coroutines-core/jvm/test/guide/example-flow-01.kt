@@ -2,7 +2,7 @@
 package kotlinx.coroutines.guide.exampleFlow01
 
 fun simple(): List<Int> = listOf(1, 2, 3)
- 
+
 fun main() {
-    simple().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) }
 }

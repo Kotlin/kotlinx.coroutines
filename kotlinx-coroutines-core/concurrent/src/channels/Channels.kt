@@ -7,15 +7,14 @@ import kotlinx.coroutines.*
 import kotlin.jvm.*
 
 /**
- * Adds [element] to this channel, **blocking** the caller while this channel is full,
- * and returning either [successful][ChannelResult.isSuccess] result when the element was added, or
- * failed result representing closed channel with a corresponding exception.
+ * Adds [element] to this channel, **blocking** the caller while this channel is full, and returning either
+ * [successful][ChannelResult.isSuccess] result when the element was added, or failed result representing closed channel with a
+ * corresponding exception.
  *
- * This is a way to call [Channel.send] method in a safe manner inside a blocking code using [runBlocking] and catching,
- * so this function should not be used from coroutine.
+ * This is a way to call [Channel.send] method in a safe manner inside a blocking code using [runBlocking] and catching, so this function
+ * should not be used from coroutine.
  *
  * Example of usage:
- *
  * ```
  * // From callback API
  * channel.trySendBlocking(element)
@@ -34,25 +33,26 @@ public fun <E> SendChannel<E>.trySendBlocking(element: E): ChannelResult<Unit> {
      * it is close. Go to slow path on failure to simplify the successful path and
      * to materialize default exception.
      */
-    trySend(element).onSuccess { return ChannelResult.success(Unit) }
+    trySend(element).onSuccess {
+        return ChannelResult.success(Unit)
+    }
     return runBlocking {
         val r = runCatching { send(element) }
-        if (r.isSuccess) ChannelResult.success(Unit)
-        else ChannelResult.closed(r.exceptionOrNull())
+        if (r.isSuccess) ChannelResult.success(Unit) else ChannelResult.closed(r.exceptionOrNull())
     }
 }
 
 /** @suppress */
 @Deprecated(
     level = DeprecationLevel.HIDDEN,
-    message = "Deprecated in the favour of 'trySendBlocking'. " +
-        "Consider handling the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
-    replaceWith = ReplaceWith("trySendBlocking(element)")
+    message =
+        "Deprecated in the favour of 'trySendBlocking'. " +
+            "Consider handling the result of 'trySendBlocking' explicitly and rethrow exception if necessary",
+    replaceWith = ReplaceWith("trySendBlocking(element)"),
 ) // WARNING in 1.5.0, ERROR in 1.6.0
 public fun <E> SendChannel<E>.sendBlocking(element: E) {
     // fast path
-    if (trySend(element).isSuccess)
-        return
+    if (trySend(element).isSuccess) return
     // slow path
     runBlocking {
         send(element)

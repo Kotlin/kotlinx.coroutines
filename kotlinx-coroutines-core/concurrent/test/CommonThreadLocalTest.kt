@@ -5,33 +5,31 @@ import kotlinx.coroutines.exceptions.*
 import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
-class CommonThreadLocalTest: TestBase() {
+class CommonThreadLocalTest : TestBase() {
 
-    /**
-     * Tests the basic functionality of [commonThreadLocal]: storing a separate value for each thread.
-     */
+    /** Tests the basic functionality of [commonThreadLocal]: storing a separate value for each thread. */
     @Test
     fun testThreadLocalBeingThreadLocal() = runTest {
         val threadLocal = commonThreadLocal<Int>(Symbol("Test1"))
         newSingleThreadContext("").use {
             threadLocal.set(10)
             assertEquals(10, threadLocal.get())
-            val job1 = launch(it) {
-                threadLocal.set(20)
-                assertEquals(20, threadLocal.get())
-            }
+            val job1 =
+                launch(it) {
+                    threadLocal.set(20)
+                    assertEquals(20, threadLocal.get())
+                }
             assertEquals(10, threadLocal.get())
             job1.join()
-            val job2 = launch(it) {
-                assertEquals(20, threadLocal.get())
-            }
+            val job2 =
+                launch(it) {
+                    assertEquals(20, threadLocal.get())
+                }
             job2.join()
         }
     }
 
-    /**
-     * Tests using [commonThreadLocal] with a nullable type.
-     */
+    /** Tests using [commonThreadLocal] with a nullable type. */
     @Test
     fun testThreadLocalWithNullableType() = runTest {
         val threadLocal = commonThreadLocal<Int?>(Symbol("Test2"))
@@ -39,27 +37,27 @@ class CommonThreadLocalTest: TestBase() {
             assertNull(threadLocal.get())
             threadLocal.set(10)
             assertEquals(10, threadLocal.get())
-            val job1 = launch(it) {
-                assertNull(threadLocal.get())
-                threadLocal.set(20)
-                assertEquals(20, threadLocal.get())
-            }
+            val job1 =
+                launch(it) {
+                    assertNull(threadLocal.get())
+                    threadLocal.set(20)
+                    assertEquals(20, threadLocal.get())
+                }
             assertEquals(10, threadLocal.get())
             job1.join()
             threadLocal.set(null)
             assertNull(threadLocal.get())
-            val job2 = launch(it) {
-                assertEquals(20, threadLocal.get())
-                threadLocal.set(null)
-                assertNull(threadLocal.get())
-            }
+            val job2 =
+                launch(it) {
+                    assertEquals(20, threadLocal.get())
+                    threadLocal.set(null)
+                    assertNull(threadLocal.get())
+                }
             job2.join()
         }
     }
 
-    /**
-     * Tests that several instances of [commonThreadLocal] with different names don't affect each other.
-     */
+    /** Tests that several instances of [commonThreadLocal] with different names don't affect each other. */
     @Test
     fun testThreadLocalsWithDifferentNamesNotInterfering() {
         val value1 = commonThreadLocal<Int>(Symbol("Test3a"))

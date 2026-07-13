@@ -19,19 +19,20 @@ class ThreadContextElementTest : TestBase() {
         val data = MyData()
         val element = MyElement(data)
         assertNull(myThreadLocal.get())
-        val job = GlobalScope.launch(element + exceptionHandler) {
-            assertTrue(mainThread != Thread.currentThread())
-            assertSame(element, coroutineContext[MyElement])
-            assertSame(data, myThreadLocal.get())
-            withContext(mainDispatcher) {
-                assertSame(mainThread, Thread.currentThread())
+        val job =
+            GlobalScope.launch(element + exceptionHandler) {
+                assertTrue(mainThread != Thread.currentThread())
+                assertSame(element, coroutineContext[MyElement])
+                assertSame(data, myThreadLocal.get())
+                withContext(mainDispatcher) {
+                    assertSame(mainThread, Thread.currentThread())
+                    assertSame(element, coroutineContext[MyElement])
+                    assertSame(data, myThreadLocal.get())
+                }
+                assertTrue(mainThread != Thread.currentThread())
                 assertSame(element, coroutineContext[MyElement])
                 assertSame(data, myThreadLocal.get())
             }
-            assertTrue(mainThread != Thread.currentThread())
-            assertSame(element, coroutineContext[MyElement])
-            assertSame(data, myThreadLocal.get())
-        }
         assertNull(myThreadLocal.get())
         job.join()
         assertNull(myThreadLocal.get())
@@ -42,14 +43,15 @@ class ThreadContextElementTest : TestBase() {
         val exceptionHandler = coroutineContext[CoroutineExceptionHandler]!!
         val data = MyData()
         val element = MyElement(data)
-        val job = GlobalScope.launch(
-            context = Dispatchers.Default + exceptionHandler + element,
-            start = CoroutineStart.UNDISPATCHED
-        ) {
-            assertSame(data, myThreadLocal.get())
-            yield()
-            assertSame(data, myThreadLocal.get())
-        }
+        val job =
+            GlobalScope.launch(
+                context = Dispatchers.Default + exceptionHandler + element,
+                start = CoroutineStart.UNDISPATCHED,
+            ) {
+                assertSame(data, myThreadLocal.get())
+                yield()
+                assertSame(data, myThreadLocal.get())
+            }
         assertNull(myThreadLocal.get())
         job.join()
         assertNull(myThreadLocal.get())
@@ -61,27 +63,30 @@ class ThreadContextElementTest : TestBase() {
         newSingleThreadContext("withContext").use {
             val data = MyData()
             GlobalScope.async(Dispatchers.Default + MyElement(data)) {
-                assertSame(data, myThreadLocal.get())
-                expect(2)
+                    assertSame(data, myThreadLocal.get())
+                    expect(2)
 
-                val newData = MyData()
-                GlobalScope.async(it + MyElement(newData)) {
-                    assertSame(newData, myThreadLocal.get())
-                    expect(3)
-                }.await()
+                    val newData = MyData()
+                    GlobalScope.async(it + MyElement(newData)) {
+                            assertSame(newData, myThreadLocal.get())
+                            expect(3)
+                        }
+                        .await()
 
-                withContext(it + MyElement(newData)) {
-                    assertSame(newData, myThreadLocal.get())
-                    expect(4)
+                    withContext(it + MyElement(newData)) {
+                        assertSame(newData, myThreadLocal.get())
+                        expect(4)
+                    }
+
+                    GlobalScope.async(it) {
+                            assertNull(myThreadLocal.get())
+                            expect(5)
+                        }
+                        .await()
+
+                    expect(6)
                 }
-
-                GlobalScope.async(it) {
-                    assertNull(myThreadLocal.get())
-                    expect(5)
-                }.await()
-
-                expect(6)
-            }.await()
+                .await()
         }
 
         finish(7)
@@ -101,9 +106,12 @@ class ThreadContextElementTest : TestBase() {
             }
         }
 
-        assertSame(inheritedElement, parentElement,
+        assertSame(
+            inheritedElement,
+            parentElement,
             "Inner and outer coroutines did not have the same object reference to a" +
-                " ThreadContextElement that did not override `copyForChildCoroutine()`")
+                " ThreadContextElement that did not override `copyForChildCoroutine()`",
+        )
     }
 
     @Test
@@ -120,8 +128,11 @@ class ThreadContextElementTest : TestBase() {
             }
         }
 
-        assertNotSame(inheritedElement, parentElement,
-            "Inner coroutine did not copy its copyable ThreadContextElement.")
+        assertNotSame(
+            inheritedElement,
+            parentElement,
+            "Inner coroutine did not copy its copyable ThreadContextElement.",
+        )
     }
 
     @Test
@@ -162,7 +173,8 @@ class ThreadContextElementTest : TestBase() {
 
         companion object Key : CoroutineContext.Key<MyElement>
 
-        override val key: CoroutineContext.Key<*> get() = Key
+        override val key: CoroutineContext.Key<*>
+            get() = Key
 
         override fun updateThreadContext(context: CoroutineContext) {
             capturees.add("Update: ${context.job}")
@@ -174,15 +186,14 @@ class ThreadContextElementTest : TestBase() {
     }
 
     /**
-     * For stability of the test, it is important to make sure that
-     * the parent job actually suspends when calling
-     * `withContext(dispatcher2 + CoroutineName("dispatched"))`.
+     * For stability of the test, it is important to make sure that the parent job actually suspends when calling `withContext(dispatcher2 +
+     * CoroutineName("dispatched"))`.
      *
-     * Here this requirement is fulfilled by forcing execution on a single thread.
-     * However, dispatching is performed with two non-equal dispatchers to force dispatching.
+     * Here this requirement is fulfilled by forcing execution on a single thread. However, dispatching is performed with two non-equal
+     * dispatchers to force dispatching.
      *
-     * Suspend of the parent coroutine [kotlinx.coroutines.DispatchedCoroutine.trySuspend] is out of the control of the test,
-     * while being executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
+     * Suspend of the parent coroutine [kotlinx.coroutines.DispatchedCoroutine.trySuspend] is out of the control of the test, while being
+     * executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
      */
     @Test
     fun testWithContextJobAccess() = runTest {
@@ -249,15 +260,20 @@ class ThreadContextElementTest : TestBase() {
             try {
                 testThreadLocalFlowOn(dispatcher, doYield, useThreadLocalInOuterContext)
             } catch (e: Throwable) {
-                throw AssertionError("Failed with parameters: dispatcher=$dispatcher, " +
-                    "doYield=$doYield, " +
-                    "useThreadLocalInOuterContext=$useThreadLocalInOuterContext", e)
+                throw AssertionError(
+                    "Failed with parameters: dispatcher=$dispatcher, " +
+                        "doYield=$doYield, " +
+                        "useThreadLocalInOuterContext=$useThreadLocalInOuterContext",
+                    e,
+                )
             }
         }
     }
 
     private fun testThreadLocalFlowOn(
-        extraFlowOnContext: CoroutineContext, doYield: Boolean, useThreadLocalInOuterContext: Boolean
+        extraFlowOnContext: CoroutineContext,
+        doYield: Boolean,
+        useThreadLocalInOuterContext: Boolean,
     ) = runTest {
         try {
             val myData1 = MyData()
@@ -266,12 +282,12 @@ class ThreadContextElementTest : TestBase() {
             withContext(if (useThreadLocalInOuterContext) myThreadLocal.asContextElement() else EmptyCoroutineContext) {
                 assertEquals(myData1, myThreadLocal.get())
                 flow {
-                    repeat(5) {
-                        assertEquals(myData2, myThreadLocal.get())
-                        emit(1)
-                        if (doYield) yield()
+                        repeat(5) {
+                            assertEquals(myData2, myThreadLocal.get())
+                            emit(1)
+                            if (doYield) yield()
+                        }
                     }
-                }
                     .flowOn(myThreadLocal.asContextElement(myData2) + extraFlowOnContext)
                     .collect {
                         if (useThreadLocalInOuterContext) {
@@ -314,9 +330,7 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
     }
 }
 
-/**
- * A [ThreadContextElement] that implements copy semantics in [copyForChild].
- */
+/** A [ThreadContextElement] that implements copy semantics in [copyForChild]. */
 class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextElement<MyData?> {
     companion object Key : CoroutineContext.Key<CopyForChildCoroutineElement>
 
@@ -338,40 +352,34 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
     }
 
     /**
-     * At coroutine launch time, the _current value of the ThreadLocal_ is inherited by the new
-     * child coroutine, and that value is copied to a new, unique, ThreadContextElement memory
-     * reference for the child coroutine to use uniquely.
+     * At coroutine launch time, the _current value of the ThreadLocal_ is inherited by the new child coroutine, and that value is copied to
+     * a new, unique, ThreadContextElement memory reference for the child coroutine to use uniquely.
      *
-     * n.b. the value copied to the child must be the __current value of the ThreadLocal__ and not
-     * the value initially passed to the ThreadContextElement in order to reflect writes made to the
-     * ThreadLocal between coroutine resumption and the child coroutine launch point. Those writes
-     * will be reflected in the parent coroutine's [CopyForChildCoroutineElement] when it yields the
-     * thread and calls [restoreThreadContext].
+     * n.b. the value copied to the child must be the __current value of the ThreadLocal__ and not the value initially passed to the
+     * ThreadContextElement in order to reflect writes made to the ThreadLocal between coroutine resumption and the child coroutine launch
+     * point. Those writes will be reflected in the parent coroutine's [CopyForChildCoroutineElement] when it yields the thread and calls
+     * [restoreThreadContext].
      */
     override fun copyForChild(): CopyForChildCoroutineElement {
         return CopyForChildCoroutineElement(myThreadLocal.get())
     }
 }
 
-
 /**
  * Calls [block], setting the value of [this] [ThreadLocal] for the duration of [block].
  *
- * When a [CopyForChildCoroutineElement] for `this` [ThreadLocal] is used within a
- * [CoroutineContext], a ThreadLocal set this way will have the "correct" value expected lexically
- * at every statement reached, whether that statement is reached immediately, across suspend and
- * redispatch within one coroutine, or within a child coroutine. Writes made to the `ThreadLocal`
- * by child coroutines will not be visible to the parent coroutine. Writes made to the `ThreadLocal`
- * by the parent coroutine _after_ launching a child coroutine will not be visible to that child
- * coroutine.
+ * When a [CopyForChildCoroutineElement] for `this` [ThreadLocal] is used within a [CoroutineContext], a ThreadLocal set this way will have
+ * the "correct" value expected lexically at every statement reached, whether that statement is reached immediately, across suspend and
+ * redispatch within one coroutine, or within a child coroutine. Writes made to the `ThreadLocal` by child coroutines will not be visible to
+ * the parent coroutine. Writes made to the `ThreadLocal` by the parent coroutine _after_ launching a child coroutine will not be visible to
+ * that child coroutine.
  */
 private inline fun <ThreadLocalT, OutputT> ThreadLocal<ThreadLocalT>.setForBlock(
     value: ThreadLocalT,
-    crossinline block: () -> OutputT
+    crossinline block: () -> OutputT,
 ) {
     val priorValue = get()
     set(value)
     block()
     set(priorValue)
 }
-

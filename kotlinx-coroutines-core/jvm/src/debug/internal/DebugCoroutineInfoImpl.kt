@@ -10,24 +10,25 @@ internal const val RUNNING = "RUNNING"
 internal const val SUSPENDED = "SUSPENDED"
 
 /**
- * Internal implementation class where debugger tracks details it knows about each coroutine.
- * Its mutable fields can be updated concurrently, thus marked with `@Volatile`
+ * Internal implementation class where debugger tracks details it knows about each coroutine. Its mutable fields can be updated
+ * concurrently, thus marked with `@Volatile`
  */
 @PublishedApi
-internal class DebugCoroutineInfoImpl internal constructor(
+internal class DebugCoroutineInfoImpl
+internal constructor(
     context: CoroutineContext?,
     /**
-     * A reference to a stack-trace that is converted to a [StackTraceFrame] which implements [CoroutineStackFrame].
-     * The actual reference to the coroutine is not stored here, so we keep a strong reference.
+     * A reference to a stack-trace that is converted to a [StackTraceFrame] which implements [CoroutineStackFrame]. The actual reference to
+     * the coroutine is not stored here, so we keep a strong reference.
      */
     internal val creationStackBottom: StackTraceFrame?,
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @JvmField public val sequenceNumber: Long
+    @JvmField public val sequenceNumber: Long,
 ) {
     /**
-     * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly
-     * keep a reference to the last frame of an abandoned coroutine which the debugger should not be preventing
-     * garbage-collection of. The reference to context will not disappear as long as the coroutine itself is not lost.
+     * We cannot keep a strong reference to the context, because with the [Job] in the context it will indirectly keep a reference to the
+     * last frame of an abandoned coroutine which the debugger should not be preventing garbage-collection of. The reference to context will
+     * not disappear as long as the coroutine itself is not lost.
      */
     private val _context = WeakReference(context)
     public val context: CoroutineContext? // can be null when the coroutine was already garbage-collected
@@ -35,18 +36,15 @@ internal class DebugCoroutineInfoImpl internal constructor(
         get() = _context.get()
 
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    public val creationStackTrace: List<StackTraceElement> get() = creationStackTrace()
+    public val creationStackTrace: List<StackTraceElement>
+        get() = creationStackTrace()
 
-    /**
-     * Last observed state of the coroutine.
-     * Can be CREATED, RUNNING, SUSPENDED.
-     */
-    internal val state: String get() = _state
+    /** Last observed state of the coroutine. Can be CREATED, RUNNING, SUSPENDED. */
+    internal val state: String
+        get() = _state
 
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @Volatile
-    @JvmField
-    public var _state: String = CREATED
+    @Volatile @JvmField public var _state: String = CREATED
 
     /*
      * How many consecutive unmatched 'updateState(RESUMED)' this object has received.
@@ -59,9 +57,8 @@ internal class DebugCoroutineInfoImpl internal constructor(
     private var unmatchedResume = 0
 
     /**
-     * Here we orchestrate overlapping state updates that are coming asynchronously.
-     * In a nutshell, `probeCoroutineSuspended` can arrive **later** than its matching `probeCoroutineResumed`,
-     * e.g. for the following code:
+     * Here we orchestrate overlapping state updates that are coming asynchronously. In a nutshell, `probeCoroutineSuspended` can arrive
+     * **later** than its matching `probeCoroutineResumed`, e.g. for the following code:
      * ```
      * suspend fun foo() = yield()
      * ```
@@ -75,18 +72,15 @@ internal class DebugCoroutineInfoImpl internal constructor(
      *     return COROUTINE_SUSPENDED // Unroll the stack
      * }
      * ```
-     * Nothing prevents coroutine to be dispatched and invoke `probeCoroutineResumed` right between '1' and '2'.
-     * See also: https://github.com/Kotlin/kotlinx.coroutines/issues/3193
      *
-     * [shouldBeMatched] -- `false` if it is an expected consecutive `probeCoroutineResumed` from BaseContinuationImpl,
-     * `true` otherwise.
+     * Nothing prevents coroutine to be dispatched and invoke `probeCoroutineResumed` right between '1' and '2'. See also:
+     * https://github.com/Kotlin/kotlinx.coroutines/issues/3193
+     *
+     * [shouldBeMatched] -- `false` if it is an expected consecutive `probeCoroutineResumed` from BaseContinuationImpl, `true` otherwise.
      */
     @Synchronized
     internal fun updateState(state: String, frame: Continuation<*>, shouldBeMatched: Boolean) {
-        /**
-         * We observe consecutive resume that had to be matched, but it wasn't,
-         * increment
-         */
+        /** We observe consecutive resume that had to be matched, but it wasn't, increment */
         if (_state == RUNNING && state == RUNNING && shouldBeMatched) {
             ++unmatchedResume
         } else if (unmatchedResume > 0 && state == SUSPENDED) {
@@ -117,27 +111,24 @@ internal class DebugCoroutineInfoImpl internal constructor(
 
         _state = state
         lastObservedFrame = frame as? CoroutineStackFrame
-        lastObservedThread = if (state == RUNNING) {
-            Thread.currentThread()
-        } else {
-            null
-        }
+        lastObservedThread =
+            if (state == RUNNING) {
+                Thread.currentThread()
+            } else {
+                null
+            }
     }
 
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    @JvmField
-    @Volatile
-    public var lastObservedThread: Thread? = null
+    @JvmField @Volatile public var lastObservedThread: Thread? = null
 
     /**
-     * We cannot keep a strong reference to the last observed frame of the coroutine, because this will
-     * prevent garbage-collection of a coroutine that was lost.
+     * We cannot keep a strong reference to the last observed frame of the coroutine, because this will prevent garbage-collection of a
+     * coroutine that was lost.
      *
      * Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
      */
-    @Volatile
-    @JvmField
-    public var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
+    @Volatile @JvmField public var _lastObservedFrame: WeakReference<CoroutineStackFrame>? = null
     internal var lastObservedFrame: CoroutineStackFrame?
         get() = _lastObservedFrame?.get()
         set(value) {
@@ -145,9 +136,8 @@ internal class DebugCoroutineInfoImpl internal constructor(
         }
 
     /**
-     * Last observed stacktrace of the coroutine captured on its suspension or resumption point.
-     * It means that for [running][RUNNING] coroutines resulting stacktrace is inaccurate and
-     * reflects stacktrace of the resumption point, not the actual current stacktrace.
+     * Last observed stacktrace of the coroutine captured on its suspension or resumption point. It means that for [running][RUNNING]
+     * coroutines resulting stacktrace is inaccurate and reflects stacktrace of the resumption point, not the actual current stacktrace.
      */
     internal fun lastObservedStackTrace(): List<StackTraceElement> {
         var frame: CoroutineStackFrame? = lastObservedFrame ?: return emptyList()

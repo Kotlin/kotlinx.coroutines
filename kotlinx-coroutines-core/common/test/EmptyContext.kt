@@ -10,21 +10,20 @@ suspend fun <T> withEmptyContext(block: suspend () -> T): T = suspendCoroutine {
 }
 
 /**
- * Use this function to restart a coroutine directly from inside of [suspendCoroutine],
- * when the code is already in the context of this coroutine.
- * It does not use [ContinuationInterceptor] and does not update the context of the current thread.
+ * Use this function to restart a coroutine directly from inside of [suspendCoroutine], when the code is already in the context of this
+ * coroutine. It does not use [ContinuationInterceptor] and does not update the context of the current thread.
  */
 fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
     val actualCompletion = probeCoroutineCreated(completion)
-    val value = try {
-        probeCoroutineResumed(actualCompletion)
-        startCoroutineUninterceptedOrReturn(actualCompletion)
-    } catch (e: Throwable) {
-        actualCompletion.resumeWithException(e)
-        return
-    }
+    val value =
+        try {
+            probeCoroutineResumed(actualCompletion)
+            startCoroutineUninterceptedOrReturn(actualCompletion)
+        } catch (e: Throwable) {
+            actualCompletion.resumeWithException(e)
+            return
+        }
     if (value !== COROUTINE_SUSPENDED) {
-        @Suppress("UNCHECKED_CAST")
-        actualCompletion.resume(value as T)
+        @Suppress("UNCHECKED_CAST") actualCompletion.resume(value as T)
     }
 }

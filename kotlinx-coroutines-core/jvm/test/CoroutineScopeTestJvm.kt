@@ -4,10 +4,8 @@ import kotlinx.coroutines.testing.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class CoroutineScopeTestJvm: TestBase() {
-    /**
-     * Test the documented behavior of [CoroutineScope.newCoroutineContext] regarding the copyable context elements.
-     */
+class CoroutineScopeTestJvm : TestBase() {
+    /** Test the documented behavior of [CoroutineScope.newCoroutineContext] regarding the copyable context elements. */
     @Test
     fun testNewCoroutineContextCopyableContextElements() {
         val ce1L = MyMutableContextElement("key1", "value1_l")
@@ -30,21 +28,19 @@ class CoroutineScopeTestJvm: TestBase() {
         }
     }
 
-    private fun randomlyShuffledContext(
-        vararg elements: CoroutineContext.Element
-    ): CoroutineContext = elements.toList().shuffled().fold(EmptyCoroutineContext, CoroutineContext::plus)
+    private fun randomlyShuffledContext(vararg elements: CoroutineContext.Element): CoroutineContext =
+        elements.toList().shuffled().fold(EmptyCoroutineContext, CoroutineContext::plus)
 }
 
-class MyMutableContextElementKey(val key: String): CoroutineContext.Key<MyMutableContextElement> {
-    override fun equals(other: Any?): Boolean =
-        this === other || other is MyMutableContextElementKey && key == other.key
+class MyMutableContextElementKey(val key: String) : CoroutineContext.Key<MyMutableContextElement> {
+    override fun equals(other: Any?): Boolean = this === other || other is MyMutableContextElementKey && key == other.key
 
     override fun hashCode(): Int = key.hashCode()
 }
 
 class MyMutableContextElement(
     val keyId: String,
-    var value: String
+    var value: String,
 ) : AbstractCoroutineContextElement(MyMutableContextElementKey(keyId)), CopyableThreadContextElement<String> {
     override fun updateThreadContext(context: CoroutineContext): String {
         return value
@@ -63,12 +59,11 @@ class MyMutableContextElement(
 
     override fun hashCode(): Int = 31 * key.hashCode() + value.hashCode()
 
-    override fun copyForChild(): CopyableThreadContextElement<String> =
-        MyMutableContextElement(keyId, "Copy of '$value'")
+    override fun copyForChild(): CopyableThreadContextElement<String> = MyMutableContextElement(keyId, "Copy of '$value'")
 
     override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext =
         MyMutableContextElement(
             keyId,
-            "Merged '$value' and '${(overwritingElement as MyMutableContextElement).value}'"
+            "Merged '$value' and '${(overwritingElement as MyMutableContextElement).value}'",
         )
 }

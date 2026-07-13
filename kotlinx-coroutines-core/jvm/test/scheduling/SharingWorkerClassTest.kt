@@ -35,9 +35,11 @@ class SharingWorkerClassTest : SchedulerTestBase() {
         // See #990
         val cores = Runtime.getRuntime().availableProcessors()
         repeat(cores + 1) {
-            CoroutineScope(Dispatchers.Default).launch {
-                SchedulerCoroutineDispatcher(1).close()
-            }.join()
+            CoroutineScope(Dispatchers.Default)
+                .launch {
+                    SchedulerCoroutineDispatcher(1).close()
+                }
+                .join()
         }
     }
 }

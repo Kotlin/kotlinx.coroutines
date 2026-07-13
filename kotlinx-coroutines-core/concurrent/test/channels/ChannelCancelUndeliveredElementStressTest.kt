@@ -28,14 +28,16 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
     fun testStress() = runTest {
         repeat(repeatTimes) {
             val channel = Channel<Int>(1) { dUndeliveredCnt.incrementAndGet() }
-            val j1 = launch(Dispatchers.Default) {
-                sendOne(channel) // send first
-                sendOne(channel) // send second
-            }
-            val j2 = launch(Dispatchers.Default) {
-                receiveOne(channel) // receive one element from the channel
-                channel.cancel() // cancel the channel
-            }
+            val j1 =
+                launch(Dispatchers.Default) {
+                    sendOne(channel) // send first
+                    sendOne(channel) // send second
+                }
+            val j2 =
+                launch(Dispatchers.Default) {
+                    receiveOne(channel) // receive one element from the channel
+                    channel.cancel() // cancel the channel
+                }
 
             joinAll(j1, j2)
 
@@ -73,9 +75,10 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
         try {
             when (Random.nextInt(2)) {
                 0 -> channel.send(i)
-                1 -> if (!channel.trySend(i).isSuccess) {
-                    dTrySendFailedCnt++
-                }
+                1 ->
+                    if (!channel.trySend(i).isSuccess) {
+                        dTrySendFailedCnt++
+                    }
             }
         } catch (e: Throwable) {
             assertIs<CancellationException>(e) // the only exception possible in this test
@@ -85,14 +88,16 @@ class ChannelCancelUndeliveredElementStressTest : TestBase() {
     }
 
     private suspend fun receiveOne(channel: Channel<Int>) {
-        val received = when (Random.nextInt(3)) {
-            0 -> channel.receive()
-            1 -> channel.receiveCatching().getOrElse { error("Cannot be closed yet") }
-            2 -> select {
-                channel.onReceive { it }
+        val received =
+            when (Random.nextInt(3)) {
+                0 -> channel.receive()
+                1 -> channel.receiveCatching().getOrElse { error("Cannot be closed yet") }
+                2 ->
+                    select {
+                        channel.onReceive { it }
+                    }
+                else -> error("Cannot happen")
             }
-            else -> error("Cannot happen")
-        }
         assertTrue(received > lastReceived)
         dReceivedCnt++
         lastReceived = received

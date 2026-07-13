@@ -10,13 +10,16 @@ import kotlin.test.*
 class FlowSuppressionTest : TestBase() {
     @Test
     fun testSuppressionForPrimaryException() = runTest {
-        val flow = flow {
-            try {
-                emit(1)
-            } finally {
-                throw TestException()
-            }
-        }.catch { expectUnreached() }.onEach { throw TestException2() }
+        val flow =
+            flow {
+                    try {
+                        emit(1)
+                    } finally {
+                        throw TestException()
+                    }
+                }
+                .catch { expectUnreached() }
+                .onEach { throw TestException2() }
 
         try {
             flow.collect()
@@ -28,37 +31,45 @@ class FlowSuppressionTest : TestBase() {
 
     @Test
     fun testSuppressionForPrimaryExceptionRetry() = runTest {
-        val flow = flow {
-            try {
-                emit(1)
-            } finally {
-                throw TestException()
-            }
-        }.retry { expectUnreached(); true }.onEach { throw TestException2() }
+        val flow =
+            flow {
+                    try {
+                        emit(1)
+                    } finally {
+                        throw TestException()
+                    }
+                }
+                .retry {
+                    expectUnreached()
+                    true
+                }
+                .onEach { throw TestException2() }
 
         try {
             flow.collect()
         } catch (e: Throwable) {
             assertIs<TestException>(e)
             assertIs<TestException2>(e.suppressed[0])
-
         }
     }
 
     @Test
     fun testCancellationSuppression() = runTest {
-        val flow = flow {
-            try {
-                expect(1)
-                emit(1)
-            } finally {
-                expect(3)
-                throw CancellationException("")
-            }
-        }.catch { expectUnreached() }.onEach {
-            expect(2)
-            throw TestException("")
-        }
+        val flow =
+            flow {
+                    try {
+                        expect(1)
+                        emit(1)
+                    } finally {
+                        expect(3)
+                        throw CancellationException("")
+                    }
+                }
+                .catch { expectUnreached() }
+                .onEach {
+                    expect(2)
+                    throw TestException("")
+                }
 
         try {
             flow.collect()

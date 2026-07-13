@@ -10,8 +10,7 @@ import org.jetbrains.kotlinx.lincheck.paramgen.*
 class ResizableAtomicArrayLincheckTest : AbstractLincheckTest() {
     private val a = ResizableAtomicArray<Int>(2)
 
-    @Operation
-    fun get(@Param(name = "index") index: Int): Int? = a[index]
+    @Operation fun get(@Param(name = "index") index: Int): Int? = a[index]
 
     @Operation(nonParallelGroup = "writer")
     fun set(@Param(name = "index") index: Int, @Param(name = "value") value: Int) {

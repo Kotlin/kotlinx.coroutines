@@ -9,5 +9,5 @@ fun simple(): Sequence<Int> = sequence { // sequence builder
 }
 
 fun main() {
-    simple().forEach { value -> println(value) } 
+    simple().forEach { value -> println(value) }
 }

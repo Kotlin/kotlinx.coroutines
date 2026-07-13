@@ -14,11 +14,11 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Shorthand form for calling [withTimeout] with a [Duration] timeout of [timeMillis] milliseconds.
- * Please see the overload accepting a [Duration] for details.
+ * Shorthand form for calling [withTimeout] with a [Duration] timeout of [timeMillis] milliseconds. Please see the overload accepting a
+ * [Duration] for details.
  *
- * > Note: the behavior of this function can be different from [withTimeout] if [timeMillis] is greater than
- * `Long.MAX_VALUE / 2` milliseconds.
+ * > Note: the behavior of this function can be different from [withTimeout] if [timeMillis] is greater than `Long.MAX_VALUE / 2`
+ * > milliseconds.
  */
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
@@ -31,41 +31,37 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
 }
 
 /**
- * Calls the given suspending [block] with the specified [timeout], suspends until it completes,
- * and returns the result.
+ * Calls the given suspending [block] with the specified [timeout], suspends until it completes, and returns the result.
  *
- * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException].
- * If the [timeout] is non-positive, this happens immediately, and the [block] is not executed.
+ * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException]. If the [timeout] is non-positive, this happens
+ * immediately, and the [block] is not executed.
  *
- * Cancellation on timeout runs concurrently the code running in the block and may happen at any time,
- * even after the [block] finishes executing but before the caller gets resumed with the result.
+ * Cancellation on timeout runs concurrently the code running in the block and may happen at any time, even after the [block] finishes
+ * executing but before the caller gets resumed with the result.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher]
- * in the [currentCoroutineContext].
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher] in the
+ * > [currentCoroutineContext].
  *
  * ## Structured Concurrency
  *
- * [withTimeout] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*.
- * Refer to the documentation of [coroutineScope] for details.
+ * [withTimeout] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*. Refer to the documentation of
+ * [coroutineScope] for details.
  *
  * ## Pitfalls
  *
  * ### Cancellation is cooperative
  *
- * [withTimeout] will not automatically stop all code inside it from being executed once the timeout gets triggered.
- * It only cancels the running [block], but it's up to the [block] to notice that it was cancelled, for example,
- * by suspending or checking [isActive].
+ * [withTimeout] will not automatically stop all code inside it from being executed once the timeout gets triggered. It only cancels the
+ * running [block], but it's up to the [block] to notice that it was cancelled, for example, by suspending or checking [isActive].
  *
  * This JVM code will run to completion, taking 10 seconds to do so:
- *
  * ```
  * withTimeout(1.seconds) {
  *     Thread.sleep(10_000)
  * }
  * ```
  *
- * On the JVM, use the `runInterruptible` function to propagate cancellations
- * to blocking JVM code as thread interruptions.
+ * On the JVM, use the `runInterruptible` function to propagate cancellations to blocking JVM code as thread interruptions.
  *
  * See the [Make coroutines react to cancellation](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
  * section of the coroutines guide for details.
@@ -73,7 +69,6 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * ### [TimeoutCancellationException] is not considered an error
  *
  * Consider this code:
- *
  * ```
  * coroutineScope {
  *     launch {
@@ -85,14 +80,12 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * }
  * ```
  *
- * Here, the timeout will be triggered, and [withTimeout] will finish with a [TimeoutCancellationException].
- * However, [coroutineScope] will finish normally.
- * The reason is that when coroutines finish with a [CancellationException],
- * the error does not get propagated to the parent, just like it doesn't when a child actually gets cancelled.
+ * Here, the timeout will be triggered, and [withTimeout] will finish with a [TimeoutCancellationException]. However, [coroutineScope] will
+ * finish normally. The reason is that when coroutines finish with a [CancellationException], the error does not get propagated to the
+ * parent, just like it doesn't when a child actually gets cancelled.
  *
- * For ensuring that timeouts are treated as true errors that should cause the parent to fail,
- * use [withTimeoutOrNull] and check the return value:
- *
+ * For ensuring that timeouts are treated as true errors that should cause the parent to fail, use [withTimeoutOrNull] and check the return
+ * value:
  * ```
  * coroutineScope {
  *     launch {
@@ -104,9 +97,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * }
  * ```
  *
- * If [withTimeout] has to return a nullable value, and so [withTimeoutOrNull] cannot be used,
- * this pattern can help instead:
- *
+ * If [withTimeout] has to return a nullable value, and so [withTimeoutOrNull] cannot be used, this pattern can help instead:
  * ```
  * coroutineScope {
  *     launch {
@@ -122,8 +113,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * }
  * ```
  *
- * Another option is to specify the timeout action in a [select] invocation
- * with an [onTimeout][SelectBuilder.onTimeout] clause.
+ * Another option is to specify the timeout action in a [select] invocation with an [onTimeout][SelectBuilder.onTimeout] clause.
  *
  * ### Returning closeable resources
  *
@@ -142,11 +132,11 @@ public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineSc
 }
 
 /**
- * Shorthand form for calling [withTimeoutOrNull] with a [Duration] timeout of [timeMillis] milliseconds.
- * Please see the overload accepting a [Duration] for details.
+ * Shorthand form for calling [withTimeoutOrNull] with a [Duration] timeout of [timeMillis] milliseconds. Please see the overload accepting
+ * a [Duration] for details.
  *
- * > Note: the behavior of this function can be different from [withTimeoutOrNull] if [timeMillis] is greater than
- * `Long.MAX_VALUE / 2` milliseconds.
+ * > Note: the behavior of this function can be different from [withTimeoutOrNull] if [timeMillis] is greater than `Long.MAX_VALUE / 2`
+ * > milliseconds.
  */
 public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend CoroutineScope.() -> T): T? {
     if (timeMillis <= 0L) return null
@@ -168,42 +158,37 @@ public suspend fun <T> withTimeoutOrNull(timeMillis: Long, block: suspend Corout
 }
 
 /**
- * Calls the given suspending [block] with the specified [timeout], suspends until it completes,
- * and returns the result.
+ * Calls the given suspending [block] with the specified [timeout], suspends until it completes, and returns the result.
  *
- * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException].
- * If the [timeout] is non-positive, this happens immediately, and the [block] is not executed.
+ * If the [block] execution times out, it is cancelled with a [TimeoutCancellationException]. If the [timeout] is non-positive, this happens
+ * immediately, and the [block] is not executed.
  *
- * Cancellation on timeout runs concurrently the code running in the block and may happen at any time,
- * even after the [block] finishes executing but before the caller gets resumed with the result.
+ * Cancellation on timeout runs concurrently the code running in the block and may happen at any time, even after the [block] finishes
+ * executing but before the caller gets resumed with the result.
  *
- * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher]
- * in the [currentCoroutineContext].
+ * > Implementation note: how the time is tracked exactly is an implementation detail of the [CoroutineDispatcher] in the
+ * > [currentCoroutineContext].
  *
  * ## Structured Concurrency
  *
- * [withTimeoutOrNull] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*.
- * Refer to the documentation of [coroutineScope] for details.
+ * [withTimeoutOrNull] behaves like [coroutineScope], as it, too, creates a new *lexically scoped child coroutine*. Refer to the
+ * documentation of [coroutineScope] for details.
  *
  * ## Pitfalls
  *
  * ### Cancellation is cooperative
  *
- * [withTimeoutOrNull] will not automatically stop all code inside it from being executed
- * once the timeout gets triggered.
- * It only cancels the running [block], but it's up to the [block] to notice that it was cancelled, for example,
- * by suspending or checking [isActive].
+ * [withTimeoutOrNull] will not automatically stop all code inside it from being executed once the timeout gets triggered. It only cancels
+ * the running [block], but it's up to the [block] to notice that it was cancelled, for example, by suspending or checking [isActive].
  *
  * This JVM code will run to completion, taking 10 seconds to do so:
- *
  * ```
  * withTimeoutOrNull(1.seconds) {
  *     Thread.sleep(10_000)
  * }
  * ```
  *
- * On the JVM, use the `runInterruptible` function to propagate cancellations
- * to blocking JVM code as thread interruptions.
+ * On the JVM, use the `runInterruptible` function to propagate cancellations to blocking JVM code as thread interruptions.
  *
  * See the [Make coroutines react to cancellation](https://kotlinlang.org/docs/cancellation-and-timeouts.html#cancellation-is-cooperative)
  * section of the coroutines guide for details.
@@ -222,7 +207,7 @@ public suspend fun <T> withTimeoutOrNull(timeout: Duration, block: suspend Corou
 
 private fun <U, T : U> setupTimeout(
     coroutine: TimeoutCoroutine<U, T>,
-    block: suspend CoroutineScope.() -> T
+    block: suspend CoroutineScope.() -> T,
 ): Any? {
     // schedule cancellation of this coroutine on time
     val cont = coroutine.uCont
@@ -235,7 +220,7 @@ private fun <U, T : U> setupTimeout(
 
 private class TimeoutCoroutine<U, in T : U>(
     @JvmField val time: Long,
-    uCont: Continuation<U> // unintercepted continuation
+    uCont: Continuation<U>, // unintercepted continuation
 ) : ScopeCoroutine<T>(uCont.context, uCont), Runnable {
     override fun run() {
         val delay = context.delay
@@ -243,21 +228,16 @@ private class TimeoutCoroutine<U, in T : U>(
         cancelCoroutine(TimeoutCancellationException(time, delay, this, name))
     }
 
-    override fun nameString(): String =
-        "${super.nameString()}(timeMillis=$time)"
+    override fun nameString(): String = "${super.nameString()}(timeMillis=$time)"
 }
 
-/**
- * This exception is thrown by [withTimeout] to indicate timeout.
- */
-public class TimeoutCancellationException internal constructor(
+/** This exception is thrown by [withTimeout] to indicate timeout. */
+public class TimeoutCancellationException
+internal constructor(
     message: String,
-    @JvmField @Transient internal val coroutine: Job?
+    @JvmField @Transient internal val coroutine: Job?,
 ) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
-    /**
-     * Creates a timeout exception with the given message.
-     * This constructor is needed for exception stack-traces recovery.
-     */
+    /** Creates a timeout exception with the given message. This constructor is needed for exception stack-traces recovery. */
     internal constructor(message: String) : this(message, null)
 
     // message is never null in fact
@@ -269,14 +249,14 @@ internal fun TimeoutCancellationException(
     time: Long,
     delay: Delay,
     coroutine: Job,
-    coroutineName: String?
+    coroutineName: String?,
 ): TimeoutCancellationException {
-    val baseMessage = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds)
-        ?: "Timed out waiting for $time ms"
-    val message = if (coroutineName != null) {
-        "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
-    } else {
-        baseMessage
-    }
+    val baseMessage = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds) ?: "Timed out waiting for $time ms"
+    val message =
+        if (coroutineName != null) {
+            "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
+        } else {
+            baseMessage
+        }
     return TimeoutCancellationException(message, coroutine)
 }

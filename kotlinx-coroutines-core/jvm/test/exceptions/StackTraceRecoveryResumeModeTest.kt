@@ -10,8 +10,7 @@ import org.junit.Rule
 
 class StackTraceRecoveryResumeModeTest : TestBase() {
 
-    @get:Rule
-    val testName = TestName()
+    @get:Rule val testName = TestName()
 
     @Test
     fun testUnconfined() = runTest {

@@ -59,17 +59,18 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
         withContext(dispatcher) {
             expect(2)
             assertEquals(thread, Thread.currentThread())
-            val result = withTimeoutOrNull(100) {
-                try {
-                    expect(3)
-                    delay(1000)
-                    expectUnreached()
-                } catch (e: CancellationException) {
-                    expect(4)
-                    assertEquals(thread, Thread.currentThread())
-                    throw e // rethrow
+            val result =
+                withTimeoutOrNull(100) {
+                    try {
+                        expect(3)
+                        delay(1000)
+                        expectUnreached()
+                    } catch (e: CancellationException) {
+                        expect(4)
+                        assertEquals(thread, Thread.currentThread())
+                        throw e // rethrow
+                    }
                 }
-            }
             assertEquals(thread, Thread.currentThread())
             assertNull(result)
             expect(5)

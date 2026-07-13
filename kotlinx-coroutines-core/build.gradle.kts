@@ -21,26 +21,26 @@ plugins {
 apply(plugin = "pub-conventions")
 
 /* ==========================================================================
-  Configure source sets structure for kotlinx-coroutines-core:
+ Configure source sets structure for kotlinx-coroutines-core:
 
-     TARGETS                            SOURCE SETS
-     ------------------------------------------------------------
-     wasmJs \-----------> web -------------+
-     js     /                              |
-                                           V
-     wasmWasi --------------------> jsAndWasmShared ----------+
-                                                              |
-                                                              V
-     jvm ----------------------------> concurrent -------> common
-                                        ^
-     ios     \                          |
-     macos   | ---> nativeDarwin ---> native ---+
-     tvos    |                         ^
-     watchos /                         |
-                                       |
-     linux  \  ---> nativeOther -------+
-     mingw  /
- ========================================================================== */
+    TARGETS                            SOURCE SETS
+    ------------------------------------------------------------
+    wasmJs \-----------> web -------------+
+    js     /                              |
+                                          V
+    wasmWasi --------------------> jsAndWasmShared ----------+
+                                                             |
+                                                             V
+    jvm ----------------------------> concurrent -------> common
+                                       ^
+    ios     \                          |
+    macos   | ---> nativeDarwin ---> native ---+
+    tvos    |                         ^
+    watchos /                         |
+                                      |
+    linux  \  ---> nativeOther -------+
+    mingw  /
+========================================================================== */
 
 kotlin {
     sourceSets {
@@ -107,50 +107,55 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         kotlin.srcDir("benchmarks/jvm/kotlin")
     }
 
-    targets.matching {
-        it.name != "metadata"
+    targets
+        .matching {
+            it.name != "metadata"
             // Doesn't work, don't want to figure it out for now
-            && !it.name.contains("wasm")
-            && !it.name.contains("js")
-    }.all {
-        compilations.create("benchmark") {
-            associateWith(this@all.compilations.getByName("main"))
-            defaultSourceSet {
-                dependencies {
-                    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+            && !it.name.contains("wasm") && !it.name.contains("js")
+        }
+        .all {
+            compilations.create("benchmark") {
+                associateWith(this@all.compilations.getByName("main"))
+                defaultSourceSet {
+                    dependencies {
+                        implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+                    }
+                    dependsOn(benchmarkMain)
                 }
-                dependsOn(benchmarkMain)
             }
         }
-    }
 
-    targets.matching { it.name != "metadata" }.all {
-        benchmark.targets.register("${name}Benchmark")
-    }
+    targets
+        .matching { it.name != "metadata" }
+        .all {
+            benchmark.targets.register("${name}Benchmark")
+        }
 }
 
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
-    compilerOptions {
-        freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
+val compileKotlinMetadata by
+    tasks.getting(KotlinCompilationTask::class) {
+        compilerOptions {
+            freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
+        }
     }
-}
 
-val jvmTest by tasks.getting(Test::class) {
-    minHeapSize = "1g"
-    maxHeapSize = "1g"
-    enableAssertions = true
-    // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
-    if (!Idea.active && !providers.gradleProperty("stress").isPresent) {
-        exclude("**/*LincheckTest*")
-        exclude("**/*StressTest.*")
+val jvmTest by
+    tasks.getting(Test::class) {
+        minHeapSize = "1g"
+        maxHeapSize = "1g"
+        enableAssertions = true
+        // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
+        if (!Idea.active && !providers.gradleProperty("stress").isPresent) {
+            exclude("**/*LincheckTest*")
+            exclude("**/*StressTest.*")
+        }
+        if (Idea.active) {
+            // Configure the IDEA runner for Lincheck
+            configureJvmForLincheck()
+        }
     }
-    if (Idea.active) {
-        // Configure the IDEA runner for Lincheck
-        configureJvmForLincheck()
-    }
-}
 
 // Setup manifest for kotlinx-coroutines-core-jvm.jar
 val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
@@ -178,57 +183,64 @@ fun setupManifest(jar: Jar) {
 val compileTestKotlinJvm by tasks.getting(KotlinJvmCompile::class)
 val jvmTestClasses by tasks.getting
 
-val jvmStressTest by tasks.registering(Test::class) {
-    dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
-    minHeapSize = "1g"
-    maxHeapSize = "1g"
-    include("**/*StressTest.*")
-    enableAssertions = true
-    testLogging.showStandardStreams = true
-    systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", 100000) // any unpark problem hangs test
-    // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
-    systemProperty("kotlinx.coroutines.semaphore.segmentSize", 1)
-    systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 10)
-    systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", 2)
-    systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
-}
+val jvmStressTest by
+    tasks.registering(Test::class) {
+        dependsOn(compileTestKotlinJvm)
+        classpath = jvmTest.classpath
+        testClassesDirs = jvmTest.testClassesDirs
+        minHeapSize = "1g"
+        maxHeapSize = "1g"
+        include("**/*StressTest.*")
+        enableAssertions = true
+        testLogging.showStandardStreams = true
+        systemProperty("kotlinx.coroutines.scheduler.keep.alive.sec", 100000) // any unpark problem hangs test
+        // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
+        systemProperty("kotlinx.coroutines.semaphore.segmentSize", 1)
+        systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 10)
+        systemProperty("kotlinx.coroutines.bufferedChannel.segmentSize", 2)
+        systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
+    }
 
-val jvmLincheckTest by tasks.registering(Test::class) {
-    dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
-    include("**/*LincheckTest*")
-    enableAssertions = true
-    testLogging.showStandardStreams = true
-    configureJvmForLincheck()
-}
+val jvmLincheckTest by
+    tasks.registering(Test::class) {
+        dependsOn(compileTestKotlinJvm)
+        classpath = jvmTest.classpath
+        testClassesDirs = jvmTest.testClassesDirs
+        include("**/*LincheckTest*")
+        enableAssertions = true
+        testLogging.showStandardStreams = true
+        configureJvmForLincheck()
+    }
 
 // Additional Lincheck tests with `segmentSize = 2`.
 // Some bugs cannot be revealed when storing one request per segment,
 // and some are hard to detect when storing multiple requests.
-val jvmLincheckTestAdditional by tasks.registering(Test::class) {
-    dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
-    include("**/RendezvousChannelLincheckTest*")
-    include("**/Buffered1ChannelLincheckTest*")
-    include("**/Semaphore*LincheckTest*")
-    enableAssertions = true
-    testLogging.showStandardStreams = true
-    configureJvmForLincheck(segmentSize = 2)
-}
+val jvmLincheckTestAdditional by
+    tasks.registering(Test::class) {
+        dependsOn(compileTestKotlinJvm)
+        classpath = jvmTest.classpath
+        testClassesDirs = jvmTest.testClassesDirs
+        include("**/RendezvousChannelLincheckTest*")
+        include("**/Buffered1ChannelLincheckTest*")
+        include("**/Semaphore*LincheckTest*")
+        enableAssertions = true
+        testLogging.showStandardStreams = true
+        configureJvmForLincheck(segmentSize = 2)
+    }
 
 fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
     minHeapSize = "1g"
     maxHeapSize = "4g" // we may need more space for building an interleaving tree in the model checking mode
     // https://github.com/JetBrains/lincheck#java-9
-    jvmArgs = listOf(
-        "--add-opens", "java.base/jdk.internal.misc=ALL-UNNAMED",   // required for transformation
-        "--add-exports", "java.base/sun.security.action=ALL-UNNAMED",
-        "--add-exports", "java.base/jdk.internal.util=ALL-UNNAMED"
-    ) // in the model checking mode
+    jvmArgs =
+        listOf(
+            "--add-opens",
+            "java.base/jdk.internal.misc=ALL-UNNAMED", // required for transformation
+            "--add-exports",
+            "java.base/sun.security.action=ALL-UNNAMED",
+            "--add-exports",
+            "java.base/jdk.internal.util=ALL-UNNAMED",
+        ) // in the model checking mode
     // Adjust internal algorithmic parameters to increase the testing quality instead of performance.
     systemProperty("kotlinx.coroutines.semaphore.segmentSize", segmentSize)
     systemProperty("kotlinx.coroutines.semaphore.maxSpinCycles", 1) // better for the model checking mode
@@ -278,11 +290,12 @@ kover {
     }
 }
 
-val testsJar by tasks.registering(Jar::class) {
-    dependsOn(jvmTestClasses)
-    archiveClassifier = "tests"
-    from(compileTestKotlinJvm.destinationDirectory)
-}
+val testsJar by
+    tasks.registering(Jar::class) {
+        dependsOn(jvmTestClasses)
+        archiveClassifier = "tests"
+        from(compileTestKotlinJvm.destinationDirectory)
+    }
 
 artifacts {
     archives(testsJar)

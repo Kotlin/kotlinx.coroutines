@@ -7,30 +7,33 @@ import org.reactivestreams.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-class PublisherAsFlowThreadContextElementTest: TestBase() {
+class PublisherAsFlowThreadContextElementTest : TestBase() {
     val threadLocal = ThreadLocal.withInitial { "default" }
 
     @Test
     fun testFlowOnThreadContext() = runBlocking {
-        val publisher = Publisher<Int> { it ->
-            it.onSubscribe(object : Subscription {
-                override fun request(n: Long) {
-                    assertEquals("value", threadLocal.get())
-                    it.onNext(1)
-                    it.onComplete()
-                }
+        val publisher =
+            Publisher<Int> { it ->
+                it.onSubscribe(
+                    object : Subscription {
+                        override fun request(n: Long) {
+                            assertEquals("value", threadLocal.get())
+                            it.onNext(1)
+                            it.onComplete()
+                        }
 
-                override fun cancel() {}
-            })
-        }
+                        override fun cancel() {}
+                    }
+                )
+            }
 
         val context1 = Dispatchers.IO + threadLocal.asContextElement("value")
         val context2 = threadLocal.asContextElement("value")
 
         // succeeds
-        publisher.asFlow().flowOn(context1).collect { }
+        publisher.asFlow().flowOn(context1).collect {}
         // fails with org.junit.ComparisonFailure: expected:<[value]> but was:<[default]>
-        publisher.asFlow().flowOn(context2).collect { }
+        publisher.asFlow().flowOn(context2).collect {}
     }
 
     @Test
@@ -38,18 +41,21 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         Publisher<Int> { it ->
-            it.onSubscribe(object : Subscription {
-                override fun request(n: Long) {
-                    val threadLocalData = threadLocalData.get()
-                    assertNotSame(originalData, threadLocalData)
-                    assertEquals(originalData, threadLocalData)
-                    it.onNext(1)
-                    it.onComplete()
-                }
+                it.onSubscribe(
+                    object : Subscription {
+                        override fun request(n: Long) {
+                            val threadLocalData = threadLocalData.get()
+                            assertNotSame(originalData, threadLocalData)
+                            assertEquals(originalData, threadLocalData)
+                            it.onNext(1)
+                            it.onComplete()
+                        }
 
-                override fun cancel() {}
-            })
-        }.asFlow()
+                        override fun cancel() {}
+                    }
+                )
+            }
+            .asFlow()
             .flowOn(root)
             .single()
     }
@@ -59,23 +65,26 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         Publisher<Int> { it ->
-            it.onSubscribe(object : Subscription {
-                override fun request(n: Long) {
-                    val threadLocalData = threadLocalData.get()
-                    assertNotSame(originalData, threadLocalData)
-                    assertEquals(originalData, threadLocalData)
-                    it.onNext(1)
-                    it.onComplete()
-                }
+                it.onSubscribe(
+                    object : Subscription {
+                        override fun request(n: Long) {
+                            val threadLocalData = threadLocalData.get()
+                            assertNotSame(originalData, threadLocalData)
+                            assertEquals(originalData, threadLocalData)
+                            it.onNext(1)
+                            it.onComplete()
+                        }
 
-                override fun cancel() {}
-            })
-        }.asFlow()
+                        override fun cancel() {}
+                    }
+                )
+            }
+            .asFlow()
             .flowOn(root + Dispatchers.Default)
             .single()
     }
 
-        @Test
+    @Test
     fun testThreadLocalFlowOn() = runTest {
         val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> =
             listOf(EmptyCoroutineContext, Dispatchers.Default, Dispatchers.Unconfined).flatMap { dispatcher ->
@@ -89,15 +98,20 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
             try {
                 testThreadLocalFlowOn(dispatcher, doYield, useThreadLocalInOuterContext)
             } catch (e: Throwable) {
-                throw AssertionError("Failed with parameters: dispatcher=$dispatcher, " +
-                    "doYield=$doYield, " +
-                    "useThreadLocalInOuterContext=$useThreadLocalInOuterContext", e)
+                throw AssertionError(
+                    "Failed with parameters: dispatcher=$dispatcher, " +
+                        "doYield=$doYield, " +
+                        "useThreadLocalInOuterContext=$useThreadLocalInOuterContext",
+                    e,
+                )
             }
         }
     }
 
     private fun testThreadLocalFlowOn(
-        extraFlowOnContext: CoroutineContext, doYield: Boolean, useThreadLocalInOuterContext: Boolean
+        extraFlowOnContext: CoroutineContext,
+        doYield: Boolean,
+        useThreadLocalInOuterContext: Boolean,
     ) = runTest {
         try {
             val myData1 = MyData()
@@ -106,12 +120,12 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
             withContext(if (useThreadLocalInOuterContext) myThreadLocal.asContextElement() else EmptyCoroutineContext) {
                 assertEquals(myData1, myThreadLocal.get())
                 flow {
-                    repeat(5) {
-                        assertEquals(myData2, myThreadLocal.get())
-                        emit(1)
-                        if (doYield) yield()
+                        repeat(5) {
+                            assertEquals(myData2, myThreadLocal.get())
+                            emit(1)
+                            if (doYield) yield()
+                        }
                     }
-                }
                     .flowOn(myThreadLocal.asContextElement(myData2) + extraFlowOnContext)
                     .collect {
                         if (useThreadLocalInOuterContext) {
@@ -130,9 +144,7 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
         val threadLocalData: ThreadLocal<MutableList<String>> = ThreadLocal.withInitial { ArrayList() }
     }
 
-    class MyMutableElement(
-        val mutableData: MutableList<String>
-    ) : CopyableThreadContextElement<MutableList<String>> {
+    class MyMutableElement(val mutableData: MutableList<String>) : CopyableThreadContextElement<MutableList<String>> {
 
         companion object Key : CoroutineContext.Key<MyMutableElement>
 

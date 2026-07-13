@@ -8,14 +8,13 @@ import kotlinx.coroutines.flow.internal.*
 import kotlin.jvm.*
 
 /**
- * Terminal flow operator that collects the given flow but ignores all emitted values.
- * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
+ * Terminal flow operator that collects the given flow but ignores all emitted values. If any exception occurs during collect or in the
+ * provided flow, this exception is rethrown from this method.
  *
  * It is a shorthand for `collect {}`.
  *
- * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values and
- * handle an exception that might occur in the upstream flow or during processing, for example:
- *
+ * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values and handle an exception
+ * that might occur in the upstream flow or during processing, for example:
  * ```
  * flow
  *     .onEach { value -> process(value) }
@@ -26,12 +25,11 @@ import kotlin.jvm.*
 public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
 
 /**
- * Terminal flow operator that [launches][launch] the [collection][collect] of the given flow in the [scope].
- * It is a shorthand for `scope.launch { flow.collect() }`.
+ * Terminal flow operator that [launches][launch] the [collection][collect] of the given flow in the [scope]. It is a shorthand for
+ * `scope.launch { flow.collect() }`.
  *
- * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values
- * handle an exception that might occur in the upstream flow or during processing, for example:
- *
+ * This operator is usually used with [onEach], [onCompletion] and [catch] operators to process all emitted values handle an exception that
+ * might occur in the upstream flow or during processing, for example:
  * ```
  * flow
  *     .onEach { value -> updateUi(value) }
@@ -47,24 +45,25 @@ public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
 }
 
 /**
- * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the element.
- * If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
+ * Terminal flow operator that collects the given flow with a provided [action] that takes the index of an element (zero-based) and the
+ * element. If any exception occurs during collect or in the provided flow, this exception is rethrown from this method.
  *
  * See also [collect] and [withIndex].
  */
 public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
-    collect(object : FlowCollector<T> {
-        private var index = 0
-        override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
-    })
+    collect(
+        object : FlowCollector<T> {
+            private var index = 0
+
+            override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
+        }
+    )
 
 /**
- * Terminal flow operator that collects the given flow with a provided [action].
- * The crucial difference from [collect] is that when the original flow emits a new value
- * then the [action] block for the previous value is cancelled.
+ * Terminal flow operator that collects the given flow with a provided [action]. The crucial difference from [collect] is that when the
+ * original flow emits a new value then the [action] block for the previous value is cancelled.
  *
  * It can be demonstrated by the following example:
- *
  * ```
  * flow {
  *     emit(1)
@@ -97,8 +96,8 @@ public suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit)
 }
 
 /**
- * Collects all the values from the given [flow] and emits them to the collector.
- * It is a shorthand for `flow.collect { value -> emit(value) }`.
+ * Collects all the values from the given [flow] and emits them to the collector. It is a shorthand for `flow.collect { value -> emit(value)
+ * }`.
  */
 public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
     ensureActive()
@@ -108,22 +107,21 @@ public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
 /** @suppress */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Backwards compatibility with JS and K/N")
 public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
-    collect(object : FlowCollector<T> {
-        override suspend fun emit(value: T) = action(value)
-    })
+    collect(
+        object : FlowCollector<T> {
+            override suspend fun emit(value: T) = action(value)
+        }
+    )
 
 // -------------------- Collecting operations on a SharedFlow --------------------
 // -------------------- These mirror the operations above and are introduced when requested --------------------
 
 /**
- * Terminal flow operator that collects the given flow with a provided [action].
- * The crucial difference from [collect] is that when the original flow emits a new value
- * then the [action] block for the previous value is cancelled.
+ * Terminal flow operator that collects the given flow with a provided [action]. The crucial difference from [collect] is that when the
+ * original flow emits a new value then the [action] block for the previous value is cancelled.
  *
- * This is a special version of [collectLatest] for [SharedFlow].
- * Its only difference from the usual [collectLatest] on [Flow]
- * is that this version returns [Nothing] to indicate that it never completes.
- * See [SharedFlow] for more details.
+ * This is a special version of [collectLatest] for [SharedFlow]. Its only difference from the usual [collectLatest] on [Flow] is that this
+ * version returns [Nothing] to indicate that it never completes. See [SharedFlow] for more details.
  */
 public suspend inline fun <T> SharedFlow<T>.collectLatest(noinline action: suspend (value: T) -> Unit): Nothing {
     (this as Flow<T>).collectLatest(action)

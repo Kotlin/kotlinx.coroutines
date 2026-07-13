@@ -10,11 +10,11 @@ internal actual val Any.hexAddress: String
         if (jsTypeOf(result) !== "number") {
             result = ++counter
             this.asDynamic().__debug_counter = result
-
         }
         return (result as Int).toString()
     }
 
-internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
+internal actual val Any.classSimpleName: String
+    get() = this::class.simpleName ?: "Unknown"
 
 internal actual inline fun assert(value: () -> Boolean) {}

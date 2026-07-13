@@ -8,8 +8,7 @@ import kotlin.test.*
 
 class ThreadSafeHeapStressTest : TestBase() {
     private class DisposableNode : EventLoopImplBase.DelayedTask(1L) {
-        override fun run() {
-        }
+        override fun run() {}
     }
 
     @Test
@@ -38,10 +37,11 @@ class ThreadSafeHeapStressTest : TestBase() {
         repeat(10_000 * stressTestMultiplierSqrt) {
             val jobToCancel = Job()
             val barrier = CyclicBarrier(2)
-            val jobToJoin = launch(Dispatchers.Default) {
-                barrier.await()
-                jobToCancel.cancelAndJoin()
-            }
+            val jobToJoin =
+                launch(Dispatchers.Default) {
+                    barrier.await()
+                    jobToCancel.cancelAndJoin()
+                }
 
             try {
                 runBlocking { // Use event loop impl

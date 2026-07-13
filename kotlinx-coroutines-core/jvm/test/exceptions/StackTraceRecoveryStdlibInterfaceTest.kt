@@ -36,9 +36,8 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
 
     class CopyableWithCustomMessage(
         message: String?,
-        cause: Throwable? = null
-    ) : RuntimeException(message, cause),
-        StackTraceRecoverableWithNoTypeBounds {
+        cause: Throwable? = null,
+    ) : RuntimeException(message, cause), StackTraceRecoverableWithNoTypeBounds {
 
         override fun copyForStackTraceRecovery(): Throwable {
             return CopyableWithCustomMessage("Recovered: [$message]", cause)
@@ -82,12 +81,12 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
                 return FailingException("This will not be invoked")
             }
         }
-        open class FailingExceptionChild(data: String): FailingException(data) {
+        open class FailingExceptionChild(data: String) : FailingException(data) {
             override fun copyForStackTraceRecovery(): Throwable? {
                 return FailingExceptionChild("This will be the result")
             }
         }
-        class FailingExceptionGrandchild: FailingExceptionChild("Something")
+        class FailingExceptionGrandchild : FailingExceptionChild("Something")
         val result = runCatching {
             coroutineScope<Unit> {
                 throw FailingExceptionGrandchild()

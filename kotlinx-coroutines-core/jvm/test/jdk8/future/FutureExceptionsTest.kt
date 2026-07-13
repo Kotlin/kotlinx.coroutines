@@ -21,10 +21,13 @@ class FutureExceptionsTest : TestBase() {
 
     @Test
     fun testAwaitDeepChain() {
-        testException(IOException(), { it is IOException },
-            { f -> f
-                .thenApply { it + 1 }
-                .thenApply { it + 2 } })
+        testException(
+            IOException(),
+            { it is IOException },
+            { f ->
+                f.thenApply { it + 1 }.thenApply { it + 2 }
+            },
+        )
     }
 
     @Test
@@ -50,7 +53,7 @@ class FutureExceptionsTest : TestBase() {
     private fun testException(
         exception: Throwable,
         expected: ((Throwable) -> Boolean),
-        transformer: (CompletableFuture<Int>) -> CompletableFuture<Int> = { it }
+        transformer: (CompletableFuture<Int>) -> CompletableFuture<Int> = { it },
     ) {
 
         // Fast path

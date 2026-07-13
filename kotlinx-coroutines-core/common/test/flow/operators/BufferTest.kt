@@ -7,8 +7,8 @@ import kotlin.math.*
 import kotlin.test.*
 
 /**
- * A _behavioral_ test for buffering that is introduced by the [buffer] operator to test that it is
- * implemented properly and that adjacent [buffer] calls are fused properly.
+ * A _behavioral_ test for buffering that is introduced by the [buffer] operator to test that it is implemented properly and that adjacent
+ * [buffer] calls are fused properly.
  */
 class BufferTest : TestBase() {
     private val n = 200 // number of elements to emit for test
@@ -18,18 +18,18 @@ class BufferTest : TestBase() {
     private fun checkBuffer(capacity: Int, op: suspend Flow<Int>.() -> Flow<Int>) = runTest {
         expect(1)
         /*
-           Channels perform full rendezvous. Sender does not suspend when there is a suspended receiver and vice-versa.
-           Thus, perceived batch size is +2 from capacity.
-         */
+          Channels perform full rendezvous. Sender does not suspend when there is a suspended receiver and vice-versa.
+          Thus, perceived batch size is +2 from capacity.
+        */
         val batchSize = capacity + 2
         flow {
-            repeat(n) { i ->
-                val batchNo = i / batchSize
-                val batchIdx = i % batchSize
-                expect(batchNo * batchSize * 2 + batchIdx + 2)
-                emit(i)
+                repeat(n) { i ->
+                    val batchNo = i / batchSize
+                    val batchIdx = i % batchSize
+                    expect(batchNo * batchSize * 2 + batchIdx + 2)
+                    emit(i)
+                }
             }
-        }
             .op() // insert user-defined operator
             .collect { i ->
                 val batchNo = i / batchSize
@@ -43,8 +43,7 @@ class BufferTest : TestBase() {
 
     @Test
     // capacity == -1 to checkBuffer means "no buffer" -- emits / collects are sequentially ordered
-    fun testBaseline() =
-        checkBuffer(-1) { this }
+    fun testBaseline() = checkBuffer(-1) { this }
 
     @Test
     fun testBufferDefault() =
@@ -141,7 +140,7 @@ class BufferTest : TestBase() {
         checkBuffer(5) {
             flowOn(wrapperDispatcher()).buffer(5)
         }
-    
+
     @Test // buffer(n).flowOn(...) sets explicit buffer size to n
     fun testBufferFlowOnDispatcherFused() =
         checkBuffer(6) {
@@ -163,22 +162,22 @@ class BufferTest : TestBase() {
     @Test // multiple flowOn/buffer all fused together
     fun testBufferFlowOnMultipleFused() =
         checkBuffer(12) {
-            flowOn(wrapperDispatcher()).buffer(3)
-                .flowOn(CoroutineName("Name")).buffer(4)
-                .flowOn(wrapperDispatcher()).buffer(5)
+            flowOn(wrapperDispatcher()).buffer(3).flowOn(CoroutineName("Name")).buffer(4).flowOn(wrapperDispatcher()).buffer(5)
         }
 
     @Test
     fun testCancellation() = runTest {
-        val result = flow {
-            emit(1)
-            emit(2)
-            emit(3)
-            expectUnreached()
-            emit(4)
-        }.buffer(0)
-            .take(2)
-            .toList()
+        val result =
+            flow {
+                    emit(1)
+                    emit(2)
+                    emit(3)
+                    expectUnreached()
+                    emit(4)
+                }
+                .buffer(0)
+                .take(2)
+                .toList()
         assertEquals(listOf(1, 2), result)
     }
 
@@ -187,8 +186,11 @@ class BufferTest : TestBase() {
         val flow = emptyFlow<Int>()
         assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = -3) }
         assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Int.MIN_VALUE) }
-        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_LATEST) }
-        assertFailsWith<IllegalArgumentException> { flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_OLDEST) }
+        assertFailsWith<IllegalArgumentException> {
+            flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_LATEST)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            flow.buffer(capacity = Channel.CONFLATED, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        }
     }
 }
-

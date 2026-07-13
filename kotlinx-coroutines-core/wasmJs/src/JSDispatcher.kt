@@ -6,17 +6,13 @@ internal actual abstract external class W3CWindow {
     fun clearTimeout(handle: Int)
 }
 
-internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
-    setTimeout(window, handler, timeout)
+internal actual fun w3cSetTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int = setTimeout(window, handler, timeout)
 
-internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int =
-    setTimeout(handler, timeout)
+internal actual fun w3cSetTimeout(handler: () -> Unit, timeout: Int): Int = setTimeout(handler, timeout)
 
-internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) =
-    window.clearTimeout(handle)
+internal actual fun w3cClearTimeout(window: W3CWindow, handle: Int) = window.clearTimeout(handle)
 
-internal actual fun w3cClearTimeout(handle: Int) =
-    clearTimeout(handle)
+internal actual fun w3cClearTimeout(handle: Int) = clearTimeout(handle)
 
 internal actual class ScheduledMessageQueue actual constructor(private val dispatcher: SetTimeoutBasedDispatcher) : MessageQueue() {
     internal val processQueue: () -> Unit = ::process
@@ -42,7 +38,9 @@ internal class NodeDispatcher(private val process: JsProcess) : SetTimeoutBasedD
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): Unit = js("""{
+private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): Unit =
+    js(
+        """{
     const handler = (event) => {
         if (event.source == window && event.data == 'dispatchCoroutine') {
             event.stopPropagation();
@@ -50,21 +48,21 @@ private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): U
         }
     }
     window.addEventListener('message', handler, true);
-}""")
+}"""
+    )
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun createRescheduleMessagePoster(window: W3CWindow): () -> Unit =
-    js("() => window.postMessage('dispatchCoroutine', '*')")
+private fun createRescheduleMessagePoster(window: W3CWindow): () -> Unit = js("() => window.postMessage('dispatchCoroutine', '*')")
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun createScheduleMessagePoster(process: () -> Unit): () -> Unit =
-    js("() => Promise.resolve(0).then(process)")
+private fun createScheduleMessagePoster(process: () -> Unit): () -> Unit = js("() => Promise.resolve(0).then(process)")
 
 internal actual class WindowMessageQueue actual constructor(window: W3CWindow) : MessageQueue() {
     private val scheduleMessagePoster = createScheduleMessagePoster(::process)
     private val rescheduleMessagePoster = createRescheduleMessagePoster(window)
+
     init {
         subscribeToWindowMessages(window, ::process)
     }
@@ -85,11 +83,8 @@ private external fun setTimeout(handler: () -> Unit, timeout: Int): Int
 // d8 doesn't have clearTimeout
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun clearTimeout(handle: Int): Unit =
-    js("{ if (typeof clearTimeout !== 'undefined') clearTimeout(handle); }")
+private fun clearTimeout(handle: Int): Unit = js("{ if (typeof clearTimeout !== 'undefined') clearTimeout(handle); }")
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun setTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
-    js("window.setTimeout(handler, timeout)")
-
+private fun setTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int = js("window.setTimeout(handler, timeout)")

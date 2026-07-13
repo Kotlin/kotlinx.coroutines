@@ -8,26 +8,28 @@ import java.util.concurrent.*
 class AwaitStressTest : TestBase() {
 
     private val iterations = 50_000 * stressTestMultiplier
-    @get:Rule
-    val pool =  ExecutorRule(4)
+    @get:Rule val pool = ExecutorRule(4)
 
     @Test
     fun testMultipleExceptions() = runTest {
         val ctx = pool + NonCancellable
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
-            val d1 = async(ctx) {
-                barrier.await()
-                throw TestException()
-            }
-            val d2 = async(ctx) {
-                barrier.await()
-                throw TestException()
-            }
-            val d3 = async(ctx) {
-                barrier.await()
-                1L
-            }
+            val d1 =
+                async(ctx) {
+                    barrier.await()
+                    throw TestException()
+                }
+            val d2 =
+                async(ctx) {
+                    barrier.await()
+                    throw TestException()
+                }
+            val d3 =
+                async(ctx) {
+                    barrier.await()
+                    1L
+                }
             try {
                 barrier.await()
                 awaitAll(d1, d2, d3)
@@ -44,14 +46,16 @@ class AwaitStressTest : TestBase() {
     fun testAwaitAll() = runTest {
         val barrier = CyclicBarrier(3)
         repeat(iterations) {
-            val d1 = async(pool) {
-                barrier.await()
-                1L
-            }
-            val d2 = async(pool) {
-                barrier.await()
-                2L
-            }
+            val d1 =
+                async(pool) {
+                    barrier.await()
+                    1L
+                }
+            val d2 =
+                async(pool) {
+                    barrier.await()
+                    2L
+                }
             barrier.await()
             awaitAll(d1, d2)
             require(d1.isCompleted && d2.isCompleted)
@@ -65,16 +69,18 @@ class AwaitStressTest : TestBase() {
         repeat(iterations) {
             val barrier = CyclicBarrier(3)
 
-            val d1 = async(pool) {
-                barrier.await()
-                delay(10_000)
-                yield()
-            }
+            val d1 =
+                async(pool) {
+                    barrier.await()
+                    delay(10_000)
+                    yield()
+                }
 
-            val d2 = async(pool) {
-                barrier.await()
-                d1.cancel()
-            }
+            val d2 =
+                async(pool) {
+                    barrier.await()
+                    d1.cancel()
+                }
 
             barrier.await()
             try {
@@ -95,21 +101,24 @@ class AwaitStressTest : TestBase() {
             // thread-safe collection that we are going to modify
             val deferreds = CopyOnWriteArrayList<Deferred<Long>>()
 
-            deferreds += async(pool) {
-                barrier.await()
-                1L
-            }
+            deferreds +=
+                async(pool) {
+                    barrier.await()
+                    1L
+                }
 
-            deferreds += async(pool) {
-                barrier.await()
-                2L
-            }
+            deferreds +=
+                async(pool) {
+                    barrier.await()
+                    2L
+                }
 
-            deferreds += async(pool) {
-                barrier.await()
-                deferreds.removeAt(2)
-                3L
-            }
+            deferreds +=
+                async(pool) {
+                    barrier.await()
+                    deferreds.removeAt(2)
+                    3L
+                }
 
             val allJobs = ArrayList(deferreds)
             barrier.await()

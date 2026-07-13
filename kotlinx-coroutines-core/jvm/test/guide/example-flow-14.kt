@@ -3,7 +3,7 @@ package kotlinx.coroutines.guide.exampleFlow14
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-                      
+
 fun simple(): Flow<Int> = flow {
     // The WRONG way to change context for CPU-consuming code in flow builder
     kotlinx.coroutines.withContext(Dispatchers.Default) {
@@ -14,6 +14,7 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() = runBlocking<Unit> {
-    simple().collect { value -> println(value) } 
-}            
+fun main() =
+    runBlocking<Unit> {
+        simple().collect { value -> println(value) }
+    }

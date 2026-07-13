@@ -6,7 +6,6 @@ import kotlinx.coroutines.*
  * Loops while [select] expression returns `true`.
  *
  * The statement of the form:
- *
  * ```
  * whileSelect {
  *     /*body*/
@@ -14,7 +13,6 @@ import kotlinx.coroutines.*
  * ```
  *
  * is a shortcut for:
- *
  * ```
  * while(select<Boolean> {
  *    /*body*/
@@ -24,5 +22,7 @@ import kotlinx.coroutines.*
  */
 @ExperimentalCoroutinesApi
 public suspend inline fun whileSelect(crossinline builder: SelectBuilder<Boolean>.() -> Unit) {
-    while(select(builder)) { /* do nothing */ }
+    while (select(builder)) {
+        /* do nothing */
+    }
 }

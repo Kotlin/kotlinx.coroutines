@@ -3,6 +3,7 @@ package kotlinx.coroutines.guide.exampleContext05
 
 import kotlinx.coroutines.*
 
-fun main() = runBlocking<Unit> {
-    println("My job is ${coroutineContext[Job]}")
-}
+fun main() =
+    runBlocking<Unit> {
+        println("My job is ${coroutineContext[Job]}")
+    }

@@ -65,7 +65,7 @@ class FlowScopeTest : TestBase() {
             flowScope {
                 flowScope {
                     launch {
-                       throw CancellationException("")
+                        throw CancellationException("")
                     }
                 }
             }

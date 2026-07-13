@@ -12,39 +12,35 @@ import kotlin.jvm.JvmMultifileClass
 import kotlin.jvm.JvmName
 
 /**
- * Runs the given [block] in-place in a new coroutine based on [context],
- * **blocking the current thread** until its completion, and then returning its result.
+ * Runs the given [block] in-place in a new coroutine based on [context], **blocking the current thread** until its completion, and then
+ * returning its result.
  *
- * It is designed to bridge regular blocking code to libraries that are written in suspending style, to be used in
- * `main` functions, in tests, and in non-`suspend` callbacks when `suspend` functions need to be called.
+ * It is designed to bridge regular blocking code to libraries that are written in suspending style, to be used in `main` functions, in
+ * tests, and in non-`suspend` callbacks when `suspend` functions need to be called.
  *
- * On the JVM, if this blocked thread is interrupted (see `java.lang.Thread.interrupt`),
- * then the coroutine job is cancelled and this `runBlocking` invocation throws an `InterruptedException`.
- * On Kotlin/Native, there is no way to interrupt a thread.
+ * On the JVM, if this blocked thread is interrupted (see `java.lang.Thread.interrupt`), then the coroutine job is cancelled and this
+ * `runBlocking` invocation throws an `InterruptedException`. On Kotlin/Native, there is no way to interrupt a thread.
  *
  * ## Structured concurrency
  *
- * The lifecycle of the new coroutine's [Job] begins with starting the [block] and completes when both the [block] and
- * all the coroutines created in the scope complete.
+ * The lifecycle of the new coroutine's [Job] begins with starting the [block] and completes when both the [block] and all the coroutines
+ * created in the scope complete.
  *
  * The new coroutine executing [block] is created:
- * - A new [Job] for a lexically scoped coroutine is created.
- *   Its parent is the [Job] from the [context], if any was passed.
- * - By default, an event loop opened on this thread is used as the [ContinuationInterceptor].
- *   This can be overridden by passing a [ContinuationInterceptor] in [context].
+ * - A new [Job] for a lexically scoped coroutine is created. Its parent is the [Job] from the [context], if any was passed.
+ * - By default, an event loop opened on this thread is used as the [ContinuationInterceptor]. This can be overridden by passing a
+ *   [ContinuationInterceptor] in [context].
  * - The other elements of [context] are put into the new coroutine context as is.
  * - [newCoroutineContext] is called to optionally install debugging facilities.
  *
  * The resulting context is available in the [CoroutineScope] that is passed as the [block]'s receiver.
  *
- * Because the new coroutine is lexically scoped, even if a [Job] was passed in the [context],
- * it will not be cancelled if [runBlocking] or some child coroutine fails with an exception.
- * Instead, the exception will be rethrown to the caller of this function.
- * However, cancelling the [Job] passed in the [context] does also cancel the new coroutine.
+ * Because the new coroutine is lexically scoped, even if a [Job] was passed in the [context], it will not be cancelled if [runBlocking] or
+ * some child coroutine fails with an exception. Instead, the exception will be rethrown to the caller of this function. However, cancelling
+ * the [Job] passed in the [context] does also cancel the new coroutine.
  *
- * If any child coroutine in this scope fails with an exception,
- * the scope fails, cancelling all the other children and its own [block].
- * If it is desired that children fail independently, consider using [supervisorScope]:
+ * If any child coroutine in this scope fails with an exception, the scope fails, cancelling all the other children and its own [block]. If
+ * it is desired that children fail independently, consider using [supervisorScope]:
  * ```
  * runBlocking(CoroutineExceptionHandler { _, e ->
  *     // handle the exception—necessary when using `supervisorScope`
@@ -57,19 +53,16 @@ import kotlin.jvm.JvmName
  *
  * ## Event loop
  *
- * The default [ContinuationInterceptor] for this builder is an internal implementation of event loop that processes
- * continuations in the current thread until the completion of the [runBlocking] coroutine.
+ * The default [ContinuationInterceptor] for this builder is an internal implementation of event loop that processes continuations in the
+ * current thread until the completion of the [runBlocking] coroutine.
  *
- * This event loop is set in a thread-local variable and is accessible by nested [runBlocking] calls and
- * coroutine tasks forming an event loop
- * (such as the tasks of [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate]).
+ * This event loop is set in a thread-local variable and is accessible by nested [runBlocking] calls and coroutine tasks forming an event
+ * loop (such as the tasks of [Dispatchers.Unconfined] and [MainCoroutineDispatcher.immediate]).
  *
- * Nested [runBlocking] calls may execute other coroutines' tasks from the same event loop
- * instead of running their own tasks.
+ * Nested [runBlocking] calls may execute other coroutines' tasks from the same event loop instead of running their own tasks.
  *
- * If a [ContinuationInterceptor] is present in the [context], the new coroutine runs in the context of
- * the specified interceptor while the current thread is blocked (and possibly running tasks from other
- * [runBlocking] calls on the same thread or [Dispatchers.Unconfined]).
+ * If a [ContinuationInterceptor] is present in the [context], the new coroutine runs in the context of the specified interceptor while the
+ * current thread is blocked (and possibly running tasks from other [runBlocking] calls on the same thread or [Dispatchers.Unconfined]).
  *
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
  *
@@ -77,8 +70,7 @@ import kotlin.jvm.JvmName
  *
  * ### Calling from a suspend function
  *
- * Calling [runBlocking] from a suspend function is redundant.
- * For example, the following code is incorrect:
+ * Calling [runBlocking] from a suspend function is redundant. For example, the following code is incorrect:
  * ```
  * suspend fun loadConfiguration() {
  *     // DO NOT DO THIS:
@@ -88,13 +80,11 @@ import kotlin.jvm.JvmName
  *     // ...
  * ```
  *
- * Here, instead of releasing the thread on which `loadConfiguration` runs if `fetchConfigurationData` suspends, it will
- * block, potentially leading to thread starvation issues.
- * Additionally, the [currentCoroutineContext] will be ignored, and the new computation will run in the context of
- * the new `runBlocking` coroutine.
+ * Here, instead of releasing the thread on which `loadConfiguration` runs if `fetchConfigurationData` suspends, it will block, potentially
+ * leading to thread starvation issues. Additionally, the [currentCoroutineContext] will be ignored, and the new computation will run in the
+ * context of the new `runBlocking` coroutine.
  *
  * Instead, write it like this:
- *
  * ```
  * suspend fun loadConfiguration() {
  *     val data = fetchConfigurationData() // suspending function
@@ -103,8 +93,7 @@ import kotlin.jvm.JvmName
  *
  * ### Sharing tasks between [runBlocking] calls
  *
- * The event loop used by [runBlocking] is shared with the other [runBlocking] calls.
- * This can lead to surprising and undesired behavior.
+ * The event loop used by [runBlocking] is shared with the other [runBlocking] calls. This can lead to surprising and undesired behavior.
  *
  * ```
  * runBlocking {
@@ -121,7 +110,6 @@ import kotlin.jvm.JvmName
  * ```
  *
  * This outputs the following:
- *
  * ```
  * Entered the inner runBlocking
  * Hello from the outer child coroutine
@@ -129,7 +117,6 @@ import kotlin.jvm.JvmName
  * ```
  *
  * For example, the following code may fail with a stack overflow error:
- *
  * ```
  * runBlocking {
  *     repeat(1000) {
@@ -146,16 +133,17 @@ import kotlin.jvm.JvmName
  * }
  * ```
  *
- * The reason is that each new `runBlocking` attempts to run the task of the outer `runBlocking` coroutine inline,
- * but those, in turn, start new `runBlocking` calls.
+ * The reason is that each new `runBlocking` attempts to run the task of the outer `runBlocking` coroutine inline, but those, in turn, start
+ * new `runBlocking` calls.
  *
- * The specific behavior of work stealing may change in the future, but is unlikely to be fully fixed,
- * given how widespread [runBlocking] is.
+ * The specific behavior of work stealing may change in the future, but is unlikely to be fully fixed, given how widespread [runBlocking]
+ * is.
  */
 @OptIn(ExperimentalContracts::class)
 @JvmName("runBlockingK")
 public fun <T> runBlocking(
-    context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> T,
 ): T {
     contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     val contextInterceptor = context[ContinuationInterceptor]
@@ -174,5 +162,7 @@ public fun <T> runBlocking(
 
 /** We can't inline it, because an `expect fun` can't have contracts. */
 internal expect fun <T> runBlockingImpl(
-    newContext: CoroutineContext, eventLoop: EventLoop?, block: suspend CoroutineScope.() -> T
+    newContext: CoroutineContext,
+    eventLoop: EventLoop?,
+    block: suspend CoroutineScope.() -> T,
 ): T

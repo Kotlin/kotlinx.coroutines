@@ -24,16 +24,19 @@ suspend fun selectAorB(a: ReceiveChannel<String>, b: ReceiveChannel<String>): St
             }
         }
     }
-    
-fun main() = runBlocking<Unit> {
-    val a = produce<String> {
-        repeat(4) { send("Hello $it") }
+
+fun main() =
+    runBlocking<Unit> {
+        val a =
+            produce<String> {
+                repeat(4) { send("Hello $it") }
+            }
+        val b =
+            produce<String> {
+                repeat(4) { send("World $it") }
+            }
+        repeat(8) { // print first eight results
+            println(selectAorB(a, b))
+        }
+        coroutineContext.cancelChildren()
     }
-    val b = produce<String> {
-        repeat(4) { send("World $it") }
-    }
-    repeat(8) { // print first eight results
-        println(selectAorB(a, b))
-    }
-    coroutineContext.cancelChildren()  
-}    

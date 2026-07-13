@@ -38,7 +38,7 @@ class UndispatchedResultTest : TestBase() {
 
     private suspend fun invokeTest(
         context: CoroutineContext,
-        scopeProvider: suspend (suspend CoroutineScope.() -> Unit) -> Unit
+        scopeProvider: suspend (suspend CoroutineScope.() -> Unit) -> Unit,
     ) {
         try {
             scopeProvider { block(context) }
@@ -53,9 +53,10 @@ class UndispatchedResultTest : TestBase() {
             expect(1)
             // Will cancel its parent
             async<Unit>(context) {
-                expect(2)
-                throw TestException()
-            }.await()
+                    expect(2)
+                    throw TestException()
+                }
+                .await()
         } catch (e: TestException) {
             expect(3)
         }

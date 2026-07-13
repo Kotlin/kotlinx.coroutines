@@ -10,7 +10,7 @@ class CountTest : TestBase() {
         val flow = flowOf(239, 240)
         assertEquals(2, flow.count())
         assertEquals(2, flow.count { true })
-        assertEquals(1, flow.count { it % 2 == 0})
+        assertEquals(1, flow.count { it % 2 == 0 })
         assertEquals(0, flow.count { false })
     }
 
@@ -23,9 +23,10 @@ class CountTest : TestBase() {
 
     @Test
     fun testException() = runTest {
-        val flow = flow<Int> {
-            throw TestException()
-        }
+        val flow =
+            flow<Int> {
+                throw TestException()
+            }
 
         assertFailsWith<TestException> { flow.count() }
         assertFailsWith<TestException> { flow.count { false } }

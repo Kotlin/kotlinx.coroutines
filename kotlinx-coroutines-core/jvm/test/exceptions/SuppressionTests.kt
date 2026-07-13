@@ -14,27 +14,28 @@ class SuppressionTests : TestBase() {
     fun testNotificationsWithException() = runTest {
         expect(1)
         val coroutineContext = kotlin.coroutines.coroutineContext + NonCancellable // workaround for KT-22984
-        val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
-            override fun onStart() {
-                expect(3)
-            }
+        val coroutine =
+            object : AbstractCoroutine<String>(coroutineContext, true, false) {
+                override fun onStart() {
+                    expect(3)
+                }
 
-            override fun onCancelling(cause: Throwable?) {
-                assertIs<ArithmeticException>(cause)
-                assertTrue(cause.suppressed.isEmpty())
-                expect(5)
-            }
+                override fun onCancelling(cause: Throwable?) {
+                    assertIs<ArithmeticException>(cause)
+                    assertTrue(cause.suppressed.isEmpty())
+                    expect(5)
+                }
 
-            override fun onCompleted(value: String) {
-                expectUnreached()
-            }
+                override fun onCompleted(value: String) {
+                    expectUnreached()
+                }
 
-            override fun onCancelled(cause: Throwable, handled: Boolean) {
-                assertIs<ArithmeticException>(cause)
-                checkException<IOException>(cause.suppressed[0])
-                expect(8)
+                override fun onCancelled(cause: Throwable, handled: Boolean) {
+                    assertIs<ArithmeticException>(cause)
+                    checkException<IOException>(cause.suppressed[0])
+                    expect(8)
+                }
             }
-        }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
             assertIs<ArithmeticException>(it)
@@ -61,17 +62,18 @@ class SuppressionTests : TestBase() {
     fun testExceptionUnwrapping() = runTest {
         val channel = Channel<Int>()
 
-        val deferred = async(NonCancellable) {
-            launch {
-                while (true) channel.send(1)
-            }
+        val deferred =
+            async(NonCancellable) {
+                launch {
+                    while (true) channel.send(1)
+                }
 
-            launch {
-                val exception = RecoverableTestCancellationException()
-                channel.cancel(exception)
-                throw exception
+                launch {
+                    val exception = RecoverableTestCancellationException()
+                    channel.cancel(exception)
+                    throw exception
+                }
             }
-        }
 
         try {
             deferred.await()

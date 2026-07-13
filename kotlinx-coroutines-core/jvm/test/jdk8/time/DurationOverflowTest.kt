@@ -19,9 +19,10 @@ class DurationOverflowTest : TestBase() {
             expect(++counter)
             delay(duration.negated()) // Instant bail out from negative values
             launch(start = CoroutineStart.UNDISPATCHED) {
-                expect(++counter)
-                delay(duration)
-            }.cancelAndJoin()
+                    expect(++counter)
+                    delay(duration)
+                }
+                .cancelAndJoin()
             expect(++counter)
         }
 
@@ -55,9 +56,10 @@ class DurationOverflowTest : TestBase() {
 
     @Test
     fun testWithTimeoutOrNullNegativeDuration() = runTest {
-        val result = withTimeoutOrNull(Duration.ofSeconds(1).negated()) {
-            1
-        }
+        val result =
+            withTimeoutOrNull(Duration.ofSeconds(1).negated()) {
+                1
+            }
 
         assertNull(result)
     }
