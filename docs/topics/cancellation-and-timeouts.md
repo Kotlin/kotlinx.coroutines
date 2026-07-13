@@ -35,14 +35,14 @@ import kotlin.time.Duration
 suspend fun main() {
     withContext(Dispatchers.Default) {
         // Used as a signal that the coroutine has started running
-        val started = CompletableDeferred<Unit>()
+        val childStarted = CompletableDeferred<Unit>()
         
-        val job: Job = launch {
+        val childJob: Job = launch {
             println("The coroutine has started")
 
             // Completes the CompletableDeferred,
             // signaling that the coroutine has started running
-            started.complete(Unit)
+            childStarted.complete(Unit)
             try {
                 // Suspends indefinitely
                 // This call will never return unless the coroutine is canceled
@@ -57,11 +57,11 @@ suspend fun main() {
         }
       
         // Waits for the coroutine to start before canceling it
-        started.await()
+        childStarted.await()
 
         // Cancels the coroutine,
         // so awaitCancellation() throws a CancellationException
-        job.cancel()
+        childJob.cancel()
     }
     // Coroutine builders such as withContext() or coroutineScope()
     // wait for all child coroutines to complete,
@@ -279,12 +279,12 @@ import kotlinx.coroutines.*
 //sampleStart
 suspend fun main() {
     withContext(Dispatchers.Default) {
-        val started = CompletableDeferred<Unit>()
-        val job = launch {
+        val childStarted = CompletableDeferred<Unit>()
+        val childJob = launch {
             try {
                 // Cancellation triggers a thread interruption
                 runInterruptible {
-                    started.complete(Unit)
+                    childStarted.complete(Unit)
                     try {
                         // Blocks the current thread for a very long time
                         Thread.sleep(Long.MAX_VALUE)
@@ -298,10 +298,10 @@ suspend fun main() {
                 throw e
             }
         }
-        started.await()
+        childStarted.await()
 
         // Cancels the coroutine and interrupts the thread executing Thread.sleep()
-        job.cancel()
+        childJob.cancel()
     }
 }
 //sampleEnd
@@ -464,7 +464,7 @@ suspend fun shutdownServiceAndWait() {
 
 suspend fun main() {
     withContext(Dispatchers.Default) {
-        val job = launch {
+        val childJob = launch {
             startService()
             try {
                 awaitCancellation()
@@ -477,7 +477,7 @@ suspend fun main() {
             }
         }
         serviceStarted.await()
-        job.cancel()
+        childJob.cancel()
     }
     println("Exiting the program")
 }
