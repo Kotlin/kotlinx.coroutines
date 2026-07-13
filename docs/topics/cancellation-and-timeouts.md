@@ -31,44 +31,44 @@ Here's an example on how to manually cancel a coroutine:
 import kotlinx.coroutines.*
 import kotlin.time.Duration
 
-//sampleStart
 suspend fun main() {
-    withContext(Dispatchers.Default) {
-        // Used as a signal that the coroutine has started running
-        val childStarted = CompletableDeferred<Unit>()
-        
-        val childJob: Job = launch {
-            println("The coroutine has started")
+//sampleStart
+withContext(Dispatchers.Default) {
+    // Used as a signal that the coroutine has started running
+    val childStarted = CompletableDeferred<Unit>()
+    
+    val childJob: Job = launch {
+        println("The coroutine has started")
 
-            // Completes the CompletableDeferred,
-            // signaling that the coroutine has started running
-            childStarted.complete(Unit)
-            try {
-                // Suspends indefinitely
-                // This call will never return unless the coroutine is canceled
-                awaitCancellation()
-            } catch (e: CancellationException) {
-                println("The coroutine was canceled: $e")
-              
-                // Always rethrow cancellation exceptions!
-                throw e
-            }
-            println("This line will never be executed")
+        // Completes the CompletableDeferred,
+        // signaling that the coroutine has started running
+        childStarted.complete(Unit)
+        try {
+            // Suspends indefinitely
+            // This call will never return unless the coroutine is canceled
+            awaitCancellation()
+        } catch (e: CancellationException) {
+            println("The coroutine was canceled: $e")
+          
+            // Always rethrow cancellation exceptions!
+            throw e
         }
-      
-        // Waits for the coroutine to start before canceling it
-        childStarted.await()
-
-        // Cancels the coroutine,
-        // so awaitCancellation() throws a CancellationException
-        childJob.cancel()
+        println("This line will never be executed")
     }
-    // Coroutine builders such as withContext() or coroutineScope()
-    // wait for all child coroutines to complete,
-    // even when the children are canceled
-    println("All coroutines have completed")
+  
+    // Waits for the coroutine to start before canceling it
+    childStarted.await()
+
+    // Cancels the coroutine,
+    // so awaitCancellation() throws a CancellationException
+    childJob.cancel()
 }
+// Coroutine builders such as withContext() or coroutineScope()
+// wait for all child coroutines to complete,
+// even when the children are canceled
+println("All coroutines have completed")
 //sampleEnd
+}
 ```
 {kotlin-runnable="true" id="manual-cancellation-example"}
 
@@ -100,43 +100,43 @@ Here's an example:
 import kotlinx.coroutines.*
 import kotlin.time.Duration
 
-//sampleStart
 suspend fun main() {
     withContext(Dispatchers.Default) {
-        // Used as a signal that the child coroutines have been launched
-        val childrenLaunched = CompletableDeferred<Unit>()
+//sampleStart
+// Used as a signal that the child coroutines have been launched
+val childrenLaunched = CompletableDeferred<Unit>()
 
-        // Launches two child coroutines
-        val parentJob = launch {
-            launch {
-                println("Child coroutine 1 has started running")
-                try {
-                    awaitCancellation()
-                } finally {
-                    println("Child coroutine 1 has been canceled")
-                }
-            }
-            launch {
-                println("Child coroutine 2 has started running")
-                try {
-                    awaitCancellation()
-                } finally {
-                    println("Child coroutine 2 has been canceled")
-                }
-            }
-            // Completes the CompletableDeferred,
-            // signaling that the child coroutines have been launched
-            childrenLaunched.complete(Unit)
+// Launches two child coroutines
+val parentJob = launch {
+    launch {
+        println("Child coroutine 1 has started running")
+        try {
+            awaitCancellation()
+        } finally {
+            println("Child coroutine 1 has been canceled")
         }
-        // Waits for the parent coroutine to signal that it has launched
-        // all of its children
-        childrenLaunched.await()
+    }
+    launch {
+        println("Child coroutine 2 has started running")
+        try {
+            awaitCancellation()
+        } finally {
+            println("Child coroutine 2 has been canceled")
+        }
+    }
+    // Completes the CompletableDeferred,
+    // signaling that the child coroutines have been launched
+    childrenLaunched.complete(Unit)
+}
+// Waits for the parent coroutine to signal that it has launched
+// all of its children
+childrenLaunched.await()
 
-        // Cancels the parent coroutine, which cancels all its children
-        parentJob.cancel()
+// Cancels the parent coroutine, which cancels all its children
+parentJob.cancel()
+//sampleEnd
     }
 }
-//sampleEnd
 ```
 {kotlin-runnable="true" id="cancellation-propagation-example"}
 
@@ -171,44 +171,44 @@ import kotlinx.coroutines.channels.Channel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration
 
-//sampleStart
 suspend fun main() {
-    withContext(Dispatchers.Default) {
-        val childJobs = listOf(
-            launch {
-                // Suspends until canceled
-                awaitCancellation()
-            },
-            launch {
-                // Suspends until canceled
-                delay(Duration.INFINITE)
-            },
-            launch {
-                val channel = Channel<Int>()
-                // Suspends while waiting for a value that is never sent
-                channel.receive()
-            },
-            launch {
-                val deferred = CompletableDeferred<Int>()
-                // Suspends while waiting for a value that is never completed
-                deferred.await()
-            },
-            launch {
-                val mutex = Mutex(locked = true)
-                // Suspends while waiting for a mutex that remains locked indefinitely
-                mutex.lock()
-            }
-        )
-        
-        // Gives the child coroutines time to start and suspend
-        delay(100.milliseconds)
-        
-        // Cancels all child coroutines
-        childJobs.forEach { it.cancel() }
-    }
-    println("All child jobs completed!")
+//sampleStart
+withContext(Dispatchers.Default) {
+    val childJobs = listOf(
+        launch {
+            // Suspends until canceled
+            awaitCancellation()
+        },
+        launch {
+            // Suspends until canceled
+            delay(Duration.INFINITE)
+        },
+        launch {
+            val channel = Channel<Int>()
+            // Suspends while waiting for a value that is never sent
+            channel.receive()
+        },
+        launch {
+            val deferred = CompletableDeferred<Int>()
+            // Suspends while waiting for a value that is never completed
+            deferred.await()
+        },
+        launch {
+            val mutex = Mutex(locked = true)
+            // Suspends while waiting for a mutex that remains locked indefinitely
+            mutex.lock()
+        }
+    )
+    
+    // Gives the child coroutines time to start and suspend
+    delay(100.milliseconds)
+    
+    // Cancels all child coroutines
+    childJobs.forEach { it.cancel() }
 }
+println("All child jobs completed!")
 //sampleEnd
+}
 ```
 {kotlin-runnable="true" id="suspension-points-example"}
 
@@ -232,27 +232,27 @@ Here's an example:
 ```kotlin
 import kotlinx.coroutines.*
 
-//sampleStart
 fun main() {
-    // runBlocking uses the current thread for running all coroutines
-    runBlocking {
-        val coroutineCount = 5
-        repeat(coroutineCount) { coroutineIndex ->
-            launch {
-                val id = coroutineIndex + 1
-                repeat(5) { iterationIndex ->
-                    val iteration = iterationIndex + 1
-                    // Temporarily suspends to give other coroutines a chance to run
-                    // Without this, the coroutines run sequentially
-                    yield()
-                    // Prints the coroutine index and iteration index
-                    println("$id * $iteration = ${id * iteration}")
-                }
+//sampleStart
+// runBlocking uses the current thread for running all coroutines
+runBlocking {
+    val coroutineCount = 5
+    repeat(coroutineCount) { coroutineIndex ->
+        launch {
+            val id = coroutineIndex + 1
+            repeat(5) { iterationIndex ->
+                val iteration = iterationIndex + 1
+                // Temporarily suspends to give other coroutines a chance to run
+                // Without this, the coroutines run sequentially
+                yield()
+                // Prints the coroutine index and iteration index
+                println("$id * $iteration = ${id * iteration}")
             }
         }
     }
 }
 //sampleEnd
+}
 ```
 {kotlin-runnable="true" id="yield-example"}
 
@@ -276,35 +276,35 @@ To interrupt the thread when canceling a coroutine, wrap the blocking code into 
 ```kotlin
 import kotlinx.coroutines.*
 
-//sampleStart
 suspend fun main() {
-    withContext(Dispatchers.Default) {
-        val childStarted = CompletableDeferred<Unit>()
-        val childJob = launch {
-            try {
-                // Cancellation triggers a thread interruption
-                runInterruptible {
-                    childStarted.complete(Unit)
-                    try {
-                        // Blocks the current thread for a very long time
-                        Thread.sleep(Long.MAX_VALUE)
-                    } catch (e: InterruptedException) {
-                        println("Thread interrupted (Java): $e")
-                        throw e
-                    }
+//sampleStart
+withContext(Dispatchers.Default) {
+    val childStarted = CompletableDeferred<Unit>()
+    val childJob = launch {
+        try {
+            // Cancellation triggers a thread interruption
+            runInterruptible {
+                childStarted.complete(Unit)
+                try {
+                    // Blocks the current thread for a very long time
+                    Thread.sleep(Long.MAX_VALUE)
+                } catch (e: InterruptedException) {
+                    println("Thread interrupted (Java): $e")
+                    throw e
                 }
-            } catch (e: CancellationException) {
-                println("Coroutine canceled (Kotlin): $e")
-                throw e
             }
+        } catch (e: CancellationException) {
+            println("Coroutine canceled (Kotlin): $e")
+            throw e
         }
-        childStarted.await()
-
-        // Cancels the coroutine and interrupts the thread executing Thread.sleep()
-        childJob.cancel()
     }
+    childStarted.await()
+
+    // Cancels the coroutine and interrupts the thread executing Thread.sleep()
+    childJob.cancel()
 }
 //sampleEnd
+}
 ```
 {kotlin-runnable="true" id="interrupt-cancellation-example"}
 
