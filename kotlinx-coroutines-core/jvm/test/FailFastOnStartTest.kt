@@ -2,6 +2,7 @@
 
 package kotlinx.coroutines
 
+import java.util.concurrent.RejectedExecutionException
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.emptyFlow
@@ -107,5 +108,5 @@ class FailFastOnStartTest : TestBase() {
     }
 
     private fun isRejectedExecutionException(e: Throwable): Boolean =
-        e is java.util.concurrent.RejectedExecutionException
+        e is RejectedExecutionException
 }

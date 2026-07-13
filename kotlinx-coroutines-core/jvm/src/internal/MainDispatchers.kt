@@ -63,7 +63,7 @@ internal object MainDispatcherLoader {
 }
 
 internal class MainDispatcherLoadResult(
-    val dispatcherOrNull: MainCoroutineDispatcher?,
-    val failureMessageOrNull: String?,
-    val failureCauseOrNull: Throwable?
+    @JvmField val dispatcherOrNull: MainCoroutineDispatcher?,
+    @JvmField val failureMessageOrNull: String?,
+    @JvmField val failureCauseOrNull: Throwable?
 )

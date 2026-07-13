@@ -9,10 +9,9 @@ import kotlin.coroutines.*
  * The testable main dispatcher used by kotlinx-coroutines-test.
  * It is a [MainCoroutineDispatcher] that delegates all actions to a settable delegate.
  */
-internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
-    MainCoroutineDispatcher(),
-    Delay
-{
+internal class TestMainDispatcher(
+    createInnerMain: () -> CoroutineDispatcher
+): MainCoroutineDispatcher(), Delay {
     internal constructor(delegate: CoroutineDispatcher): this({ delegate })
 
     private val mainDispatcher: Result<CoroutineDispatcher> by lazy {

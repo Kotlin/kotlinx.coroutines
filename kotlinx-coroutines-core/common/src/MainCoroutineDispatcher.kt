@@ -62,7 +62,11 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
      */
     @InternalCoroutinesApi
     protected fun toStringInternalImpl(): String? {
-        val main = Dispatchers.Main
+        val main = try {
+            Dispatchers.Main
+        } catch (_: Throwable) {
+            return null
+        }
         if (this === main) return "Dispatchers.Main"
         val immediate =
             try { main.immediate }
