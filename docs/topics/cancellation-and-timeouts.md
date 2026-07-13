@@ -73,9 +73,14 @@ suspend fun main() {
 {kotlin-runnable="true" id="manual-cancellation-example"}
 
 In this example, [`CompletableDeferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completable-deferred/) is used as a signal that the coroutine has started running.
-The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed. This way, cancellation happens only after the coroutine has started running. Without this check, the coroutine may be canceled before it runs the code inside its block. You don't need this check to cancel a coroutine, but it is included here to make the example reproducible, so the coroutine always starts and prints its messages before it's canceled.
+The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed.
+This way, cancellation happens only after the coroutine has started running.
+Without this check, the coroutine may be canceled before it runs the code inside its block.
+You don't need this check to cancel a coroutine, but it is included here to make the example reproducible, so the coroutine always starts and prints its messages before it's canceled.
 
-Similarly, a coroutine created by `async` can be canceled, `val deferred = async { ... }`, `deferred.cancel()`. The `async` builder returns a `Deferred` handle, which inherits from `Job`. Hence, the cancellation works in exactly the same way for `Deferred` as it does for `Job`.
+Similarly, a coroutine created by `async` can be canceled, `val deferred = async { ... }`, `deferred.cancel()`.
+The `async` builder returns a `Deferred` handle, which inherits from `Job`. 
+Hence, the cancellation works in exactly the same way for `Deferred` as it does for `Job`.
 
 > Catching `CancellationException` can break the cancellation propagation.
 > If you must catch it, rethrow it to let the cancellation propagate correctly through the coroutine hierarchy.
@@ -482,7 +487,9 @@ suspend fun main() {
 
 ## Timeout
 
-A timeout allows you to automatically cancel a coroutine after a specified duration. It is useful for stopping operations that take too long. For example, if a request to download a picture from a server times-out, you can choose to retry, or fallback to the local cache.
+A timeout allows you to automatically cancel a coroutine after a specified duration.
+It is useful for stopping operations that take too long.
+For example, if a request to download a picture from a server times-out, you can choose to retry, or fallback to the local cache.
 
 To specify a timeout, use the [`withTimeoutOrNull()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/with-timeout-or-null.html) function with a `Duration`:
 
