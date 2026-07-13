@@ -11,9 +11,8 @@ import kotlinx.coroutines.flow.*
 @Retention(value = AnnotationRetention.BINARY)
 @RequiresOptIn(
     level = RequiresOptIn.Level.WARNING,
-    message =
-        "This is a delicate API and its use requires care." +
-            " Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.",
+    message = "This is a delicate API and its use requires care." +
+    " Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.",
 )
 public annotation class DelicateCoroutinesApi
 
@@ -57,8 +56,8 @@ public annotation class ExperimentalCoroutinesApi
     level = RequiresOptIn.Level.WARNING,
     message =
         "This declaration is in a preview state and can be changed in a backwards-incompatible manner with a best-effort migration. " +
-            "Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' " +
-            "if you accept the drawback of relying on preview API",
+        "Its usage should be marked with '@kotlinx.coroutines.FlowPreview' or '@OptIn(kotlinx.coroutines.FlowPreview::class)' " +
+        "if you accept the drawback of relying on preview API",
 )
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 public annotation class FlowPreview
@@ -82,11 +81,10 @@ public annotation class ObsoleteCoroutinesApi
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS, AnnotationTarget.PROPERTY)
 @RequiresOptIn(
     level = RequiresOptIn.Level.ERROR,
-    message =
-        "This is an internal kotlinx.coroutines API that " +
-            "should not be used from outside of kotlinx.coroutines. No compatibility guarantees are provided. " +
-            "It is recommended to report your use-case of internal API to kotlinx.coroutines issue tracker, " +
-            "so stable API could be provided instead",
+    message = "This is an internal kotlinx.coroutines API that " +
+    "should not be used from outside of kotlinx.coroutines. No compatibility guarantees are provided. " +
+    "It is recommended to report your use-case of internal API to kotlinx.coroutines issue tracker, " +
+    "so stable API could be provided instead",
 )
 public annotation class InternalCoroutinesApi
 
@@ -94,10 +92,9 @@ public annotation class InternalCoroutinesApi
 @Target(AnnotationTarget.CLASS)
 @RequiresOptIn(
     level = RequiresOptIn.Level.WARNING,
-    message =
-        "Inheriting from this kotlinx.coroutines API is unstable. " +
-            "Either new methods may be added in the future, which would break the inheritance, " +
-            "or correctly inheriting from it requires fulfilling contracts that may change in the future.",
+    message = "Inheriting from this kotlinx.coroutines API is unstable. " +
+    "Either new methods may be added in the future, which would break the inheritance, " +
+    "or correctly inheriting from it requires fulfilling contracts that may change in the future.",
 )
 public annotation class ExperimentalForInheritanceCoroutinesApi
 
@@ -105,11 +102,10 @@ public annotation class ExperimentalForInheritanceCoroutinesApi
 @Target(AnnotationTarget.CLASS)
 @RequiresOptIn(
     level = RequiresOptIn.Level.WARNING,
-    message =
-        "This is a kotlinx.coroutines API that is not intended to be inherited from, " +
-            "as the library may handle predefined instances of this in a special manner. " +
-            "This will be an error in a future release. " +
-            "If you need to inherit from this, please describe your use case in " +
-            "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance. ",
+    message = "This is a kotlinx.coroutines API that is not intended to be inherited from, " +
+    "as the library may handle predefined instances of this in a special manner. " +
+    "This will be an error in a future release. " +
+    "If you need to inherit from this, please describe your use case in " +
+    "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance. ",
 )
 public annotation class InternalForInheritanceCoroutinesApi

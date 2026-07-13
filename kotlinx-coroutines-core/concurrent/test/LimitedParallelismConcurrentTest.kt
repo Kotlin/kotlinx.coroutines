@@ -47,12 +47,11 @@ class LimitedParallelismConcurrentTest : TestBase() {
         val executor = newSingleThreadContext("test")
         val view = executor.limitedParallelism(1)
         val view2 = executor.limitedParallelism(1)
-        val j1 =
-            launch(view) {
-                while (true) {
-                    yield()
-                }
+        val j1 = launch(view) {
+            while (true) {
+                yield()
             }
+        }
         val j2 = launch(view2) { j1.cancel() }
         joinAll(j1, j2)
         executor.close()
@@ -81,10 +80,9 @@ class LimitedParallelismConcurrentTest : TestBase() {
             val dispatcher = NaggingDispatcher()
             val view = dispatcher.limitedParallelism(1)
             val deferred = CompletableDeferred<Unit>()
-            val job =
-                launch(view) {
-                    deferred.await()
-                }
+            val job = launch(view) {
+                deferred.await()
+            }
             launch(Dispatchers.Default) {
                 deferred.complete(Unit)
             }

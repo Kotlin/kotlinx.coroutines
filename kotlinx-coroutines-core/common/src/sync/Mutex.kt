@@ -92,7 +92,8 @@ public interface Mutex {
  *
  * @param locked initial state of the mutex.
  */
-@Suppress("FunctionName") public fun Mutex(locked: Boolean = false): Mutex = MutexImpl(locked)
+@Suppress("FunctionName")
+public fun Mutex(locked: Boolean = false): Mutex = MutexImpl(locked)
 
 /**
  * Executes the given [action] under this mutex's lock.
@@ -125,8 +126,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
         { _, _, _ -> unlock(owner) }
     }
 
-    override val isLocked: Boolean
-        get() = availablePermits == 0
+    override val isLocked: Boolean get() = availablePermits == 0
 
     override fun holdsLock(owner: Any): Boolean = holdsLockImpl(owner) == HOLDS_LOCK_YES
 
@@ -151,19 +151,17 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
         lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) =
-        suspendCancellableCoroutineReusable<Unit> { cont ->
-            val contWithOwner = CancellableContinuationWithOwner(cont, owner)
-            acquire(contWithOwner)
-        }
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
+        val contWithOwner = CancellableContinuationWithOwner(cont, owner)
+        acquire(contWithOwner)
+    }
 
-    override fun tryLock(owner: Any?): Boolean =
-        when (tryLockImpl(owner)) {
-            TRY_LOCK_SUCCESS -> true
-            TRY_LOCK_FAILED -> false
-            TRY_LOCK_ALREADY_LOCKED_BY_OWNER -> error("This mutex is already locked by the specified owner: $owner")
-            else -> error("unexpected")
-        }
+    override fun tryLock(owner: Any?): Boolean = when (tryLockImpl(owner)) {
+        TRY_LOCK_SUCCESS -> true
+        TRY_LOCK_FAILED -> false
+        TRY_LOCK_ALREADY_LOCKED_BY_OWNER -> error("This mutex is already locked by the specified owner: $owner")
+        else -> error("unexpected")
+    }
 
     private fun tryLockImpl(owner: Any?): Int {
         while (true) {
@@ -206,14 +204,12 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
     }
 
     @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
-    override val onLock: SelectClause2<Any?, Mutex>
-        get() =
-            SelectClause2Impl(
-                clauseObject = this,
-                regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
-                processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
-                onCancellationConstructor = onSelectCancellationUnlockConstructor,
-            )
+    override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
+        processResFunc = MutexImpl::onLockProcessResult as ProcessResultFunction,
+        onCancellationConstructor = onSelectCancellationUnlockConstructor,
+    )
 
     protected open fun onLockRegFunction(select: SelectInstance<*>, owner: Any?) {
         if (owner != null && holdsLock(owner)) {
@@ -241,12 +237,11 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
             onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
         ): Any? {
             assert { this@MutexImpl.owner.value === NO_OWNER }
-            val token =
-                cont.tryResume(value, idempotent) { _, _, _ ->
-                    assert { this@MutexImpl.owner.value.let { it === NO_OWNER || it === owner } }
-                    this@MutexImpl.owner.value = owner
-                    unlock(owner)
-                }
+            val token = cont.tryResume(value, idempotent) { _, _, _ ->
+                assert { this@MutexImpl.owner.value.let { it === NO_OWNER || it === owner } }
+                this@MutexImpl.owner.value = owner
+                unlock(owner)
+            }
             if (token != null) {
                 assert { this@MutexImpl.owner.value === NO_OWNER }
                 this@MutexImpl.owner.value = owner

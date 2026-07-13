@@ -56,10 +56,9 @@ class DurationOverflowTest : TestBase() {
 
     @Test
     fun testWithTimeoutOrNullNegativeDuration() = runTest {
-        val result =
-            withTimeoutOrNull(Duration.ofSeconds(1).negated()) {
-                1
-            }
+        val result = withTimeoutOrNull(Duration.ofSeconds(1).negated()) {
+            1
+        }
 
         assertNull(result)
     }

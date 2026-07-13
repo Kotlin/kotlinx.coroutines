@@ -45,12 +45,11 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
 
     private fun launchCoroutines() = runBlocking {
         closeableDispatcher = SchedulerCoroutineDispatcher(N_THREADS)
-        dispatcher =
-            when (mode) {
-                Mode.CPU -> closeableDispatcher
-                Mode.CPU_LIMITED -> closeableDispatcher.limitedParallelism(N_THREADS)
-                Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS)
-            }
+        dispatcher = when (mode) {
+            Mode.CPU -> closeableDispatcher
+            Mode.CPU_LIMITED -> closeableDispatcher.limitedParallelism(N_THREADS)
+            Mode.BLOCKING -> closeableDispatcher.blocking(N_THREADS)
+        }
         started.value = 0
         finished.value = 0
         withContext(dispatcher) {
@@ -61,22 +60,21 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
     }
 
     // Index and level are used only for debugging purpose
-    private fun CoroutineScope.launchChild(index: Int, level: Int): Job =
-        launch(start = CoroutineStart.ATOMIC) {
-            started.incrementAndGet()
-            try {
-                if (level < MAX_LEVEL) {
-                    launchChild(2 * index + 1, level + 1)
-                    launchChild(2 * index + 2, level + 1)
+    private fun CoroutineScope.launchChild(index: Int, level: Int): Job = launch(start = CoroutineStart.ATOMIC) {
+        started.incrementAndGet()
+        try {
+            if (level < MAX_LEVEL) {
+                launchChild(2 * index + 1, level + 1)
+                launchChild(2 * index + 2, level + 1)
+            } else {
+                if (rnd.nextBoolean()) {
+                    delay(1000)
                 } else {
-                    if (rnd.nextBoolean()) {
-                        delay(1000)
-                    } else {
-                        yield()
-                    }
+                    yield()
                 }
-            } finally {
-                finished.incrementAndGet()
             }
+        } finally {
+            finished.incrementAndGet()
         }
+    }
 }

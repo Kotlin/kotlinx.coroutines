@@ -28,7 +28,8 @@ internal class OnDemandAllocatingPool<T>(
         }
     }
 
-    @Suppress("NOTHING_TO_INLINE") private inline fun Int.isClosed(): Boolean = this and IS_CLOSED_MASK != 0
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Int.isClosed(): Boolean = this and IS_CLOSED_MASK != 0
 
     /**
      * Request that a new element is created.

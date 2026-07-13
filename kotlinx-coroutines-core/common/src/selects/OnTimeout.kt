@@ -29,12 +29,10 @@ public fun <R> SelectBuilder<R>.onTimeout(timeout: Duration, block: suspend () -
  */
 private class OnTimeout(private val timeMillis: Long) {
     @Suppress("UNCHECKED_CAST")
-    val selectClause: SelectClause0
-        get() =
-            SelectClause0Impl(
-                clauseObject = this@OnTimeout,
-                regFunc = OnTimeout::register as RegistrationFunction,
-            )
+    val selectClause: SelectClause0 get() = SelectClause0Impl(
+        clauseObject = this@OnTimeout,
+        regFunc = OnTimeout::register as RegistrationFunction,
+    )
 
     @Suppress("UNUSED_PARAMETER")
     private fun register(select: SelectInstance<*>, ignoredParam: Any?) {

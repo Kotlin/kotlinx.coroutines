@@ -6,7 +6,8 @@ import kotlin.coroutines.*
 
 private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", false)
 
-@PublishedApi internal actual val DefaultDelay: Delay = initializeDefaultDelay()
+@PublishedApi
+internal actual val DefaultDelay: Delay = initializeDefaultDelay()
 
 private fun initializeDefaultDelay(): Delay {
     // Opt-out flag
@@ -30,19 +31,19 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
 
     private const val DEFAULT_KEEP_ALIVE_MS = 1000L // in milliseconds
 
-    private val KEEP_ALIVE_NANOS =
-        TimeUnit.MILLISECONDS.toNanos(
-            try {
-                java.lang.Long.getLong("kotlinx.coroutines.DefaultExecutor.keepAlive", DEFAULT_KEEP_ALIVE_MS)
-            } catch (e: SecurityException) {
-                DEFAULT_KEEP_ALIVE_MS
-            }
-        )
+    private val KEEP_ALIVE_NANOS = TimeUnit.MILLISECONDS.toNanos(
+        try {
+            java.lang.Long.getLong("kotlinx.coroutines.DefaultExecutor.keepAlive", DEFAULT_KEEP_ALIVE_MS)
+        } catch (e: SecurityException) {
+            DEFAULT_KEEP_ALIVE_MS
+        },
+    )
 
-    @Suppress("ObjectPropertyName") @Volatile private var _thread: Thread? = null
+    @Suppress("ObjectPropertyName")
+    @Volatile
+    private var _thread: Thread? = null
 
-    override val thread: Thread
-        get() = _thread ?: createThreadSync()
+    override val thread: Thread get() = _thread ?: createThreadSync()
 
     private const val FRESH = 0
     private const val ACTIVE = 1
@@ -50,10 +51,10 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private const val SHUTDOWN_ACK = 3
     private const val SHUTDOWN = 4
 
-    @Volatile private var debugStatus: Int = FRESH
+    @Volatile
+    private var debugStatus: Int = FRESH
 
-    private val isShutDown: Boolean
-        get() = debugStatus == SHUTDOWN
+    private val isShutDown: Boolean get() = debugStatus == SHUTDOWN
 
     private val isShutdownRequested: Boolean
         get() {
@@ -74,8 +75,8 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     private fun shutdownError() {
         throw RejectedExecutionException(
             "DefaultExecutor was shut down. " +
-                "This error indicates that Dispatchers.shutdown() was invoked prior to completion of exiting coroutines, leaving coroutines in incomplete state. " +
-                "Please refer to Dispatchers.shutdown documentation for more details"
+            "This error indicates that Dispatchers.shutdown() was invoked prior to completion of exiting coroutines, leaving coroutines in incomplete state. " +
+            "Please refer to Dispatchers.shutdown documentation for more details",
         )
     }
 
@@ -188,8 +189,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
     }
 
     // User only for testing and nothing else
-    internal val isThreadPresent
-        get() = _thread != null
+    internal val isThreadPresent get() = _thread != null
 
     override fun toString(): String {
         return "DefaultExecutor"

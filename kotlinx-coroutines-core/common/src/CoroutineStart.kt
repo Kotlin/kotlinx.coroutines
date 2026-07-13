@@ -219,7 +219,8 @@ public enum class CoroutineStart {
      * Android development, updating a UI element is not allowed if the coroutine's scope, which is tied to the element's lifecycle, has
      * been cancelled.
      */
-    @DelicateCoroutinesApi ATOMIC,
+    @DelicateCoroutinesApi
+    ATOMIC,
 
     /**
      * Immediately executes the coroutine until its first suspension point _in the current thread_.
@@ -328,13 +329,12 @@ public enum class CoroutineStart {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>): Unit =
-        when (this) {
-            DEFAULT -> block.startCoroutineCancellable(receiver, completion)
-            ATOMIC -> block.startCoroutine(receiver, completion)
-            UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
-            LAZY -> Unit // will start lazily
-        }
+    public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>): Unit = when (this) {
+        DEFAULT -> block.startCoroutineCancellable(receiver, completion)
+        ATOMIC -> block.startCoroutine(receiver, completion)
+        UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
+        LAZY -> Unit // will start lazily
+    }
 
     /**
      * Returns `true` when [LAZY].
@@ -342,6 +342,5 @@ public enum class CoroutineStart {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @InternalCoroutinesApi
-    public val isLazy: Boolean
-        get() = this === LAZY
+    public val isLazy: Boolean get() = this === LAZY
 }

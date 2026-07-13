@@ -14,27 +14,26 @@ class StateFlowCancellabilityTest : TestBase() {
         var subscribed = true
         var lastReceived = -1
         val barrier = CyclicBarrier(2)
-        val job =
-            state
-                .onSubscription {
-                    subscribed = true
-                    barrier.await()
-                }
-                .onEach { i ->
-                    when (i) {
-                        0 -> expect(2) // initial value
-                        1 -> expect(3)
-                        2 -> {
-                            expect(4)
-                            currentCoroutineContext().cancel()
-                        }
-                        else -> expectUnreached() // shall check for cancellation
+        val job = state
+            .onSubscription {
+                subscribed = true
+                barrier.await()
+            }
+            .onEach { i ->
+                when (i) {
+                    0 -> expect(2) // initial value
+                    1 -> expect(3)
+                    2 -> {
+                        expect(4)
+                        currentCoroutineContext().cancel()
                     }
-                    lastReceived = i
-                    barrier.await()
-                    barrier.await()
+                    else -> expectUnreached() // shall check for cancellation
                 }
-                .launchIn(this + Dispatchers.Default)
+                lastReceived = i
+                barrier.await()
+                barrier.await()
+            }
+            .launchIn(this + Dispatchers.Default)
         barrier.await()
         assertTrue(subscribed) // should have subscribed in the first barrier
         barrier.await()

@@ -90,8 +90,7 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
     // Pointer to the previous node, updates in [remove] function.
     private val _prev = atomic(prev)
 
-    private val nextOrClosed
-        get() = _next.value
+    private val nextOrClosed get() = _next.value
 
     /** Returns the next segment or `null` of the one does not exist, and invokes [onClosedAction] if this segment is marked as closed. */
     @Suppress("UNCHECKED_CAST")
@@ -103,20 +102,17 @@ internal abstract class ConcurrentLinkedListNode<N : ConcurrentLinkedListNode<N>
         }
     }
 
-    val next: N?
-        get() = nextOrIfClosed {
-            return null
-        }
+    val next: N? get() = nextOrIfClosed {
+        return null
+    }
 
     /** Tries to set the next segment if it is not specified and this segment is not marked as closed. */
     fun trySetNext(value: N): Boolean = _next.compareAndSet(null, value)
 
     /** Checks whether this node is the physical tail of the current linked list. */
-    val isTail: Boolean
-        get() = next == null
+    val isTail: Boolean get() = next == null
 
-    val prev: N?
-        get() = _prev.value
+    val prev: N? get() = _prev.value
 
     /** Cleans the pointer to the previous node. */
     fun cleanPrev() {
@@ -184,15 +180,13 @@ internal abstract class Segment<S : Segment<S>>(
     @JvmField val id: Long,
     prev: S?,
     pointers: Int,
-) :
-    ConcurrentLinkedListNode<S>(prev),
-    // Segments typically store waiting continuations. Thus, on cancellation, the corresponding
-    // slot should be cleaned and the segment should be removed if it becomes full of cancelled cells.
-    // To install such a handler efficiently, without creating an extra object, we allow storing
-    // segments as cancellation handlers in [CancellableContinuationImpl] state, putting the slot
-    // index in another field. The details are here: https://github.com/Kotlin/kotlinx.coroutines/pull/3084.
-    // For that, we need segments to implement this internal marker interface.
-    NotCompleted {
+) : ConcurrentLinkedListNode<S>(prev), // Segments typically store waiting continuations. Thus, on cancellation, the corresponding
+// slot should be cleaned and the segment should be removed if it becomes full of cancelled cells.
+// To install such a handler efficiently, without creating an extra object, we allow storing
+// segments as cancellation handlers in [CancellableContinuationImpl] state, putting the slot
+// index in another field. The details are here: https://github.com/Kotlin/kotlinx.coroutines/pull/3084.
+// For that, we need segments to implement this internal marker interface.
+NotCompleted {
     /** This property should return the number of slots in this segment, it is used to define whether the segment is logically removed. */
     abstract val numberOfSlots: Int
 
@@ -200,8 +194,7 @@ internal abstract class Segment<S : Segment<S>>(
     private val cleanedAndPointers = atomic(pointers shl POINTERS_SHIFT)
 
     /** The segment is considered as removed if all the slots are cleaned and there are no pointers to this segment from outside. */
-    override val isRemoved
-        get() = cleanedAndPointers.value == numberOfSlots && !isTail
+    override val isRemoved get() = cleanedAndPointers.value == numberOfSlots && !isTail
 
     // increments the number of pointers if this segment is not logically removed.
     internal fun tryIncPointers() = cleanedAndPointers.addConditionally(1 shl POINTERS_SHIFT) { it != numberOfSlots || isTail }
@@ -236,12 +229,10 @@ private inline fun AtomicInt.addConditionally(delta: Int, condition: (cur: Int) 
 
 @JvmInline
 internal value class SegmentOrClosed<S : Segment<S>>(private val value: Any?) {
-    val isClosed: Boolean
-        get() = value === CLOSED
+    val isClosed: Boolean get() = value === CLOSED
 
     @Suppress("UNCHECKED_CAST")
-    val segment: S
-        get() = if (value === CLOSED) error("Does not contain segment") else value as S
+    val segment: S get() = if (value === CLOSED) error("Does not contain segment") else value as S
 }
 
 private const val POINTERS_SHIFT = 16

@@ -86,11 +86,9 @@ class JobChildStressTest : TestBase() {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child
                     // **Asynchronously** submit task that launches a child so it races with completion
                     pool.executor.execute {
-                        rogueJob.set(
-                            launch(pool + deferred) {
+                        rogueJob.set(launch(pool + deferred) {
                                 throw TestException("isCancelled: ${coroutineContext.job.isCancelled}")
-                            }
-                        )
+                            })
                         canCloseThePool.countDown()
                     }
                 }
@@ -99,7 +97,7 @@ class JobChildStressTest : TestBase() {
                 val rogue = rogueJob.get()
                 if (rogue?.isActive == true) {
                     throw TestException(
-                        "Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList()
+                        "Rogue job $rogue with parent " + rogue.parent + " and children list: " + rogue.parent?.children?.toList(),
                     )
                 } else {
                     canCloseThePool.await()

@@ -20,15 +20,14 @@ class CatchTest : TestBase() {
     @Test
     fun testCatchEmitExceptionFromDownstream() = runTest {
         var executed = 0
-        val flow =
-            flow {
-                    emit(1)
-                }
-                .catch { emit(42) }
-                .map {
-                    ++executed
-                    throw TestException()
-                }
+        val flow = flow {
+                emit(1)
+            }
+            .catch { emit(42) }
+            .map {
+                ++executed
+                throw TestException()
+            }
 
         assertFailsWith<TestException>(flow)
         assertEquals(1, executed)
@@ -36,12 +35,10 @@ class CatchTest : TestBase() {
 
     @Test
     fun testCatchEmitAll() = runTest {
-        val flow =
-            flow {
-                    emit(1)
-                    throw TestException()
-                }
-                .catch { emitAll(flowOf(2)) }
+        val flow = flow {
+            emit(1)
+            throw TestException()
+        }.catch { emitAll(flowOf(2)) }
 
         assertEquals(3, flow.sum())
     }
@@ -49,15 +46,14 @@ class CatchTest : TestBase() {
     @Test
     fun testCatchEmitAllExceptionFromDownstream() = runTest {
         var executed = 0
-        val flow =
-            flow {
-                    emit(1)
-                }
-                .catch { emitAll(flowOf(1, 2, 3)) }
-                .map {
-                    ++executed
-                    throw TestException()
-                }
+        val flow = flow {
+                emit(1)
+            }
+            .catch { emitAll(flowOf(1, 2, 3)) }
+            .map {
+                ++executed
+                throw TestException()
+            }
 
         assertFailsWith<TestException>(flow)
         assertEquals(1, executed)
@@ -65,14 +61,12 @@ class CatchTest : TestBase() {
 
     @Test
     fun testWithTimeoutCatch() = runTest {
-        val flow =
-            flow<Int> {
-                    withTimeout(1) {
-                        hang { expect(1) }
-                    }
-                    expectUnreached()
-                }
-                .catch { emit(1) }
+        val flow = flow<Int> {
+            withTimeout(1) {
+                hang { expect(1) }
+            }
+            expectUnreached()
+        }.catch { emit(1) }
 
         assertEquals(1, flow.single())
         finish(2)
@@ -80,11 +74,9 @@ class CatchTest : TestBase() {
 
     @Test
     fun testCancellationFromUpstreamCatch() = runTest {
-        val flow =
-            flow<Int> {
-                    hang {}
-                }
-                .catch { expectUnreached() }
+        val flow = flow<Int> {
+            hang {}
+        }.catch { expectUnreached() }
 
         val job = launch {
             expect(1)
@@ -156,21 +148,20 @@ class CatchTest : TestBase() {
 
     @Test
     fun testUpstreamExceptionConcurrentWithDownstream() = runTest {
-        val flow =
-            flow {
-                    try {
-                        expect(1)
-                        emit(1)
-                    } finally {
-                        expect(3)
-                        throw TestException()
-                    }
+        val flow = flow {
+                try {
+                    expect(1)
+                    emit(1)
+                } finally {
+                    expect(3)
+                    throw TestException()
                 }
-                .catch { expectUnreached() }
-                .onEach {
-                    expect(2)
-                    throw TestException2()
-                }
+            }
+            .catch { expectUnreached() }
+            .onEach {
+                expect(2)
+                throw TestException2()
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -178,21 +169,20 @@ class CatchTest : TestBase() {
 
     @Test
     fun testUpstreamExceptionConcurrentWithDownstreamCancellation() = runTest {
-        val flow =
-            flow {
-                    try {
-                        expect(1)
-                        emit(1)
-                    } finally {
-                        expect(3)
-                        throw TestException()
-                    }
+        val flow = flow {
+                try {
+                    expect(1)
+                    emit(1)
+                } finally {
+                    expect(3)
+                    throw TestException()
                 }
-                .catch { expectUnreached() }
-                .onEach {
-                    expect(2)
-                    throw CancellationException("")
-                }
+            }
+            .catch { expectUnreached() }
+            .onEach {
+                expect(2)
+                throw CancellationException("")
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -200,21 +190,20 @@ class CatchTest : TestBase() {
 
     @Test
     fun testUpstreamCancellationIsIgnoredWhenDownstreamFails() = runTest {
-        val flow =
-            flow {
-                    try {
-                        expect(1)
-                        emit(1)
-                    } finally {
-                        expect(3)
-                        throw CancellationException("")
-                    }
+        val flow = flow {
+                try {
+                    expect(1)
+                    emit(1)
+                } finally {
+                    expect(3)
+                    throw CancellationException("")
                 }
-                .catch { expectUnreached() }
-                .onEach {
-                    expect(2)
-                    throw TestException("")
-                }
+            }
+            .catch { expectUnreached() }
+            .onEach {
+                expect(2)
+                throw TestException("")
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)

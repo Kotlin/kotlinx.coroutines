@@ -23,10 +23,9 @@ class CountTest : TestBase() {
 
     @Test
     fun testException() = runTest {
-        val flow =
-            flow<Int> {
-                throw TestException()
-            }
+        val flow = flow<Int> {
+            throw TestException()
+        }
 
         assertFailsWith<TestException> { flow.count() }
         assertFailsWith<TestException> { flow.count { false } }

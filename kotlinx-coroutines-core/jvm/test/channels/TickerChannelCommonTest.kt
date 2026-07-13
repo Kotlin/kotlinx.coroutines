@@ -11,7 +11,9 @@ import kotlin.test.*
 @RunWith(Parameterized::class)
 class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() {
     companion object {
-        @Parameterized.Parameters(name = "{0}") @JvmStatic fun params(): Collection<Array<Any>> = Channel.values().map { arrayOf<Any>(it) }
+        @Parameterized.Parameters(name = "{0}")
+        @JvmStatic
+        fun params(): Collection<Array<Any>> = Channel.values().map { arrayOf<Any>(it) }
     }
 
     enum class Channel {
@@ -69,18 +71,16 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         runTest {
             val delayChannel = channelFactory(delay = 1000)
             delayChannel.checkNotEmpty()
-            var value =
-                withTimeoutOrNull(750) {
-                    delayChannel.receive()
-                    1
-                }
+            var value = withTimeoutOrNull(750) {
+                delayChannel.receive()
+                1
+            }
 
             assertNull(value)
-            value =
-                withTimeoutOrNull(260) {
-                    delayChannel.receive()
-                    1
-                }
+            value = withTimeoutOrNull(260) {
+                delayChannel.receive()
+                1
+            }
 
             assertNotNull(value)
             delayChannel.cancel()

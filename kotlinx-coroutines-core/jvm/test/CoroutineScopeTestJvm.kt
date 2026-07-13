@@ -61,9 +61,8 @@ class MyMutableContextElement(
 
     override fun copyForChild(): CopyableThreadContextElement<String> = MyMutableContextElement(keyId, "Copy of '$value'")
 
-    override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext =
-        MyMutableContextElement(
-            keyId,
-            "Merged '$value' and '${(overwritingElement as MyMutableContextElement).value}'",
-        )
+    override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext = MyMutableContextElement(
+        keyId,
+        "Merged '$value' and '${(overwritingElement as MyMutableContextElement).value}'",
+    )
 }

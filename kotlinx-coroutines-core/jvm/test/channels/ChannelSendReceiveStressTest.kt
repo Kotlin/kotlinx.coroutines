@@ -21,12 +21,11 @@ class ChannelSendReceiveStressTest(
     companion object {
         @Parameterized.Parameters(name = "{0}, nSenders={1}, nReceivers={2}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            listOf(1, 2, 10).flatMap { nSenders ->
-                listOf(1, 10).flatMap { nReceivers ->
-                    TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
-                }
+        fun params(): Collection<Array<Any>> = listOf(1, 2, 10).flatMap { nSenders ->
+            listOf(1, 10).flatMap { nReceivers ->
+                TestChannelKind.values().map { arrayOf(it, nSenders, nReceivers) }
             }
+        }
     }
 
     private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
@@ -53,30 +52,28 @@ class ChannelSendReceiveStressTest(
     @Test
     fun testSendReceiveStress() = runBlocking {
         println("--- ChannelSendReceiveStressTest $kind with nSenders=$nSenders, nReceivers=$nReceivers")
-        val receivers =
-            List(nReceivers) { receiverIndex ->
-                // different event receivers use different code
-                launch(pool + CoroutineName("receiver$receiverIndex")) {
-                    when (receiverIndex % 5) {
-                        0 -> doReceive(receiverIndex)
-                        1 -> doReceiveCatching(receiverIndex)
-                        2 -> doIterator(receiverIndex)
-                        3 -> doReceiveSelect(receiverIndex)
-                        4 -> doReceiveCatchingSelect(receiverIndex)
-                    }
-                    receiversCompleted.incrementAndGet()
+        val receivers = List(nReceivers) { receiverIndex ->
+            // different event receivers use different code
+            launch(pool + CoroutineName("receiver$receiverIndex")) {
+                when (receiverIndex % 5) {
+                    0 -> doReceive(receiverIndex)
+                    1 -> doReceiveCatching(receiverIndex)
+                    2 -> doIterator(receiverIndex)
+                    3 -> doReceiveSelect(receiverIndex)
+                    4 -> doReceiveCatchingSelect(receiverIndex)
                 }
+                receiversCompleted.incrementAndGet()
             }
-        val senders =
-            List(nSenders) { senderIndex ->
-                launch(pool + CoroutineName("sender$senderIndex")) {
-                    when (senderIndex % 2) {
-                        0 -> doSend(senderIndex)
-                        1 -> doSendSelect(senderIndex)
-                    }
-                    sendersCompleted.incrementAndGet()
+        }
+        val senders = List(nSenders) { senderIndex ->
+            launch(pool + CoroutineName("sender$senderIndex")) {
+                when (senderIndex % 2) {
+                    0 -> doSend(senderIndex)
+                    1 -> doSendSelect(senderIndex)
                 }
+                sendersCompleted.incrementAndGet()
             }
+        }
         // print progress
         val progressJob = launch {
             var seconds = 0
@@ -118,9 +115,7 @@ class ChannelSendReceiveStressTest(
     private suspend fun doSent() {
         sentTotal.incrementAndGet()
         if (!kind.isConflated) {
-            while (
-                sentTotal.get() > receivedTotal.get() + maxBuffer
-            ) yield() // throttle fast senders to prevent OOM with an unlimited channel
+            while (sentTotal.get() > receivedTotal.get() + maxBuffer) yield() // throttle fast senders to prevent OOM with an unlimited channel
         }
     }
 

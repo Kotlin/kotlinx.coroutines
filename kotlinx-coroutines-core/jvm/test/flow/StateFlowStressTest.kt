@@ -27,21 +27,20 @@ class StateFlowStressTest : TestBase() {
                     do {
                         val batchSize = Random.nextInt(1..1000)
                         var index = 0
-                        val cnt =
-                            state
-                                .onEach { value ->
-                                    val emitter = (value % nEmitters).toInt()
-                                    val current = value / nEmitters
-                                    // the first value in batch is allowed to repeat, but cannot go back
-                                    val ok = if (index++ == 0) current >= c[emitter] else current > c[emitter]
-                                    check(ok) {
-                                        "Values must be monotonic, but $current is not, " +
-                                            "was ${c[emitter]} in collector #$collector from emitter #$emitter"
-                                    }
-                                    c[emitter] = current
+                        val cnt = state
+                            .onEach { value ->
+                                val emitter = (value % nEmitters).toInt()
+                                val current = value / nEmitters
+                                // the first value in batch is allowed to repeat, but cannot go back
+                                val ok = if (index++ == 0) current >= c[emitter] else current > c[emitter]
+                                check(ok) {
+                                    "Values must be monotonic, but $current is not, " +
+                                        "was ${c[emitter]} in collector #$collector from emitter #$emitter"
                                 }
-                                .take(batchSize)
-                                .count()
+                                c[emitter] = current
+                            }
+                            .take(batchSize)
+                            .count()
                     } while (cnt == batchSize)
                 }
             }
@@ -74,7 +73,9 @@ class StateFlowStressTest : TestBase() {
 
     private fun AtomicLongArray.sum() = (0..<length()).sumOf(::get)
 
-    @Test fun testSingleEmitterAndCollector() = stress(1, 1)
+    @Test
+    fun testSingleEmitterAndCollector() = stress(1, 1)
 
-    @Test fun testTenEmittersAndCollectors() = stress(10, 10)
+    @Test
+    fun testTenEmittersAndCollectors() = stress(10, 10)
 }

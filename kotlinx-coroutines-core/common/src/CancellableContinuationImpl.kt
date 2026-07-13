@@ -14,14 +14,14 @@ private const val DECISION_SHIFT = 29
 private const val INDEX_MASK = (1 shl DECISION_SHIFT) - 1
 private const val NO_INDEX = INDEX_MASK
 
-private inline val Int.decision
-    get() = this shr DECISION_SHIFT
-private inline val Int.index
-    get() = this and INDEX_MASK
+private inline val Int.decision get() = this shr DECISION_SHIFT
+private inline val Int.index get() = this and INDEX_MASK
 
-@Suppress("NOTHING_TO_INLINE") private inline fun decisionAndIndex(decision: Int, index: Int) = (decision shl DECISION_SHIFT) + index
+@Suppress("NOTHING_TO_INLINE")
+private inline fun decisionAndIndex(decision: Int, index: Int) = (decision shl DECISION_SHIFT) + index
 
-@JvmField internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
+@JvmField
+internal val RESUME_TOKEN = Symbol("RESUME_TOKEN")
 
 /** @suppress **This is unstable API and it is subject to change.** */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
@@ -47,7 +47,6 @@ internal open class CancellableContinuationImpl<in T>(
      * As a consequence it has much simpler state machine, more lightweight machinery and
      * less dependencies.
      */
-
     /**
      * decision state machine
      *
@@ -91,29 +90,22 @@ internal open class CancellableContinuationImpl<in T>(
      * With a guarantee that after disposal the only state handle may end up in is NonDisposableHandle
      */
     private val _parentHandle = atomic<DisposableHandle?>(null)
-    private val parentHandle: DisposableHandle?
-        get() = _parentHandle.value
+    private val parentHandle: DisposableHandle? get() = _parentHandle.value
 
-    internal val state: Any?
-        get() = _state.value
+    internal val state: Any? get() = _state.value
 
-    public override val isActive: Boolean
-        get() = state is NotCompleted
+    public override val isActive: Boolean get() = state is NotCompleted
 
-    public override val isCompleted: Boolean
-        get() = state !is NotCompleted
+    public override val isCompleted: Boolean get() = state !is NotCompleted
 
-    public override val isCancelled: Boolean
-        get() = state is CancelledContinuation
+    public override val isCancelled: Boolean get() = state is CancelledContinuation
 
     // We cannot invoke `state.toString()` since it may cause a circular dependency
-    private val stateDebugRepresentation
-        get() =
-            when (state) {
-                is NotCompleted -> "Active"
-                is CancelledContinuation -> "Cancelled"
-                else -> "Completed"
-            }
+    private val stateDebugRepresentation get() = when (state) {
+        is NotCompleted -> "Active"
+        is CancelledContinuation -> "Cancelled"
+        else -> "Completed"
+    }
 
     public override fun initCancellability() {
         /*
@@ -154,8 +146,7 @@ internal open class CancellableContinuationImpl<in T>(
         return true
     }
 
-    public override val callerFrame: CoroutineStackFrame?
-        get() = delegate as? CoroutineStackFrame
+    public override val callerFrame: CoroutineStackFrame? get() = delegate as? CoroutineStackFrame
 
     public override fun getStackTraceElement(): StackTraceElement? = null
 
@@ -392,8 +383,7 @@ internal open class CancellableContinuationImpl<in T>(
                 is Active -> {
                     if (_state.compareAndSet(state, handler)) return // quit on cas success
                 }
-                is CancelHandler,
-                is Segment<*> -> multipleHandlersError(handler, state)
+                is CancelHandler, is Segment<*> -> multipleHandlersError(handler, state)
                 is CompletedExceptionally -> {
                     /*
                      * Continuation was already cancelled or completed exceptionally.
@@ -465,20 +455,18 @@ internal open class CancellableContinuationImpl<in T>(
         resumeMode: Int,
         onCancellation: ((cause: Throwable, value: R, context: CoroutineContext) -> Unit)?,
         idempotent: Any?,
-    ): Any? =
-        when {
-            proposedUpdate is CompletedExceptionally -> {
-                assert { idempotent == null } // there are no idempotent exceptional resumes
-                assert { onCancellation == null } // only successful results can be cancelled
-                proposedUpdate
-            }
-            !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
-            onCancellation != null || state is CancelHandler || idempotent != null ->
-                // mark as CompletedContinuation if special cases are present:
-                // Cancellation handlers that shall be called after resume or idempotent resume
-                CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
-            else -> proposedUpdate // simple case -- use the value directly
+    ): Any? = when {
+        proposedUpdate is CompletedExceptionally -> {
+            assert { idempotent == null } // there are no idempotent exceptional resumes
+            assert { onCancellation == null } // only successful results can be cancelled
+            proposedUpdate
         }
+        !resumeMode.isCancellableMode && idempotent == null -> proposedUpdate // cannot be cancelled in process, all is fine
+        onCancellation != null || state is CancelHandler || idempotent != null -> // mark as CompletedContinuation if special cases are present:
+        // Cancellation handlers that shall be called after resume or idempotent resume
+        CompletedContinuation(proposedUpdate, state as? CancelHandler, onCancellation, idempotent)
+        else -> proposedUpdate // simple case -- use the value directly
+    }
 
     internal fun <R> resumeImpl(
         proposedUpdate: R,
@@ -588,11 +576,10 @@ internal open class CancellableContinuationImpl<in T>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> getSuccessfulResult(state: Any?): T =
-        when (state) {
-            is CompletedContinuation<*> -> state.result as T
-            else -> state as T
-        }
+    override fun <T> getSuccessfulResult(state: Any?): T = when (state) {
+        is CompletedContinuation<*> -> state.result as T
+        else -> state as T
+    }
 
     // The exceptional state in CancellableContinuationImpl is stored directly and it is not recovered yet.
     // The stacktrace recovery is invoked here.
@@ -661,8 +648,7 @@ private data class CompletedContinuation<R>(
     @JvmField val idempotentResume: Any? = null,
     @JvmField val cancelCause: Throwable? = null,
 ) {
-    val cancelled: Boolean
-        get() = cancelCause != null
+    val cancelled: Boolean get() = cancelCause != null
 
     fun invokeHandlers(cont: CancellableContinuationImpl<*>, cause: Throwable) {
         cancelHandler?.let { cont.callCancelHandler(it, cause) }
@@ -672,8 +658,7 @@ private data class CompletedContinuation<R>(
 
 // Same as ChildHandleNode, but for cancellable continuation
 private class ChildContinuation(@JvmField val child: CancellableContinuationImpl<*>) : JobNode() {
-    override val onCancelling
-        get() = true
+    override val onCancelling get() = true
 
     override fun invoke(cause: Throwable?) {
         child.parentCancelled(child.getContinuationCancellationCause(job))

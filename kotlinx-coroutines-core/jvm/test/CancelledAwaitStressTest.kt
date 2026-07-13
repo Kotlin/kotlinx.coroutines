@@ -13,12 +13,11 @@ class CancelledAwaitStressTest : TestBase() {
             delay(Long.MAX_VALUE)
         }
         repeat(n) {
-            val waiter =
-                launch(start = CoroutineStart.UNDISPATCHED) {
-                    val a = ByteArray(10000000) // allocate 10M of memory here
-                    d.await()
-                    keepMe(a) // make sure it is kept in state machine
-                }
+            val waiter = launch(start = CoroutineStart.UNDISPATCHED) {
+                val a = ByteArray(10000000) // allocate 10M of memory here
+                d.await()
+                keepMe(a) // make sure it is kept in state machine
+            }
             waiter.cancel() // cancel await
             yield() // complete the waiter job, release its memory
         }
@@ -32,12 +31,11 @@ class CancelledAwaitStressTest : TestBase() {
             delay(Long.MAX_VALUE)
         }
         repeat(n) {
-            val joiner =
-                launch(start = CoroutineStart.UNDISPATCHED) {
-                    val a = ByteArray(10000000) // allocate 10M of memory here
-                    j.join()
-                    keepMe(a) // make sure it is kept in state machine
-                }
+            val joiner = launch(start = CoroutineStart.UNDISPATCHED) {
+                val a = ByteArray(10000000) // allocate 10M of memory here
+                j.join()
+                keepMe(a) // make sure it is kept in state machine
+            }
             joiner.cancel() // cancel join
             yield() // complete the joiner job, release its memory
         }

@@ -117,11 +117,9 @@ private open class ActorCoroutine<E>(
     }
 
     override fun onCancelling(cause: Throwable?) {
-        _channel.cancel(
-            cause?.let {
-                it as? CancellationException ?: CancellationException("$classSimpleName was cancelled", it)
-            }
-        )
+        _channel.cancel(cause?.let {
+            it as? CancellationException ?: CancellationException("$classSimpleName was cancelled", it)
+        })
     }
 
     override fun handleJobException(exception: Throwable): Boolean {
@@ -164,7 +162,7 @@ private class LazyActorCoroutine<E>(
     }
 
     @Suppress(
-        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING"
+        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING",
     ) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     override fun close(cause: Throwable?): Boolean {
         // close the channel _first_
@@ -175,13 +173,11 @@ private class LazyActorCoroutine<E>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override val onSend: SelectClause2<E, SendChannel<E>>
-        get() =
-            SelectClause2Impl(
-                clauseObject = this,
-                regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,
-                processResFunc = super.onSend.processResFunc,
-            )
+    override val onSend: SelectClause2<E, SendChannel<E>> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = LazyActorCoroutine<*>::onSendRegFunction as RegistrationFunction,
+        processResFunc = super.onSend.processResFunc,
+    )
 
     private fun onSendRegFunction(select: SelectInstance<*>, element: Any?) {
         onStart()

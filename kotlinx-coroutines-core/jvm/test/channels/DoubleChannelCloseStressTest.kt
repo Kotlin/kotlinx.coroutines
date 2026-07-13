@@ -10,10 +10,9 @@ class DoubleChannelCloseStressTest : TestBase() {
     @Test
     fun testDoubleCloseStress() {
         repeat(nTimes) {
-            val actor =
-                GlobalScope.actor<Int>(CoroutineName("actor"), start = CoroutineStart.LAZY) {
-                    // empty -- just closes channel
-                }
+            val actor = GlobalScope.actor<Int>(CoroutineName("actor"), start = CoroutineStart.LAZY) {
+            // empty -- just closes channel
+            }
             GlobalScope.launch(CoroutineName("sender")) {
                 try {
                     actor.send(1)

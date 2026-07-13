@@ -10,7 +10,6 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 // -------------------------------- shareIn --------------------------------
-
 /**
  * Converts a _cold_ [Flow] into a _hot_ [SharedFlow] that is started in the given coroutine [scope], sharing emissions from a single
  * running instance of the upstream flow with multiple downstream subscribers, and replaying a specified number of [replay] values to new
@@ -120,13 +119,13 @@ public fun <T> Flow<T>.shareIn(
     replay: Int = 0,
 ): SharedFlow<T> {
     val config = configureSharing(replay)
-    val shared =
-        MutableSharedFlow<T>(
-            replay = replay,
-            extraBufferCapacity = config.extraBufferCapacity,
-            onBufferOverflow = config.onBufferOverflow,
-        )
-    @Suppress("UNCHECKED_CAST") val job = scope.launchSharing(config.context, config.upstream, shared, started, NO_VALUE as T)
+    val shared = MutableSharedFlow<T>(
+        replay = replay,
+        extraBufferCapacity = config.extraBufferCapacity,
+        onBufferOverflow = config.onBufferOverflow,
+    )
+    @Suppress("UNCHECKED_CAST")
+    val job = scope.launchSharing(config.context, config.upstream, shared, started, NO_VALUE as T)
     return ReadonlySharedFlow(shared, job)
 }
 
@@ -148,19 +147,19 @@ private fun <T> Flow<T>.configureSharing(replay: Int): SharingConfig<T> {
         if (upstream != null) { // Yes, it can => eliminate the intermediate channel
             return SharingConfig(
                 upstream = upstream,
-                extraBufferCapacity =
-                    when (capacity) {
-                        Channel.OPTIONAL_CHANNEL,
-                        Channel.BUFFERED,
-                        0 -> // handle special capacities
-                        when {
-                                onBufferOverflow == BufferOverflow.SUSPEND -> // buffer was configured with suspension
-                                if (capacity == 0) 0 else defaultExtraCapacity // keep explicitly configured 0 or use default
-                                replay == 0 -> 1 // no suspension => need at least buffer of one
-                                else -> 0 // replay > 0 => no need for extra buffer beyond replay because we don't suspend
-                            }
-                        else -> capacity // otherwise just use the specified capacity as extra capacity
-                    },
+                extraBufferCapacity = when (capacity) {
+                    Channel.OPTIONAL_CHANNEL,
+                    Channel.BUFFERED,
+                    0 -> // handle special capacities
+                    when {
+                        onBufferOverflow == BufferOverflow.SUSPEND -> // buffer was configured with suspension
+                        if (capacity == 0) 0
+                        else defaultExtraCapacity // keep explicitly configured 0 or use default
+                        replay == 0 -> 1 // no suspension => need at least buffer of one
+                        else -> 0 // replay > 0 => no need for extra buffer beyond replay because we don't suspend
+                    }
+                    else -> capacity // otherwise just use the specified capacity as extra capacity
+                },
                 onBufferOverflow = onBufferOverflow,
                 context = context,
             )
@@ -229,7 +228,6 @@ private fun <T> CoroutineScope.launchSharing(
 }
 
 // -------------------------------- stateIn --------------------------------
-
 /**
  * Converts a _cold_ [Flow] into a _hot_ [StateFlow] that is started in the given coroutine [scope], sharing the most recently emitted value
  * from a single running instance of the upstream flow with multiple downstream subscribers. See the [StateFlow] documentation for the
@@ -322,10 +320,9 @@ private fun <T> CoroutineScope.launchSharingDeferred(
             upstream.collect { value ->
                 state?.let { it.value = value }
                     ?: run {
-                        state =
-                            MutableStateFlow(value).also {
-                                result.complete(Result.success(ReadonlyStateFlow(it, coroutineContext.job)))
-                            }
+                        state = MutableStateFlow(value).also {
+                            result.complete(Result.success(ReadonlyStateFlow(it, coroutineContext.job)))
+                        }
                     }
             }
             if (state == null) {
@@ -341,7 +338,6 @@ private fun <T> CoroutineScope.launchSharingDeferred(
 }
 
 // -------------------------------- asFlow --------------------------------
-
 /**
  * Represents this shared flow and its subtypes as a plain flow, hiding its hot flow characteristics.
  *
@@ -363,10 +359,10 @@ private fun <T> CoroutineScope.launchSharingDeferred(
  * val stateFlow = flow as? StateFlow // null - cast prevented
  * ```
  */
-@ExperimentalCoroutinesApi public fun <T> SharedFlow<T>.asFlow(): Flow<T> = transform { value -> emit(value) }
+@ExperimentalCoroutinesApi
+public fun <T> SharedFlow<T>.asFlow(): Flow<T> = transform { value -> emit(value) }
 
 // -------------------------------- asSharedFlow/asStateFlow --------------------------------
-
 /** Represents this mutable shared flow as a read-only shared flow. */
 public fun <T> MutableSharedFlow<T>.asSharedFlow(): SharedFlow<T> = ReadonlySharedFlow(this, null)
 
@@ -377,7 +373,8 @@ public fun <T> MutableStateFlow<T>.asStateFlow(): StateFlow<T> = ReadonlyStateFl
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlySharedFlow<T>(
     flow: SharedFlow<T>,
-    @Suppress("unused") private val job: Job?, // keeps a strong reference to the job (if present)
+    @Suppress("unused")
+    private val job: Job?, // keeps a strong reference to the job (if present)
 ) : SharedFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T> {
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseSharedFlow(context, capacity, onBufferOverflow)
@@ -387,14 +384,14 @@ private class ReadonlySharedFlow<T>(
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class ReadonlyStateFlow<T>(
     flow: StateFlow<T>,
-    @Suppress("unused") private val job: Job?, // keeps a strong reference to the job (if present)
+    @Suppress("unused")
+    private val job: Job?, // keeps a strong reference to the job (if present)
 ) : StateFlow<T> by flow, CancellableFlow<T>, FusibleFlow<T> {
     override fun fuse(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow) =
         fuseStateFlow(context, capacity, onBufferOverflow)
 }
 
 // -------------------------------- onSubscription --------------------------------
-
 /**
  * Returns a flow that invokes the given [action] **after** this shared flow starts to be collected (after the subscription is registered).
  *

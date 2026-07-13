@@ -22,8 +22,8 @@ internal object Unconfined : CoroutineDispatcher() {
         }
         throw UnsupportedOperationException(
             "Dispatchers.Unconfined.dispatch function can only be used by the yield function. " +
-                "If you wrap Unconfined dispatcher in your code, make sure you properly delegate " +
-                "isDispatchNeeded and dispatch calls."
+            "If you wrap Unconfined dispatcher in your code, make sure you properly delegate " +
+            "isDispatchNeeded and dispatch calls.",
         )
     }
 
@@ -35,5 +35,6 @@ internal object Unconfined : CoroutineDispatcher() {
 internal class YieldContext : AbstractCoroutineContextElement(Key) {
     companion object Key : CoroutineContext.Key<YieldContext>
 
-    @JvmField var dispatcherWasUnconfined = false
+    @JvmField
+    var dispatcherWasUnconfined = false
 }

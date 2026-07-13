@@ -4,8 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.*
 
-internal actual class SafeCollector<T>
-actual constructor(
+internal actual class SafeCollector<T> actual constructor(
     internal actual val collector: FlowCollector<T>,
     internal actual val collectContext: CoroutineContext,
 ) : FlowCollector<T> {

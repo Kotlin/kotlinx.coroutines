@@ -8,13 +8,12 @@ class SafeFlowTest : TestBase() {
 
     @Test
     fun testEmissionsFromDifferentStateMachine() = runTest {
-        val result =
-            flow<Int> {
-                    emit1(1)
-                    emit2(2)
-                }
-                .onEach { yield() }
-                .toList()
+        val result = flow<Int> {
+                emit1(1)
+                emit2(2)
+            }
+            .onEach { yield() }
+            .toList()
         assertEquals(listOf(1, 2), result)
         finish(3)
     }

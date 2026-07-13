@@ -17,12 +17,10 @@ enum class TestBroadcastChannelKind {
 
         override fun toString(): String = "ConflatedBroadcastChannel"
 
-        override val isConflated: Boolean
-            get() = true
+        override val isConflated: Boolean get() = true
     };
 
     abstract fun <T> create(): BroadcastChannel<T>
 
-    open val isConflated: Boolean
-        get() = false
+    open val isConflated: Boolean get() = false
 }

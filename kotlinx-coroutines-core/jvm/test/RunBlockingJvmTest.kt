@@ -103,20 +103,19 @@ class RunBlockingJvmTest : TestBase() {
     fun testNonInterruptibleRunBlockingFailure() {
         val exception = AssertionError()
         startInSeparateThreadAndInterrupt { mayInterrupt ->
-            val exception2 =
-                assertFailsWith<AssertionError> {
-                    runBlockingNonInterruptible {
-                        mayInterrupt()
-                        repeat(10) {
-                            expect(it + 1)
-                            // even thread switches should not be a problem
-                            withContext(Dispatchers.IO) {
-                                delay(1)
-                            }
+            val exception2 = assertFailsWith<AssertionError> {
+                runBlockingNonInterruptible {
+                    mayInterrupt()
+                    repeat(10) {
+                        expect(it + 1)
+                        // even thread switches should not be a problem
+                        withContext(Dispatchers.IO) {
+                            delay(1)
                         }
-                        throw exception
                     }
+                    throw exception
                 }
+            }
             assertTrue(Thread.interrupted())
             assertSame(exception, exception2)
             expect(11)

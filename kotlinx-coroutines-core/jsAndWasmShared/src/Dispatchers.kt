@@ -6,8 +6,7 @@ internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
-    public actual val Main: MainCoroutineDispatcher
-        get() = injectedMainDispatcher ?: mainDispatcher
+    public actual val Main: MainCoroutineDispatcher get() = injectedMainDispatcher ?: mainDispatcher
 
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 

@@ -27,11 +27,10 @@ internal fun throwAsyncJsError(message: String?, className: String?, stack: Stri
             // Fallback for old browsers (pre-2022), Node.js
             setTimeout(function () { throw error }, 0);
         }
-    """
+    """,
     )
 }
 
-internal actual fun propagateExceptionFinalResort(exception: Throwable) =
-    with(exception) {
-        throwAsyncJsError(message, this::class.simpleName, stackTraceToString())
-    }
+internal actual fun propagateExceptionFinalResort(exception: Throwable) = with(exception) {
+    throwAsyncJsError(message, this::class.simpleName, stackTraceToString())
+}

@@ -18,8 +18,7 @@ internal const val STEAL_ANY: StealingMode = 3
 internal const val STEAL_CPU_ONLY: StealingMode = 2
 internal const val STEAL_BLOCKING_ONLY: StealingMode = 1
 
-internal inline val Task.maskForStealingMode: Int
-    get() = if (isBlocking) STEAL_BLOCKING_ONLY else STEAL_CPU_ONLY
+internal inline val Task.maskForStealingMode: Int get() = if (isBlocking) STEAL_BLOCKING_ONLY else STEAL_CPU_ONLY
 
 /**
  * Tightly coupled with [CoroutineScheduler] queue of pending tasks, but extracted to separate file for simplicity. At any moment queue is
@@ -56,11 +55,9 @@ internal class WorkQueue {
      * Negative sizes can be observed only when non-owner reads the size, which happens only
      * for diagnostic toString().
      */
-    private val bufferSize: Int
-        get() = producerIndex.value - consumerIndex.value
+    private val bufferSize: Int get() = producerIndex.value - consumerIndex.value
 
-    internal val size: Int
-        get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
+    internal val size: Int get() = if (lastScheduledTask.value != null) bufferSize + 1 else bufferSize
 
     private val buffer: AtomicReferenceArray<Task?> = AtomicReferenceArray(BUFFER_CAPACITY)
     private val lastScheduledTask = atomic<Task?>(null)
@@ -114,11 +111,10 @@ internal class WorkQueue {
      * - [STEAL_CPU_ONLY] is a kludge for `runSingleTaskFromCurrentSystemDispatcher`
      */
     fun trySteal(stealingMode: StealingMode, stolenTaskRef: ObjectRef<Task?>): Long {
-        val task =
-            when (stealingMode) {
-                STEAL_ANY -> pollBuffer()
-                else -> stealWithExclusiveMode(onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY)
-            }
+        val task = when (stealingMode) {
+            STEAL_ANY -> pollBuffer()
+            else -> stealWithExclusiveMode(onlyBlocking = stealingMode == STEAL_BLOCKING_ONLY)
+        }
 
         if (task != null) {
             stolenTaskRef.element = task
@@ -128,7 +124,7 @@ internal class WorkQueue {
     }
 
     // Steal only tasks of a particular kind, potentially invoking full queue scan
-    private fun stealWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
+    private fun stealWithExclusiveMode( /* Only blocking OR only CPU */onlyBlocking: Boolean): Task? {
         var start = consumerIndex.value
         val end = producerIndex.value
         // Bail out if there is no blocking work for us
@@ -144,7 +140,7 @@ internal class WorkQueue {
     // NB: ONLY for runSingleTask method
     fun pollBlocking(): Task? = pollWithExclusiveMode(onlyBlocking = true /* only blocking */)
 
-    private fun pollWithExclusiveMode(/* Only blocking OR only CPU */ onlyBlocking: Boolean): Task? {
+    private fun pollWithExclusiveMode( /* Only blocking OR only CPU */onlyBlocking: Boolean): Task? {
         while (true) { // Poll the slot
             val lastScheduled = lastScheduledTask.value ?: break
             if (lastScheduled.isBlocking != onlyBlocking) break

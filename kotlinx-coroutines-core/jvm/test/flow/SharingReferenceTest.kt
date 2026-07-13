@@ -15,7 +15,8 @@ class SharingReferenceTest : TestBase() {
      * Without that, it's possible to have a situation where target flow is still
      * being strongly referenced (by its dispatcher), but the test already tries to test reachability and fails.
      */
-    @get:Rule val executor = ExecutorRule(1)
+    @get:Rule
+    val executor = ExecutorRule(1)
 
     private val weakEmitter = flow {
         emit(null)

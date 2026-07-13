@@ -9,7 +9,8 @@ import org.junit.rules.*
 
 class StackTraceRecoverySelectTest : TestBase() {
 
-    @get:Rule val name = TestName()
+    @get:Rule
+    val name = TestName()
 
     @Test
     fun testSelectJoin() = runTest {

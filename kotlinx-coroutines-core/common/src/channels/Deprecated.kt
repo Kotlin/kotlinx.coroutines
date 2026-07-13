@@ -166,15 +166,14 @@ public suspend fun <E> ReceiveChannel<E>.singleOrNull(): E? = consume {
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
+public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> = GlobalScope
+    .produce(context, onCompletion = consumes()) {
         require(n >= 0) { "Requested element count $n is less than zero." }
         var remaining: Int = n
-        if (remaining > 0)
-            for (e in this@drop) {
-                remaining--
-                if (remaining == 0) break
-            }
+        if (remaining > 0) for (e in this@drop) {
+            remaining--
+            if (remaining == 0) break
+        }
         for (e in this@drop) {
             send(e)
         }
@@ -185,42 +184,39 @@ public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Dispat
 public fun <E> ReceiveChannel<E>.dropWhile(
     context: CoroutineContext = Dispatchers.Unconfined,
     predicate: suspend (E) -> Boolean,
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        for (e in this@dropWhile) {
-            if (!predicate(e)) {
-                send(e)
-                break
-            }
-        }
-        for (e in this@dropWhile) {
+): ReceiveChannel<E> = GlobalScope.produce(context, onCompletion = consumes()) {
+    for (e in this@dropWhile) {
+        if (!predicate(e)) {
             send(e)
+            break
         }
     }
+    for (e in this@dropWhile) {
+        send(e)
+    }
+}
 
 @PublishedApi
 internal fun <E> ReceiveChannel<E>.filter(
     context: CoroutineContext = Dispatchers.Unconfined,
     predicate: suspend (E) -> Boolean,
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        for (e in this@filter) {
-            if (predicate(e)) send(e)
-        }
+): ReceiveChannel<E> = GlobalScope.produce(context, onCompletion = consumes()) {
+    for (e in this@filter) {
+        if (predicate(e)) send(e)
     }
+}
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
 public fun <E> ReceiveChannel<E>.filterIndexed(
     context: CoroutineContext = Dispatchers.Unconfined,
     predicate: suspend (index: Int, E) -> Boolean,
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        var index = 0
-        for (e in this@filterIndexed) {
-            if (predicate(index++, e)) send(e)
-        }
+): ReceiveChannel<E> = GlobalScope.produce(context, onCompletion = consumes()) {
+    var index = 0
+    for (e in this@filterIndexed) {
+        if (predicate(index++, e)) send(e)
     }
+}
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -253,8 +249,8 @@ public suspend fun <E : Any, C : SendChannel<E>> ReceiveChannel<E?>.filterNotNul
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
-public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
+public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> = GlobalScope
+    .produce(context, onCompletion = consumes()) {
         if (n == 0) return@produce
         require(n >= 0) { "Requested element count $n is less than zero." }
         var remaining: Int = n
@@ -270,13 +266,12 @@ public fun <E> ReceiveChannel<E>.take(n: Int, context: CoroutineContext = Dispat
 public fun <E> ReceiveChannel<E>.takeWhile(
     context: CoroutineContext = Dispatchers.Unconfined,
     predicate: suspend (E) -> Boolean,
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        for (e in this@takeWhile) {
-            if (!predicate(e)) return@produce
-            send(e)
-        }
+): ReceiveChannel<E> = GlobalScope.produce(context, onCompletion = consumes()) {
+    for (e in this@takeWhile) {
+        if (!predicate(e)) return@produce
+        send(e)
     }
+}
 
 @PublishedApi
 internal suspend fun <E, C : SendChannel<E>> ReceiveChannel<E>.toChannel(destination: C): C {
@@ -319,35 +314,32 @@ public suspend fun <E> ReceiveChannel<E>.toSet(): Set<E> = this.toMutableSet()
 public fun <E, R> ReceiveChannel<E>.flatMap(
     context: CoroutineContext = Dispatchers.Unconfined,
     transform: suspend (E) -> ReceiveChannel<R>,
-): ReceiveChannel<R> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        for (e in this@flatMap) {
-            transform(e).toChannel(this)
-        }
+): ReceiveChannel<R> = GlobalScope.produce(context, onCompletion = consumes()) {
+    for (e in this@flatMap) {
+        transform(e).toChannel(this)
     }
+}
 
 @PublishedApi
 internal fun <E, R> ReceiveChannel<E>.map(
     context: CoroutineContext = Dispatchers.Unconfined,
     transform: suspend (E) -> R,
-): ReceiveChannel<R> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        consumeEach {
-            send(transform(it))
-        }
+): ReceiveChannel<R> = GlobalScope.produce(context, onCompletion = consumes()) {
+    consumeEach {
+        send(transform(it))
     }
+}
 
 @PublishedApi
 internal fun <E, R> ReceiveChannel<E>.mapIndexed(
     context: CoroutineContext = Dispatchers.Unconfined,
     transform: suspend (index: Int, E) -> R,
-): ReceiveChannel<R> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        var index = 0
-        for (e in this@mapIndexed) {
-            send(transform(index++, e))
-        }
+): ReceiveChannel<R> = GlobalScope.produce(context, onCompletion = consumes()) {
+    var index = 0
+    for (e in this@mapIndexed) {
+        send(transform(index++, e))
     }
+}
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -381,19 +373,19 @@ public fun <E> ReceiveChannel<E>.distinct(): ReceiveChannel<E> = this.distinctBy
 internal fun <E, K> ReceiveChannel<E>.distinctBy(
     context: CoroutineContext = Dispatchers.Unconfined,
     selector: suspend (E) -> K,
-): ReceiveChannel<E> =
-    GlobalScope.produce(context, onCompletion = consumes()) {
-        val keys = HashSet<K>()
-        for (e in this@distinctBy) {
-            val k = selector(e)
-            if (k !in keys) {
-                send(e)
-                keys += k
-            }
+): ReceiveChannel<E> = GlobalScope.produce(context, onCompletion = consumes()) {
+    val keys = HashSet<K>()
+    for (e in this@distinctBy) {
+        val k = selector(e)
+        if (k !in keys) {
+            send(e)
+            keys += k
         }
     }
+}
 
-@PublishedApi internal suspend fun <E> ReceiveChannel<E>.toMutableSet(): MutableSet<E> = toCollection(LinkedHashSet())
+@PublishedApi
+internal suspend fun <E> ReceiveChannel<E>.toMutableSet(): MutableSet<E> = toCollection(LinkedHashSet())
 
 /** @suppress * */
 @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
@@ -456,15 +448,14 @@ internal fun <E, R, V> ReceiveChannel<E>.zip(
     other: ReceiveChannel<R>,
     context: CoroutineContext = Dispatchers.Unconfined,
     transform: (a: E, b: R) -> V,
-): ReceiveChannel<V> =
-    GlobalScope.produce(context, onCompletion = consumesAll(this, other)) {
-        val otherIterator = other.iterator()
-        this@zip.consumeEach { element1 ->
-            if (!otherIterator.hasNext()) return@consumeEach
-            val element2 = otherIterator.next()
-            send(transform(element1, element2))
-        }
+): ReceiveChannel<V> = GlobalScope.produce(context, onCompletion = consumesAll(this, other)) {
+    val otherIterator = other.iterator()
+    this@zip.consumeEach { element1 ->
+        if (!otherIterator.hasNext()) return@consumeEach
+        val element2 = otherIterator.next()
+        send(transform(element1, element2))
     }
+}
 
 @PublishedApi // Binary compatibility
 internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwable? ->
@@ -598,8 +589,8 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun <E> CoroutineScope.produce(

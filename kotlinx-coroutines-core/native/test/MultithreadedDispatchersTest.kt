@@ -46,16 +46,14 @@ class MultithreadedDispatchersTest {
         try {
             runBlocking {
                 val encounteredWorkers = mutableSetOf<Worker>()
-                val coroutine1 =
-                    launch(dispatcher) {
-                        barrier.await()
-                        spin(encounteredWorkers)
-                    }
-                val coroutine2 =
-                    launch(dispatcher) {
-                        barrier.await()
-                        spin(encounteredWorkers)
-                    }
+                val coroutine1 = launch(dispatcher) {
+                    barrier.await()
+                    spin(encounteredWorkers)
+                }
+                val coroutine2 = launch(dispatcher) {
+                    barrier.await()
+                    spin(encounteredWorkers)
+                }
                 listOf(coroutine1, coroutine2).joinAll()
                 assertEquals(2, encounteredWorkers.size)
             }

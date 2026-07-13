@@ -48,12 +48,11 @@ class DefaultExecutorStressTest : TestBase() {
         runTest {
             awaitWorkerShutdown() // so that the worker shuts down after the initial launch
             repeat(iterations) {
-                val job =
-                    launch(Dispatchers.Unconfined) {
-                        // this line runs in the main thread
-                        delay(1)
-                        // this line runs in the DefaultExecutor worker
-                    }
+                val job = launch(Dispatchers.Unconfined) {
+                    // this line runs in the main thread
+                    delay(1)
+                // this line runs in the DefaultExecutor worker
+                }
                 delay(100) // yield the execution, allow the worker to spawn
                 assertTrue(DefaultExecutor.isThreadPresent) // the worker spawned
                 job.join()

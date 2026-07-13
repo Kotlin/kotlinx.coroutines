@@ -9,7 +9,7 @@ import kotlin.coroutines.CoroutineContext
  */
 public data class CoroutineName(
     /** User-defined coroutine name. */
-    val name: String
+    val name: String,
 ) : AbstractCoroutineContextElement(CoroutineName) {
     /** Key for [CoroutineName] instance in the coroutine context. */
     public companion object Key : CoroutineContext.Key<CoroutineName>

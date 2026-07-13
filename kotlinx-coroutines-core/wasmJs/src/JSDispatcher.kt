@@ -38,9 +38,8 @@ internal class NodeDispatcher(private val process: JsProcess) : SetTimeoutBasedD
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): Unit =
-    js(
-        """{
+private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): Unit = js(
+    """{
     const handler = (event) => {
         if (event.source == window && event.data == 'dispatchCoroutine') {
             event.stopPropagation();
@@ -48,8 +47,8 @@ private fun subscribeToWindowMessages(window: W3CWindow, process: () -> Unit): U
         }
     }
     window.addEventListener('message', handler, true);
-}"""
-    )
+}""",
+)
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")

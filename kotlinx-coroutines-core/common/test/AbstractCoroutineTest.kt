@@ -10,26 +10,25 @@ class AbstractCoroutineTest : TestBase() {
     fun testNotifications() = runTest {
         expect(1)
         val coroutineContext = coroutineContext // workaround for KT-22984
-        val coroutine =
-            object : AbstractCoroutine<String>(coroutineContext, true, false) {
-                override fun onStart() {
-                    expect(3)
-                }
-
-                override fun onCancelling(cause: Throwable?) {
-                    assertNull(cause)
-                    expect(5)
-                }
-
-                override fun onCompleted(value: String) {
-                    assertEquals("OK", value)
-                    expect(6)
-                }
-
-                override fun onCancelled(cause: Throwable, handled: Boolean) {
-                    expectUnreached()
-                }
+        val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
+            override fun onStart() {
+                expect(3)
             }
+
+            override fun onCancelling(cause: Throwable?) {
+                assertNull(cause)
+                expect(5)
+            }
+
+            override fun onCompleted(value: String) {
+                assertEquals("OK", value)
+                expect(6)
+            }
+
+            override fun onCancelled(cause: Throwable, handled: Boolean) {
+                expectUnreached()
+            }
+        }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
             assertNull(it)
@@ -51,26 +50,25 @@ class AbstractCoroutineTest : TestBase() {
     fun testNotificationsWithException() = runTest {
         expect(1)
         val coroutineContext = coroutineContext // workaround for KT-22984
-        val coroutine =
-            object : AbstractCoroutine<String>(coroutineContext + NonCancellable, true, false) {
-                override fun onStart() {
-                    expect(3)
-                }
-
-                override fun onCancelling(cause: Throwable?) {
-                    assertIs<TestException1>(cause)
-                    expect(5)
-                }
-
-                override fun onCompleted(value: String) {
-                    expectUnreached()
-                }
-
-                override fun onCancelled(cause: Throwable, handled: Boolean) {
-                    assertIs<TestException1>(cause)
-                    expect(8)
-                }
+        val coroutine = object : AbstractCoroutine<String>(coroutineContext + NonCancellable, true, false) {
+            override fun onStart() {
+                expect(3)
             }
+
+            override fun onCancelling(cause: Throwable?) {
+                assertIs<TestException1>(cause)
+                expect(5)
+            }
+
+            override fun onCompleted(value: String) {
+                expectUnreached()
+            }
+
+            override fun onCancelled(cause: Throwable, handled: Boolean) {
+                assertIs<TestException1>(cause)
+                expect(8)
+            }
+        }
 
         coroutine.invokeOnCompletion(onCancelling = true) {
             assertIs<TestException1>(it)

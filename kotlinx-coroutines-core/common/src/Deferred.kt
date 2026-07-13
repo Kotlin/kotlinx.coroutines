@@ -78,7 +78,8 @@ public interface Deferred<out T> : Job {
      *
      * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */
-    @ExperimentalCoroutinesApi public fun getCompleted(): T
+    @ExperimentalCoroutinesApi
+    public fun getCompleted(): T
 
     /**
      * Returns *completion exception* result if this deferred was [cancelled][isCancelled] and has [completed][isCompleted], `null` if it
@@ -89,5 +90,6 @@ public interface Deferred<out T> : Job {
      *
      * **Note: This is an experimental api.** This function may be removed or renamed in the future.
      */
-    @ExperimentalCoroutinesApi public fun getCompletionExceptionOrNull(): Throwable?
+    @ExperimentalCoroutinesApi
+    public fun getCompletionExceptionOrNull(): Throwable?
 }

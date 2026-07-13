@@ -23,16 +23,14 @@ class JobActivationStressTest : TestBase() {
         val scope = CoroutineScope(pool)
         repeat(N_ITERATIONS) {
             var wasStarted = false
-            val d =
-                scope.async(NonCancellable, start = CoroutineStart.LAZY) {
-                    wasStarted = true
-                    throw TestException()
-                }
+            val d = scope.async(NonCancellable, start = CoroutineStart.LAZY) {
+                wasStarted = true
+                throw TestException()
+            }
             // need to add on completion handler
-            val causeHolder =
-                object {
-                    var cause: Throwable? = null
-                }
+            val causeHolder = object {
+                var cause: Throwable? = null
+            }
             // we use synchronization on causeHolder to work around the fact that completion listeners
             // are invoked after the job is in the final state, so when "d.join()" completes there is
             // no guarantee that this listener was already invoked
@@ -57,11 +55,10 @@ class JobActivationStressTest : TestBase() {
             if (wasStarted) {
                 val exception = d.getCompletionExceptionOrNull()
                 assertIs<TestException>(exception, "exception=$exception")
-                val cause =
-                    synchronized(causeHolder) {
-                        while (causeHolder.cause == null) (causeHolder as Object).wait()
-                        causeHolder.cause
-                    }
+                val cause = synchronized(causeHolder) {
+                    while (causeHolder.cause == null) (causeHolder as Object).wait()
+                    causeHolder.cause
+                }
                 assertIs<TestException>(cause, "cause=$cause")
             }
         }

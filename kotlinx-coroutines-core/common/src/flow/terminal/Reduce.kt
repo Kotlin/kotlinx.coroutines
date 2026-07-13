@@ -15,12 +15,12 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
     var accumulator: Any? = NULL
 
     collect { value ->
-        accumulator =
-            if (accumulator !== NULL) {
-                @Suppress("UNCHECKED_CAST") operation(accumulator as S, value)
-            } else {
-                value
-            }
+        accumulator = if (accumulator !== NULL) {
+            @Suppress("UNCHECKED_CAST")
+            operation(accumulator as S, value)
+        } else {
+            value
+        }
     }
 
     if (accumulator === NULL) throw NoSuchElementException("Empty flow can't be reduced")

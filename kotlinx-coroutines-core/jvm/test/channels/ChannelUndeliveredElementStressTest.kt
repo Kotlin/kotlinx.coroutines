@@ -33,7 +33,8 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     private val senderDone = Channel<Boolean>(1)
     private val receiverDone = Channel<Boolean>(1)
 
-    @Volatile private var lastReceived = -1L
+    @Volatile
+    private var lastReceived = -1L
 
     private var stoppedSender = 0L
     private var stoppedReceiver = 0L
@@ -134,38 +135,37 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
             if (sentCnt - failedToDeliverCnt != receivedCnt) {
                 println(
                     "!!! Error for value $x: " +
-                        "sentStatus=${sentStatus[x]}, " +
-                        "receivedStatus=${receivedStatus[x]}, " +
-                        "failedStatus=${failedStatus[x]}"
+                    "sentStatus=${sentStatus[x]}, " +
+                    "receivedStatus=${receivedStatus[x]}, " +
+                    "failedStatus=${failedStatus[x]}",
                 )
             }
         }
     }
 
     private fun launchSender() {
-        sender =
-            scope.launch(start = CoroutineStart.ATOMIC) {
-                cancellable(senderDone) {
-                    var counter = 0
-                    while (true) {
-                        val trySendData = Data(sentCnt++)
-                        val sendMode = Random.nextInt(2) + 1
-                        sentStatus[trySendData.x] = sendMode
-                        when (sendMode) {
-                            1 -> channel.send(trySendData)
-                            2 -> select<Unit> { channel.onSend(trySendData) {} }
-                            else -> error("cannot happen")
-                        }
-                        sentStatus[trySendData.x] = sendMode + 2
-                        when {
-                            // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
-                            kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 100) yield()
-                            // yield periodically to check cancellation on conflated channels
-                            kind.isConflated -> if (counter++ % 100 == 0) yield()
-                        }
+        sender = scope.launch(start = CoroutineStart.ATOMIC) {
+            cancellable(senderDone) {
+                var counter = 0
+                while (true) {
+                    val trySendData = Data(sentCnt++)
+                    val sendMode = Random.nextInt(2) + 1
+                    sentStatus[trySendData.x] = sendMode
+                    when (sendMode) {
+                        1 -> channel.send(trySendData)
+                        2 -> select<Unit> { channel.onSend(trySendData) {} }
+                        else -> error("cannot happen")
+                    }
+                    sentStatus[trySendData.x] = sendMode + 2
+                    when {
+                        // must artificially slow down LINKED_LIST sender to avoid overwhelming receiver and going OOM
+                        kind == TestChannelKind.UNLIMITED -> while (sentCnt > lastReceived + 100) yield()
+                        // yield periodically to check cancellation on conflated channels
+                        kind.isConflated -> if (counter++ % 100 == 0) yield()
                     }
                 }
             }
+        }
     }
 
     private suspend fun stopSender() {
@@ -175,34 +175,32 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
     }
 
     private fun launchReceiver() {
-        receiver =
-            scope.launch(start = CoroutineStart.ATOMIC) {
-                cancellable(receiverDone) {
-                    while (true) {
-                        val receiveMode = Random.nextInt(6) + 1
-                        val receivedData =
-                            when (receiveMode) {
-                                1 -> channel.receive()
-                                2 -> select { channel.onReceive { it } }
-                                3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
-                                4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
-                                5 -> channel.receiveCatching().getOrThrow()
-                                6 -> {
-                                    val iterator = channel.iterator()
-                                    check(iterator.hasNext()) { "Should not be closed" }
-                                    iterator.next()
-                                }
-                                else -> error("cannot happen")
-                            }
-                        receivedData.onReceived()
-                        receivedCnt++
-                        val received = receivedData.x
-                        if (received <= lastReceived) dupCnt++
-                        lastReceived = received
-                        receivedStatus[received] = receiveMode
+        receiver = scope.launch(start = CoroutineStart.ATOMIC) {
+            cancellable(receiverDone) {
+                while (true) {
+                    val receiveMode = Random.nextInt(6) + 1
+                    val receivedData = when (receiveMode) {
+                        1 -> channel.receive()
+                        2 -> select { channel.onReceive { it } }
+                        3 -> channel.receiveCatching().getOrElse { error("Should not be closed") }
+                        4 -> select { channel.onReceiveCatching { it.getOrElse { error("Should not be closed") } } }
+                        5 -> channel.receiveCatching().getOrThrow()
+                        6 -> {
+                            val iterator = channel.iterator()
+                            check(iterator.hasNext()) { "Should not be closed" }
+                            iterator.next()
+                        }
+                        else -> error("cannot happen")
                     }
+                    receivedData.onReceived()
+                    receivedCnt++
+                    val received = receivedData.x
+                    if (received <= lastReceived) dupCnt++
+                    lastReceived = received
+                    receivedStatus[received] = receiveMode
                 }
             }
+        }
     }
 
     private suspend fun drainReceiver() {
@@ -246,11 +244,9 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
         private val _min = atomic(Long.MAX_VALUE)
         private val _max = atomic(-1L)
 
-        val min: Long
-            get() = _min.value
+        val min: Long get() = _min.value
 
-        val max: Long
-            get() = _max.value
+        val max: Long get() = _max.value
 
         operator fun set(x: Long, value: Int) {
             a[(x and mask).toInt()] = value.toByte()
@@ -270,5 +266,6 @@ class ChannelUndeliveredElementStressTest(private val kind: TestChannelKind) : T
 }
 
 private const val TRACING_ENABLED = false // Change to `true` to enable the tracing
-private val DUMMY_TRACE_EXCEPTION =
-    Exception("The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.")
+private val DUMMY_TRACE_EXCEPTION = Exception(
+    "The tracing is disabled; please enable it by changing the `TRACING_ENABLED` constant to `true`.",
+)

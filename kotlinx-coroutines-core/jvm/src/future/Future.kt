@@ -67,8 +67,8 @@ public fun <T> CoroutineScope.future(
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun <T> CoroutineScope.future(
@@ -131,11 +131,9 @@ public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
 
 private fun Job.setupCancellation(future: CompletableFuture<*>) {
     future.handle { _, exception ->
-        cancel(
-            exception?.let {
-                it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
-            }
-        )
+        cancel(exception?.let {
+            it as? CancellationException ?: CancellationException("CompletableFuture was completed exceptionally", it)
+        })
     }
 }
 
@@ -151,7 +149,8 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     // Fast path if already completed
     if (future.isDone) {
         return try {
-            @Suppress("UNCHECKED_CAST") CompletableDeferred(future.get() as T)
+            @Suppress("UNCHECKED_CAST")
+            CompletableDeferred(future.get() as T)
         } catch (e: Throwable) {
             // unwrap original cause from ExecutionException
             val original = (e as? ExecutionException)?.cause ?: e
@@ -227,8 +226,7 @@ private class ContinuationHandler<T>(@Volatile @JvmField var cont: Continuation<
 }
 
 private class CancelFutureOnCompletion(private val future: Future<*>) : JobNode() {
-    override val onCancelling
-        get() = false
+    override val onCancelling get() = false
 
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this

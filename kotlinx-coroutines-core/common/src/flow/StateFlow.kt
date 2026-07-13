@@ -162,10 +162,10 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
 }
 
 /** Creates a [MutableStateFlow] with the given initial [value]. */
-@Suppress("FunctionName") public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
+@Suppress("FunctionName")
+public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
 
 // ------------------------------------ Update methods ------------------------------------
-
 /**
  * Updates the [MutableStateFlow.value] atomically using the specified [function] of its value, and returns the new value.
  *
@@ -212,7 +212,6 @@ public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
 }
 
 // ------------------------------------ Implementation ------------------------------------
-
 private val NONE = Symbol("NONE")
 
 private val PENDING = Symbol("PENDING")
@@ -268,11 +267,10 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
         }
     }
 
-    fun takePending(): Boolean =
-        _state.getAndSet(NONE)!!.let { state ->
-            assert { state !is CancellableContinuationImpl<*> }
-            return state === PENDING
-        }
+    fun takePending(): Boolean = _state.getAndSet(NONE)!!.let { state ->
+        assert { state !is CancellableContinuationImpl<*> }
+        return state === PENDING
+    }
 
     suspend fun awaitPending(): Unit = suspendCancellableCoroutine sc@{ cont ->
         assert { _state.value !is CancellableContinuationImpl<*> } // can be NONE or PENDING
@@ -286,6 +284,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class StateFlowImpl<T>(
     initialState: Any // T | NULL
+    ,
 ) : AbstractSharedFlow<StateFlowSlot>(), MutableStateFlow<T>, CancellableFlow<T>, FusibleFlow<T> {
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
@@ -341,8 +340,7 @@ private class StateFlowImpl<T>(
         }
     }
 
-    override val replayCache: List<T>
-        get() = listOf(value)
+    override val replayCache: List<T> get() = listOf(value)
 
     override fun tryEmit(value: T): Boolean {
         this.value = value

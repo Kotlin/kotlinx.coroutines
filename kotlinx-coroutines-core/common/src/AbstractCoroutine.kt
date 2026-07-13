@@ -48,14 +48,13 @@ public abstract class AbstractCoroutine<in T>(
     }
 
     /** The context of this coroutine that includes this coroutine as a [Job]. */
-    @Suppress("LeakingThis") public final override val context: CoroutineContext = parentContext + this
+    @Suppress("LeakingThis")
+    public final override val context: CoroutineContext = parentContext + this
 
     /** The context of this scope which is the same as the [context] of this coroutine. */
-    public override val coroutineContext: CoroutineContext
-        get() = context
+    public override val coroutineContext: CoroutineContext get() = context
 
-    override val isActive: Boolean
-        get() = super.isActive
+    override val isActive: Boolean get() = super.isActive
 
     /**
      * This function is invoked once when the job was completed normally with the specified [value], right before all the waiters for the

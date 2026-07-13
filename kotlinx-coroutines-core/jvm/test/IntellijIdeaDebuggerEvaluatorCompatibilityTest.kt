@@ -26,24 +26,22 @@ class IntellijIdeaDebuggerEvaluatorCompatibilityTest {
      *
      * Note that this behaviour is not carved in stone: IDEA fallbacks to `kotlin.coroutines.coroutineContext` for the context if necessary.
      */
-
     @Test
-    fun testScopeIsAccessible() =
-        runBlocking<Unit> {
+    fun testScopeIsAccessible() = runBlocking<Unit> {
+        verify()
+
+        withContext(Job()) {
             verify()
-
-            withContext(Job()) {
-                verify()
-            }
-
-            coroutineScope {
-                verify()
-            }
-
-            supervisorScope {
-                verify()
-            }
         }
+
+        coroutineScope {
+            verify()
+        }
+
+        supervisorScope {
+            verify()
+        }
+    }
 
     private suspend fun verify() {
         val ctx = coroutineContext

@@ -33,24 +33,22 @@ public actual open class LockFreeLinkedListNode {
 
     private fun removed(): Removed = _removedRef.value ?: Removed(this).also { _removedRef.lazySet(it) }
 
-    public actual open val isRemoved: Boolean
-        get() = next is Removed
+    public actual open val isRemoved: Boolean get() = next is Removed
 
     // LINEARIZABLE. Returns Node | Removed
-    public val next: Any
-        get() = _next.value
+    public val next: Any get() = _next.value
 
     // LINEARIZABLE. Returns next non-removed Node
-    public actual val nextNode: Node
-        get() = next.let { (it as? Removed)?.ref ?: it as Node } // unwraps the `next` node
+    public actual val nextNode: Node get() = next.let {
+        (it as? Removed)?.ref ?: it as Node
+    } // unwraps the `next` node
 
     // LINEARIZABLE WHEN THIS NODE IS NOT REMOVED:
     // Returns prev non-removed Node, makes sure prev is correct (prev.next === this)
     // NOTE: if this node is removed, then returns non-removed previous node without applying
     // prev.next correction, which does not provide linearizable backwards iteration, but can be used to
     // resume forward iteration when current node was removed.
-    public actual val prevNode: Node
-        get() = correctPrev() ?: findPrevNonRemoved(_prev.value)
+    public actual val prevNode: Node get() = correctPrev() ?: findPrevNonRemoved(_prev.value)
 
     private tailrec fun findPrevNonRemoved(current: Node): Node {
         if (!current.isRemoved) return current
@@ -58,7 +56,6 @@ public actual open class LockFreeLinkedListNode {
     }
 
     // ------ addOneIfEmpty ------
-
     public actual fun addOneIfEmpty(node: Node): Boolean {
         node._prev.lazySet(this)
         node._next.lazySet(this)
@@ -74,14 +71,13 @@ public actual open class LockFreeLinkedListNode {
     }
 
     // ------ addLastXXX ------
-
     /** Adds last item to this list. Returns `false` if the list is closed. */
     public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean {
         while (true) { // lock-free loop on prev.next
             val currentPrev = prevNode
             return when {
-                currentPrev is ListClosed ->
-                    currentPrev.forbiddenElementsBitmask and permissionsBitmask == 0 && currentPrev.addLast(node, permissionsBitmask)
+                currentPrev is ListClosed -> currentPrev.forbiddenElementsBitmask and permissionsBitmask == 0 &&
+                    currentPrev.addLast(node, permissionsBitmask)
                 currentPrev.addNext(node, this) -> true
                 else -> continue
             }
@@ -128,7 +124,6 @@ public actual open class LockFreeLinkedListNode {
     }
 
     // ------ removeXXX ------
-
     /**
      * Removes this node from the list. Returns `true` when removed successfully, or `false` if the node was already removed or if it was
      * not added to any list in the first place.
@@ -156,9 +151,7 @@ public actual open class LockFreeLinkedListNode {
 
     // This is Harris's RDCSS (Restricted Double-Compare Single Swap) operation
     // It inserts "op" descriptor of when "op" status is still undecided (rolls back otherwise)
-
     // ------ other helpers ------
-
     /**
      * Given:
      * ```
@@ -273,8 +266,7 @@ public actual open class LockFreeLinkedListHead : LockFreeLinkedListNode() {
     public actual final override fun remove(): Nothing = error("head cannot be removed")
 
     // optimization: because head is never removed, we don't have to read _next.value to check these:
-    override val isRemoved: Boolean
-        get() = false
+    override val isRemoved: Boolean get() = false
 }
 
 private class ListClosed(@JvmField val forbiddenElementsBitmask: Int) : LockFreeLinkedListNode()

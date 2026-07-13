@@ -62,32 +62,30 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
     }
 
     var leftoverContext = appendContext
-    val folded =
-        originalContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
-            if (element !is CopyableThreadContextElement<*>) return@fold result + element
-            // Will this element be overwritten?
-            val newElement = leftoverContext[element.key]
-            // No, just copy it
-            if (newElement == null) {
-                // For 'withContext'-like builders we do not copy as the element is not shared
-                return@fold result + if (isNewCoroutine) element.copyForChild() else element
-            }
-            // Yes, then first remove the element from append context
-            leftoverContext = leftoverContext.minusKey(element.key)
-            // Return the sum
-            @Suppress("UNCHECKED_CAST")
-            return@fold result + (element as CopyableThreadContextElement<Any?>).mergeForChild(newElement)
+    val folded = originalContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
+        if (element !is CopyableThreadContextElement<*>) return@fold result + element
+        // Will this element be overwritten?
+        val newElement = leftoverContext[element.key]
+        // No, just copy it
+        if (newElement == null) {
+            // For 'withContext'-like builders we do not copy as the element is not shared
+            return@fold result + if (isNewCoroutine) element.copyForChild() else element
         }
+        // Yes, then first remove the element from append context
+        leftoverContext = leftoverContext.minusKey(element.key)
+        // Return the sum
+        @Suppress("UNCHECKED_CAST")
+        return@fold result + (element as CopyableThreadContextElement<Any?>).mergeForChild(newElement)
+    }
 
     if (hasElementsRight) {
-        leftoverContext =
-            leftoverContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
-                // We're appending new context element -- we have to copy it, otherwise it may be shared with others
-                if (element is CopyableThreadContextElement<*>) {
-                    return@fold result + element.copyForChild()
-                }
-                return@fold result + element
+        leftoverContext = leftoverContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
+            // We're appending new context element -- we have to copy it, otherwise it may be shared with others
+            if (element is CopyableThreadContextElement<*>) {
+                return@fold result + element.copyForChild()
             }
+            return@fold result + element
+        }
     }
     return folded + leftoverContext
 }
@@ -106,13 +104,12 @@ internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, c
 internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
     val context = continuation.context
     val oldValue = updateThreadContext(context, countOrElement)
-    val undispatchedCompletion =
-        if (oldValue !== NO_THREAD_ELEMENTS) {
-            // Only if some values were replaced we'll go to the slow path of figuring out where/how to restore them
-            continuation.updateUndispatchedCompletion(context, oldValue)
-        } else {
-            null // fast path -- don't even try to find undispatchedCompletion as there's nothing to restore in the context
-        }
+    val undispatchedCompletion = if (oldValue !== NO_THREAD_ELEMENTS) {
+        // Only if some values were replaced we'll go to the slow path of figuring out where/how to restore them
+        continuation.updateUndispatchedCompletion(context, oldValue)
+    } else {
+        null // fast path -- don't even try to find undispatchedCompletion as there's nothing to restore in the context
+    }
     try {
         return block()
     } finally {
@@ -145,11 +142,10 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
 
 internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
     // Find direct completion of this continuation
-    val completion: CoroutineStackFrame =
-        when (this) {
-            is DispatchedCoroutine<*> -> return null
-            else -> callerFrame ?: return null // something else -- not supported
-        }
+    val completion: CoroutineStackFrame = when (this) {
+        is DispatchedCoroutine<*> -> return null
+        else -> callerFrame ?: return null // something else -- not supported
+    }
     if (completion is UndispatchedCoroutine<*>) return completion // found UndispatchedCoroutine!
     return completion.undispatchedCompletion() // walk up the call stack with tail call
 }
@@ -159,13 +155,11 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedC
  * walking where it is not necessary.
  */
 private object UndispatchedMarker : CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
-    override val key: CoroutineContext.Key<*>
-        get() = this
+    override val key: CoroutineContext.Key<*> get() = this
 }
 
 // Used by withContext when context changes, but dispatcher stays the same
-internal actual class UndispatchedCoroutine<in T>
-actual constructor(
+internal actual class UndispatchedCoroutine<in T> actual constructor(
     context: CoroutineContext,
     uCont: Continuation<T>,
 ) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
@@ -213,7 +207,8 @@ actual constructor(
      * coroutine is yet being suspended in one thread while already being resumed
      * in another.
      */
-    @Volatile private var threadLocalIsSet = false
+    @Volatile
+    private var threadLocalIsSet = false
 
     init {
         /*
@@ -294,7 +289,7 @@ private const val DEBUG_THREAD_NAME_SEPARATOR = " @"
 @PublishedApi
 internal data class CoroutineId(
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
-    val id: Long
+    val id: Long,
 ) : ThreadContextElement<String>, AbstractCoroutineContextElement(CoroutineId) {
     // Used by the IDEA debugger via reflection and must be kept binary-compatible, see KTIJ-24102
     companion object Key : CoroutineContext.Key<CoroutineId>
@@ -307,14 +302,13 @@ internal data class CoroutineId(
         val oldName = currentThread.name
         var lastIndex = oldName.lastIndexOf(DEBUG_THREAD_NAME_SEPARATOR)
         if (lastIndex < 0) lastIndex = oldName.length
-        currentThread.name =
-            buildString(lastIndex + coroutineName.length + 10) {
-                append(oldName.substring(0, lastIndex))
-                append(DEBUG_THREAD_NAME_SEPARATOR)
-                append(coroutineName)
-                append('#')
-                append(id)
-            }
+        currentThread.name = buildString(lastIndex + coroutineName.length + 10) {
+            append(oldName.substring(0, lastIndex))
+            append(DEBUG_THREAD_NAME_SEPARATOR)
+            append(coroutineName)
+            append('#')
+            append(id)
+        }
         return oldName
     }
 

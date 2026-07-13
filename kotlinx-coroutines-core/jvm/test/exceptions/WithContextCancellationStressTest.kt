@@ -32,25 +32,24 @@ class WithContextCancellationStressTest : TestBase() {
                 val ctx = pool + NonCancellable
                 var e1 = false
                 var e2 = false
-                val jobWithContext =
-                    async(ctx) {
-                        withContext(wrapperDispatcher(coroutineContext)) {
-                            launch {
-                                barrier.await()
-                                e1 = true
-                                throw TestException1()
-                            }
-
-                            launch {
-                                barrier.await()
-                                e2 = true
-                                throw TestException2()
-                            }
-
+                val jobWithContext = async(ctx) {
+                    withContext(wrapperDispatcher(coroutineContext)) {
+                        launch {
                             barrier.await()
-                            throw TestException()
+                            e1 = true
+                            throw TestException1()
                         }
+
+                        launch {
+                            barrier.await()
+                            e2 = true
+                            throw TestException2()
+                        }
+
+                        barrier.await()
+                        throw TestException()
                     }
+                }
 
                 barrier.await()
 

@@ -25,34 +25,31 @@ class JobExceptionsStressTest : TestBase() {
          * Result: one of the exceptions with the rest two as suppressed
          */
         repeat(1000 * stressTestMultiplier) {
-            val exception =
-                captureExceptionsRun(executor) {
-                    val barrier = CyclicBarrier(4)
-                    val job =
-                        launch(NonCancellable) {
-                            launch(start = CoroutineStart.ATOMIC) {
-                                barrier.await()
-                                throw TestException1()
-                            }
-                            launch(start = CoroutineStart.ATOMIC) {
-                                barrier.await()
-                                throw TestException2()
-                            }
-                            launch(start = CoroutineStart.ATOMIC) {
-                                barrier.await()
-                                throw TestException3()
-                            }
-                            delay(1000) // to avoid OutOfMemory errors....
-                        }
-                    barrier.await()
-                    job.join()
+            val exception = captureExceptionsRun(executor) {
+                val barrier = CyclicBarrier(4)
+                val job = launch(NonCancellable) {
+                    launch(start = CoroutineStart.ATOMIC) {
+                        barrier.await()
+                        throw TestException1()
+                    }
+                    launch(start = CoroutineStart.ATOMIC) {
+                        barrier.await()
+                        throw TestException2()
+                    }
+                    launch(start = CoroutineStart.ATOMIC) {
+                        barrier.await()
+                        throw TestException3()
+                    }
+                    delay(1000) // to avoid OutOfMemory errors....
                 }
-            val classes =
-                mutableSetOf(
-                    TestException1::class,
-                    TestException2::class,
-                    TestException3::class,
-                )
+                barrier.await()
+                job.join()
+            }
+            val classes = mutableSetOf(
+                TestException1::class,
+                TestException2::class,
+                TestException3::class,
+            )
             val suppressedExceptions = exception.suppressed.toSet()
             assertTrue(
                 classes.remove(exception::class),

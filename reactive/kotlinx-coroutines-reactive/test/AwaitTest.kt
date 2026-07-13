@@ -14,30 +14,26 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitCancellation() = runTest {
         expect(1)
-        val publisher =
-            Publisher<Int> { s ->
-                s.onSubscribe(
-                    object : Subscription {
-                        override fun request(n: Long) {
-                            expect(3)
-                        }
-
-                        override fun cancel() {
-                            expect(5)
-                        }
-                    }
-                )
-            }
-        val job =
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                try {
-                    expect(2)
-                    publisher.awaitFirst()
-                } catch (e: CancellationException) {
-                    expect(6)
-                    throw e
+        val publisher = Publisher<Int> { s ->
+            s.onSubscribe(object : Subscription {
+                override fun request(n: Long) {
+                    expect(3)
                 }
+
+                override fun cancel() {
+                    expect(5)
+                }
+            })
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            try {
+                expect(2)
+                publisher.awaitFirst()
+            } catch (e: CancellationException) {
+                expect(6)
+                throw e
             }
+        }
         expect(4)
         job.cancelAndJoin()
         finish(7)

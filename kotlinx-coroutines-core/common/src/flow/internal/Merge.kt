@@ -26,10 +26,9 @@ internal class ChannelFlowTransformLatest<T, R>(
                     join()
                 }
                 // Do not pay for dispatch here, it's never necessary
-                previousFlow =
-                    launch(start = CoroutineStart.UNDISPATCHED) {
-                        collector.transform(value)
-                    }
+                previousFlow = launch(start = CoroutineStart.UNDISPATCHED) {
+                    collector.transform(value)
+                }
             }
         }
     }

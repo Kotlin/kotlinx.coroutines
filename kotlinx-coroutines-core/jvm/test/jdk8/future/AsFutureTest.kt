@@ -12,11 +12,10 @@ class AsFutureTest : TestBase() {
     @Test
     fun testCompletedDeferredAsCompletableFuture() = runTest {
         expect(1)
-        val deferred =
-            async(start = CoroutineStart.UNDISPATCHED) {
-                expect(2) // completed right away
-                "OK"
-            }
+        val deferred = async(start = CoroutineStart.UNDISPATCHED) {
+            expect(2) // completed right away
+            "OK"
+        }
         expect(3)
         val future = deferred.asCompletableFuture()
         assertEquals("OK", future.await())

@@ -76,18 +76,16 @@ class StackTraceRecoveryExceptionConstructorsTest : TestBase() {
 
     @Test
     fun testWrongMessageExceptionInChannel() = runTest {
-        val result =
-            produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
-                throw WrongMessageException("OK")
-            }
-        val ex =
-            runCatching {
-                    @Suppress("ControlFlowWithEmptyBody")
-                    for (unit in result) {
-                        // Iterator has a special code path
-                    }
+        val result = produce<Unit>(SupervisorJob() + Dispatchers.Unconfined) {
+            throw WrongMessageException("OK")
+        }
+        val ex = runCatching {
+                @Suppress("ControlFlowWithEmptyBody")
+                for (unit in result) {
+                    // Iterator has a special code path
                 }
-                .exceptionOrNull() ?: error("Expected to fail")
+            }
+            .exceptionOrNull() ?: error("Expected to fail")
         assertIs<WrongMessageException>(ex)
         assertEquals("Token OK", ex.message)
     }

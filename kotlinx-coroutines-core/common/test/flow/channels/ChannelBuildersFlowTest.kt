@@ -32,13 +32,12 @@ class ChannelBuildersFlowTest : TestBase() {
 
     @Test
     fun testConsumeAsFlowCancellation() = runTest {
-        val channel =
-            produce(NonCancellable) { // otherwise failure will cancel scope as well
-                repeat(10) {
-                    send(it + 1)
-                }
-                throw TestException()
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
             }
+            throw TestException()
+        }
         val flow = channel.consumeAsFlow()
         assertEquals(15, flow.take(5).sum())
         // the channel should have been canceled, even though took only 5 elements
@@ -48,13 +47,12 @@ class ChannelBuildersFlowTest : TestBase() {
 
     @Test
     fun testReceiveAsFlowCancellation() = runTest {
-        val channel =
-            produce(NonCancellable) { // otherwise failure will cancel scope as well
-                repeat(10) {
-                    send(it + 1)
-                }
-                throw TestException()
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
             }
+            throw TestException()
+        }
         val flow = channel.receiveAsFlow()
         assertEquals(15, flow.take(5).sum()) // sum of first 5
         assertEquals(40, flow.take(5).sum()) // sum the rest 5
@@ -63,13 +61,12 @@ class ChannelBuildersFlowTest : TestBase() {
 
     @Test
     fun testConsumeAsFlowException() = runTest {
-        val channel =
-            produce(NonCancellable) { // otherwise failure will cancel scope as well
-                repeat(10) {
-                    send(it + 1)
-                }
-                throw TestException()
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
             }
+            throw TestException()
+        }
         val flow = channel.consumeAsFlow()
         assertFailsWith<TestException> { flow.sum() }
         assertFailsWith<IllegalStateException> { flow.collect() }
@@ -77,13 +74,12 @@ class ChannelBuildersFlowTest : TestBase() {
 
     @Test
     fun testReceiveAsFlowException() = runTest {
-        val channel =
-            produce(NonCancellable) { // otherwise failure will cancel scope as well
-                repeat(10) {
-                    send(it + 1)
-                }
-                throw TestException()
+        val channel = produce(NonCancellable) { // otherwise failure will cancel scope as well
+            repeat(10) {
+                send(it + 1)
             }
+            throw TestException()
+        }
         val flow = channel.receiveAsFlow()
         assertFailsWith<TestException> { flow.sum() }
         assertFailsWith<TestException> { flow.collect() } // repeated collection -- same exception

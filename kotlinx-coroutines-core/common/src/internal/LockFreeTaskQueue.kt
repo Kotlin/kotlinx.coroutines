@@ -23,15 +23,14 @@ private typealias Core<E> = LockFreeTaskQueueCore<E>
  */
 internal open class LockFreeTaskQueue<E : Any>(
     singleConsumer: Boolean // true when there is only a single consumer (slightly faster & lock-free)
+    ,
 ) {
     private val _cur = atomic(Core<E>(Core.INITIAL_CAPACITY, singleConsumer))
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
-    val isEmpty: Boolean
-        get() = _cur.value.isEmpty
+    val isEmpty: Boolean get() = _cur.value.isEmpty
 
-    val size: Int
-        get() = _cur.value.size
+    val size: Int get() = _cur.value.size
 
     fun close() {
         _cur.loop { cur ->
@@ -86,11 +85,9 @@ internal class LockFreeTaskQueueCore<E : Any>(
     }
 
     // Note: it is not atomic w.r.t. remove operation (remove can transiently fail when isEmpty is false)
-    val isEmpty: Boolean
-        get() = _state.value.withState { head, tail -> head == tail }
+    val isEmpty: Boolean get() = _state.value.withState { head, tail -> head == tail }
 
-    val size: Int
-        get() = _state.value.withState { head, tail -> (tail - head) and MAX_CAPACITY_MASK }
+    val size: Int get() = _state.value.withState { head, tail -> (tail - head) and MAX_CAPACITY_MASK }
 
     fun close(): Boolean {
         _state.update { state ->
@@ -249,7 +246,8 @@ internal class LockFreeTaskQueueCore<E : Any>(
             while (index and mask != tail and mask) {
                 // replace nulls with placeholders on copy
                 val element = array[index and mask].value
-                @Suppress("UNCHECKED_CAST") if (element != null && element !is Placeholder) res.add(transform(element as E))
+                @Suppress("UNCHECKED_CAST")
+                if (element != null && element !is Placeholder) res.add(transform(element as E))
                 index++
             }
         }
@@ -283,7 +281,8 @@ internal class LockFreeTaskQueueCore<E : Any>(
 
         const val MIN_ADD_SPIN_CAPACITY = 1024
 
-        @JvmField val REMOVE_FROZEN = Symbol("REMOVE_FROZEN")
+        @JvmField
+        val REMOVE_FROZEN = Symbol("REMOVE_FROZEN")
 
         const val ADD_SUCCESS = 0
         const val ADD_FROZEN = 1

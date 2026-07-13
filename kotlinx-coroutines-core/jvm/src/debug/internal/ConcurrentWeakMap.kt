@@ -13,14 +13,13 @@ internal class ConcurrentWeakMap<K : Any, V : Any>(
      * Weak reference queue is needed when a small key is mapped to a large value, and we need to promptly release a reference to the value
      * when the key was already disposed.
      */
-    weakRefQueue: Boolean = false
+    weakRefQueue: Boolean = false,
 ) : AbstractMap<K, V>() {
     private val _size = atomic(0)
     private val core = atomic(Core(MIN_CAPACITY))
     private val weakRefQueue: ReferenceQueue<K>? = if (weakRefQueue) ReferenceQueue() else null
 
-    override val size: Int
-        get() = _size.value
+    override val size: Int get() = _size.value
 
     private fun decrementSize() {
         _size.decrementAndGet()
@@ -54,11 +53,9 @@ internal class ConcurrentWeakMap<K : Any, V : Any>(
         }
     }
 
-    override val keys: MutableSet<K>
-        get() = KeyValueSet { k, _ -> k }
+    override val keys: MutableSet<K> get() = KeyValueSet { k, _ -> k }
 
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        get() = KeyValueSet { k, v -> Entry(k, v) }
+    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> get() = KeyValueSet { k, v -> Entry(k, v) }
 
     // We don't care much about clear's efficiency
     override fun clear() {
@@ -242,8 +239,7 @@ internal class ConcurrentWeakMap<K : Any, V : Any>(
     }
 
     private inner class KeyValueSet<E>(private val factory: (K, V) -> E) : AbstractMutableSet<E>() {
-        override val size: Int
-            get() = this@ConcurrentWeakMap.size
+        override val size: Int get() = this@ConcurrentWeakMap.size
 
         override fun add(element: E): Boolean = noImpl()
 
@@ -265,7 +261,8 @@ internal class HashedWeakRef<T>(
     ref: T,
     queue: ReferenceQueue<T>?,
 ) : WeakReference<T>(ref, queue) {
-    @JvmField val hash = ref.hashCode()
+    @JvmField
+    val hash = ref.hashCode()
 }
 
 /**
@@ -274,12 +271,11 @@ internal class HashedWeakRef<T>(
  */
 private class Marked(@JvmField val ref: Any?)
 
-private fun Any?.mark(): Marked =
-    when (this) {
-        null -> MARKED_NULL
-        true -> MARKED_TRUE
-        else -> Marked(this)
-    }
+private fun Any?.mark(): Marked = when (this) {
+    null -> MARKED_NULL
+    true -> MARKED_TRUE
+    else -> Marked(this)
+}
 
 private fun noImpl(): Nothing {
     throw UnsupportedOperationException("not implemented")

@@ -27,25 +27,23 @@ class LockFreeLinkedListLongStressTest : TestBase() {
     @Test
     fun testStress() {
         println("--- LockFreeLinkedListLongStressTest")
-        for (j in 0 until nAddThreads) threads +=
-            thread(start = false, name = "adder-$j") {
-                for (i in j until nAdded step nAddThreads) {
-                    list.addLast(IntNode(i), Int.MAX_VALUE)
+        for (j in 0 until nAddThreads) threads += thread(start = false, name = "adder-$j") {
+            for (i in j until nAdded step nAddThreads) {
+                list.addLast(IntNode(i), Int.MAX_VALUE)
+            }
+            println("${Thread.currentThread().name} completed")
+            workingAdders.decrementAndGet()
+        }
+        for (j in 0 until nRemoveThreads) threads += thread(start = false, name = "remover-$j") {
+            val rnd = Random()
+            do {
+                val lastTurn = workingAdders.get() == 0
+                list.forEach { node ->
+                    if (node is IntNode && shallRemove(node.i) && (lastTurn || rnd.nextDouble() < removeProbability)) node.remove()
                 }
-                println("${Thread.currentThread().name} completed")
-                workingAdders.decrementAndGet()
-            }
-        for (j in 0 until nRemoveThreads) threads +=
-            thread(start = false, name = "remover-$j") {
-                val rnd = Random()
-                do {
-                    val lastTurn = workingAdders.get() == 0
-                    list.forEach { node ->
-                        if (node is IntNode && shallRemove(node.i) && (lastTurn || rnd.nextDouble() < removeProbability)) node.remove()
-                    }
-                } while (!lastTurn)
-                println("${Thread.currentThread().name} completed")
-            }
+            } while (!lastTurn)
+            println("${Thread.currentThread().name} completed")
+        }
         println("Starting ${threads.size} threads")
         for (thread in threads) thread.start()
         println("Joining threads")

@@ -166,8 +166,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val parent: Job?
-        get() = null
+    override val parent: Job? get() = null
 
     /**
      * Always returns `true`.
@@ -175,8 +174,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val isActive: Boolean
-        get() = true
+    override val isActive: Boolean get() = true
 
     /**
      * Always returns `false`.
@@ -184,8 +182,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val isCompleted: Boolean
-        get() = false
+    override val isCompleted: Boolean get() = false
 
     /**
      * Always returns `false`.
@@ -193,15 +190,15 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val isCancelled: Boolean
-        get() = false
+    override val isCancelled: Boolean get() = false
 
     /**
      * Always returns `false`.
      *
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @Deprecated(level = DeprecationLevel.WARNING, message = message) override fun start(): Boolean = false
+    @Deprecated(level = DeprecationLevel.WARNING, message = message)
+    override fun start(): Boolean = false
 
     /**
      * Always throws [UnsupportedOperationException].
@@ -219,8 +216,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val onJoin: SelectClause0
-        get() = throw UnsupportedOperationException("This job is always active")
+    override val onJoin: SelectClause0 get() = throw UnsupportedOperationException("This job is always active")
 
     /**
      * Always throws [IllegalStateException].
@@ -248,7 +244,8 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      *
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @Deprecated(level = DeprecationLevel.WARNING, message = message) override fun cancel(cause: CancellationException?) {}
+    @Deprecated(level = DeprecationLevel.WARNING, message = message)
+    override fun cancel(cause: CancellationException?) {}
 
     /**
      * Always returns `false`.
@@ -264,8 +261,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
      * @suppress **This an internal API and should not be used from general code.**
      */
     @Deprecated(level = DeprecationLevel.WARNING, message = message)
-    override val children: Sequence<Job>
-        get() = emptySequence()
+    override val children: Sequence<Job> get() = emptySequence()
 
     /**
      * Always returns [NonDisposableHandle] and does not do anything.

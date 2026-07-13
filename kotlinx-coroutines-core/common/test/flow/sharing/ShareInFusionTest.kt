@@ -19,12 +19,11 @@ class ShareInFusionTest : TestBase() {
 
     @Test
     fun testFlowOnContextFusion() = runTest {
-        val flow =
-            flow {
-                    assertEquals("FlowCtx", currentCoroutineContext()[CoroutineName]?.name)
-                    emit("OK")
-                }
-                .flowOn(CoroutineName("FlowCtx"))
+        val flow = flow {
+                assertEquals("FlowCtx", currentCoroutineContext()[CoroutineName]?.name)
+                emit("OK")
+            }
+            .flowOn(CoroutineName("FlowCtx"))
         assertEquals("OK", flow.shareIn(this, SharingStarted.Eagerly, 1).first())
         coroutineContext.cancelChildren()
     }
@@ -36,15 +35,14 @@ class ShareInFusionTest : TestBase() {
     @Test
     fun testChannelFlowBufferShareIn() = runTest {
         expect(1)
-        val flow =
-            channelFlow {
-                    // send a batch of 10 elements using [offer]
-                    for (i in 1..10) {
-                        assertTrue(trySend(i).isSuccess) // offer must succeed, because buffer
-                    }
-                    send(0) // done
+        val flow = channelFlow {
+                // send a batch of 10 elements using [offer]
+                for (i in 1..10) {
+                    assertTrue(trySend(i).isSuccess) // offer must succeed, because buffer
                 }
-                .buffer(10) // request a buffer of 10
+                send(0) // done
+            }
+            .buffer(10) // request a buffer of 10
         // ^^^^^^^^^ buffer stays here
         val shared = flow.shareIn(this, SharingStarted.Eagerly)
         shared.takeWhile { it > 0 }.collect { i -> expect(i + 1) }

@@ -43,8 +43,8 @@ public fun <E> CoroutineScope.broadcast(
 ): BroadcastChannel<E> {
     val newContext = newCoroutineContext(context)
     val channel = BroadcastChannel<E>(capacity)
-    val coroutine =
-        if (start.isLazy) LazyBroadcastCoroutine(newContext, channel, block) else BroadcastCoroutine(newContext, channel, active = true)
+    val coroutine = if (start.isLazy) LazyBroadcastCoroutine(newContext, channel, block)
+        else BroadcastCoroutine(newContext, channel, active = true)
     if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
     coroutine.start(start, coroutine, block)
     return coroutine
@@ -60,14 +60,12 @@ private open class BroadcastCoroutine<E>(
         initParentJob(parentContext[Job])
     }
 
-    override val isActive: Boolean
-        get() = super.isActive
+    override val isActive: Boolean get() = super.isActive
 
-    override val channel: SendChannel<E>
-        get() = this
+    override val channel: SendChannel<E> get() = this
 
     @Suppress(
-        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING"
+        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING",
     ) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     final override fun cancel(cause: Throwable?): Boolean {
@@ -76,7 +74,7 @@ private open class BroadcastCoroutine<E>(
     }
 
     @Suppress(
-        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING"
+        "MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING",
     ) // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
     final override fun cancel(cause: CancellationException?) {
         cancelInternal(cause ?: defaultCancellationException())

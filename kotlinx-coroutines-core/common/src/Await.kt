@@ -62,14 +62,13 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
     suspend fun await(): List<T> = suspendCancellableCoroutine { cont ->
         // Intricate dance here
         // Step 1: Create nodes and install them as completion handlers, they may fire!
-        val nodes =
-            Array(deferreds.size) { i ->
-                val deferred = deferreds[i]
-                deferred.start() // To properly await lazily started deferreds
-                AwaitAllNode(cont).apply {
-                    handle = deferred.invokeOnCompletion(handler = this)
-                }
+        val nodes = Array(deferreds.size) { i ->
+            val deferred = deferreds[i]
+            deferred.start() // To properly await lazily started deferreds
+            AwaitAllNode(cont).apply {
+                handle = deferred.invokeOnCompletion(handler = this)
             }
+        }
         val disposer = DisposeHandlersOnCancel(nodes)
         // Step 2: Set disposer to each node
         nodes.forEach { it.disposer = disposer }
@@ -105,8 +104,7 @@ private class AwaitAll<T>(private val deferreds: Array<out Deferred<T>>) {
                 _disposer.value = value
             }
 
-        override val onCancelling
-            get() = false
+        override val onCancelling get() = false
 
         override fun invoke(cause: Throwable?) {
             if (cause != null) {

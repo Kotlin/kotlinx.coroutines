@@ -32,10 +32,9 @@ import kotlin.coroutines.*
 public suspend fun <T> runInterruptible(
     context: CoroutineContext = EmptyCoroutineContext,
     block: () -> T,
-): T =
-    withContext(context) {
-        runInterruptibleInExpectedContext(coroutineContext, block)
-    }
+): T = withContext(context) {
+    runInterruptibleInExpectedContext(coroutineContext, block)
+}
 
 private fun <T> runInterruptibleInExpectedContext(coroutineContext: CoroutineContext, block: () -> T): T {
     try {
@@ -92,8 +91,7 @@ private class ThreadState : JobNode() {
     // Registered cancellation handler
     private var cancelHandle: DisposableHandle? = null
 
-    override val onCancelling
-        get() = true
+    override val onCancelling get() = true
 
     fun setup(job: Job) {
         cancelHandle = job.invokeOnCompletion(handler = this)
@@ -116,11 +114,10 @@ private class ThreadState : JobNode() {
          */
         _state.loop { state ->
             when (state) {
-                WORKING ->
-                    if (_state.compareAndSet(state, FINISHED)) {
-                        cancelHandle?.dispose()
-                        return
-                    }
+                WORKING -> if (_state.compareAndSet(state, FINISHED)) {
+                    cancelHandle?.dispose()
+                    return
+                }
                 INTERRUPTING -> {
                     /*
                      * Spin, cancellation mechanism is interrupting our thread right now

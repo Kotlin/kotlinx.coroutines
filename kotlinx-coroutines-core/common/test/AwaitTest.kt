@@ -33,16 +33,14 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllLazy() = runTest {
         expect(1)
-        val d =
-            async(start = CoroutineStart.LAZY) {
-                expect(2)
-                1
-            }
-        val d2 =
-            async(start = CoroutineStart.LAZY) {
-                expect(3)
-                2
-            }
+        val d = async(start = CoroutineStart.LAZY) {
+            expect(2)
+            1
+        }
+        val d2 = async(start = CoroutineStart.LAZY) {
+            expect(3)
+            2
+        }
         assertEquals(listOf(1, 2), awaitAll(d, d2))
         finish(4)
     }
@@ -66,11 +64,10 @@ class AwaitTest : TestBase() {
             "OK"
         }
 
-        val d2 =
-            async(NonCancellable) {
-                yield()
-                throw TestException()
-            }
+        val d2 = async(NonCancellable) {
+            yield()
+            throw TestException()
+        }
 
         val d3 = async {
             expect(4)
@@ -93,17 +90,15 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllMultipleExceptions() = runTest {
-        val d =
-            async(NonCancellable) {
-                expect(2)
-                throw TestException()
-            }
+        val d = async(NonCancellable) {
+            expect(2)
+            throw TestException()
+        }
 
-        val d2 =
-            async(NonCancellable) {
-                yield()
-                throw TestException()
-            }
+        val d2 = async(NonCancellable) {
+            yield()
+            throw TestException()
+        }
 
         val d3 = async {
             yield()
@@ -161,11 +156,10 @@ class AwaitTest : TestBase() {
 
     @Test
     fun testAwaitAllPartiallyCompletedExceptionally() = runTest {
-        val d1 =
-            async(NonCancellable) {
-                expect(1)
-                throw TestException()
-            }
+        val d1 = async(NonCancellable) {
+            expect(1)
+            throw TestException()
+        }
 
         yield()
 
@@ -255,7 +249,6 @@ class AwaitTest : TestBase() {
     }
 
     // joinAll
-
     @Test
     fun testJoinAll() = runTest {
         val d1 = launch { expect(2) }
@@ -273,14 +266,12 @@ class AwaitTest : TestBase() {
     @Test
     fun testJoinAllLazy() = runTest {
         expect(1)
-        val d =
-            async(start = CoroutineStart.LAZY) {
-                expect(2)
-            }
-        val d2 =
-            launch(start = CoroutineStart.LAZY) {
-                expect(3)
-            }
+        val d = async(start = CoroutineStart.LAZY) {
+            expect(2)
+        }
+        val d2 = launch(start = CoroutineStart.LAZY) {
+            expect(3)
+        }
         joinAll(d, d2)
         finish(4)
     }
@@ -290,11 +281,10 @@ class AwaitTest : TestBase() {
         val d1 = launch {
             expect(2)
         }
-        val d2 =
-            async(NonCancellable) {
-                expect(3)
-                throw TestException()
-            }
+        val d2 = async(NonCancellable) {
+            expect(3)
+            throw TestException()
+        }
         val d3 = async {
             expect(4)
         }
@@ -363,7 +353,8 @@ class AwaitTest : TestBase() {
     fun testAwaitAllDelegates() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
-        @OptIn(InternalForInheritanceCoroutinesApi::class) val delegate = object : Deferred<String> by deferred {}
+        @OptIn(InternalForInheritanceCoroutinesApi::class)
+        val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
             deferred.complete("OK")
@@ -377,7 +368,8 @@ class AwaitTest : TestBase() {
     fun testCancelAwaitAllDelegate() = runTest {
         expect(1)
         val deferred = CompletableDeferred<String>()
-        @OptIn(InternalForInheritanceCoroutinesApi::class) val delegate = object : Deferred<String> by deferred {}
+        @OptIn(InternalForInheritanceCoroutinesApi::class)
+        val delegate = object : Deferred<String> by deferred {}
         launch {
             expect(3)
             deferred.cancel()

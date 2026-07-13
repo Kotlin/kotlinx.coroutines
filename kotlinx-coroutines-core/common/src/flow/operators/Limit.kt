@@ -100,26 +100,24 @@ public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = f
  *     }
  * ```
  */
-public fun <T, R> Flow<T>.transformWhile(transform: suspend FlowCollector<R>.(value: T) -> Boolean): Flow<R> =
-    safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
-        // This return is needed to work around a bug in JS BE: KT-39227
-        return@safeFlow collectWhile { value ->
-            transform(value)
-        }
+public fun <T, R> Flow<T>.transformWhile(transform: suspend FlowCollector<R>.(value: T) -> Boolean): Flow<R> = safeFlow { // Note: safe flow is used here, because collector is exposed to transform on each operation
+    // This return is needed to work around a bug in JS BE: KT-39227
+    return@safeFlow collectWhile { value ->
+        transform(value)
     }
+}
 
 // Internal building block for non-tailcalling flow-truncating operators
 internal suspend inline fun <T> Flow<T>.collectWhile(crossinline predicate: suspend (value: T) -> Boolean) {
-    val collector =
-        object : FlowCollector<T> {
-            override suspend fun emit(value: T) {
-                // Note: we are checking predicate first, then throw. If the predicate does suspend (calls emit, for example)
-                // the resulting code is never tail-suspending and produces a state-machine
-                if (!predicate(value)) {
-                    throw AbortFlowException(this)
-                }
+    val collector = object : FlowCollector<T> {
+        override suspend fun emit(value: T) {
+            // Note: we are checking predicate first, then throw. If the predicate does suspend (calls emit, for example)
+            // the resulting code is never tail-suspending and produces a state-machine
+            if (!predicate(value)) {
+                throw AbortFlowException(this)
             }
         }
+    }
     try {
         collect(collector)
     } catch (e: AbortFlowException) {

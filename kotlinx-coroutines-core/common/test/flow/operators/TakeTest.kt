@@ -77,20 +77,19 @@ class TakeTest : TestBase() {
     @Test
     fun testErrorCancelsUpstream() = runTest {
         var cancelled = false
-        val flow =
-            flow {
-                    coroutineScope {
-                        launch(start = CoroutineStart.ATOMIC) {
-                            hang { cancelled = true }
-                        }
-                        emit(1)
+        val flow = flow {
+                coroutineScope {
+                    launch(start = CoroutineStart.ATOMIC) {
+                        hang { cancelled = true }
                     }
+                    emit(1)
                 }
-                .take(2)
-                .map<Int, Int> {
-                    throw TestException()
-                }
-                .catch { emit(42) }
+            }
+            .take(2)
+            .map<Int, Int> {
+                throw TestException()
+            }
+            .catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)
@@ -98,23 +97,22 @@ class TakeTest : TestBase() {
 
     @Test
     fun takeWithRetries() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    expect(2)
-                    emit(2)
+        val flow = flow {
+                expect(1)
+                emit(1)
+                expect(2)
+                emit(2)
 
-                    while (true) {
-                        emit(42)
-                        expectUnreached()
-                    }
-                }
-                .retry(2) {
+                while (true) {
+                    emit(42)
                     expectUnreached()
-                    true
                 }
-                .take(2)
+            }
+            .retry(2) {
+                expectUnreached()
+                true
+            }
+            .take(2)
 
         val sum = flow.sum()
         assertEquals(3, sum)
@@ -135,12 +133,11 @@ class TakeTest : TestBase() {
 
     @Test
     fun testNestedTake() = runTest {
-        val inner =
-            flow {
-                    emit(1)
-                    expectUnreached()
-                }
-                .take(1)
+        val inner = flow {
+                emit(1)
+                expectUnreached()
+            }
+            .take(1)
         val outer = flow {
             while (true) {
                 emitAll(inner)

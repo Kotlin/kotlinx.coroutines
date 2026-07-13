@@ -28,21 +28,20 @@ class OnEachTest : TestBase() {
     fun testErrorCancelsUpstream() = runTest {
         var cancelled = false
         val latch = Channel<Unit>()
-        val flow =
-            flow {
-                    coroutineScope {
-                        launch {
-                            latch.send(Unit)
-                            hang { cancelled = true }
-                        }
-                        emit(1)
+        val flow = flow {
+                coroutineScope {
+                    launch {
+                        latch.send(Unit)
+                        hang { cancelled = true }
                     }
+                    emit(1)
                 }
-                .onEach {
-                    latch.receive()
-                    throw TestException()
-                }
-                .catch { emit(42) }
+            }
+            .onEach {
+                latch.receive()
+                throw TestException()
+            }
+            .catch { emit(42) }
 
         assertEquals(42, flow.single())
         assertTrue(cancelled)

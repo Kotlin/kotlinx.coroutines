@@ -24,10 +24,9 @@ class UnconfinedCancellationTest : TestBase() {
         launch(parent) {
                 expect(1)
                 parent.cancel()
-                val job =
-                    launch(Dispatchers.Unconfined) {
-                        expectUnreached()
-                    }
+                val job = launch(Dispatchers.Unconfined) {
+                    expectUnreached()
+                }
 
                 assertTrue(job.isCancelled)
                 assertTrue(job.isCompleted)
@@ -42,10 +41,9 @@ class UnconfinedCancellationTest : TestBase() {
         val parent = Job()
         launch(parent) {
                 expect(1)
-                val job =
-                    launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
-                        expectUnreached()
-                    }
+                val job = launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
+                    expectUnreached()
+                }
                 job.invokeOnCompletion { expect(2) }
                 assertFalse(job.isCompleted)
 

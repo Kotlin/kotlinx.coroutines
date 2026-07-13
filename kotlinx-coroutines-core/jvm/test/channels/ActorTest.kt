@@ -20,10 +20,9 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testEmpty() = runBlocking {
         expect(1)
-        val actor =
-            actor<String>(capacity = capacity) {
-                expect(3)
-            }
+        val actor = actor<String>(capacity = capacity) {
+            expect(3)
+        }
         actor as Job // type assertion
         assertTrue(actor.isActive)
         assertFalse(actor.isCompleted)
@@ -39,12 +38,11 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testOne() = runBlocking {
         expect(1)
-        val actor =
-            actor<String>(capacity = capacity) {
-                expect(3)
-                assertEquals("OK", receive())
-                expect(6)
-            }
+        val actor = actor<String>(capacity = capacity) {
+            expect(3)
+            assertEquals("OK", receive())
+            expect(6)
+        }
         actor as Job // type assertion
         assertTrue(actor.isActive)
         assertFalse(actor.isCompleted)
@@ -67,15 +65,14 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCloseWithoutCause() = runTest {
-        val actor =
-            actor<Int>(capacity = capacity) {
-                val element = channel.receive()
-                expect(2)
-                assertEquals(42, element)
-                val next = channel.receiveCatching()
-                assertNull(next.exceptionOrNull())
-                expect(3)
-            }
+        val actor = actor<Int>(capacity = capacity) {
+            val element = channel.receive()
+            expect(2)
+            assertEquals(42, element)
+            val next = channel.receiveCatching()
+            assertNull(next.exceptionOrNull())
+            expect(3)
+        }
 
         expect(1)
         actor.send(42)
@@ -87,17 +84,16 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCloseWithCause() = runTest {
-        val actor =
-            actor<Int>(capacity = capacity) {
-                val element = channel.receive()
-                expect(2)
-                require(element == 42)
-                try {
-                    channel.receive()
-                } catch (e: IOException) {
-                    expect(3)
-                }
+        val actor = actor<Int>(capacity = capacity) {
+            val element = channel.receive()
+            expect(2)
+            require(element == 42)
+            try {
+                channel.receive()
+            } catch (e: IOException) {
+                expect(3)
             }
+        }
 
         expect(1)
         actor.send(42)
@@ -135,22 +131,20 @@ class ActorTest(private val capacity: Int) : TestBase() {
     }
 
     @Test
-    fun testThrowingActor() =
-        runTest(unhandled = listOf({ e -> e is IllegalArgumentException })) {
-            val parent = Job()
-            val actor =
-                actor<Int>(parent) {
-                    channel.consumeEach {
-                        expect(1)
-                        throw IllegalArgumentException()
-                    }
-                }
-
-            actor.send(1)
-            parent.cancel()
-            parent.join()
-            finish(2)
+    fun testThrowingActor() = runTest(unhandled = listOf({ e -> e is IllegalArgumentException })) {
+        val parent = Job()
+        val actor = actor<Int>(parent) {
+            channel.consumeEach {
+                expect(1)
+                throw IllegalArgumentException()
+            }
         }
+
+        actor.send(1)
+        parent.cancel()
+        parent.join()
+        finish(2)
+    }
 
     @Test
     fun testChildJob() = runTest {
@@ -176,10 +170,9 @@ class ActorTest(private val capacity: Int) : TestBase() {
     fun testCloseFreshActor() = runTest {
         for (start in CoroutineStart.values()) {
             val job = launch {
-                val actor =
-                    actor<Int>(start = start) {
-                        for (i in channel) {}
-                    }
+                val actor = actor<Int>(start = start) {
+                    for (i in channel) {}
+                }
                 actor.close()
             }
 
@@ -188,13 +181,12 @@ class ActorTest(private val capacity: Int) : TestBase() {
     }
 
     @Test
-    fun testCancelledParent() =
-        runTest({ it is CancellationException }) {
-            cancel()
-            expect(1)
-            actor<Int> {
-                expectUnreached()
-            }
-            finish(2)
+    fun testCancelledParent() = runTest({ it is CancellationException }) {
+        cancel()
+        expect(1)
+        actor<Int> {
+            expectUnreached()
         }
+        finish(2)
+    }
 }

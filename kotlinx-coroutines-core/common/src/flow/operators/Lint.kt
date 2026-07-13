@@ -57,22 +57,19 @@ public fun <T> StateFlow<T>.distinctUntilChanged(): Flow<T> = noImpl()
 
 /** @suppress */
 @Deprecated(
-    message =
-        "isActive is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
-            "Use currentCoroutineContext().isActive or cancellable() operator instead " +
-            "or specify the receiver of isActive explicitly. " +
-            "Additionally, flow {} builder emissions are cancellable by default.",
+    message = "isActive is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
+    "Use currentCoroutineContext().isActive or cancellable() operator instead " +
+    "or specify the receiver of isActive explicitly. " +
+    "Additionally, flow {} builder emissions are cancellable by default.",
     level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("currentCoroutineContext().isActive"),
 )
-public val FlowCollector<*>.isActive: Boolean
-    get() = noImpl()
+public val FlowCollector<*>.isActive: Boolean get() = noImpl()
 
 /** @suppress */
 @Deprecated(
-    message =
-        "cancel() is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
-            "Use currentCoroutineContext().cancel() instead or specify the receiver of cancel() explicitly",
+    message = "cancel() is resolved into the extension of outer CoroutineScope which is likely to be an error. " +
+    "Use currentCoroutineContext().cancel() instead or specify the receiver of cancel() explicitly",
     level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("currentCoroutineContext().cancel(cause)"),
 )
@@ -80,20 +77,17 @@ public fun FlowCollector<*>.cancel(cause: CancellationException? = null): Unit =
 
 /** @suppress */
 @Deprecated(
-    message =
-        "coroutineContext is resolved into the property of outer CoroutineScope which is likely to be an error. " +
-            "Use currentCoroutineContext() instead or specify the receiver of coroutineContext explicitly",
+    message = "coroutineContext is resolved into the property of outer CoroutineScope which is likely to be an error. " +
+    "Use currentCoroutineContext() instead or specify the receiver of coroutineContext explicitly",
     level = DeprecationLevel.ERROR,
     replaceWith = ReplaceWith("currentCoroutineContext()"),
 )
-public val FlowCollector<*>.coroutineContext: CoroutineContext
-    get() = noImpl()
+public val FlowCollector<*>.coroutineContext: CoroutineContext get() = noImpl()
 
 /** @suppress */
 @Deprecated(
-    message =
-        "SharedFlow never completes, so this operator typically has not effect, it can only " +
-            "catch exceptions from 'onSubscribe' operator",
+    message = "SharedFlow never completes, so this operator typically has not effect, it can only " +
+    "catch exceptions from 'onSubscribe' operator",
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this"),
 )
@@ -121,7 +115,7 @@ public inline fun <T> SharedFlow<T>.retry(
 )
 @InlineOnly
 public inline fun <T> SharedFlow<T>.retryWhen(
-    noinline predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean
+    noinline predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean,
 ): Flow<T> = (this as Flow<T>).retryWhen(predicate)
 
 /** @suppress */
@@ -164,9 +158,8 @@ public suspend inline fun <T> SharedFlow<T>.count(): Int = (this as Flow<T>).cou
 
 /** @suppress */
 @Deprecated(
-    message =
-        "SharedFlow never completes, so this terminal operation never completes. " +
-            "If you are using last() to imitate a subscriber, use collect() instead.",
+    message = "SharedFlow never completes, so this terminal operation never completes. " +
+    "If you are using last() to imitate a subscriber, use collect() instead.",
     level = DeprecationLevel.WARNING,
 )
 @InlineOnly

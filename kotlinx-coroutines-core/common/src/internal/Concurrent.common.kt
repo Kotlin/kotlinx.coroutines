@@ -13,7 +13,9 @@ internal expect fun <E> identitySet(expectedSize: Int): MutableSet<E>
  * The purpose of this annotation is not to save an extra-volatile on JVM platform, but rather to explicitly emphasize that data-race is
  * benign.
  */
-@OptionalExpectation @Target(AnnotationTarget.FIELD) internal expect annotation class BenignDataRace()
+@OptionalExpectation
+@Target(AnnotationTarget.FIELD)
+internal expect annotation class BenignDataRace()
 
 // Used **only** as a workaround for #3820 in StateFlow. Do not use anywhere else
 internal expect class WorkaroundAtomicReference<V>(value: V) {

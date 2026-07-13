@@ -11,7 +11,6 @@ import kotlin.test.*
  * parent is not cancelled on child cancellation and launch {}, Job(), async {} and
  * CompletableDeferred behave properly
  */
-
 @Suppress("DEPRECATION") // cancel(cause)
 class JobBasicCancellationTest : TestBase() {
 
@@ -38,10 +37,9 @@ class JobBasicCancellationTest : TestBase() {
     fun testJobCancelChildAtomic() = runTest {
         val parent = launch {
             expect(1)
-            val child =
-                launch(start = CoroutineStart.ATOMIC) {
-                    expect(3)
-                }
+            val child = launch(start = CoroutineStart.ATOMIC) {
+                expect(3)
+            }
 
             expect(2)
             child.cancel()
@@ -79,10 +77,9 @@ class JobBasicCancellationTest : TestBase() {
     fun testAsyncCancelChildAtomic() = runTest {
         val parent = async {
             expect(1)
-            val child =
-                async(start = CoroutineStart.ATOMIC) {
-                    expect(3)
-                }
+            val child = async(start = CoroutineStart.ATOMIC) {
+                expect(3)
+            }
 
             expect(2)
             child.cancel()
@@ -96,19 +93,17 @@ class JobBasicCancellationTest : TestBase() {
 
     @Test
     fun testNestedAsyncFailure() = runTest {
-        val deferred =
-            async(NonCancellable) {
-                val nested =
-                    async(NonCancellable) {
-                        expect(3)
-                        throw IOException()
-                    }
-
-                expect(2)
-                yield()
-                expect(4)
-                nested.await()
+        val deferred = async(NonCancellable) {
+            val nested = async(NonCancellable) {
+                expect(3)
+                throw IOException()
             }
+
+            expect(2)
+            yield()
+            expect(4)
+            nested.await()
+        }
 
         expect(1)
         try {

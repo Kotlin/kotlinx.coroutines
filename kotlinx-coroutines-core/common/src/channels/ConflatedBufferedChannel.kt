@@ -24,8 +24,7 @@ internal open class ConflatedBufferedChannel<E>(
         }
     }
 
-    override val isConflatedDropOldest: Boolean
-        get() = onBufferOverflow == DROP_OLDEST
+    override val isConflatedDropOldest: Boolean get() = onBufferOverflow == DROP_OLDEST
 
     override suspend fun send(element: E) {
         // Should never suspend, implement via `trySend(..)`.
@@ -41,9 +40,9 @@ internal open class ConflatedBufferedChannel<E>(
     override suspend fun sendBroadcast(element: E): Boolean {
         // Should never suspend, implement via `trySend(..)`.
         trySendImpl(element, isSendOp = true) // fails only when this channel is closed.
-            .onSuccess {
-                return true
-            }
+        .onSuccess {
+            return true
+        }
         return false
     }
 
@@ -75,9 +74,9 @@ internal open class ConflatedBufferedChannel<E>(
         // In any case, complete this `select` in the registration phase.
         trySend(element as E).let {
             it.onSuccess {
-                    select.selectInRegistrationPhase(Unit)
-                    return
-                }
+                select.selectInRegistrationPhase(Unit)
+                return
+            }
                 .onClosed {
                     select.selectInRegistrationPhase(CHANNEL_CLOSED)
                     return

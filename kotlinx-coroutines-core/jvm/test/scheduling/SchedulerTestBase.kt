@@ -65,12 +65,11 @@ abstract class SchedulerTestBase : TestBase() {
     protected val dispatcher: CoroutineDispatcher
         get() {
             if (_dispatcher == null) {
-                _dispatcher =
-                    SchedulerCoroutineDispatcher(
-                        corePoolSize,
-                        maxPoolSize,
-                        idleWorkerKeepAliveNs,
-                    )
+                _dispatcher = SchedulerCoroutineDispatcher(
+                    corePoolSize,
+                    maxPoolSize,
+                    idleWorkerKeepAliveNs,
+                )
             }
 
             return _dispatcher!!
@@ -108,14 +107,14 @@ abstract class SchedulerTestBase : TestBase() {
 internal fun SchedulerCoroutineDispatcher.blocking(parallelism: Int = 16): CoroutineDispatcher {
     return object : CoroutineDispatcher() {
 
-            @InternalCoroutinesApi
-            override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-                this@blocking.dispatchWithContext(block, BlockingContext, true)
-            }
-
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                this@blocking.dispatchWithContext(block, BlockingContext, false)
-            }
+        @InternalCoroutinesApi
+        override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+            this@blocking.dispatchWithContext(block, BlockingContext, true)
         }
+
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            this@blocking.dispatchWithContext(block, BlockingContext, false)
+        }
+    }
         .limitedParallelism(parallelism)
 }

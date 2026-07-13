@@ -21,7 +21,8 @@ public expect fun CoroutineScope.newCoroutineContext(context: CoroutineContext):
  *
  * @suppress
  */
-@InternalCoroutinesApi public expect fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext
+@InternalCoroutinesApi
+public expect fun CoroutineContext.newCoroutineContext(addedContext: CoroutineContext): CoroutineContext
 
 @PublishedApi // to have unmangled name when using from other modules via suppress
 @Suppress("PropertyName")

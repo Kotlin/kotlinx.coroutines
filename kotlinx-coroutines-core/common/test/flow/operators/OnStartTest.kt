@@ -13,19 +13,18 @@ class OnStartTest : TestBase() {
 
     @Test
     fun testTransparencyViolation() = runTest {
-        val flow =
-            emptyFlow<Int>().onStart {
-                expect(2)
-                coroutineScope {
-                    launch {
-                        try {
-                            emit(1)
-                        } catch (e: IllegalStateException) {
-                            expect(3)
-                        }
+        val flow = emptyFlow<Int>().onStart {
+            expect(2)
+            coroutineScope {
+                launch {
+                    try {
+                        emit(1)
+                    } catch (e: IllegalStateException) {
+                        expect(3)
                     }
                 }
             }
+        }
         expect(1)
         assertNull(flow.singleOrNull())
         finish(4)

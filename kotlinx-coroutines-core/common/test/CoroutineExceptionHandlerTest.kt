@@ -14,10 +14,9 @@ class CoroutineExceptionHandlerTest : TestBase() {
             expect(3)
         }
         val parent = Job()
-        val job =
-            launch(handler + parent) {
-                throw TestException()
-            }
+        val job = launch(handler + parent) {
+            throw TestException()
+        }
         expect(2)
         job.join()
         finish(4)
@@ -33,10 +32,9 @@ class CoroutineExceptionHandlerTest : TestBase() {
             expectUnreached()
         }
         val parent = CompletableDeferred<Unit>()
-        val job =
-            launch(handler + parent) {
-                throw TestException()
-            }
+        val job = launch(handler + parent) {
+            throw TestException()
+        }
         expect(2)
         job.join()
         finish(3)

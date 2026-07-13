@@ -12,21 +12,21 @@ import kotlin.coroutines.intrinsics.*
  */
 internal fun <R, T> (suspend (R) -> T).startCoroutineUndispatched(receiver: R, completion: Continuation<T>) {
     val actualCompletion = probeCoroutineCreated(completion)
-    val value =
-        try {
-            /* The code below is started immediately in the current stack-frame
+    val value = try {
+        /* The code below is started immediately in the current stack-frame
              * and runs until the first suspension point. */
-            withCoroutineContext(actualCompletion.context, null) {
-                probeCoroutineResumed(actualCompletion)
-                startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
-            }
-        } catch (e: Throwable) {
-            val reportException = if (e is DispatchException) e.cause else e
-            actualCompletion.resumeWithException(reportException)
-            return
+        withCoroutineContext(actualCompletion.context, null) {
+            probeCoroutineResumed(actualCompletion)
+            startCoroutineUninterceptedOrReturn(receiver, actualCompletion)
         }
+    } catch (e: Throwable) {
+        val reportException = if (e is DispatchException) e.cause else e
+        actualCompletion.resumeWithException(reportException)
+        return
+    }
     if (value !== COROUTINE_SUSPENDED) {
-        @Suppress("UNCHECKED_CAST") actualCompletion.resume(value as T)
+        @Suppress("UNCHECKED_CAST")
+        actualCompletion.resume(value as T)
     }
 }
 
@@ -60,16 +60,15 @@ private fun <T, R> ScopeCoroutine<T>.startUndispatched(
     receiver: R,
     block: suspend R.() -> T,
 ): Any? {
-    val result =
-        try {
-            block.startCoroutineUninterceptedOrReturn(receiver, this)
-        } catch (e: DispatchException) {
-            // Special codepath for failing CoroutineDispatcher: rethrow an exception
-            // immediately without waiting for children to indicate something is wrong
-            dispatchExceptionAndMakeCompleting(e)
-        } catch (e: Throwable) {
-            CompletedExceptionally(e)
-        }
+    val result = try {
+        block.startCoroutineUninterceptedOrReturn(receiver, this)
+    } catch (e: DispatchException) {
+        // Special codepath for failing CoroutineDispatcher: rethrow an exception
+        // immediately without waiting for children to indicate something is wrong
+        dispatchExceptionAndMakeCompleting(e)
+    } catch (e: Throwable) {
+        CompletedExceptionally(e)
+    }
 
     /*
      * We are trying to complete our undispatched block with the following possible codepaths:

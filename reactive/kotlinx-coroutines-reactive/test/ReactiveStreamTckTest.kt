@@ -14,19 +14,18 @@ class ReactiveStreamTckTest : TestBase() {
         return arrayOf(ReactiveStreamTckTestSuite(dispatcher))
     }
 
-    @DataProvider(name = "dispatchers") fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
+    @DataProvider(name = "dispatchers")
+    fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
 
     class ReactiveStreamTckTestSuite(private val dispatcher: Dispatcher) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
 
-        override fun createPublisher(elements: Long): Publisher<Long> =
-            publish(dispatcher.dispatcher) {
-                for (i in 1..elements) send(i)
-            }
+        override fun createPublisher(elements: Long): Publisher<Long> = publish(dispatcher.dispatcher) {
+            for (i in 1..elements) send(i)
+        }
 
-        override fun createFailedPublisher(): Publisher<Long> =
-            publish(dispatcher.dispatcher) {
-                throw TestException()
-            }
+        override fun createFailedPublisher(): Publisher<Long> = publish(dispatcher.dispatcher) {
+            throw TestException()
+        }
 
         @Test
         override fun optional_spec105_emptyStreamMustTerminateBySignallingOnComplete() {

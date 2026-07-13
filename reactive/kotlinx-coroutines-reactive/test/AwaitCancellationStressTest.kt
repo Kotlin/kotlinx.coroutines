@@ -13,30 +13,26 @@ class AwaitCancellationStressTest : TestBase() {
     @Test
     fun testAwaitCancellationOrder() = runTest {
         repeat(iterations) {
-            val job =
-                launch(Dispatchers.Default) {
-                    testPublisher().awaitFirst()
-                }
+            val job = launch(Dispatchers.Default) {
+                testPublisher().awaitFirst()
+            }
             job.cancelAndJoin()
         }
     }
 
-    private fun testPublisher() =
-        Publisher<Int> { s ->
-            val lock = ReentrantLock()
-            s.onSubscribe(
-                object : Subscription {
-                    override fun request(n: Long) {
-                        check(lock.tryLock())
-                        s.onNext(42)
-                        lock.unlock()
-                    }
+    private fun testPublisher() = Publisher<Int> { s ->
+        val lock = ReentrantLock()
+        s.onSubscribe(object : Subscription {
+            override fun request(n: Long) {
+                check(lock.tryLock())
+                s.onNext(42)
+                lock.unlock()
+            }
 
-                    override fun cancel() {
-                        check(lock.tryLock())
-                        lock.unlock()
-                    }
-                }
-            )
-        }
+            override fun cancel() {
+                check(lock.tryLock())
+                lock.unlock()
+            }
+        })
+    }
 }

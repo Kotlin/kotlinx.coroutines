@@ -23,28 +23,22 @@ class BooleanTerminationTest : TestBase() {
 
     @Test
     fun testAnyInfinite() = runTest {
-        assertTrue(
-            flow {
-                    while (true) {
-                        emit(5)
-                    }
-                }
-                .any { it == 5 }
-        )
+        assertTrue(flow {
+            while (true) {
+                emit(5)
+            }
+        }.any { it == 5 })
     }
 
     @Test
     fun testAnyShortCircuit() = runTest {
-        assertTrue(
-            flow {
-                    emit(1)
-                    emit(2)
-                    expectUnreached()
-                }
-                .any {
-                    it == 2
-                }
-        )
+        assertTrue(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.any {
+            it == 2
+        })
     }
 
     @Test
@@ -66,28 +60,22 @@ class BooleanTerminationTest : TestBase() {
 
     @Test
     fun testAllInfinite() = runTest {
-        assertFalse(
-            flow {
-                    while (true) {
-                        emit(5)
-                    }
-                }
-                .all { it == 0 }
-        )
+        assertFalse(flow {
+            while (true) {
+                emit(5)
+            }
+        }.all { it == 0 })
     }
 
     @Test
     fun testAllShortCircuit() = runTest {
-        assertFalse(
-            flow {
-                    emit(1)
-                    emit(2)
-                    expectUnreached()
-                }
-                .all {
-                    it <= 1
-                }
-        )
+        assertFalse(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.all {
+            it <= 1
+        })
     }
 
     @Test
@@ -109,27 +97,21 @@ class BooleanTerminationTest : TestBase() {
 
     @Test
     fun testNoneInfinite() = runTest {
-        assertFalse(
-            flow {
-                    while (true) {
-                        emit(5)
-                    }
-                }
-                .none { it == 5 }
-        )
+        assertFalse(flow {
+            while (true) {
+                emit(5)
+            }
+        }.none { it == 5 })
     }
 
     @Test
     fun testNoneShortCircuit() = runTest {
-        assertFalse(
-            flow {
-                    emit(1)
-                    emit(2)
-                    expectUnreached()
-                }
-                .none {
-                    it == 2
-                }
-        )
+        assertFalse(flow {
+            emit(1)
+            emit(2)
+            expectUnreached()
+        }.none {
+            it == 2
+        })
     }
 }

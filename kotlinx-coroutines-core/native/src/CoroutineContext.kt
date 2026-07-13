@@ -26,7 +26,8 @@ internal actual object DefaultExecutor : CoroutineDispatcher(), Delay {
 
 internal expect fun createDefaultDispatcher(): CoroutineDispatcher
 
-@PublishedApi internal actual val DefaultDelay: Delay = DefaultExecutor
+@PublishedApi
+internal actual val DefaultDelay: Delay = DefaultExecutor
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
@@ -44,11 +45,9 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
 
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 
-internal actual val CoroutineContext.coroutineName: String?
-    get() = null // not supported on native
+internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on native
 
-internal actual class UndispatchedCoroutine<in T>
-actual constructor(
+internal actual class UndispatchedCoroutine<in T> actual constructor(
     context: CoroutineContext,
     uCont: Continuation<T>,
 ) : ScopeCoroutine<T>(context, uCont) {

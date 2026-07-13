@@ -53,10 +53,9 @@ class JobCancellationExceptionSerializerTest : TestBase() {
             ObjectOutputStream(outputStream).use {
                 it.writeObject(e)
             }
-            val deserializedException =
-                ObjectInputStream(outputStream.toByteArray().inputStream()).use {
-                    it.readObject() as JobCancellationException
-                }
+            val deserializedException = ObjectInputStream(outputStream.toByteArray().inputStream()).use {
+                it.readObject() as JobCancellationException
+            }
             // verify hashCode does not fail even though Job is transient
             assert(deserializedException.hashCode() != 0)
         }

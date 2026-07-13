@@ -8,24 +8,23 @@ class LaunchInTest : TestBase() {
 
     @Test
     fun testLaunchIn() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    throw TestException()
-                }
-                .onEach {
-                    assertEquals(1, it)
-                    expect(2)
-                }
-                .onCompletion {
-                    assertIs<TestException>(it)
-                    expect(3)
-                }
-                .catch {
-                    assertTrue { it is TestException }
-                    expect(4)
-                }
+        val flow = flow {
+                expect(1)
+                emit(1)
+                throw TestException()
+            }
+            .onEach {
+                assertEquals(1, it)
+                expect(2)
+            }
+            .onCompletion {
+                assertIs<TestException>(it)
+                expect(3)
+            }
+            .catch {
+                assertTrue { it is TestException }
+                expect(4)
+            }
 
         flow.launchIn(this).join()
         finish(5)
@@ -44,19 +43,18 @@ class LaunchInTest : TestBase() {
     }
 
     @Test
-    fun testUnhandledError() =
-        runTest(expected = { it is TestException }) {
-            flow {
-                    emit(1)
-                    expect(1)
-                }
-                .catch {
-                    expectUnreached()
-                }
-                .onCompletion {
-                    finish(2)
-                    throw TestException()
-                }
-                .launchIn(this)
-        }
+    fun testUnhandledError() = runTest(expected = { it is TestException }) {
+        flow {
+                emit(1)
+                expect(1)
+            }
+            .catch {
+                expectUnreached()
+            }
+            .onCompletion {
+                finish(2)
+                throw TestException()
+            }
+            .launchIn(this)
+    }
 }

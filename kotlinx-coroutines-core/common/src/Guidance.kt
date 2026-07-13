@@ -9,8 +9,8 @@ import kotlin.coroutines.EmptyCoroutineContext
  */
 @Deprecated(
     "'launch' can not be called without the corresponding coroutine scope. " +
-        "Consider wrapping 'launch' in 'coroutineScope { }', using 'runBlocking { }', " +
-        "or using some other 'CoroutineScope'",
+    "Consider wrapping 'launch' in 'coroutineScope { }', using 'runBlocking { }', " +
+    "or using some other 'CoroutineScope'",
     level = DeprecationLevel.ERROR,
 )
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
@@ -165,8 +165,8 @@ public fun launch(
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun CoroutineScope.launch(
@@ -230,8 +230,8 @@ public fun CoroutineScope.launch(
  */
 @Deprecated(
     "Passing a NonCancellable to `launch` breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun CoroutineScope.launch(
@@ -246,8 +246,8 @@ public fun CoroutineScope.launch(
  */
 @Deprecated(
     "'async' can not be called without the corresponding coroutine scope. " +
-        "Consider wrapping 'async' in 'coroutineScope { }', using 'runBlocking { }', " +
-        "or using some other 'CoroutineScope'",
+    "Consider wrapping 'async' in 'coroutineScope { }', using 'runBlocking { }', " +
+    "or using some other 'CoroutineScope'",
     level = DeprecationLevel.ERROR,
 )
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
@@ -403,8 +403,8 @@ public fun <T> async(
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun <T> CoroutineScope.async(
@@ -467,8 +467,8 @@ public fun <T> CoroutineScope.async(
  */
 @Deprecated(
     "Passing a NonCancellable to `async` breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public fun <T> CoroutineScope.async(

@@ -8,7 +8,6 @@ suspend fun simple(): List<Int> {
     return listOf(1, 2, 3)
 }
 
-fun main() =
-    runBlocking<Unit> {
-        simple().forEach { value -> println(value) }
-    }
+fun main() = runBlocking<Unit> {
+    simple().forEach { value -> println(value) }
+}

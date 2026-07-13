@@ -54,11 +54,10 @@ class SelectDeferredTest : TestBase() {
     @Test
     fun testSelectIncompleteLazy() = runTest {
         expect(1)
-        val d1 =
-            async(start = CoroutineStart.LAZY) {
-                expect(5)
-                42
-            }
+        val d1 = async(start = CoroutineStart.LAZY) {
+            expect(5)
+            42
+        }
         launch {
             expect(3)
             val res = select {
@@ -131,22 +130,21 @@ class SelectDeferredTest : TestBase() {
     }
 
     @Test
-    fun testSelectCancel() =
-        runTest(expected = { it is CancellationException }) {
-            expect(1)
-            val d = CompletableDeferred<String>()
-            launch {
-                finish(3)
-                d.cancel() // will cancel after select starts
-            }
-            expect(2)
-            select {
-                d.onAwait {
-                    expectUnreached() // will not select
-                }
-            }
-            expectUnreached()
+    fun testSelectCancel() = runTest(expected = { it is CancellationException }) {
+        expect(1)
+        val d = CompletableDeferred<String>()
+        launch {
+            finish(3)
+            d.cancel() // will cancel after select starts
         }
+        expect(2)
+        select {
+            d.onAwait {
+                expectUnreached() // will not select
+            }
+        }
+        expectUnreached()
+    }
 
     @Test
     fun testSelectIncomplete() = runTest {
@@ -177,10 +175,8 @@ class SelectDeferredTest : TestBase() {
     }
 
     private class Wrapper(val value: String) : Incomplete {
-        override val isActive: Boolean
-            get() = error("")
+        override val isActive: Boolean get() = error("")
 
-        override val list: NodeList?
-            get() = error("")
+        override val list: NodeList? get() = error("")
     }
 }

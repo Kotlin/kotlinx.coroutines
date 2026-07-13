@@ -27,21 +27,20 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithoutCause() = runTest {
-        val c =
-            produce(NonCancellable) {
-                expect(2)
-                send(1)
-                expect(3)
-                try {
-                    send(2) // will get cancelled
-                    expectUnreached()
-                } catch (e: Throwable) {
-                    expect(7)
-                    check(e is CancellationException)
-                    throw e
-                }
+        val c = produce(NonCancellable) {
+            expect(2)
+            send(1)
+            expect(3)
+            try {
+                send(2) // will get cancelled
                 expectUnreached()
+            } catch (e: Throwable) {
+                expect(7)
+                check(e is CancellationException)
+                throw e
             }
+            expectUnreached()
+        }
         expect(1)
         check(c.receive() == 1)
         expect(4)
@@ -55,21 +54,20 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest {
-        val c =
-            produce(NonCancellable) {
-                expect(2)
-                send(1)
-                expect(3)
-                try {
-                    send(2) // will get cancelled
-                    expectUnreached()
-                } catch (e: Throwable) {
-                    expect(6)
-                    check(e is TestCancellationException)
-                    throw e
-                }
+        val c = produce(NonCancellable) {
+            expect(2)
+            send(1)
+            expect(3)
+            try {
+                send(2) // will get cancelled
                 expectUnreached()
+            } catch (e: Throwable) {
+                expect(6)
+                check(e is TestCancellationException)
+                throw e
             }
+            expectUnreached()
+        }
         expect(1)
         check(c.receive() == 1)
         expect(4)
@@ -96,16 +94,15 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWhenTheChannelIsClosed() = runTest {
-        val channel =
-            produce<Int> {
-                send(1)
-                close()
-                expect(2)
-                launch {
-                    expect(3)
-                    hang { expect(5) }
-                }
+        val channel = produce<Int> {
+            send(1)
+            close()
+            expect(2)
+            launch {
+                expect(3)
+                hang { expect(5) }
             }
+        }
 
         expect(1)
         channel.receive()
@@ -119,18 +116,17 @@ class ProduceTest : TestBase() {
     @Test
     fun testAwaitCloseOnlyAllowedOnce() = runTest {
         expect(1)
-        val c =
-            produce<Int> {
-                try {
+        val c = produce<Int> {
+            try {
+                awaitClose()
+            } catch (e: CancellationException) {
+                assertFailsWith<IllegalStateException> {
                     awaitClose()
-                } catch (e: CancellationException) {
-                    assertFailsWith<IllegalStateException> {
-                        awaitClose()
-                    }
-                    finish(2)
-                    throw e
                 }
+                finish(2)
+                throw e
             }
+        }
         yield() // let the `produce` procedure run
         c.cancel()
     }
@@ -150,11 +146,10 @@ class ProduceTest : TestBase() {
     @Test
     fun testAwaitConsumerCancellation() = runTest {
         val parent = Job()
-        val channel =
-            produce<Int>(parent) {
-                expect(2)
-                awaitClose { expect(4) }
-            }
+        val channel = produce<Int>(parent) {
+            expect(2)
+            awaitClose { expect(4) }
+        }
         expect(1)
         yield()
         expect(3)
@@ -215,41 +210,37 @@ class ProduceTest : TestBase() {
     }
 
     @Test
-    fun testUncaughtExceptionsInProduce() =
-        runTest(unhandled = listOf({ it is TestException })) {
-            val c =
-                produce<Int> {
-                    launch(SupervisorJob()) {
-                            throw TestException()
-                        }
-                        .join()
-                    send(3)
+    fun testUncaughtExceptionsInProduce() = runTest(unhandled = listOf({ it is TestException })) {
+        val c = produce<Int> {
+            launch(SupervisorJob()) {
+                    throw TestException()
                 }
-            assertEquals(3, c.receive())
+                .join()
+            send(3)
         }
+        assertEquals(3, c.receive())
+    }
 
     @Test
     fun testCancellingProduceCoroutineButNotChannel() = runTest {
-        val c =
-            produce<Int>(Job(), capacity = Channel.UNLIMITED) {
-                launch { throw TestException() }
-                try {
-                    yield()
-                } finally {
-                    repeat(10) { trySend(it) }
-                }
+        val c = produce<Int>(Job(), capacity = Channel.UNLIMITED) {
+            launch { throw TestException() }
+            try {
+                yield()
+            } finally {
+                repeat(10) { trySend(it) }
             }
+        }
         repeat(10) { assertEquals(it, c.receive()) }
     }
 
     @Test
     fun testReceivingValuesAfterFailingTheCoroutine() = runTest {
         val produceJob = Job()
-        val c =
-            produce<Int>(produceJob, capacity = Channel.UNLIMITED) {
-                repeat(5) { send(it) }
-                throw TestException()
-            }
+        val c = produce<Int>(produceJob, capacity = Channel.UNLIMITED) {
+            repeat(5) { send(it) }
+            throw TestException()
+        }
         produceJob.join()
         assertTrue(produceJob.isCancelled)
         repeat(5) { assertEquals(it, c.receive()) }
@@ -259,15 +250,14 @@ class ProduceTest : TestBase() {
     @Test
     fun testSilentKillerInProduce() = runTest {
         val parentScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        val channel =
-            parentScope.produce<Int>(capacity = Channel.UNLIMITED) {
-                repeat(5) {
-                    send(it)
-                }
-                parentScope.cancel()
-                // suspending after this point would fail, but sending succeeds
-                send(-1)
+        val channel = parentScope.produce<Int>(capacity = Channel.UNLIMITED) {
+            repeat(5) {
+                send(it)
             }
+            parentScope.cancel()
+            // suspending after this point would fail, but sending succeeds
+            send(-1)
+        }
         launch {
             for (c in channel) {
                 println(c) // 0, 1, 2, 3, 4, -1
@@ -283,23 +273,21 @@ class ProduceTest : TestBase() {
         }
     }
 
-    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) =
-        CoroutineScope(coroutineContext).apply {
-            val source = Channel<Int>()
-            expect(1)
-            val produced =
-                produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
-                    expect(2)
-                    source.receive()
-                }
-
-            yield()
-            expect(3)
-            produced.cancel()
-            try {
-                source.receive()
-            } catch (e: CancellationException) {
-                finish(4)
-            }
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
+        val source = Channel<Int>()
+        expect(1)
+        val produced = produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
+            expect(2)
+            source.receive()
         }
+
+        yield()
+        expect(3)
+        produced.cancel()
+        try {
+            source.receive()
+        } catch (e: CancellationException) {
+            finish(4)
+        }
+    }
 }

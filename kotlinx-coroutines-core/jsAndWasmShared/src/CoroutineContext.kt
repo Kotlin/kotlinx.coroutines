@@ -4,8 +4,7 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import kotlin.coroutines.*
 
 @PublishedApi // Used from kotlinx-coroutines-test via suppress, not part of ABI
-internal actual val DefaultDelay: Delay
-    get() = Dispatchers.Default as Delay
+internal actual val DefaultDelay: Delay get() = Dispatchers.Default as Delay
 
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = coroutineContext + context
@@ -23,11 +22,9 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
 
 internal actual fun Continuation<*>.toDebugString(): String = toString()
 
-internal actual val CoroutineContext.coroutineName: String?
-    get() = null // not supported on Wasm and JS
+internal actual val CoroutineContext.coroutineName: String? get() = null // not supported on Wasm and JS
 
-internal actual class UndispatchedCoroutine<in T>
-actual constructor(
+internal actual class UndispatchedCoroutine<in T> actual constructor(
     context: CoroutineContext,
     uCont: Continuation<T>,
 ) : ScopeCoroutine<T>(context, uCont) {

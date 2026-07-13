@@ -19,12 +19,11 @@ class BufferConflationTest : TestBase() {
     ) = runTest {
         expect(1)
         // emit all and conflate, then collect first & last
-        val expectedList =
-            when (onBufferOverflow) {
-                BufferOverflow.DROP_OLDEST -> listOf(0) + (n - capacity until n).toList() // first item & capacity last ones
-                BufferOverflow.DROP_LATEST -> (0..capacity).toList() // first & capacity following ones
-                else -> error("cannot happen")
-            }
+        val expectedList = when (onBufferOverflow) {
+            BufferOverflow.DROP_OLDEST -> listOf(0) + (n - capacity until n).toList() // first item & capacity last ones
+            BufferOverflow.DROP_LATEST -> (0..capacity).toList() // first & capacity following ones
+            else -> error("cannot happen")
+        }
         flow {
                 repeat(n) { i ->
                     expect(i + 2)
@@ -40,104 +39,87 @@ class BufferConflationTest : TestBase() {
     }
 
     @Test
-    fun testConflate() =
-        checkConflate(1) {
-            conflate()
-        }
+    fun testConflate() = checkConflate(1) {
+        conflate()
+    }
 
     @Test
-    fun testBufferConflated() =
-        checkConflate(1) {
-            buffer(Channel.CONFLATED)
-        }
+    fun testBufferConflated() = checkConflate(1) {
+        buffer(Channel.CONFLATED)
+    }
 
     @Test
-    fun testBufferDropOldest() =
-        checkConflate(1) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        }
+    fun testBufferDropOldest() = checkConflate(1) {
+        buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    }
 
     @Test
-    fun testBuffer0DropOldest() =
-        checkConflate(1) {
-            buffer(0, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        }
+    fun testBuffer0DropOldest() = checkConflate(1) {
+        buffer(0, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    }
 
     @Test
-    fun testBuffer1DropOldest() =
-        checkConflate(1) {
-            buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        }
+    fun testBuffer1DropOldest() = checkConflate(1) {
+        buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    }
 
     @Test
-    fun testBuffer10DropOldest() =
-        checkConflate(10) {
-            buffer(10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        }
+    fun testBuffer10DropOldest() = checkConflate(10) {
+        buffer(10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    }
 
     @Test
-    fun testConflateOverridesBuffer() =
-        checkConflate(1) {
-            buffer(42).conflate()
-        }
+    fun testConflateOverridesBuffer() = checkConflate(1) {
+        buffer(42).conflate()
+    }
 
     @Test // conflate().conflate() should work like a single conflate
-    fun testDoubleConflate() =
-        checkConflate(1) {
-            conflate().conflate()
-        }
+    fun testDoubleConflate() = checkConflate(1) {
+        conflate().conflate()
+    }
 
     @Test
-    fun testConflateBuffer10Combine() =
-        checkConflate(10) {
-            conflate().buffer(10)
-        }
+    fun testConflateBuffer10Combine() = checkConflate(10) {
+        conflate().buffer(10)
+    }
 
     @Test
-    fun testBufferDropLatest() =
-        checkConflate(1, BufferOverflow.DROP_LATEST) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
-        }
+    fun testBufferDropLatest() = checkConflate(1, BufferOverflow.DROP_LATEST) {
+        buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 
     @Test
-    fun testBuffer0DropLatest() =
-        checkConflate(1, BufferOverflow.DROP_LATEST) {
-            buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST)
-        }
+    fun testBuffer0DropLatest() = checkConflate(1, BufferOverflow.DROP_LATEST) {
+        buffer(0, onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 
     @Test
-    fun testBuffer1DropLatest() =
-        checkConflate(1, BufferOverflow.DROP_LATEST) {
-            buffer(1, onBufferOverflow = BufferOverflow.DROP_LATEST)
-        }
+    fun testBuffer1DropLatest() = checkConflate(1, BufferOverflow.DROP_LATEST) {
+        buffer(1, onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 
     @Test // overrides previous buffer
-    fun testBufferDropLatestOverrideBuffer() =
-        checkConflate(1, BufferOverflow.DROP_LATEST) {
-            buffer(42).buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
-        }
+    fun testBufferDropLatestOverrideBuffer() = checkConflate(1, BufferOverflow.DROP_LATEST) {
+        buffer(42).buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 
     @Test // overrides previous conflate
-    fun testBufferDropLatestOverrideConflate() =
-        checkConflate(1, BufferOverflow.DROP_LATEST) {
-            conflate().buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
-        }
+    fun testBufferDropLatestOverrideConflate() = checkConflate(1, BufferOverflow.DROP_LATEST) {
+        conflate().buffer(onBufferOverflow = BufferOverflow.DROP_LATEST)
+    }
 
     @Test
-    fun testBufferDropLatestBuffer7Combine() =
-        checkConflate(7, BufferOverflow.DROP_LATEST) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).buffer(7)
-        }
+    fun testBufferDropLatestBuffer7Combine() = checkConflate(7, BufferOverflow.DROP_LATEST) {
+        buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).buffer(7)
+    }
 
     @Test
-    fun testConflateOverrideBufferDropLatest() =
-        checkConflate(1) {
-            buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).conflate()
-        }
+    fun testConflateOverrideBufferDropLatest() = checkConflate(1) {
+        buffer(onBufferOverflow = BufferOverflow.DROP_LATEST).conflate()
+    }
 
     @Test
-    fun testBuffer3DropOldestOverrideBuffer8DropLatest() =
-        checkConflate(3, BufferOverflow.DROP_OLDEST) {
-            buffer(8, onBufferOverflow = BufferOverflow.DROP_LATEST).buffer(3, BufferOverflow.DROP_OLDEST)
-        }
+    fun testBuffer3DropOldestOverrideBuffer8DropLatest() = checkConflate(3, BufferOverflow.DROP_OLDEST) {
+        buffer(8, onBufferOverflow = BufferOverflow.DROP_LATEST).buffer(3, BufferOverflow.DROP_OLDEST)
+    }
 }

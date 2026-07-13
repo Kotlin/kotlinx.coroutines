@@ -9,9 +9,12 @@ public abstract class SimpleChannel {
         const val NULL_SURROGATE: Int = -1
     }
 
-    @JvmField protected var producer: Continuation<Unit>? = null
-    @JvmField protected var enqueuedValue: Int = NULL_SURROGATE
-    @JvmField protected var consumer: Continuation<Int>? = null
+    @JvmField
+    protected var producer: Continuation<Unit>? = null
+    @JvmField
+    protected var enqueuedValue: Int = NULL_SURROGATE
+    @JvmField
+    protected var consumer: Continuation<Int>? = null
 
     suspend fun send(element: Int) {
         require(element != NULL_SURROGATE)
@@ -55,12 +58,11 @@ class NonCancellableChannel : SimpleChannel() {
         COROUTINE_SUSPENDED
     }
 
-    override suspend fun suspendSend(element: Int) =
-        suspendCoroutineUninterceptedOrReturn<Unit> {
-            enqueuedValue = element
-            producer = it.intercepted()
-            COROUTINE_SUSPENDED
-        }
+    override suspend fun suspendSend(element: Int) = suspendCoroutineUninterceptedOrReturn<Unit> {
+        enqueuedValue = element
+        producer = it.intercepted()
+        COROUTINE_SUSPENDED
+    }
 }
 
 class CancellableChannel : SimpleChannel() {
@@ -69,12 +71,11 @@ class CancellableChannel : SimpleChannel() {
         COROUTINE_SUSPENDED
     }
 
-    override suspend fun suspendSend(element: Int) =
-        suspendCancellableCoroutine<Unit> {
-            enqueuedValue = element
-            producer = it.intercepted()
-            COROUTINE_SUSPENDED
-        }
+    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutine<Unit> {
+        enqueuedValue = element
+        producer = it.intercepted()
+        COROUTINE_SUSPENDED
+    }
 }
 
 class CancellableReusableChannel : SimpleChannel() {
@@ -83,10 +84,9 @@ class CancellableReusableChannel : SimpleChannel() {
         COROUTINE_SUSPENDED
     }
 
-    override suspend fun suspendSend(element: Int) =
-        suspendCancellableCoroutineReusable<Unit> {
-            enqueuedValue = element
-            producer = it.intercepted()
-            COROUTINE_SUSPENDED
-        }
+    override suspend fun suspendSend(element: Int) = suspendCancellableCoroutineReusable<Unit> {
+        enqueuedValue = element
+        producer = it.intercepted()
+        COROUTINE_SUSPENDED
+    }
 }

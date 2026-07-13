@@ -243,19 +243,18 @@ class OnCompletionTest : TestBase() {
 
     @Test
     fun testFirst() = runTest {
-        val value =
-            flowOf(239)
-                .onCompletion {
-                    assertNotNull(it) // the flow did not complete normally
-                    expect(1)
-                    try {
-                        emit(42)
-                        expectUnreached()
-                    } catch (e: Throwable) {
-                        assertTrue { e is AbortFlowException }
-                    }
+        val value = flowOf(239)
+            .onCompletion {
+                assertNotNull(it) // the flow did not complete normally
+                expect(1)
+                try {
+                    emit(42)
+                    expectUnreached()
+                } catch (e: Throwable) {
+                    assertTrue { e is AbortFlowException }
                 }
-                .first()
+            }
+            .first()
         assertEquals(239, value)
         finish(2)
     }
@@ -284,33 +283,31 @@ class OnCompletionTest : TestBase() {
 
     @Test
     fun testEmptySingleInterference() = runTest {
-        val value =
-            emptyFlow<Int>()
-                .onCompletion {
-                    assertNull(it)
-                    expect(1)
-                    emit(42)
-                }
-                .single()
+        val value = emptyFlow<Int>()
+            .onCompletion {
+                assertNull(it)
+                expect(1)
+                emit(42)
+            }
+            .single()
         assertEquals(42, value)
         finish(2)
     }
 
     @Test
     fun testTransparencyViolation() = runTest {
-        val flow =
-            emptyFlow<Int>().onCompletion {
-                expect(2)
-                coroutineScope {
-                    launch {
-                        try {
-                            emit(1)
-                        } catch (e: IllegalStateException) {
-                            expect(3)
-                        }
+        val flow = emptyFlow<Int>().onCompletion {
+            expect(2)
+            coroutineScope {
+                launch {
+                    try {
+                        emit(1)
+                    } catch (e: IllegalStateException) {
+                        expect(3)
                     }
                 }
             }
+        }
         expect(1)
         assertNull(flow.singleOrNull())
         finish(4)
@@ -320,13 +317,12 @@ class OnCompletionTest : TestBase() {
     fun testTakeOnCompletion() = runTest {
         // even though it uses "take" from the outside it completes normally
         val flow = (1..10).asFlow().take(5)
-        val result =
-            flow
-                .onCompletion { cause ->
-                    assertNull(cause)
-                    emit(-1)
-                }
-                .toList()
+        val result = flow
+            .onCompletion { cause ->
+                assertNull(cause)
+                emit(-1)
+            }
+            .toList()
         val expected = (1..5).toList() + (-1)
         assertEquals(expected, result)
     }

@@ -7,7 +7,6 @@ import kotlin.test.*
 class SendReceiveStressTest : TestBase() {
 
     // Emulate parametrized by hand :(
-
     @Test
     fun testBufferedChannel() = runTest {
         testStress(Channel(2))

@@ -19,11 +19,10 @@ fun main() {
     runBlocking {
         repeat(10_000) { // Launch 10K coroutines
             launch {
-                val resource =
-                    withTimeout(60) { // Timeout of 60 ms
-                        delay(50) // Delay for 50 ms
-                        Resource() // Acquire a resource and return it from withTimeout block
-                    }
+                val resource = withTimeout(60) { // Timeout of 60 ms
+                    delay(50) // Delay for 50 ms
+                    Resource() // Acquire a resource and return it from withTimeout block
+                }
                 resource.close() // Release the resource
             }
         }

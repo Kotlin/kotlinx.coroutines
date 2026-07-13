@@ -22,10 +22,9 @@ class RejectedExecutionTest : TestBase() {
     @Test
     fun testRejectOnLaunch() = runTest {
         expect(1)
-        val job =
-            launch(executor.asCoroutineDispatcher()) {
-                expectUnreached()
-            }
+        val job = launch(executor.asCoroutineDispatcher()) {
+            expectUnreached()
+        }
         assertEquals(1, executor.submittedTasks)
         assertTrue(job.isCancelled)
         finish(2)
@@ -34,12 +33,11 @@ class RejectedExecutionTest : TestBase() {
     @Test
     fun testRejectOnLaunchAtomic() = runTest {
         expect(1)
-        val job =
-            launch(executor.asCoroutineDispatcher(), start = CoroutineStart.ATOMIC) {
-                expect(2)
-                assertEquals(true, coroutineContext[Job]?.isCancelled)
-                assertIoThread() // was rejected on start, but start was atomic
-            }
+        val job = launch(executor.asCoroutineDispatcher(), start = CoroutineStart.ATOMIC) {
+            expect(2)
+            assertEquals(true, coroutineContext[Job]?.isCancelled)
+            assertIoThread() // was rejected on start, but start was atomic
+        }
         assertEquals(1, executor.submittedTasks)
         job.join()
         finish(3)

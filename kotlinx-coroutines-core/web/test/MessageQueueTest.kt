@@ -6,17 +6,16 @@ class MessageQueueTest {
     private var scheduled = false
     private val processed = mutableListOf<Int>()
 
-    private val queue =
-        object : MessageQueue() {
-            override fun schedule() {
-                assertFalse(scheduled)
-                scheduled = true
-            }
-
-            override fun reschedule() {
-                schedule()
-            }
+    private val queue = object : MessageQueue() {
+        override fun schedule() {
+            assertFalse(scheduled)
+            scheduled = true
         }
+
+        override fun reschedule() {
+            schedule()
+        }
+    }
 
     inner class Box(val i: Int) : Runnable {
         override fun run() {

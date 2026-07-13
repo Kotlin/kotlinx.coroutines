@@ -13,8 +13,8 @@ import kotlin.coroutines.CoroutineContext
  */
 @Deprecated(
     "Passing a Job to `runInterruptible` prevents it from being cancelled when the caller gets cancelled. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 public suspend fun <T> runInterruptible(

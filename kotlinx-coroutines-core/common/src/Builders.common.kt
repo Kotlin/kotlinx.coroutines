@@ -15,7 +15,6 @@ import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 // --------------- launch ---------------
-
 /**
  * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread and returns a reference to the coroutine as a
  * [Job].
@@ -187,7 +186,6 @@ public fun CoroutineScope.launch(
 }
 
 // --------------- async ---------------
-
 /**
  * Launches a new *child coroutine* of [CoroutineScope] without blocking the current thread and returns a reference to the coroutine as a
  * [Deferred] that can be used to access the result of the coroutine.
@@ -268,8 +266,7 @@ private open class DeferredCoroutine<T>(
 
     override suspend fun await(): T = awaitInternal() as T
 
-    override val onAwait: SelectClause1<T>
-        get() = onAwaitInternal as SelectClause1<T>
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 }
 
 private class LazyDeferredCoroutine<T>(
@@ -284,7 +281,6 @@ private class LazyDeferredCoroutine<T>(
 }
 
 // --------------- withContext ---------------
-
 /**
  * Calls the specified suspending [block] with an updated coroutine context, suspends until it completes, and returns the result.
  *
@@ -460,7 +456,6 @@ public suspend inline operator fun <T> CoroutineDispatcher.invoke(noinline block
     withContext(this, block)
 
 // --------------- implementation ---------------
-
 private open class StandaloneCoroutine(
     parentContext: CoroutineContext,
     active: Boolean,

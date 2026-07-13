@@ -14,8 +14,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
 
         companion object Key : CoroutineContext.Key<MyMutableElement>
 
-        override val key: CoroutineContext.Key<*>
-            get() = Key
+        override val key: CoroutineContext.Key<*> get() = Key
 
         override fun updateThreadContext(context: CoroutineContext): MutableList<String> {
             val st = threadLocalData.get()

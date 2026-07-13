@@ -13,7 +13,6 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        simple().collect { value -> log("Collected $value") }
-    }
+fun main() = runBlocking<Unit> {
+    simple().collect { value -> log("Collected $value") }
+}

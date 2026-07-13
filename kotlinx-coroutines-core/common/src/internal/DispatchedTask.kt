@@ -18,7 +18,8 @@ internal const val MODE_ATOMIC = 0
  *
  * **DO NOT CHANGE THE CONSTANT VALUE**. It is being into the user code from [suspendCancellableCoroutine].
  */
-@PublishedApi internal const val MODE_CANCELLABLE: Int = 1
+@PublishedApi
+internal const val MODE_CANCELLABLE: Int = 1
 
 /**
  * Cancellable dispatch mode for [suspendCancellableCoroutineReusable]. Note, that implementation of cancellability checks mode via
@@ -38,10 +39,8 @@ internal const val MODE_UNDISPATCHED = 4
  */
 internal const val MODE_UNINITIALIZED = -1
 
-internal val Int.isCancellableMode
-    get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
-internal val Int.isReusableMode
-    get() = this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isCancellableMode get() = this == MODE_CANCELLABLE || this == MODE_CANCELLABLE_REUSABLE
+internal val Int.isReusableMode get() = this == MODE_CANCELLABLE_REUSABLE
 
 internal abstract class DispatchedTask<in T> internal constructor(@JvmField var resumeMode: Int) : SchedulerTask() {
     internal abstract val delegate: Continuation<T>
@@ -56,7 +55,8 @@ internal abstract class DispatchedTask<in T> internal constructor(@JvmField var 
      * - [DispatchedContinuation] keeps only simple values as successfully results.
      * - [CancellableContinuationImpl] keeps additional data with values and overrides this method to unwrap it.
      */
-    @Suppress("UNCHECKED_CAST") internal open fun <T> getSuccessfulResult(state: Any?): T = state as T
+    @Suppress("UNCHECKED_CAST")
+    internal open fun <T> getSuccessfulResult(state: Any?): T = state as T
 
     /**
      * There are two implementations of `DispatchedTask`:
@@ -117,12 +117,11 @@ internal abstract class DispatchedTask<in T> internal constructor(@JvmField var 
      * exceptions should be reported anyway.
      */
     internal fun handleFatalException(exception: Throwable) {
-        val reason =
-            CoroutinesInternalError(
-                "Fatal exception in coroutines machinery for $this. " +
-                    "Please read KDoc to 'handleFatalException' method and report this incident to maintainers",
-                exception,
-            )
+        val reason = CoroutinesInternalError(
+            "Fatal exception in coroutines machinery for $this. " +
+            "Please read KDoc to 'handleFatalException' method and report this incident to maintainers",
+            exception,
+        )
         handleCoroutineException(this.delegate.context, reason)
     }
 }

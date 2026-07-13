@@ -14,7 +14,6 @@ internal actual val Any.hexAddress: String
         return (result as Int).toString()
     }
 
-internal actual val Any.classSimpleName: String
-    get() = this::class.simpleName ?: "Unknown"
+internal actual val Any.classSimpleName: String get() = this::class.simpleName ?: "Unknown"
 
 internal actual inline fun assert(value: () -> Boolean) {}

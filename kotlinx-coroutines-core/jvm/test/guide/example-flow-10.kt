@@ -15,9 +15,8 @@ fun numbers(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        numbers()
-            .take(2) // take only the first two
-            .collect { value -> println(value) }
-    }
+fun main() = runBlocking<Unit> {
+    numbers()
+        .take(2) // take only the first two
+        .collect { value -> println(value) }
+}

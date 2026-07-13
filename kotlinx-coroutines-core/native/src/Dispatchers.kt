@@ -5,11 +5,9 @@ import kotlin.coroutines.*
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
-    public actual val Main: MainCoroutineDispatcher
-        get() = injectedMainDispatcher ?: mainDispatcher
+    public actual val Main: MainCoroutineDispatcher get() = injectedMainDispatcher ?: mainDispatcher
 
-    public actual val Unconfined: CoroutineDispatcher
-        get() = kotlinx.coroutines.Unconfined // Avoid freezing
+    public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
 
     private val mainDispatcher = createMainDispatcher(Default)
 
@@ -46,7 +44,6 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
 }
 
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-public actual val Dispatchers.IO: CoroutineDispatcher
-    get() = IO
+public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher

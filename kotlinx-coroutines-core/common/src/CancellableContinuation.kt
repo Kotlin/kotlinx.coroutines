@@ -139,7 +139,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    @InternalCoroutinesApi public fun tryResume(value: T, idempotent: Any? = null): Any?
+    @InternalCoroutinesApi
+    public fun tryResume(value: T, idempotent: Any? = null): Any?
 
     /**
      * Same as [tryResume] but with an [onCancellation] handler that is called if and only if the value is not delivered to the caller
@@ -165,14 +166,16 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.** Used in ktor.
      */
-    @InternalCoroutinesApi public fun tryResumeWithException(exception: Throwable): Any?
+    @InternalCoroutinesApi
+    public fun tryResumeWithException(exception: Throwable): Any?
 
     /**
      * Completes the execution of [tryResume] or [tryResumeWithException] on its non-null result.
      *
      * @suppress **This is unstable API and it is subject to change.** Used in ktor.
      */
-    @InternalCoroutinesApi public fun completeResume(token: Any)
+    @InternalCoroutinesApi
+    public fun completeResume(token: Any)
 
     /**
      * Internal function that setups cancellation behavior in [suspendCancellableCoroutine]. It's illegal to call this function in any
@@ -181,7 +184,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * @suppress **This is unstable API and it is subject to change.** Used in ktor.
      */
-    @InternalCoroutinesApi public fun initCancellability()
+    @InternalCoroutinesApi
+    public fun initCancellability()
 
     /**
      * Cancels this continuation with an optional cancellation `cause`. The result is `true` if this continuation was cancelled as a result
@@ -220,7 +224,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * **Note: This function is experimental.** Its signature general code may be changed in the future.
      */
-    @ExperimentalCoroutinesApi public fun CoroutineDispatcher.resumeUndispatched(value: T)
+    @ExperimentalCoroutinesApi
+    public fun CoroutineDispatcher.resumeUndispatched(value: T)
 
     /**
      * Resumes this continuation with the specified [exception] in the invoker thread without going through the
@@ -229,7 +234,8 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      *
      * **Note: This function is experimental.** Its signature general code may be changed in the future.
      */
-    @ExperimentalCoroutinesApi public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
+    @ExperimentalCoroutinesApi
+    public fun CoroutineDispatcher.resumeUndispatchedWithException(exception: Throwable)
 
     /** @suppress */
     @Deprecated(
@@ -285,11 +291,10 @@ public interface CancellableContinuation<in T> : Continuation<T> {
  * A version of `invokeOnCancellation` that accepts a class as a handler instead of a lambda, but identical otherwise. This allows providing
  * a custom [toString] instance that will look better during debugging.
  */
-internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: CancelHandler) =
-    when (this) {
-        is CancellableContinuationImpl -> invokeOnCancellationInternal(handler)
-        else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
-    }
+internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: CancelHandler) = when (this) {
+    is CancellableContinuationImpl -> invokeOnCancellationInternal(handler)
+    else -> throw UnsupportedOperationException("third-party implementation of CancellableContinuation is not supported")
+}
 
 /**
  * Suspends the coroutine like [suspendCoroutine], but providing a [CancellableContinuation] to the [block]. This function throws a

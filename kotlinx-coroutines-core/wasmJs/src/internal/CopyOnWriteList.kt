@@ -4,8 +4,7 @@ package kotlinx.coroutines.internal
 internal class CopyOnWriteList<E> : AbstractMutableList<E>() {
     private var array: Array<Any?> = arrayOfNulls<Any?>(0)
 
-    override val size: Int
-        get() = array.size
+    override val size: Int get() = array.size
 
     override fun add(element: E): Boolean {
         val n = size

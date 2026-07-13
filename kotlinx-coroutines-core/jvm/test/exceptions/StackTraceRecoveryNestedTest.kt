@@ -11,47 +11,46 @@ class StackTraceRecoveryNestedTest : TestBase() {
 
     @Test
     fun testNestedAsync() = runTest {
-        val rootAsync =
-            async(NonCancellable) {
-                expect(1)
+        val rootAsync = async(NonCancellable) {
+            expect(1)
 
-                // Just a noise for unwrapping
+            // Just a noise for unwrapping
+            async {
+                expect(2)
+                delay(Long.MAX_VALUE)
+            }
+
+            // Do not catch, fail on cancellation
+            async {
+                expect(3)
                 async {
-                    expect(2)
+                    expect(4)
                     delay(Long.MAX_VALUE)
                 }
 
-                // Do not catch, fail on cancellation
                 async {
-                    expect(3)
-                    async {
-                        expect(4)
-                        delay(Long.MAX_VALUE)
-                    }
-
-                    async {
-                        expect(5)
-                        // 1) await(), catch, verify and rethrow
-                        try {
-                            val nested = async {
-                                expect(6)
-                                throw RecoverableTestException()
-                            }
-
-                            nested.awaitNested()
-                        } catch (e: RecoverableTestException) {
-                            expect(7)
-                            e.verifyException(
-                                "await\$suspendImpl",
-                                "awaitNested",
-                                "\$testNestedAsync\$1\$rootAsync\$1\$2\$2.invokeSuspend",
-                            )
-                            // Just rethrow it
-                            throw e
+                    expect(5)
+                    // 1) await(), catch, verify and rethrow
+                    try {
+                        val nested = async {
+                            expect(6)
+                            throw RecoverableTestException()
                         }
+
+                        nested.awaitNested()
+                    } catch (e: RecoverableTestException) {
+                        expect(7)
+                        e.verifyException(
+                            "await\$suspendImpl",
+                            "awaitNested",
+                            "\$testNestedAsync\$1\$rootAsync\$1\$2\$2.invokeSuspend",
+                        )
+                        // Just rethrow it
+                        throw e
                     }
                 }
             }
+        }
 
         try {
             rootAsync.awaitRootLevel()

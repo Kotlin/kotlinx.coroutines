@@ -25,13 +25,12 @@ internal class WorkerDispatcher(name: String) : CloseableCoroutineDispatcher(), 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val handle =
-            schedule(
-                timeMillis,
-                Runnable {
-                    with(continuation) { resumeUndispatched(Unit) }
-                },
-            )
+        val handle = schedule(
+            timeMillis,
+            Runnable {
+                with(continuation) { resumeUndispatched(Unit) }
+            },
+        )
         continuation.disposeOnCancellation(handle)
     }
 
@@ -85,21 +84,23 @@ private class MultiWorkerDispatcher(
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
     private val availableWorkers = Channel<CancellableContinuation<Runnable>>(Channel.UNLIMITED)
-    private val workerPool =
-        OnDemandAllocatingPool(workersCount) {
-            Worker.start(name = "$name-$it").apply {
-                executeAfter { workerRunLoop() }
-            }
+    private val workerPool = OnDemandAllocatingPool(workersCount) {
+        Worker.start(name = "$name-$it").apply {
+            executeAfter { workerRunLoop() }
         }
+    }
 
     /** (number of tasks - number of workers) * 2 + (1 if closed) */
     private val tasksAndWorkersCounter = atomic(0L)
 
-    @Suppress("NOTHING_TO_INLINE") private inline fun Long.isClosed() = this and 1L == 1L
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Long.isClosed() = this and 1L == 1L
 
-    @Suppress("NOTHING_TO_INLINE") private inline fun Long.hasTasks() = this >= 2
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Long.hasTasks() = this >= 2
 
-    @Suppress("NOTHING_TO_INLINE") private inline fun Long.hasWorkers() = this < 0
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Long.hasWorkers() = this < 0
 
     private fun workerRunLoop() = runBlocking {
         while (true) {
@@ -175,10 +176,9 @@ private class MultiWorkerDispatcher(
     }
 
     private fun checkChannelResult(result: ChannelResult<*>) {
-        if (!result.isSuccess)
-            throw IllegalStateException(
-                "Internal invariants of $this were violated, please file a bug to kotlinx.coroutines",
-                result.exceptionOrNull(),
-            )
+        if (!result.isSuccess) throw IllegalStateException(
+            "Internal invariants of $this were violated, please file a bug to kotlinx.coroutines",
+            result.exceptionOrNull(),
+        )
     }
 }

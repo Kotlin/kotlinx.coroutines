@@ -16,18 +16,17 @@ public actual fun CancellationException(message: String?, cause: Throwable?): Ca
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled or completed without cause, or with a cause or
  * exception that is not [CancellationException] (see [Job.getCancellationException]).
  */
-internal actual class JobCancellationException
-public actual constructor(
+internal actual class JobCancellationException public actual constructor(
     message: String,
     cause: Throwable?,
     job: Job,
 ) : CancellationException(message), CopyableThrowable<JobCancellationException> {
 
-    @Transient private val _job: Job? = job
+    @Transient
+    private val _job: Job? = job
 
     // The safest option for transient -- return something that meanigfully reject any attemp to interact with the job
-    internal actual val job
-        get() = _job ?: NonCancellable
+    internal actual val job get() = _job ?: NonCancellable
 
     init {
         if (cause != null) initCause(cause)

@@ -85,12 +85,11 @@ internal class LimitedDispatcher(
     private fun obtainTaskOrDeallocateWorker(): Runnable? {
         while (true) {
             when (val nextTask = queue.removeFirstOrNull()) {
-                null ->
-                    synchronized(workerAllocationLock) {
-                        runningWorkers.decrementAndGet()
-                        if (queue.size == 0) return null
-                        runningWorkers.incrementAndGet()
-                    }
+                null -> synchronized(workerAllocationLock) {
+                    runningWorkers.decrementAndGet()
+                    if (queue.size == 0) return null
+                    runningWorkers.incrementAndGet()
+                }
                 else -> return nextTask
             }
         }

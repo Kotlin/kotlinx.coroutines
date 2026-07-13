@@ -11,14 +11,13 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        try {
-            simple().collect { value ->
-                println(value)
-                check(value <= 1) { "Collected $value" }
-            }
-        } catch (e: Throwable) {
-            println("Caught $e")
+fun main() = runBlocking<Unit> {
+    try {
+        simple().collect { value ->
+            println(value)
+            check(value <= 1) { "Collected $value" }
         }
+    } catch (e: Throwable) {
+        println("Caught $e")
     }
+}

@@ -46,7 +46,9 @@ class UnboundedIntegerIncrementPublisherTest : PublisherVerification<Int>(TestEn
         return super.publisherUnableToSignalOnComplete()
     }
 
-    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 }

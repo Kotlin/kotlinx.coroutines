@@ -10,8 +10,7 @@ import kotlin.coroutines.jvm.internal.*
  */
 @Suppress("unused")
 @PublishedApi
-internal class DebugCoroutineInfo
-internal constructor(
+internal class DebugCoroutineInfo internal constructor(
     source: DebugCoroutineInfoImpl,
     public val context: CoroutineContext, // field is used as of 1.4-M3
 ) {

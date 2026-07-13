@@ -137,15 +137,13 @@ public suspend fun delay(timeMillis: Long) {
 public suspend fun delay(duration: Duration): Unit = delay(duration.toDelayMillis())
 
 /** Returns [Delay] implementation of the given context */
-internal val CoroutineContext.delay: Delay
-    get() = get(ContinuationInterceptor) as? Delay ?: DefaultDelay
+internal val CoroutineContext.delay: Delay get() = get(ContinuationInterceptor) as? Delay ?: DefaultDelay
 
 /**
  * Convert this duration to its millisecond value. Durations which have a nanosecond component less than a single millisecond will be
  * rounded up to the next largest millisecond.
  */
-internal fun Duration.toDelayMillis(): Long =
-    when (isPositive()) {
-        true -> plus(999_999L.nanoseconds).inWholeMilliseconds
-        false -> 0L
-    }
+internal fun Duration.toDelayMillis(): Long = when (isPositive()) {
+    true -> plus(999_999L.nanoseconds).inWholeMilliseconds
+    false -> 0L
+}

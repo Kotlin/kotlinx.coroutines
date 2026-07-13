@@ -23,17 +23,16 @@ internal expect class SafeCollector<T>(
 
 @JvmName("checkContext") // For prettier stack traces
 internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
-    val result =
-        currentContext.fold(0) fold@{ count, element ->
-            val key = element.key
-            val collectElement = collectContext[key]
-            if (key !== Job) {
-                return@fold if (element !== collectElement) Int.MIN_VALUE else count + 1
-            }
+    val result = currentContext.fold(0) fold@{ count, element ->
+        val key = element.key
+        val collectElement = collectContext[key]
+        if (key !== Job) {
+            return@fold if (element !== collectElement) Int.MIN_VALUE else count + 1
+        }
 
-            val collectJob = collectElement as Job?
-            val emissionParentJob = (element as Job).transitiveCoroutineParent(collectJob)
-            /*
+        val collectJob = collectElement as Job?
+        val emissionParentJob = (element as Job).transitiveCoroutineParent(collectJob)
+        /*
              * Code like
              * ```
              * coroutineScope {
@@ -64,29 +63,29 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
              * ```
              * is a completely valid.
              */
-            if (emissionParentJob !== collectJob) {
-                error(
-                    "Flow invariant is violated:\n" +
-                        "\t\tEmission from another coroutine is detected.\n" +
-                        "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
-                        "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
-                        "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
-                )
-            }
+        if (emissionParentJob !== collectJob) {
+            error(
+                "Flow invariant is violated:\n" +
+                "\t\tEmission from another coroutine is detected.\n" +
+                "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
+                "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
+                "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'",
+            )
+        }
 
-            /*
+        /*
              * If collect job is null (-> EmptyCoroutineContext, probably run from `suspend fun main`), then invariant is maintained
              * (common transitive parent is "null"), but count check will fail, so just do not count job context element when
              * flow is collected from EmptyCoroutineContext
              */
-            if (collectJob == null) count else count + 1
-        }
+        if (collectJob == null) count else count + 1
+    }
     if (result != collectContextSize) {
         error(
             "Flow invariant is violated:\n" +
-                "\t\tFlow was collected in $collectContext,\n" +
-                "\t\tbut emission happened in $currentContext.\n" +
-                "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
+            "\t\tFlow was collected in $collectContext,\n" +
+            "\t\tbut emission happened in $currentContext.\n" +
+            "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead",
         )
     }
 }

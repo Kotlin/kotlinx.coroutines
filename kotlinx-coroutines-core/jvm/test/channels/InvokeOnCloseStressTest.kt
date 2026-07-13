@@ -14,8 +14,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
     private val iterations = 1000 * stressTestMultiplier
 
     private val pool = newFixedThreadPoolContext(3, "InvokeOnCloseStressTest")
-    override val coroutineContext: CoroutineContext
-        get() = pool
+    override val coroutineContext: CoroutineContext get() = pool
 
     @After
     fun tearDown() {

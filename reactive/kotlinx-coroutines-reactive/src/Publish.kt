@@ -67,15 +67,14 @@ public class PublisherCoroutine<in T>(
     private val subscriber: Subscriber<T>,
     private val exceptionOnCancelHandler: (Throwable, CoroutineContext) -> Unit,
 ) : AbstractCoroutine<Unit>(parentContext, false, true), ProducerScope<T>, Subscription {
-    override val channel: SendChannel<T>
-        get() = this
+    override val channel: SendChannel<T> get() = this
 
     private val _nRequested = atomic(0L) // < 0 when closed (CLOSED or SIGNALLED)
 
-    @Volatile private var cancelled = false // true after Subscription.cancel() is invoked
+    @Volatile
+    private var cancelled = false // true after Subscription.cancel() is invoked
 
-    override val isClosedForSend: Boolean
-        get() = !isActive
+    override val isClosedForSend: Boolean get() = !isActive
 
     override fun close(cause: Throwable?): Boolean = cancelCoroutine(cause)
 
@@ -90,13 +89,11 @@ public class PublisherCoroutine<in T>(
         "INVISIBLE_MEMBER",
         "INVISIBLE_REFERENCE",
     ) // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-    override val onSend: SelectClause2<T, SendChannel<T>>
-        get() =
-            SelectClause2Impl(
-                clauseObject = this,
-                regFunc = PublisherCoroutine<*>::registerSelectForSend as RegistrationFunction,
-                processResFunc = PublisherCoroutine<*>::processResultSelectSend as ProcessResultFunction,
-            )
+    override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
+        clauseObject = this,
+        regFunc = PublisherCoroutine<*>::registerSelectForSend as RegistrationFunction,
+        processResFunc = PublisherCoroutine<*>::processResultSelectSend as ProcessResultFunction,
+    )
 
     @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
     private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
@@ -124,15 +121,14 @@ public class PublisherCoroutine<in T>(
         return this@PublisherCoroutine
     }
 
-    override fun trySend(element: T): ChannelResult<Unit> =
-        if (!mutex.tryLock()) {
-            ChannelResult.failure()
-        } else {
-            when (val throwable = doLockedNext(element)) {
-                null -> ChannelResult.success(Unit)
-                else -> ChannelResult.closed(throwable)
-            }
+    override fun trySend(element: T): ChannelResult<Unit> = if (!mutex.tryLock()) {
+        ChannelResult.failure()
+    } else {
+        when (val throwable = doLockedNext(element)) {
+            null -> ChannelResult.success(Unit)
+            else -> ChannelResult.closed(throwable)
         }
+    }
 
     public override suspend fun send(element: T) {
         mutex.lock()
@@ -153,7 +149,6 @@ public class PublisherCoroutine<in T>(
      *    subscriber actually requests some elements. This is implemented by the mutex being locked when emitting
      *    elements is not permitted (`_nRequested.value == 0`).
      */
-
     /**
      * Attempts to emit a value to the subscriber and, if back-pressure permits this, unlock the mutex.
      *

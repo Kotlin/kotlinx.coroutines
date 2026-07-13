@@ -33,13 +33,12 @@ private fun printlnErrorStream(message: String): Int = withScopedMemoryAllocator
 
     val rp0 = allocator.allocate(4)
 
-    val ret =
-        wasiRawFdWrite(
-            descriptor = STDERR,
-            scatterPtr = scatterPtr.address.toInt(),
-            scatterSize = 1,
-            errorPtr = rp0.address.toInt(),
-        )
+    val ret = wasiRawFdWrite(
+        descriptor = STDERR,
+        scatterPtr = scatterPtr.address.toInt(),
+        scatterSize = 1,
+        errorPtr = rp0.address.toInt(),
+    )
 
     if (ret != 0) rp0.loadInt() else 0
 }
@@ -47,7 +46,9 @@ private fun printlnErrorStream(message: String): Int = withScopedMemoryAllocator
 /*
  * Terminate the process normally with an exit code.
  */
-@OptIn(ExperimentalWasmInterop::class) @WasmImport("wasi_snapshot_preview1", "proc_exit") private external fun wasiProcExit(exitCode: Int)
+@OptIn(ExperimentalWasmInterop::class)
+@WasmImport("wasi_snapshot_preview1", "proc_exit")
+private external fun wasiProcExit(exitCode: Int)
 
 internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     val errorCode = printlnErrorStream("!!!")

@@ -15,7 +15,8 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * Name of the property that defines the value of [DEFAULT_CONCURRENCY]. This is a preview API and can be changed in a
  * backwards-incompatible manner within a single release.
  */
-@FlowPreview public const val DEFAULT_CONCURRENCY_PROPERTY_NAME: String = "kotlinx.coroutines.flow.defaultConcurrency"
+@FlowPreview
+public const val DEFAULT_CONCURRENCY_PROPERTY_NAME: String = "kotlinx.coroutines.flow.defaultConcurrency"
 
 /**
  * Default concurrency limit that is used by [flattenMerge] and [flatMapMerge] operators. It is 16 by default and can be changed on JVM
@@ -23,13 +24,12 @@ import kotlinx.coroutines.flow.internal.unsafeFlow as flow
  * single release.
  */
 @FlowPreview
-public val DEFAULT_CONCURRENCY: Int =
-    systemProp(
-        DEFAULT_CONCURRENCY_PROPERTY_NAME,
-        16,
-        1,
-        Int.MAX_VALUE,
-    )
+public val DEFAULT_CONCURRENCY: Int = systemProp(
+    DEFAULT_CONCURRENCY_PROPERTY_NAME,
+    16,
+    1,
+    Int.MAX_VALUE,
+)
 
 /**
  * Transforms elements emitted by the original flow by applying [transform], that returns another flow, and then concatenating and

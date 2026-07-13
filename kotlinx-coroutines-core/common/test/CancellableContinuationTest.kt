@@ -128,12 +128,10 @@ class CancellableContinuationTest : TestBase() {
             }
             expect(3)
         }
-        coroutineBlock.startCoroutine(
-            Continuation(completableJob) {
+        coroutineBlock.startCoroutine(Continuation(completableJob) {
                 assertEquals(Unit, it.getOrNull())
                 expect(4)
-            }
-        )
+            })
         finish(5)
     }
 

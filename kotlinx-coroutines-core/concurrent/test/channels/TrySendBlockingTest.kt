@@ -7,20 +7,19 @@ import kotlin.test.*
 class TrySendBlockingTest : TestBase() {
 
     @Test
-    fun testTrySendBlocking() =
-        runBlocking<Unit> { // For old MM
-            val ch = Channel<Int>()
-            val sum = GlobalScope.async {
-                var sum = 0
-                ch.consumeEach { sum += it }
-                sum
-            }
-            repeat(10) {
-                assertTrue(ch.trySendBlocking(it).isSuccess)
-            }
-            ch.close()
-            assertEquals(45, runBlocking { sum.await() })
+    fun testTrySendBlocking() = runBlocking<Unit> { // For old MM
+        val ch = Channel<Int>()
+        val sum = GlobalScope.async {
+            var sum = 0
+            ch.consumeEach { sum += it }
+            sum
         }
+        repeat(10) {
+            assertTrue(ch.trySendBlocking(it).isSuccess)
+        }
+        ch.close()
+        assertEquals(45, runBlocking { sum.await() })
+    }
 
     @Test
     fun testTrySendBlockingClosedChannel() {

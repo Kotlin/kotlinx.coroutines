@@ -35,10 +35,9 @@ class PublisherRequestStressTest : TestBase() {
 
     private val emitThreadNo = AtomicInteger()
 
-    private val emitPool =
-        Executors.newFixedThreadPool(nEmitThreads) { r ->
-            Thread(r, "PublisherRequestStressTest-emit-${emitThreadNo.incrementAndGet()}")
-        }
+    private val emitPool = Executors.newFixedThreadPool(nEmitThreads) { r ->
+        Thread(r, "PublisherRequestStressTest-emit-${emitThreadNo.incrementAndGet()}")
+    }
 
     private val reqPool = Executors.newSingleThreadExecutor { r ->
         Thread(r, "PublisherRequestStressTest-req")
@@ -65,50 +64,48 @@ class PublisherRequestStressTest : TestBase() {
         val publisher = mtFlow().asPublisher()
         var error = false
 
-        publisher.subscribe(
-            object : Subscriber<Long> {
-                private var demand = 0L // only updated from reqPool
+        publisher.subscribe(object : Subscriber<Long> {
+            private var demand = 0L // only updated from reqPool
 
-                override fun onComplete() {
-                    // Typically unreached, but, rarely, `emitPool` may shut down before the cancellation is performed.
-                }
+            override fun onComplete() {
+                // Typically unreached, but, rarely, `emitPool` may shut down before the cancellation is performed.
+            }
 
-                override fun onSubscribe(sub: Subscription) {
-                    subscription = sub
+            override fun onSubscribe(sub: Subscription) {
+                subscription = sub
+                maybeRequestMore()
+            }
+
+            private fun maybeRequestMore() {
+                if (demand >= minDemand) return
+                val nextDemand = Random.nextLong(minDemand + 1..maxDemand)
+                val more = nextDemand - demand
+                demand = nextDemand
+                requestedTill.addAndGet(more)
+                subscription.request(more)
+            }
+
+            override fun onNext(value: Long) {
+                check(callingOnNext.getAndIncrement() == 0) // make sure it is not concurrent
+                // check for expected value
+                check(value == expectedValue.get())
+                // check that it does not exceed requested values
+                check(value < requestedTill.get())
+                val nextExpected = value + 1
+                expectedValue.set(nextExpected)
+                // send more requests from request thread
+                reqPool.execute {
+                    demand-- // processed an item
                     maybeRequestMore()
                 }
-
-                private fun maybeRequestMore() {
-                    if (demand >= minDemand) return
-                    val nextDemand = Random.nextLong(minDemand + 1..maxDemand)
-                    val more = nextDemand - demand
-                    demand = nextDemand
-                    requestedTill.addAndGet(more)
-                    subscription.request(more)
-                }
-
-                override fun onNext(value: Long) {
-                    check(callingOnNext.getAndIncrement() == 0) // make sure it is not concurrent
-                    // check for expected value
-                    check(value == expectedValue.get())
-                    // check that it does not exceed requested values
-                    check(value < requestedTill.get())
-                    val nextExpected = value + 1
-                    expectedValue.set(nextExpected)
-                    // send more requests from request thread
-                    reqPool.execute {
-                        demand-- // processed an item
-                        maybeRequestMore()
-                    }
-                    callingOnNext.decrementAndGet()
-                }
-
-                override fun onError(ex: Throwable?) {
-                    error = true
-                    error("Failed", ex)
-                }
+                callingOnNext.decrementAndGet()
             }
-        )
+
+            override fun onError(ex: Throwable?) {
+                error = true
+                error("Failed", ex)
+            }
+        })
         var prevExpected = -1L
         for (second in 1..testDurationSec) {
             if (error) break
@@ -133,10 +130,8 @@ class PublisherRequestStressTest : TestBase() {
     }
 
     private suspend fun aWait(): Long = suspendCancellableCoroutine { cont ->
-        emitPool.execute(
-            Runnable {
-                cont.resume(nextValue.getAndIncrement())
-            }
-        )
+        emitPool.execute(Runnable {
+            cont.resume(nextValue.getAndIncrement())
+        })
     }
 }

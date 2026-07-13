@@ -57,7 +57,8 @@ public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
     result.fold({ complete(it) }, { completeExceptionally(it) })
 
 /** Creates a [CompletableDeferred] in an _active_ state. It is optionally a child of a [parent] job. */
-@Suppress("FunctionName") public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
+@Suppress("FunctionName")
+public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
 
 /** Creates an already _completed_ [CompletableDeferred] with a given [value]. */
 @Suppress("FunctionName")
@@ -84,7 +85,8 @@ public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = Completab
  * // (myClass.operationCompleted as CompletableDeferred<*>) will fail
  * ```
  */
-@ExperimentalCoroutinesApi public fun <T> CompletableDeferred<T>.asDeferred(): Deferred<T> = ReadonlyDeferred(this)
+@ExperimentalCoroutinesApi
+public fun <T> CompletableDeferred<T>.asDeferred(): Deferred<T> = ReadonlyDeferred(this)
 
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 private class ReadonlyDeferred<T>(val deferred: CompletableDeferred<T>) : Deferred<T> by deferred {
@@ -99,15 +101,13 @@ private class CompletableDeferredImpl<T>(parent: Job?) : JobSupport(true), Compl
         initParentJob(parent)
     }
 
-    override val onCancelComplete
-        get() = true
+    override val onCancelComplete get() = true
 
     override fun getCompleted(): T = getCompletedInternal() as T
 
     override suspend fun await(): T = awaitInternal() as T
 
-    override val onAwait: SelectClause1<T>
-        get() = onAwaitInternal as SelectClause1<T>
+    override val onAwait: SelectClause1<T> get() = onAwaitInternal as SelectClause1<T>
 
     override fun complete(value: T): Boolean = makeCompleting(value)
 

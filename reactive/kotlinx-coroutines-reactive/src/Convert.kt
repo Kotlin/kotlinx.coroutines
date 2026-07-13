@@ -10,7 +10,6 @@ import kotlin.coroutines.*
     level = DeprecationLevel.HIDDEN, // Error in 1.4, HIDDEN in 1.6.0
     replaceWith = ReplaceWith("this.consumeAsFlow().asPublisher(context)", imports = ["kotlinx.coroutines.flow.consumeAsFlow"]),
 )
-public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> =
-    publish(context) {
-        for (t in this@asPublisher) send(t)
-    }
+public fun <T> ReceiveChannel<T>.asPublisher(context: CoroutineContext = EmptyCoroutineContext): Publisher<T> = publish(context) {
+    for (t in this@asPublisher) send(t)
+}

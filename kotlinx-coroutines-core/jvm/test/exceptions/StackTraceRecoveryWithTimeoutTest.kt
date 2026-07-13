@@ -7,7 +7,8 @@ import org.junit.rules.*
 
 class StackTraceRecoveryWithTimeoutTest : TestBase() {
 
-    @get:Rule val name = TestName()
+    @get:Rule
+    val name = TestName()
 
     @Test
     fun testStacktraceIsRecoveredFromSuspensionPoint() = runTest {

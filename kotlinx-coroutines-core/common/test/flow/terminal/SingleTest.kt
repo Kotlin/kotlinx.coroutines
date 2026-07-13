@@ -34,10 +34,9 @@ class SingleTest : TestBase() {
 
     @Test
     fun testException() = runTest {
-        val flow =
-            flow<Int> {
-                throw TestException()
-            }
+        val flow = flow<Int> {
+            throw TestException()
+        }
 
         assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException> { flow.singleOrNull() }

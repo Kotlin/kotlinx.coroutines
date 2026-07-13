@@ -3,7 +3,8 @@ package kotlinx.coroutines.internal
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-@JvmField internal val NO_THREAD_ELEMENTS = Symbol("NO_THREAD_ELEMENTS")
+@JvmField
+internal val NO_THREAD_ELEMENTS = Symbol("NO_THREAD_ELEMENTS")
 
 // Used when there are >= 2 active elements in the context
 @Suppress("UNCHECKED_CAST")
@@ -26,37 +27,35 @@ private class ThreadState(@JvmField val context: CoroutineContext, n: Int) {
 
 // Counts ThreadContextElements in the context
 // Any? here is Int | ThreadContextElement (when count is one)
-private val countAll =
-    fun(countOrElement: Any?, element: CoroutineContext.Element): Any? {
-        if (element is ThreadContextElement<*>) {
-            val inCount = countOrElement as? Int ?: 1
-            return if (inCount == 0) element else inCount + 1
-        }
-        return countOrElement
+private val countAll = fun(countOrElement: Any?, element: CoroutineContext.Element): Any? {
+    if (element is ThreadContextElement<*>) {
+        val inCount = countOrElement as? Int ?: 1
+        return if (inCount == 0) element else inCount + 1
     }
+    return countOrElement
+}
 
 // Find one (first) ThreadContextElement in the context, it is used when we know there is exactly one
-private val findOne =
-    fun(found: ThreadContextElement<*>?, element: CoroutineContext.Element): ThreadContextElement<*>? {
-        if (found != null) return found
-        return element as? ThreadContextElement<*>
-    }
+private val findOne = fun(found: ThreadContextElement<*>?, element: CoroutineContext.Element): ThreadContextElement<*>? {
+    if (found != null) return found
+    return element as? ThreadContextElement<*>
+}
 
 // Updates state for ThreadContextElements in the context using the given ThreadState
-private val updateState =
-    fun(state: ThreadState, element: CoroutineContext.Element): ThreadState {
-        if (element is ThreadContextElement<*>) {
-            state.append(element, element.updateThreadContext(state.context))
-        }
-        return state
+private val updateState = fun(state: ThreadState, element: CoroutineContext.Element): ThreadState {
+    if (element is ThreadContextElement<*>) {
+        state.append(element, element.updateThreadContext(state.context))
     }
+    return state
+}
 
 internal actual fun threadContextElements(context: CoroutineContext): Any = context.fold(0, countAll)!!
 
 // countOrElement is pre-cached in dispatched continuation
 // returns NO_THREAD_ELEMENTS if the contest does not have any ThreadContextElements
 internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?): Any? {
-    @Suppress("NAME_SHADOWING") val countOrElement = countOrElement ?: threadContextElements(context)
+    @Suppress("NAME_SHADOWING")
+    val countOrElement = countOrElement ?: threadContextElements(context)
     @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
     return when {
         countOrElement === 0 -> NO_THREAD_ELEMENTS // very fast path when there are no active ThreadContextElements
@@ -67,7 +66,8 @@ internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?
         }
         else -> {
             // fast path for one ThreadContextElement (no allocations, no additional context scan)
-            @Suppress("UNCHECKED_CAST") val element = countOrElement as ThreadContextElement<Any?>
+            @Suppress("UNCHECKED_CAST")
+            val element = countOrElement as ThreadContextElement<Any?>
             element.updateThreadContext(context)
         }
     }
@@ -82,14 +82,16 @@ internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
         }
         else -> {
             // fast path for one ThreadContextElement, but need to find it
-            @Suppress("UNCHECKED_CAST") val element = context.fold(null, findOne) as ThreadContextElement<Any?>
+            @Suppress("UNCHECKED_CAST")
+            val element = context.fold(null, findOne) as ThreadContextElement<Any?>
             element.restoreThreadContext(context, oldState)
         }
     }
 }
 
 // top-level data class for a nicer out-of-the-box toString representation and class name
-@PublishedApi internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
+@PublishedApi
+internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
 
 @PublishedApi
 internal class ThreadLocalElement<T>(

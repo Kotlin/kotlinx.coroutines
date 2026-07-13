@@ -58,7 +58,8 @@ public interface Semaphore {
  * @param permits the number of permits available in this semaphore.
  * @param acquiredPermits the number of already acquired permits, should be between `0` and `permits` (inclusively).
  */
-@Suppress("FunctionName") public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = SemaphoreImpl(permits, acquiredPermits)
+@Suppress("FunctionName")
+public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = SemaphoreImpl(permits, acquiredPermits)
 
 /**
  * Executes the given [action], acquiring a permit from this semaphore at the beginning and releasing it after the [action] is completed.
@@ -114,7 +115,6 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
                     +---------------------------------------> | BROKEN | (BOTH RELEASE AND ACQUIRE FAILED)
                            but `acquire` has not come         +--------+
     */
-
     private val head: AtomicRef<SemaphoreSegment>
     private val deqIdx = atomic(0L)
     private val tail: AtomicRef<SemaphoreSegment>
@@ -134,8 +134,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
      * the maximum number of waiting acquirers cannot be greater than 2^31 in any real application.
      */
     private val _availablePermits = atomic(permits - acquiredPermits)
-    val availablePermits: Int
-        get() = max(_availablePermits.value, 0)
+    val availablePermits: Int get() = max(_availablePermits.value, 0)
 
     private val onCancellationRelease = { _: Throwable, _: Unit, _: CoroutineContext -> release() }
 
@@ -170,23 +169,21 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() =
-        suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
-            // Try to suspend.
-            if (addAcquireToQueue(cont)) return@sc
-            // The suspension has been failed
-            // due to the synchronous resumption mode.
-            // Restart the whole `acquire`.
-            acquire(cont)
-        }
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@{ cont ->
+        // Try to suspend.
+        if (addAcquireToQueue(cont)) return@sc
+        // The suspension has been failed
+        // due to the synchronous resumption mode.
+        // Restart the whole `acquire`.
+        acquire(cont)
+    }
 
     @JsName("acquireCont")
-    protected fun acquire(waiter: CancellableContinuation<Unit>) =
-        acquire(
-            waiter = waiter,
-            suspend = { cont -> addAcquireToQueue(cont as Waiter) },
-            onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) },
-        )
+    protected fun acquire(waiter: CancellableContinuation<Unit>) = acquire(
+        waiter = waiter,
+        suspend = { cont -> addAcquireToQueue(cont as Waiter) },
+        onAcquired = { cont -> cont.resume(Unit, onCancellationRelease) },
+    )
 
     @JsName("acquireInternal")
     private inline fun <W> acquire(waiter: W, suspend: (waiter: W) -> Boolean, onAcquired: (waiter: W) -> Unit) {
@@ -205,12 +202,11 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
 
     // We do not fully support `onAcquire` as it is needed only for `Mutex.onLock`.
     @Suppress("UNUSED_PARAMETER")
-    protected fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) =
-        acquire(
-            waiter = select,
-            suspend = { s -> addAcquireToQueue(s as Waiter) },
-            onAcquired = { s -> s.selectInRegistrationPhase(Unit) },
-        )
+    protected fun onAcquireRegFunction(select: SelectInstance<*>, ignoredParam: Any?) = acquire(
+        waiter = select,
+        suspend = { s -> addAcquireToQueue(s as Waiter) },
+        onAcquired = { s -> s.selectInRegistrationPhase(Unit) },
+    )
 
     /**
      * Decrements the number of available permits and ensures that it is not greater than [permits] at the point of decrement. The last may
@@ -266,13 +262,8 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         val enqIdx = enqIdx.getAndIncrement()
         val createNewSegment = ::createSegment
         val segment =
-            this.tail
-                .findSegmentAndMoveForward(
-                    id = enqIdx / SEGMENT_SIZE,
-                    startFrom = curTail,
-                    createNewSegment = createNewSegment,
-                )
-                .segment // cannot be closed
+            this.tail.findSegmentAndMoveForward(id = enqIdx / SEGMENT_SIZE, startFrom = curTail, createNewSegment = createNewSegment)
+            .segment // cannot be closed
         val i = (enqIdx % SEGMENT_SIZE).toInt()
         // the regular (fast) path -- if the cell is empty, try to install continuation
         if (segment.cas(i, null, waiter)) { // installed continuation successfully
@@ -305,14 +296,8 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         val deqIdx = deqIdx.getAndIncrement()
         val id = deqIdx / SEGMENT_SIZE
         val createNewSegment = ::createSegment
-        val segment =
-            this.head
-                .findSegmentAndMoveForward(
-                    id,
-                    startFrom = curHead,
-                    createNewSegment = createNewSegment,
-                )
-                .segment // cannot be closed
+        val segment = this.head.findSegmentAndMoveForward(id, startFrom = curHead, createNewSegment = createNewSegment)
+            .segment // cannot be closed
         segment.cleanPrev()
         if (segment.id > id) return false
         val i = (deqIdx % SEGMENT_SIZE).toInt()
@@ -332,21 +317,20 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         }
     }
 
-    private fun Any.tryResumeAcquire(): Boolean =
-        when (this) {
-            is CancellableContinuation<*> -> {
-                this as CancellableContinuation<Unit>
-                val token = tryResume(Unit, null, onCancellationRelease)
-                if (token != null) {
-                    completeResume(token)
-                    true
-                } else false
-            }
-            is SelectInstance<*> -> {
-                trySelect(this@SemaphoreAndMutexImpl, Unit)
-            }
-            else -> error("unexpected: $this")
+    private fun Any.tryResumeAcquire(): Boolean = when (this) {
+        is CancellableContinuation<*> -> {
+            this as CancellableContinuation<Unit>
+            val token = tryResume(Unit, null, onCancellationRelease)
+            if (token != null) {
+                completeResume(token)
+                true
+            } else false
         }
+        is SelectInstance<*> -> {
+            trySelect(this@SemaphoreAndMutexImpl, Unit)
+        }
+        else -> error("unexpected: $this")
+    }
 }
 
 private class SemaphoreImpl(
@@ -358,10 +342,10 @@ private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(
 
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
-    override val numberOfSlots: Int
-        get() = SEGMENT_SIZE
+    override val numberOfSlots: Int get() = SEGMENT_SIZE
 
-    @Suppress("NOTHING_TO_INLINE") inline fun get(index: Int): Any? = acquirers[index].value
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun get(index: Int): Any? = acquirers[index].value
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun set(index: Int, value: Any?) {
@@ -371,7 +355,8 @@ private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int)
     @Suppress("NOTHING_TO_INLINE")
     inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
 
-    @Suppress("NOTHING_TO_INLINE") inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.

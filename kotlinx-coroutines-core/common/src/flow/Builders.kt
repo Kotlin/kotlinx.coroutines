@@ -298,7 +298,7 @@ private class CallbackFlowBuilder<T>(
                 Otherwise, a callback/listener may leak in case of external cancellation.
                 See callbackFlow API documentation for the details.
                 """
-                    .trimIndent()
+                    .trimIndent(),
             )
         }
     }

@@ -20,11 +20,10 @@ public abstract class ExecutorCoroutineDispatcher : CoroutineDispatcher(), Close
     )
     @ExperimentalStdlibApi
     @Suppress("DEPRECATION")
-    public companion object Key :
-        AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
-            CoroutineDispatcher,
-            { it as? ExecutorCoroutineDispatcher },
-        )
+    public companion object Key : AbstractCoroutineContextKey<CoroutineDispatcher, ExecutorCoroutineDispatcher>(
+        CoroutineDispatcher,
+        { it as? ExecutorCoroutineDispatcher },
+    )
 
     /** Underlying executor of current [CoroutineDispatcher]. */
     public abstract val executor: Executor
@@ -131,12 +130,11 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        val future =
-            (executor as? ScheduledExecutorService)?.scheduleBlock(
-                ResumeUndispatchedRunnable(this, continuation),
-                continuation.context,
-                timeMillis,
-            )
+        val future = (executor as? ScheduledExecutorService)?.scheduleBlock(
+            ResumeUndispatchedRunnable(this, continuation),
+            continuation.context,
+            timeMillis,
+        )
         // If everything went fine and the scheduling attempt was not rejected -- use it
         if (future != null) {
             continuation.invokeOnCancellation(CancelFutureOnCancel(future))

@@ -13,11 +13,10 @@ import kotlin.jvm.*
  * `distinctUntilChanged` to a `StateFlow` has no effect. See [StateFlow] documentation on Operator Fusion. Also, repeated application of
  * `distinctUntilChanged` operator on any flow has no effect.
  */
-public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> =
-    when (this) {
-        is StateFlow<*> -> this // state flows are always distinct
-        else -> distinctUntilChangedBy(keySelector = defaultKeySelector, areEquivalent = defaultAreEquivalent)
-    }
+public fun <T> Flow<T>.distinctUntilChanged(): Flow<T> = when (this) {
+    is StateFlow<*> -> this // state flows are always distinct
+    else -> distinctUntilChangedBy(keySelector = defaultKeySelector, areEquivalent = defaultAreEquivalent)
+}
 
 /**
  * Returns flow where all subsequent repetitions of the same value are filtered out, when compared with each other via the provided
@@ -50,11 +49,10 @@ private val defaultAreEquivalent: (Any?, Any?) -> Boolean = { old, new -> old ==
 private fun <T> Flow<T>.distinctUntilChangedBy(
     keySelector: (T) -> Any?,
     areEquivalent: (old: Any?, new: Any?) -> Boolean,
-): Flow<T> =
-    when {
-        this is DistinctFlowImpl<*> && this.keySelector === keySelector && this.areEquivalent === areEquivalent -> this // same
-        else -> DistinctFlowImpl(this, keySelector, areEquivalent)
-    }
+): Flow<T> = when {
+    this is DistinctFlowImpl<*> && this.keySelector === keySelector && this.areEquivalent === areEquivalent -> this // same
+    else -> DistinctFlowImpl(this, keySelector, areEquivalent)
+}
 
 private class DistinctFlowImpl<T>(
     private val upstream: Flow<T>,

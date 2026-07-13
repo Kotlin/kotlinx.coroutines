@@ -51,17 +51,14 @@ private class PublisherAsFlow<T : Any>(
      * will also create undesired effect.
      */
     @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
-    private val requestSize: Long
-        get() =
-            if (onBufferOverflow != BufferOverflow.SUSPEND) {
-                Long.MAX_VALUE // request all, since buffering strategy is to never suspend
-            } else
-                when (capacity) {
-                    Channel.RENDEZVOUS -> 1L // need to request at least one anyway
-                    Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all", must be Long.MAX_VALUE
-                    Channel.BUFFERED -> Channel.CHANNEL_DEFAULT_CAPACITY.toLong()
-                    else -> capacity.toLong().also { check(it >= 1) }
-                }
+    private val requestSize: Long get() = if (onBufferOverflow != BufferOverflow.SUSPEND) {
+        Long.MAX_VALUE // request all, since buffering strategy is to never suspend
+    } else when (capacity) {
+        Channel.RENDEZVOUS -> 1L // need to request at least one anyway
+        Channel.UNLIMITED -> Long.MAX_VALUE // reactive streams way to say "give all", must be Long.MAX_VALUE
+        Channel.BUFFERED -> Channel.CHANNEL_DEFAULT_CAPACITY.toLong()
+        else -> capacity.toLong().also { check(it >= 1) }
+    }
 
     override suspend fun collect(collector: FlowCollector<T>) {
         val collectContext = coroutineContext
@@ -147,10 +144,10 @@ private class ReactiveSubscriber<T : Any>(
 // If `kotlinx-coroutines-reactor` module is not included, the list is empty.
 private val contextInjectors: Array<ContextInjector> =
     ServiceLoader.load(ContextInjector::class.java, ContextInjector::class.java.classLoader)
-        .iterator()
-        .asSequence()
-        .toList()
-        .toTypedArray() // R8 opto
+    .iterator()
+    .asSequence()
+    .toList()
+    .toTypedArray() // R8 opto
 
 internal fun <T> Publisher<T>.injectCoroutineContext(coroutineContext: CoroutineContext) =
     contextInjectors.fold(this) { pub, contextInjector -> contextInjector.injectCoroutineContext(pub, coroutineContext) }
@@ -179,13 +176,13 @@ public class FlowSubscription<T>(
      */
     private val requested = atomic(0L)
     private val producer = atomic<Continuation<Unit>?>(createInitialContinuation())
-    @Volatile private var cancellationRequested = false
+    @Volatile
+    private var cancellationRequested = false
 
     // This code wraps startCoroutineCancellable into continuation
-    private fun createInitialContinuation(): Continuation<Unit> =
-        Continuation(coroutineContext) {
-            ::flowProcessing.startCoroutineCancellable(this)
-        }
+    private fun createInitialContinuation(): Continuation<Unit> = Continuation(coroutineContext) {
+        ::flowProcessing.startCoroutineCancellable(this)
+    }
 
     private suspend fun flowProcessing() {
         try {

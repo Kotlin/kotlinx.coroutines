@@ -39,7 +39,7 @@ private fun addUncaughtExceptionHandlerHelper() {
                 globalThis.exceptionCaught = true;
             };
             process.on('uncaughtException', globalThis.exceptionHandler);
-        """
+        """,
     )
 }
 
@@ -48,8 +48,9 @@ private fun removeHandlerHelper() {
     js(
         """
             process.removeListener('uncaughtException', globalThis.exceptionHandler);
-        """
+        """,
     )
 }
 
-@OptIn(ExperimentalWasmJsInterop::class) private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")
+@OptIn(ExperimentalWasmJsInterop::class)
+private fun exceptionCaught(): Boolean = js("globalThis.exceptionCaught")

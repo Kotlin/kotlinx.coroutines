@@ -11,7 +11,6 @@ import kotlin.jvm.*
 // ------------------ WARNING ------------------
 //   These emitting operators must use safe flow builder, because they allow
 //   user code to directly emit to the underlying FlowCollector.
-
 /**
  * Applies [transform] function to each value of the given flow.
  *
@@ -28,12 +27,11 @@ import kotlin.jvm.*
  * }
  * ```
  */
-public inline fun <T, R> Flow<T>.transform(crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
-    flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
-        collect { value ->
-            transform(value)
-        }
+public inline fun <T, R> Flow<T>.transform(crossinline transform: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> = flow { // Note: safe flow is used here, because collector is exposed to transform on each operation
+    collect { value ->
+        transform(value)
     }
+}
 
 // For internal operator implementation
 @PublishedApi
@@ -58,16 +56,15 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(crossinline transform: suspen
  *     .collect { println(it) } // prints Begin, a, b, c
  * ```
  */
-public fun <T> Flow<T>.onStart(action: suspend FlowCollector<T>.() -> Unit): Flow<T> =
-    unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-        val safeCollector = SafeCollector<T>(this, currentCoroutineContext())
-        try {
-            safeCollector.action()
-        } finally {
-            safeCollector.releaseIntercepted()
-        }
-        collect(this) // directly delegate
+public fun <T> Flow<T>.onStart(action: suspend FlowCollector<T>.() -> Unit): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
+    val safeCollector = SafeCollector<T>(this, currentCoroutineContext())
+    try {
+        safeCollector.action()
+    } finally {
+        safeCollector.releaseIntercepted()
     }
+    collect(this) // directly delegate
+}
 
 /**
  * Returns a flow that invokes the given [action] **after** the flow is completed or cancelled, passing the cancellation exception or
@@ -121,27 +118,26 @@ public fun <T> Flow<T>.onStart(action: suspend FlowCollector<T>.() -> Unit): Flo
  * In case of failure or cancellation, any attempt to emit additional elements throws the corresponding exception. Use [catch] if you need
  * to suppress failure and replace it with emission of elements.
  */
-public fun <T> Flow<T>.onCompletion(action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit): Flow<T> =
-    unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
-        try {
-            collect(this)
-        } catch (e: Throwable) {
-            /*
+public fun <T> Flow<T>.onCompletion(action: suspend FlowCollector<T>.(cause: Throwable?) -> Unit): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke completion action
+    try {
+        collect(this)
+    } catch (e: Throwable) {
+        /*
              * Use throwing collector to prevent any emissions from the
              * completion sequence when downstream has failed, otherwise it may
              * lead to a non-sequential behaviour impossible with `finally`
              */
-            ThrowingCollector(e).invokeSafely(action, e)
-            throw e
-        }
-        // Normal completion
-        val sc = SafeCollector(this, currentCoroutineContext())
-        try {
-            sc.action(null)
-        } finally {
-            sc.releaseIntercepted()
-        }
+        ThrowingCollector(e).invokeSafely(action, e)
+        throw e
     }
+    // Normal completion
+    val sc = SafeCollector(this, currentCoroutineContext())
+    try {
+        sc.action(null)
+    } finally {
+        sc.releaseIntercepted()
+    }
+}
 
 /**
  * Invokes the given [action] when this flow completes without emitting any elements. The receiver of the [action] is [FlowCollector], so

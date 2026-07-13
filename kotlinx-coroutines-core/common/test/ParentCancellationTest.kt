@@ -129,10 +129,9 @@ class ParentCancellationTest : TestBase() {
                 // launch failing grandchild
                 var unhandledException: Throwable? = null
                 val handler = CoroutineExceptionHandler { _, e -> unhandledException = e }
-                val grandchild =
-                    launch(handler) {
-                        throw throwException
-                    }
+                val grandchild = launch(handler) {
+                    throw throwException
+                }
                 grandchild.join()
                 when {
                     !expectParentActive && runsInScopeContext -> expectUnreached()

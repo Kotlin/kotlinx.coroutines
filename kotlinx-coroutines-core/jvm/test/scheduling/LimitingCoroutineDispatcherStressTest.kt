@@ -20,36 +20,33 @@ class LimitingCoroutineDispatcherStressTest : SchedulerTestBase() {
     private val iterations = 25_000 * stressTestMultiplierSqrt
 
     @Test
-    fun testCpuLimitNotExtended() =
-        runBlocking<Unit> {
-            val tasks = ArrayList<Deferred<*>>(iterations * 2)
-            repeat(iterations) {
-                tasks += task(cpuView, 3)
-                tasks += task(cpuView2, 3)
-            }
-
-            tasks.awaitAll()
+    fun testCpuLimitNotExtended() = runBlocking<Unit> {
+        val tasks = ArrayList<Deferred<*>>(iterations * 2)
+        repeat(iterations) {
+            tasks += task(cpuView, 3)
+            tasks += task(cpuView2, 3)
         }
+
+        tasks.awaitAll()
+    }
 
     @Test
-    fun testCpuLimitWithBlocking() =
-        runBlocking<Unit> {
-            val tasks = ArrayList<Deferred<*>>(iterations * 2)
-            repeat(iterations) {
-                tasks += task(cpuView, 4)
-                tasks += task(blocking, 4)
-            }
-
-            tasks.awaitAll()
+    fun testCpuLimitWithBlocking() = runBlocking<Unit> {
+        val tasks = ArrayList<Deferred<*>>(iterations * 2)
+        repeat(iterations) {
+            tasks += task(cpuView, 4)
+            tasks += task(blocking, 4)
         }
 
-    private fun task(ctx: CoroutineContext, maxLimit: Int): Deferred<Unit> =
-        GlobalScope.async(ctx) {
-            try {
-                val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                assertTrue(currentlyExecuting <= maxLimit, "Executing: $currentlyExecuting, max limit: $maxLimit")
-            } finally {
-                concurrentWorkers.decrementAndGet()
-            }
+        tasks.awaitAll()
+    }
+
+    private fun task(ctx: CoroutineContext, maxLimit: Int): Deferred<Unit> = GlobalScope.async(ctx) {
+        try {
+            val currentlyExecuting = concurrentWorkers.incrementAndGet()
+            assertTrue(currentlyExecuting <= maxLimit, "Executing: $currentlyExecuting, max limit: $maxLimit")
+        } finally {
+            concurrentWorkers.decrementAndGet()
         }
+    }
 }

@@ -15,16 +15,15 @@ class SemaphoreStressTest : TestBase() {
         val k = 100
         var shared = 0
         val semaphore = Semaphore(1)
-        val jobs =
-            List(n) {
-                launch(Dispatchers.Default) {
-                    repeat(k) {
-                        semaphore.acquire()
-                        shared++
-                        semaphore.release()
-                    }
+        val jobs = List(n) {
+            launch(Dispatchers.Default) {
+                repeat(k) {
+                    semaphore.acquire()
+                    shared++
+                    semaphore.release()
                 }
             }
+        }
         jobs.forEach { it.join() }
         assertEquals(n * k, shared)
     }
@@ -34,15 +33,14 @@ class SemaphoreStressTest : TestBase() {
         val n = iterations
         val k = 100
         val semaphore = Semaphore(10)
-        val jobs =
-            List(n) {
-                launch(Dispatchers.Default) {
-                    repeat(k) {
-                        semaphore.acquire()
-                        semaphore.release()
-                    }
+        val jobs = List(n) {
+            launch(Dispatchers.Default) {
+                repeat(k) {
+                    semaphore.acquire()
+                    semaphore.release()
                 }
             }
+        }
         jobs.forEach { it.join() }
     }
 
@@ -53,16 +51,15 @@ class SemaphoreStressTest : TestBase() {
             val k = 100
             var shared = 0
             val semaphore = Semaphore(1)
-            val jobs =
-                List(n) {
-                    launch {
-                        repeat(k) {
-                            semaphore.acquire()
-                            shared++
-                            semaphore.release()
-                        }
+            val jobs = List(n) {
+                launch {
+                    repeat(k) {
+                        semaphore.acquire()
+                        shared++
+                        semaphore.release()
                     }
                 }
+            }
             jobs.forEach { it.join() }
             assertEquals(n * k, shared)
         }
@@ -74,10 +71,9 @@ class SemaphoreStressTest : TestBase() {
         val semaphore = Semaphore(1)
         semaphore.acquire()
         repeat(n) {
-            val job =
-                launch(Dispatchers.Default) {
-                    semaphore.acquire()
-                }
+            val job = launch(Dispatchers.Default) {
+                semaphore.acquire()
+            }
             yield()
             job.cancelAndJoin()
         }
@@ -97,18 +93,16 @@ class SemaphoreStressTest : TestBase() {
                 // otherwise it's a bug.
                 assertEquals(0, semaphore.availablePermits)
                 var job1EnteredCriticalSection = false
-                val job1 =
-                    launch(start = CoroutineStart.UNDISPATCHED) {
-                        semaphore.acquire()
-                        job1EnteredCriticalSection = true
-                        semaphore.release()
-                    }
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+                    semaphore.acquire()
+                    job1EnteredCriticalSection = true
+                    semaphore.release()
+                }
                 // check that `job1` didn't finish the call to `acquire()`
                 assertEquals(false, job1EnteredCriticalSection)
-                val job2 =
-                    launch(pool) {
-                        semaphore.release()
-                    }
+                val job2 = launch(pool) {
+                    semaphore.release()
+                }
                 // Because `job2` executes in a separate thread, this
                 // cancellation races with the call to `release()`.
                 job1.cancelAndJoin()
@@ -124,11 +118,10 @@ class SemaphoreStressTest : TestBase() {
         val semaphore = Semaphore(1)
         val n = 1000 * stressTestMultiplier
         repeat(n) {
-            val job =
-                launch(Dispatchers.Default) {
-                    semaphore.acquire()
-                    semaphore.release()
-                }
+            val job = launch(Dispatchers.Default) {
+                semaphore.acquire()
+                semaphore.release()
+            }
             semaphore.withPermit {
                 job.cancel()
             }

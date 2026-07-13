@@ -136,8 +136,8 @@ class ChannelsTest : TestBase() {
         assertEquals(initialList + elementsToSend, destination)
     }
 
-    private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> =
-        GlobalScope.produce(context) {
+    private fun <E> Iterable<E>.asReceiveChannel(context: CoroutineContext = Dispatchers.Unconfined): ReceiveChannel<E> = GlobalScope
+        .produce(context) {
             for (element in this@asReceiveChannel) send(element)
         }
 }

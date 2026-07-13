@@ -22,12 +22,11 @@ class FlowInvariantsTest : TestBase() {
         check(r2, expectedException)
     }
 
-    private fun <T> abstractFlow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> =
-        object : AbstractFlow<T>() {
-            override suspend fun collectSafely(collector: FlowCollector<T>) {
-                collector.block()
-            }
+    private fun <T> abstractFlow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = object : AbstractFlow<T>() {
+        override suspend fun collectSafely(collector: FlowCollector<T>) {
+            collector.block()
         }
+    }
 
     private fun check(exception: Throwable?, expectedException: KClass<out Throwable>?) {
         if (expectedException != null && exception == null) fail("Expected $expectedException, but test completed successfully")
@@ -36,51 +35,44 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testWithContextContract() =
-        runParametrizedTest<Int>(IllegalStateException::class) { flow ->
-            flow {
-                    withContext(NonCancellable) {
-                        emit(1)
-                    }
-                }
-                .collect {
-                    expectUnreached()
-                }
+    fun testWithContextContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow {
+            withContext(NonCancellable) {
+                emit(1)
+            }
+        }.collect {
+            expectUnreached()
         }
+    }
 
     @Test
-    fun testWithDispatcherContractViolated() =
-        runParametrizedTest<Int>(IllegalStateException::class) { flow ->
-            flow {
-                    withContext(NamedDispatchers("foo")) {
-                        emit(1)
-                    }
-                }
-                .collect {
-                    expectUnreached()
-                }
+    fun testWithDispatcherContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow {
+            withContext(NamedDispatchers("foo")) {
+                emit(1)
+            }
+        }.collect {
+            expectUnreached()
         }
+    }
 
     @Test
-    fun testWithNameContractViolated() =
-        runParametrizedTest<Int>(IllegalStateException::class) { flow ->
-            flow {
-                    withContext(CoroutineName("foo")) {
-                        emit(1)
-                    }
-                }
-                .collect {
-                    expectUnreached()
-                }
+    fun testWithNameContractViolated() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow {
+            withContext(CoroutineName("foo")) {
+                emit(1)
+            }
+        }.collect {
+            expectUnreached()
         }
+    }
 
     @Test
     fun testWithContextDoesNotChangeExecution() = runTest {
-        val flow =
-            flow {
-                    emit(NamedDispatchers.name())
-                }
-                .flowOn(NamedDispatchers("original"))
+        val flow = flow {
+                emit(NamedDispatchers.name())
+            }
+            .flowOn(NamedDispatchers("original"))
 
         var result = "unknown"
         withContext(NamedDispatchers("misc")) {
@@ -97,54 +89,51 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedJob() =
-        runParametrizedTest<Int>(IllegalStateException::class) { flow ->
-            flow { emit(1) }
-                .buffer(EmptyCoroutineContext, flow)
-                .collect {
-                    expect(1)
-                }
-            finish(2)
-        }
+    fun testScopedJob() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow { emit(1) }
+            .buffer(EmptyCoroutineContext, flow)
+            .collect {
+                expect(1)
+            }
+        finish(2)
+    }
 
     @Test
-    fun testScopedJobWithViolation() =
-        runParametrizedTest<Int>(IllegalStateException::class) { flow ->
-            flow { emit(1) }
-                .buffer(Dispatchers.Unconfined, flow)
-                .collect {
-                    expect(1)
-                }
-            finish(2)
-        }
+    fun testScopedJobWithViolation() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow { emit(1) }
+            .buffer(Dispatchers.Unconfined, flow)
+            .collect {
+                expect(1)
+            }
+        finish(2)
+    }
 
     @Test
-    fun testMergeViolation() =
-        runParametrizedTest<Int> { flow ->
-            fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = flow {
-                coroutineScope {
-                    launch {
-                        collect { value -> emit(value) }
-                    }
-                    other.collect { value -> emit(value) }
+    fun testMergeViolation() = runParametrizedTest<Int> { flow ->
+        fun Flow<Int>.merge(other: Flow<Int>): Flow<Int> = flow {
+            coroutineScope {
+                launch {
+                    collect { value -> emit(value) }
                 }
+                other.collect { value -> emit(value) }
             }
-
-            fun Flow<Int>.trickyMerge(other: Flow<Int>): Flow<Int> = flow {
-                coroutineScope {
-                    launch {
-                        collect { value ->
-                            coroutineScope { emit(value) }
-                        }
-                    }
-                    other.collect { value -> emit(value) }
-                }
-            }
-
-            val flowInstance = flowOf(1)
-            assertFailsWith<IllegalStateException> { flowInstance.merge(flowInstance).toList() }
-            assertFailsWith<IllegalStateException> { flowInstance.trickyMerge(flowInstance).toList() }
         }
+
+        fun Flow<Int>.trickyMerge(other: Flow<Int>): Flow<Int> = flow {
+            coroutineScope {
+                launch {
+                    collect { value ->
+                        coroutineScope { emit(value) }
+                    }
+                }
+                other.collect { value -> emit(value) }
+            }
+        }
+
+        val flowInstance = flowOf(1)
+        assertFailsWith<IllegalStateException> { flowInstance.merge(flowInstance).toList() }
+        assertFailsWith<IllegalStateException> { flowInstance.trickyMerge(flowInstance).toList() }
+    }
 
     @Test
     fun testNoMergeViolation() = runTest {
@@ -172,22 +161,21 @@ class FlowInvariantsTest : TestBase() {
     }
 
     @Test
-    fun testScopedCoroutineNoViolation() =
-        runParametrizedTest<Int> { flow ->
-            fun Flow<Int>.buffer(): Flow<Int> = flow {
-                coroutineScope {
-                    val channel = produce {
-                        collect {
-                            send(it)
-                        }
-                    }
-                    channel.consumeEach {
-                        emit(it)
+    fun testScopedCoroutineNoViolation() = runParametrizedTest<Int> { flow ->
+        fun Flow<Int>.buffer(): Flow<Int> = flow {
+            coroutineScope {
+                val channel = produce {
+                    collect {
+                        send(it)
                     }
                 }
+                channel.consumeEach {
+                    emit(it)
+                }
             }
-            assertEquals(listOf(1, 1), flowOf(1, 1).buffer().toList())
         }
+        assertEquals(listOf(1, 1), flowOf(1, 1).buffer().toList())
+    }
 
     private fun Flow<Int>.buffer(
         coroutineContext: CoroutineContext,

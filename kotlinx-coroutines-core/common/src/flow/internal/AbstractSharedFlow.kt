@@ -7,7 +7,8 @@ import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 
-@JvmField internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
+@JvmField
+internal val EMPTY_RESUMES = arrayOfNulls<Continuation<Unit>?>(0)
 
 internal abstract class AbstractSharedFlowSlot<F> {
     abstract fun allocateLocked(flow: F): Boolean
@@ -25,15 +26,13 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     private var nextIndex = 0 // oracle for the next free slot index
     private var _subscriptionCount: SubscriptionCountStateFlow? = null // init on first need
 
-    val subscriptionCount: StateFlow<Int>
-        get() =
-            synchronized(this) {
-                // allocate under lock in sync with nCollectors variable
-                _subscriptionCount
-                    ?: SubscriptionCountStateFlow(nCollectors).also {
-                        _subscriptionCount = it
-                    }
+    val subscriptionCount: StateFlow<Int> get() = synchronized(this) {
+        // allocate under lock in sync with nCollectors variable
+        _subscriptionCount
+            ?: SubscriptionCountStateFlow(nCollectors).also {
+                _subscriptionCount = it
             }
+    }
 
     protected abstract fun createSlot(): S
 
@@ -43,31 +42,28 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     protected fun allocateSlot(): S {
         // Actually create slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
-        val slot =
-            synchronized(this) {
-                val slots =
-                    when (val curSlots = slots) {
-                        null -> createSlotArray(2).also { slots = it }
-                        else ->
-                            if (nCollectors >= curSlots.size) {
-                                curSlots.copyOf(2 * curSlots.size).also { slots = it }
-                            } else {
-                                curSlots
-                            }
-                    }
-                var index = nextIndex
-                var slot: S
-                while (true) {
-                    slot = slots[index] ?: createSlot().also { slots[index] = it }
-                    index++
-                    if (index >= slots.size) index = 0
-                    if ((slot as AbstractSharedFlowSlot<Any>).allocateLocked(this)) break // break when found and allocated free slot
+        val slot = synchronized(this) {
+            val slots = when (val curSlots = slots) {
+                null -> createSlotArray(2).also { slots = it }
+                else -> if (nCollectors >= curSlots.size) {
+                    curSlots.copyOf(2 * curSlots.size).also { slots = it }
+                } else {
+                    curSlots
                 }
-                nextIndex = index
-                nCollectors++
-                subscriptionCount = _subscriptionCount // retrieve under lock if initialized
-                slot
             }
+            var index = nextIndex
+            var slot: S
+            while (true) {
+                slot = slots[index] ?: createSlot().also { slots[index] = it }
+                index++
+                if (index >= slots.size) index = 0
+                if ((slot as AbstractSharedFlowSlot<Any>).allocateLocked(this)) break // break when found and allocated free slot
+            }
+            nextIndex = index
+            nCollectors++
+            subscriptionCount = _subscriptionCount // retrieve under lock if initialized
+            slot
+        }
         // increments subscription count
         subscriptionCount?.increment(1)
         return slot
@@ -77,14 +73,13 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
     protected fun freeSlot(slot: S) {
         // Release slot under lock
         val subscriptionCount: SubscriptionCountStateFlow?
-        val resumes =
-            synchronized(this) {
-                nCollectors--
-                subscriptionCount = _subscriptionCount // retrieve under lock if initialized
-                // Reset next index oracle if we have no more active collectors for more predictable behavior next time
-                if (nCollectors == 0) nextIndex = 0
-                (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
-            }
+        val resumes = synchronized(this) {
+            nCollectors--
+            subscriptionCount = _subscriptionCount // retrieve under lock if initialized
+            // Reset next index oracle if we have no more active collectors for more predictable behavior next time
+            if (nCollectors == 0) nextIndex = 0
+            (slot as AbstractSharedFlowSlot<Any>).freeLocked(this)
+        }
         /*
          * Resume suspended coroutines.
          * This can happen when the subscriber that was freed was a slow one and was holding up buffer.
@@ -124,17 +119,15 @@ internal abstract class AbstractSharedFlow<S : AbstractSharedFlowSlot<*>> : Sync
  * To avoid that (especially in a more complex scenarios), we do not conflate subscription updates.
  */
 @OptIn(ExperimentalForInheritanceCoroutinesApi::class)
-private class SubscriptionCountStateFlow(initialValue: Int) :
-    StateFlow<Int>, SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST) {
+private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int>,
+    SharedFlowImpl<Int>(1, Int.MAX_VALUE, BufferOverflow.DROP_OLDEST) {
     init {
         tryEmit(initialValue)
     }
 
-    override val value: Int
-        get() = synchronized(this) { lastReplayedLocked }
+    override val value: Int get() = synchronized(this) { lastReplayedLocked }
 
-    fun increment(delta: Int) =
-        synchronized(this) {
-            tryEmit(lastReplayedLocked + delta)
-        }
+    fun increment(delta: Int) = synchronized(this) {
+        tryEmit(lastReplayedLocked + delta)
+    }
 }

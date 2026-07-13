@@ -33,7 +33,9 @@ class WorkQueueTest : TestBase() {
         val queue = WorkQueue()
         val size = 130L
         val offload = GlobalQueue()
-        (0 until size).forEach { queue.add(task(it))?.let { t -> offload.addLast(t) } }
+        (0 until size).forEach {
+            queue.add(task(it))?.let { t -> offload.addLast(t) }
+        }
 
         val expectedResult = listOf(129L) + (0L..126L).toList()
         val actualResult = queue.drain(ObjectRef())

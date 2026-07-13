@@ -10,13 +10,12 @@ private val throwableFields = Throwable::class.java.fieldsCountOrDefault(-1)
 
 private typealias Ctor = (Throwable) -> Throwable?
 
-private val ctorCache =
-    try {
-        if (ANDROID_DETECTED) WeakMapCtorCache else ClassValueCtorCache
-    } catch (e: Throwable) {
-        // Fallback on Java 6 or exotic setups
-        WeakMapCtorCache
-    }
+private val ctorCache = try {
+    if (ANDROID_DETECTED) WeakMapCtorCache else ClassValueCtorCache
+} catch (e: Throwable) {
+    // Fallback on Java 6 or exotic setups
+    WeakMapCtorCache
+}
 
 @Suppress("UNCHECKED_CAST")
 internal fun <E : Throwable> tryCopyException(exception: E): E? {
@@ -28,7 +27,9 @@ internal fun <E : Throwable> tryCopyException(exception: E): E? {
 }
 
 private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
-    val nullResult: Ctor = { null } // Pre-cache class
+    val nullResult: Ctor = {
+        null
+    } // Pre-cache class
     /* Prepare for the introduction of `StackTraceRecoverable` in the standard library.
      * The exact interface to be added is still under discussion,
      * but the name `StackTraceRecoverable#copyForStackTraceRecovery`,
@@ -64,27 +65,23 @@ private fun <E : Throwable> createConstructor(clz: Class<E>): Ctor {
      * By default, Java's reflection iterates over ctors in the source-code order and the sorting is stable, so we can
      * not rely on the order of iteration. Instead, we assign a unique priority to each ctor type.
      */
-    return clz.constructors
-        .map { constructor ->
-            val p = constructor.parameterTypes
-            when (p.size) {
-                2 ->
-                    when {
-                        p[0] == String::class.java && p[1] == Throwable::class.java ->
-                            safeCtor { e -> constructor.newInstance(e.message, e) as Throwable } to 3
-                        else -> null to -1
-                    }
-                1 ->
-                    when (p[0]) {
-                        String::class.java ->
-                            safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } } to 2
-                        Throwable::class.java -> safeCtor { e -> constructor.newInstance(e) as Throwable } to 1
-                        else -> null to -1
-                    }
-                0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } } to 0
+    return clz.constructors.map { constructor ->
+        val p = constructor.parameterTypes
+        when (p.size) {
+            2 -> when {
+                p[0] == String::class.java && p[1] == Throwable::class.java ->
+                    safeCtor { e -> constructor.newInstance(e.message, e) as Throwable } to 3
                 else -> null to -1
             }
+            1 -> when (p[0]) {
+                String::class.java -> safeCtor { e -> (constructor.newInstance(e.message) as Throwable).also { it.initCause(e) } } to 2
+                Throwable::class.java -> safeCtor { e -> constructor.newInstance(e) as Throwable } to 1
+                else -> null to -1
+            }
+            0 -> safeCtor { e -> (constructor.newInstance() as Throwable).also { it.initCause(e) } } to 0
+            else -> null to -1
         }
+    }
         .maxByOrNull(Pair<*, Int>::second)
         ?.first ?: nullResult
 }
@@ -135,13 +132,12 @@ private object WeakMapCtorCache : CtorCache() {
 
 @IgnoreJreRequirement
 private object ClassValueCtorCache : CtorCache() {
-    private val cache =
-        object : ClassValue<Ctor>() {
-            override fun computeValue(type: Class<*>?): Ctor {
-                @Suppress("UNCHECKED_CAST")
-                return createConstructor(type as Class<out Throwable>)
-            }
+    private val cache = object : ClassValue<Ctor>() {
+        override fun computeValue(type: Class<*>?): Ctor {
+            @Suppress("UNCHECKED_CAST")
+            return createConstructor(type as Class<out Throwable>)
         }
+    }
 
     override fun get(key: Class<out Throwable>): Ctor = cache.get(key)
 }

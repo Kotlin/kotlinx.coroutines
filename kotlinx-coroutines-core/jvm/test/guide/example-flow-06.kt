@@ -12,10 +12,9 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        withTimeoutOrNull(250) { // Timeout after 250ms
-            simple().collect { value -> println(value) }
-        }
-        println("Done")
+fun main() = runBlocking<Unit> {
+    withTimeoutOrNull(250) { // Timeout after 250ms
+        simple().collect { value -> println(value) }
     }
+    println("Done")
+}

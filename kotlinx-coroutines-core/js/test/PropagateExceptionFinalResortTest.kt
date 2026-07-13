@@ -13,7 +13,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
             """
             globalThis.originalListeners = process.listeners('uncaughtException');
             process.removeAllListeners('uncaughtException');
-        """
+        """,
         )
     }
 
@@ -27,7 +27,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
                     process.on('uncaughtException', listener);
                 });
             }
-        """
+        """,
         )
     }
 
@@ -44,7 +44,7 @@ class PropagateExceptionFinalResortTest : TestBase() {
             process.on('uncaughtException', function(e) {
                 globalThis.exceptionCaught = true;
             });
-        """
+        """,
         )
         val job = GlobalScope.launch {
             throw IllegalStateException("My ISE")

@@ -84,7 +84,8 @@ class ThreadContextElementRestoreTest : TestBase() {
         }
     }
 
-    @Test fun testSimpleNoSuspend() = check {}
+    @Test
+    fun testSimpleNoSuspend() = check {}
 
     @Test
     fun testSimpleDelay() = check {

@@ -12,25 +12,22 @@ internal object MainDispatcherLoader {
 
     private val FAST_SERVICE_LOADER_ENABLED = systemProp(FAST_SERVICE_LOADER_PROPERTY_NAME, true)
 
-    @JvmField val dispatcher: MainCoroutineDispatcher = loadMainDispatcher()
+    @JvmField
+    val dispatcher: MainCoroutineDispatcher = loadMainDispatcher()
 
     private fun loadMainDispatcher(): MainCoroutineDispatcher {
         return try {
-            val factories =
-                if (FAST_SERVICE_LOADER_ENABLED) {
-                    FastServiceLoader.loadMainDispatcherFactory()
-                } else {
-                    // We are explicitly using the
-                    // `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
-                    // form of the ServiceLoader call to enable R8 optimization when compiled on Android.
-                    ServiceLoader.load(
-                            MainDispatcherFactory::class.java,
-                            MainDispatcherFactory::class.java.classLoader,
-                        )
-                        .iterator()
-                        .asSequence()
-                        .toList()
-                }
+            val factories = if (FAST_SERVICE_LOADER_ENABLED) {
+                FastServiceLoader.loadMainDispatcherFactory()
+            } else {
+                // We are explicitly using the
+                // `ServiceLoader.load(MyClass::class.java, MyClass::class.java.classLoader).iterator()`
+                // form of the ServiceLoader call to enable R8 optimization when compiled on Android.
+                ServiceLoader.load(MainDispatcherFactory::class.java, MainDispatcherFactory::class.java.classLoader)
+                    .iterator()
+                    .asSequence()
+                    .toList()
+            }
             @Suppress("ConstantConditionIf")
             factories.maxByOrNull { it.loadPriority }?.tryCreateDispatcher(factories) ?: createMissingDispatcher()
         } catch (e: Throwable) {
@@ -47,12 +44,11 @@ internal object MainDispatcherLoader {
  * @suppress internal API
  */
 @InternalCoroutinesApi
-public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatcherFactory>): MainCoroutineDispatcher =
-    try {
-        createDispatcher(factories)
-    } catch (cause: Throwable) {
-        createMissingDispatcher(cause, hintOnError())
-    }
+public fun MainDispatcherFactory.tryCreateDispatcher(factories: List<MainDispatcherFactory>): MainCoroutineDispatcher = try {
+    createDispatcher(factories)
+} catch (cause: Throwable) {
+    createMissingDispatcher(cause, hintOnError())
+}
 
 /** @suppress */
 @InternalCoroutinesApi
@@ -61,21 +57,22 @@ public fun MainCoroutineDispatcher.isMissing(): Boolean =
     this.immediate is MissingMainCoroutineDispatcher
 
 // R8 optimization hook, not const on purpose to enable R8 optimizations via "assumenosideeffects"
-@Suppress("MayBeConstant") private val SUPPORT_MISSING = true
+@Suppress("MayBeConstant")
+private val SUPPORT_MISSING = true
 
 @Suppress(
     "ConstantConditionIf",
     "IMPLICIT_NOTHING_TYPE_ARGUMENT_AGAINST_NOT_NOTHING_EXPECTED_TYPE", // KT-47626
 )
-private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) =
-    if (SUPPORT_MISSING) MissingMainCoroutineDispatcher(cause, errorHint)
+private fun createMissingDispatcher(cause: Throwable? = null, errorHint: String? = null) = if (SUPPORT_MISSING)
+        MissingMainCoroutineDispatcher(cause, errorHint)
     else cause?.let { throw it } ?: throwMissingMainDispatcherException()
 
 internal fun throwMissingMainDispatcherException(): Nothing {
     throw IllegalStateException(
         "Module with the Main dispatcher is missing. " +
-            "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
-            "and ensure it has the same version as 'kotlinx-coroutines-core'"
+        "Add dependency providing the Main dispatcher, e.g. 'kotlinx-coroutines-android' " +
+        "and ensure it has the same version as 'kotlinx-coroutines-core'",
     )
 }
 
@@ -84,8 +81,7 @@ private class MissingMainCoroutineDispatcher(
     private val errorHint: String? = null,
 ) : MainCoroutineDispatcher(), Delay {
 
-    override val immediate: MainCoroutineDispatcher
-        get() = this
+    override val immediate: MainCoroutineDispatcher get() = this
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = missing()
 
@@ -112,8 +108,7 @@ private class MissingMainCoroutineDispatcher(
 /** @suppress */
 @InternalCoroutinesApi
 public object MissingMainCoroutineDispatcherFactory : MainDispatcherFactory {
-    override val loadPriority: Int
-        get() = -1
+    override val loadPriority: Int get() = -1
 
     override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
         return MissingMainCoroutineDispatcher(null)

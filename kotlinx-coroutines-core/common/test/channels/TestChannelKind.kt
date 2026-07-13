@@ -18,28 +18,26 @@ enum class TestChannelKind(
     BUFFERED_10_BROADCAST(10, "BufferedBroadcastChannel(10)", viaBroadcast = true),
     CONFLATED_BROADCAST(Channel.CONFLATED, "ConflatedBroadcastChannel", viaBroadcast = true);
 
-    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> =
-        when {
-            viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
-            viaBroadcast -> @Suppress("DEPRECATION_ERROR") ChannelViaBroadcast(BroadcastChannel(capacity))
-            else -> Channel(capacity, onUndeliveredElement = onUndeliveredElement)
-        }
+    fun <T> create(onUndeliveredElement: ((T) -> Unit)? = null): Channel<T> = when {
+        viaBroadcast && onUndeliveredElement != null -> error("Broadcast channels to do not support onUndeliveredElement")
+        viaBroadcast -> @Suppress("DEPRECATION_ERROR") ChannelViaBroadcast(BroadcastChannel(capacity))
+        else -> Channel(capacity, onUndeliveredElement = onUndeliveredElement)
+    }
 
-    val isConflated
-        get() = capacity == Channel.CONFLATED
+    val isConflated get() = capacity == Channel.CONFLATED
 
     override fun toString(): String = description
 }
 
-internal class ChannelViaBroadcast<E>(@Suppress("DEPRECATION_ERROR") private val broadcast: BroadcastChannel<E>) :
-    Channel<E>, SendChannel<E> by broadcast {
+internal class ChannelViaBroadcast<E>(
+    @Suppress("DEPRECATION_ERROR")
+    private val broadcast: BroadcastChannel<E>,
+) : Channel<E>, SendChannel<E> by broadcast {
     val sub = broadcast.openSubscription()
 
-    override val isClosedForReceive: Boolean
-        get() = sub.isClosedForReceive
+    override val isClosedForReceive: Boolean get() = sub.isClosedForReceive
 
-    override val isEmpty: Boolean
-        get() = sub.isEmpty
+    override val isEmpty: Boolean get() = sub.isEmpty
 
     override suspend fun receive(): E = sub.receive()
 
@@ -55,9 +53,7 @@ internal class ChannelViaBroadcast<E>(@Suppress("DEPRECATION_ERROR") private val
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     override fun cancel(cause: Throwable?): Boolean = error("unsupported")
 
-    override val onReceive: SelectClause1<E>
-        get() = sub.onReceive
+    override val onReceive: SelectClause1<E> get() = sub.onReceive
 
-    override val onReceiveCatching: SelectClause1<ChannelResult<E>>
-        get() = sub.onReceiveCatching
+    override val onReceiveCatching: SelectClause1<ChannelResult<E>> get() = sub.onReceiveCatching
 }

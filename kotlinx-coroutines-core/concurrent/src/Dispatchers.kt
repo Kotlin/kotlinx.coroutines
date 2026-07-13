@@ -39,4 +39,5 @@ package kotlinx.coroutines
  * thread than the limit to exist at the same time, but the extra threads are guaranteed to be in their start-up or shutdown phases and not
  * actually executing work.
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER") public expect val Dispatchers.IO: CoroutineDispatcher
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+public expect val Dispatchers.IO: CoroutineDispatcher

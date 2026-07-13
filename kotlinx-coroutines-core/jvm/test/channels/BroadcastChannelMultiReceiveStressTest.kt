@@ -38,15 +38,14 @@ class BroadcastChannelMultiReceiveStressTest(private val kind: TestBroadcastChan
     @Test
     fun testStress() = runBlocking {
         println("--- BroadcastChannelMultiReceiveStressTest $kind with nReceivers=$nReceivers")
-        val sender =
-            launch(pool + CoroutineName("Sender")) {
-                var i = 0L
-                while (isActive) {
-                    i++
-                    broadcast.send(i) // could be cancelled
-                    sentTotal.set(i) // only was for it if it was not cancelled
-                }
+        val sender = launch(pool + CoroutineName("Sender")) {
+            var i = 0L
+            while (isActive) {
+                i++
+                broadcast.send(i) // could be cancelled
+                sentTotal.set(i) // only was for it if it was not cancelled
             }
+        }
         val receivers = mutableListOf<Job>()
         fun printProgress() {
             println("Sent ${sentTotal.get()}, received ${receivedTotal.get()}, receivers=${receivers.size}")
@@ -57,18 +56,17 @@ class BroadcastChannelMultiReceiveStressTest(private val kind: TestBroadcastChan
             val receiverIndex = receivers.size
             val name = "Receiver$receiverIndex"
             println("Launching $name")
-            receivers +=
-                launch(pool + CoroutineName(name)) {
-                    val channel = broadcast.openSubscription()
-                    when (receiverIndex % 5) {
-                        0 -> doReceive(channel, receiverIndex)
-                        1 -> doReceiveCatching(channel, receiverIndex)
-                        2 -> doIterator(channel, receiverIndex)
-                        3 -> doReceiveSelect(channel, receiverIndex)
-                        4 -> doReceiveCatchingSelect(channel, receiverIndex)
-                    }
-                    channel.cancel()
+            receivers += launch(pool + CoroutineName(name)) {
+                val channel = broadcast.openSubscription()
+                when (receiverIndex % 5) {
+                    0 -> doReceive(channel, receiverIndex)
+                    1 -> doReceiveCatching(channel, receiverIndex)
+                    2 -> doIterator(channel, receiverIndex)
+                    3 -> doReceiveSelect(channel, receiverIndex)
+                    4 -> doReceiveCatchingSelect(channel, receiverIndex)
                 }
+                channel.cancel()
+            }
             printProgress()
         }
         // wait

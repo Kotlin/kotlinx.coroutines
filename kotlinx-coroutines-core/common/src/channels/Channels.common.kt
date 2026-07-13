@@ -14,7 +14,6 @@ import kotlin.jvm.*
 internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
 
 // -------- Operations on BroadcastChannel --------
-
 /**
  * This function is deprecated in the favour of [ReceiveChannel.receiveCatching].
  *
@@ -240,9 +239,7 @@ public suspend fun <E, C : MutableCollection<E>> ReceiveChannel<E>.consumeTo(col
 
 @PublishedApi
 internal fun ReceiveChannel<*>.cancelConsumed(cause: Throwable?) {
-    cancel(
-        cause?.let {
-            it as? CancellationException ?: CancellationException("Channel was consumed, consumer had failed", it)
-        }
-    )
+    cancel(cause?.let {
+        it as? CancellationException ?: CancellationException("Channel was consumed, consumer had failed", it)
+    })
 }

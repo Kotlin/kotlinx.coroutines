@@ -6,8 +6,9 @@ import kotlinx.coroutines.*
  * Implementation note: `owner` is an internal marked that is used ONLY for identity checks by coroutines machinery, and it's never exposed,
  * thus it's safe to have it both `@Transient` and non-nullable.
  */
-internal actual class AbortFlowException actual constructor(@JvmField @Transient actual val owner: Any) :
-    CancellationException("Flow was aborted, no more elements needed") {
+internal actual class AbortFlowException actual constructor(@JvmField @Transient actual val owner: Any) : CancellationException(
+    "Flow was aborted, no more elements needed",
+) {
 
     override fun fillInStackTrace(): Throwable {
         if (DEBUG) return super.fillInStackTrace()

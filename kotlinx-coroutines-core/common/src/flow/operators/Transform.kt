@@ -22,16 +22,16 @@ public inline fun <T> Flow<T>.filterNot(crossinline predicate: suspend (T) -> Bo
 }
 
 /** Returns a flow containing only values that are instances of specified type [R]. */
-@Suppress("UNCHECKED_CAST") public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
+@Suppress("UNCHECKED_CAST")
+public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it is R } as Flow<R>
 
 /** Returns a flow containing only values that are instances of the given [klass]. */
 public fun <R : Any> Flow<*>.filterIsInstance(klass: KClass<R>): Flow<R> = filter { klass.isInstance(it) } as Flow<R>
 
 /** Returns a flow containing only values of the original flow that are not null. */
-public fun <T : Any> Flow<T?>.filterNotNull(): Flow<T> =
-    transform<T?, T> { value ->
-        if (value != null) return@transform emit(value)
-    }
+public fun <T : Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value ->
+    if (value != null) return@transform emit(value)
+}
 
 /** Returns a flow containing the results of applying the given [transform] function to each value of the original flow. */
 public inline fun <T, R> Flow<T>.map(crossinline transform: suspend (value: T) -> R): Flow<R> = transform { value ->
@@ -103,12 +103,11 @@ public fun <T, R> Flow<T>.runningFold(initial: R, operation: suspend (accumulato
 public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: T) -> T): Flow<T> = flow {
     var accumulator: Any? = NULL
     collect { value ->
-        accumulator =
-            if (accumulator === NULL) {
-                value
-            } else {
-                operation(accumulator as T, value)
-            }
+        accumulator = if (accumulator === NULL) {
+            value
+        } else {
+            operation(accumulator as T, value)
+        }
         emit(accumulator)
     }
 }

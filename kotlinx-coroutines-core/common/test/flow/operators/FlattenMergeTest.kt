@@ -10,17 +10,16 @@ class FlattenMergeTest : FlatMapMergeBaseTest() {
     @Test
     override fun testFlatMapConcurrency() = runTest {
         var concurrentRequests = 0
-        val flow =
-            (1..100)
-                .asFlow()
-                .map { value ->
-                    flow {
-                        ++concurrentRequests
-                        emit(value)
-                        delay(Long.MAX_VALUE)
-                    }
+        val flow = (1..100)
+            .asFlow()
+            .map { value ->
+                flow {
+                    ++concurrentRequests
+                    emit(value)
+                    delay(Long.MAX_VALUE)
                 }
-                .flattenMerge(concurrency = 2)
+            }
+            .flattenMerge(concurrency = 2)
 
         val consumer = launch {
             flow.collect { value ->
@@ -39,20 +38,19 @@ class FlattenMergeTest : FlatMapMergeBaseTest() {
 
     @Test
     fun testContextPreservationAcrossFlows() = runTest {
-        val result =
-            flow {
-                    flowOf(1, 2)
-                        .flatMapMerge {
-                            flow {
-                                yield()
-                                emit(it)
-                            }
-                        }
-                        .collect {
+        val result = flow {
+                flowOf(1, 2)
+                    .flatMapMerge {
+                        flow {
+                            yield()
                             emit(it)
                         }
-                }
-                .toList()
+                    }
+                    .collect {
+                        emit(it)
+                    }
+            }
+            .toList()
         assertEquals(listOf(1, 2), result)
     }
 }

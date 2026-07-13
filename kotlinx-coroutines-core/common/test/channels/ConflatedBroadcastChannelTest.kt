@@ -13,18 +13,16 @@ class ConflatedBroadcastChannelTest : TestBase() {
         val s1 = channel.openSubscription()
         val s2 = channel.openSubscription()
 
-        val job1 =
-            launch(Dispatchers.Unconfined, CoroutineStart.UNDISPATCHED) {
-                expect(1)
-                s1.receive()
-                s1.cancel()
-            }
+        val job1 = launch(Dispatchers.Unconfined, CoroutineStart.UNDISPATCHED) {
+            expect(1)
+            s1.receive()
+            s1.cancel()
+        }
 
-        val job2 =
-            launch(Dispatchers.Unconfined, CoroutineStart.UNDISPATCHED) {
-                expect(2)
-                s2.receive()
-            }
+        val job2 = launch(Dispatchers.Unconfined, CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            s2.receive()
+        }
 
         expect(3)
         channel.send(1)

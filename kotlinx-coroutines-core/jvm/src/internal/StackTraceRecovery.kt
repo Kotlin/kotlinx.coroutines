@@ -18,17 +18,13 @@ private const val stackTraceRecoveryClass = "kotlinx.coroutines.internal.StackTr
 
 private val ARTIFICIAL_FRAME = ArtificialStackFrames().coroutineBoundary()
 
-private val baseContinuationImplClassName =
-    runCatching {
-            Class.forName(baseContinuationImplClass).canonicalName
-        }
-        .getOrElse { baseContinuationImplClass }
+private val baseContinuationImplClassName = runCatching {
+    Class.forName(baseContinuationImplClass).canonicalName
+}.getOrElse { baseContinuationImplClass }
 
-private val stackTraceRecoveryClassName =
-    runCatching {
-            Class.forName(stackTraceRecoveryClass).canonicalName
-        }
-        .getOrElse { stackTraceRecoveryClass }
+private val stackTraceRecoveryClassName = runCatching {
+    Class.forName(stackTraceRecoveryClass).canonicalName
+}.getOrElse { stackTraceRecoveryClass }
 
 internal actual fun <E : Throwable> recoverStackTrace(exception: E): E {
     if (!RECOVER_STACK_TRACES) return exception
@@ -44,14 +40,13 @@ private fun <E : Throwable> E.sanitizeStackTrace(): E {
     val startIndex = lastIntrinsic + 1
     val endIndex = stackTrace.firstFrameIndex(baseContinuationImplClassName)
     val adjustment = if (endIndex == -1) 0 else size - endIndex
-    val trace =
-        Array(size - lastIntrinsic - adjustment) {
-            if (it == 0) {
-                ARTIFICIAL_FRAME
-            } else {
-                stackTrace[startIndex + it - 1]
-            }
+    val trace = Array(size - lastIntrinsic - adjustment) {
+        if (it == 0) {
+            ARTIFICIAL_FRAME
+        } else {
+            stackTrace[startIndex + it - 1]
         }
+    }
 
     setStackTrace(trace)
     return this

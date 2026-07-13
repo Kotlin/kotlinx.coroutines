@@ -23,7 +23,7 @@ class SelectMutexTest : TestBase() {
         }
         assertEquals("OK", res)
         expect(3)
-        // will wait for the first coroutine
+    // will wait for the first coroutine
     }
 
     @Test

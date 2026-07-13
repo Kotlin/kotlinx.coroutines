@@ -24,7 +24,8 @@ import kotlin.jvm.*
  * If a [parent] job is specified, then this supervisor job becomes a child job of the [parent] and is cancelled when the parent fails or is
  * cancelled. All this supervisor's children are cancelled in this case, too.
  */
-@Suppress("FunctionName") public fun SupervisorJob(parent: Job? = null): CompletableJob = SupervisorJobImpl(parent)
+@Suppress("FunctionName")
+public fun SupervisorJob(parent: Job? = null): CompletableJob = SupervisorJobImpl(parent)
 
 /** @suppress Binary compatibility only */
 @Suppress("FunctionName")

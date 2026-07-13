@@ -75,14 +75,10 @@ class ThreadLocalStressTest : TestBase() {
      * Also note that `uncaughtExceptionHandler` is used as the only available mechanism to propagate error from
      * `resumeWith`
      */
-
     @Test
     fun testNonDispatcheableLeak() {
         repeat(100) {
-            doTestWithPreparation(
-                ::doTest,
-                { threadLocal.set(null) },
-            ) {
+            doTestWithPreparation(::doTest, { threadLocal.set(null) }) {
                 threadLocal.get() == null
             }
             assertNull(threadLocal.get())
@@ -100,10 +96,7 @@ class ThreadLocalStressTest : TestBase() {
     @Test
     fun testNonDispatcheableLeakWithContextSwitch() {
         repeat(100) {
-            doTestWithPreparation(
-                ::doTestWithContextSwitch,
-                { threadLocal.set(null) },
-            ) {
+            doTestWithPreparation(::doTestWithContextSwitch, { threadLocal.set(null) }) {
                 threadLocal.get() == null
             }
             assertNull(threadLocal.get())
@@ -113,10 +106,7 @@ class ThreadLocalStressTest : TestBase() {
     @Test
     fun testNonDispatcheableLeakWithInitialWithContextSwitch() {
         repeat(100) {
-            doTestWithPreparation(
-                ::doTestWithContextSwitch,
-                { threadLocal.set("initial") },
-            ) {
+            doTestWithPreparation(::doTestWithContextSwitch, { threadLocal.set("initial") }) {
                 true /* can randomly wake up on the non-main thread */
             }
             // Here we are always on the main thread
@@ -127,8 +117,7 @@ class ThreadLocalStressTest : TestBase() {
     private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isValid: () -> Boolean) {
         setup()
         val latch = CountDownLatch(1)
-        testBody.startCoroutineUninterceptedOrReturn(
-            Continuation(EmptyCoroutineContext) {
+        testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
                 if (!isValid()) {
                     Thread.currentThread()
                         .uncaughtExceptionHandler
@@ -138,8 +127,7 @@ class ThreadLocalStressTest : TestBase() {
                         )
                 }
                 latch.countDown()
-            }
-        )
+            })
         latch.await()
     }
 

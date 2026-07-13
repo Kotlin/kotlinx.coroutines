@@ -270,12 +270,11 @@ class RendezvousChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() =
-        runTest({ it is TestCancellationException }) {
-            val channel = Channel<Int>(Channel.RENDEZVOUS)
-            channel.cancel(TestCancellationException())
-            channel.receiveCatching().getOrThrow()
-        }
+    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
+        val channel = Channel<Int>(Channel.RENDEZVOUS)
+        channel.cancel(TestCancellationException())
+        channel.receiveCatching().getOrThrow()
+    }
 
     /** Tests that [BufferOverflow.DROP_OLDEST] takes precedence over [Channel.RENDEZVOUS]. */
     @Test

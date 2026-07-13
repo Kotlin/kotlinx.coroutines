@@ -469,7 +469,8 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * instance of [MainScope], with an unrelated [SupervisorJob]. For example, writing `MainScope().cancel()` is meaningless, because the only
  * job that will be cancelled is the one created in that specific `MainScope()` call.
  */
-@Suppress("FunctionName") public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
+@Suppress("FunctionName")
+public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatchers.Main)
 
 /**
  * Returns `true` when the [Job] of this [CoroutineScope] is still active (has not completed and was not cancelled yet).
@@ -510,8 +511,7 @@ public operator fun CoroutineScope.plus(context: CoroutineContext): CoroutineSco
  * @see CoroutineScope.ensureActive for a function that throws an exception instead of returning a boolean value.
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
-public val CoroutineScope.isActive: Boolean
-    get() = coroutineContext[Job]?.isActive ?: true
+public val CoroutineScope.isActive: Boolean get() = coroutineContext[Job]?.isActive ?: true
 
 /**
  * A [CoroutineScope] without any [Job].
@@ -671,8 +671,7 @@ public object GlobalScope : CoroutineScope {
      *
      * Note that, unlike other [CoroutineScope] implementations, this scope does not have a [Job] in its context.
      */
-    override val coroutineContext: CoroutineContext
-        get() = EmptyCoroutineContext
+    override val coroutineContext: CoroutineContext get() = EmptyCoroutineContext
 }
 
 /**

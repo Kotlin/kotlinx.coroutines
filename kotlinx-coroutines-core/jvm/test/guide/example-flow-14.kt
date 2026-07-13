@@ -14,7 +14,6 @@ fun simple(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        simple().collect { value -> println(value) }
-    }
+fun main() = runBlocking<Unit> {
+    simple().collect { value -> println(value) }
+}

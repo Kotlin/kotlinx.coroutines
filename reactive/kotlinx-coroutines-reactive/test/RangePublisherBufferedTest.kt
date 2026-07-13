@@ -15,7 +15,9 @@ class RangePublisherBufferedTest : PublisherVerification<Int>(TestEnvironment(50
         return null
     }
 
-    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 }

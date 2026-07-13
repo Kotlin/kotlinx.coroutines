@@ -22,23 +22,21 @@ class JoinStressTest : TestBase() {
 
         repeat(iterations) {
             val barrier = CyclicBarrier(3)
-            val exceptionalJob =
-                async(pool + NonCancellable) {
-                    barrier.await()
-                    throw TestException()
-                }
+            val exceptionalJob = async(pool + NonCancellable) {
+                barrier.await()
+                throw TestException()
+            }
 
-            val awaiterJob =
-                async(pool) {
-                    barrier.await()
-                    try {
-                        exceptionalJob.await()
-                    } catch (e: TestException) {
-                        0
-                    } catch (e: CancellationException) {
-                        1
-                    }
+            val awaiterJob = async(pool) {
+                barrier.await()
+                try {
+                    exceptionalJob.await()
+                } catch (e: TestException) {
+                    0
+                } catch (e: CancellationException) {
+                    1
                 }
+            }
 
             barrier.await()
             exceptionalJob.cancel()
@@ -56,31 +54,28 @@ class JoinStressTest : TestBase() {
 
         repeat(iterations) {
             val barrier = CyclicBarrier(4)
-            val exceptionalJob =
-                async<Unit>(pool + NonCancellable) {
-                    barrier.await()
-                    throw TestException()
-                }
+            val exceptionalJob = async<Unit>(pool + NonCancellable) {
+                barrier.await()
+                throw TestException()
+            }
 
-            val awaiterJob =
-                async(pool) {
-                    barrier.await()
-                    try {
-                        exceptionalJob.await()
-                        2
-                    } catch (e: TestException) {
-                        0
-                    } catch (e: TestException1) {
-                        1
-                    }
+            val awaiterJob = async(pool) {
+                barrier.await()
+                try {
+                    exceptionalJob.await()
+                    2
+                } catch (e: TestException) {
+                    0
+                } catch (e: TestException1) {
+                    1
                 }
+            }
 
-            val canceller =
-                async(pool + NonCancellable) {
-                    barrier.await()
-                    // cast for test purposes only
-                    (exceptionalJob as AbstractCoroutine<*>).cancelInternal(TestException1())
-                }
+            val canceller = async(pool + NonCancellable) {
+                barrier.await()
+                // cast for test purposes only
+                (exceptionalJob as AbstractCoroutine<*>).cancelInternal(TestException1())
+            }
 
             barrier.await()
             val awaiterResult = awaiterJob.await()

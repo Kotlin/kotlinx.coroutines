@@ -11,10 +11,9 @@ fun foo(): Flow<Int> = flow {
     }
 }
 
-fun main() =
-    runBlocking<Unit> {
-        foo().collect { value ->
-            if (value == 3) cancel()
-            println(value)
-        }
+fun main() = runBlocking<Unit> {
+    foo().collect { value ->
+        if (value == 3) cancel()
+        println(value)
     }
+}

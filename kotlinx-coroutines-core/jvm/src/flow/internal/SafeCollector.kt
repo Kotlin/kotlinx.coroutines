@@ -27,14 +27,12 @@ private val emitFun = FlowCollector<Any?>::emit as Function3<FlowCollector<Any?>
  * See a comment to [emit] for the explanation of what and how is being optimized.
  */
 @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNCHECKED_CAST")
-internal actual class SafeCollector<T>
-actual constructor(
+internal actual class SafeCollector<T> actual constructor(
     @JvmField internal actual val collector: FlowCollector<T>,
     @JvmField internal actual val collectContext: CoroutineContext,
 ) : FlowCollector<T>, ContinuationImpl(NoOpContinuation, EmptyCoroutineContext), CoroutineStackFrame {
 
-    override val callerFrame: CoroutineStackFrame?
-        get() = completion_ as? CoroutineStackFrame
+    override val callerFrame: CoroutineStackFrame? get() = completion_ as? CoroutineStackFrame
 
     override fun getStackTraceElement(): StackTraceElement? = null
 
@@ -51,8 +49,7 @@ actual constructor(
      * - ContinuationImpl invokes this in its `releaseIntercepted` as `context[ContinuationInterceptor]!!`
      * - When we are within a callee, it is used to create its continuation object with this collector as completion_
      */
-    override val context: CoroutineContext
-        get() = lastEmissionContext ?: EmptyCoroutineContext
+    override val context: CoroutineContext get() = lastEmissionContext ?: EmptyCoroutineContext
 
     override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionContext(it, context) }
@@ -162,8 +159,7 @@ actual constructor(
                 Previous 'emit' call has thrown exception ${exception.e}, but then emission attempt of value '$value' has been detected.
                 Emissions from 'catch' blocks are prohibited in order to avoid unspecified behaviour, 'Flow.catch' operator can be used instead.
                 For a more detailed explanation, please refer to Flow documentation.
-            """
-                .trimIndent()
+            """.trimIndent(),
         )
     }
 }

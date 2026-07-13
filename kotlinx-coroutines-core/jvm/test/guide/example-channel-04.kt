@@ -14,11 +14,10 @@ fun main() = runBlocking {
     coroutineContext.cancelChildren() // cancel children coroutines
 }
 
-fun CoroutineScope.produceNumbers() =
-    produce<Int> {
-        var x = 1
-        while (true) send(x++) // infinite stream of integers starting from 1
-    }
+fun CoroutineScope.produceNumbers() = produce<Int> {
+    var x = 1
+    while (true) send(x++) // infinite stream of integers starting from 1
+}
 
 fun CoroutineScope.square(numbers: ReceiveChannel<Int>): ReceiveChannel<Int> = produce {
     for (x in numbers) send(x * x)

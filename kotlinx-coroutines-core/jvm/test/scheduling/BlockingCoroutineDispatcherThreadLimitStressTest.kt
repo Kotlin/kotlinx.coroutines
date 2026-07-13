@@ -22,28 +22,7 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
         // Do in bursts to avoid OOM
         repeat(100 * stressTestMultiplierSqrt) {
             val iterations = 1_000 * stressTestMultiplierSqrt
-            val tasks =
-                (1..iterations).map {
-                    async(limitingDispatcher) {
-                        try {
-                            val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                            observedParallelism.add(currentlyExecuting)
-                        } finally {
-                            concurrentWorkers.decrementAndGet()
-                        }
-                    }
-                }
-            tasks.awaitAll()
-            assertEquals(1, observedParallelism.single(), "Expected parallelism should be 1, had $observedParallelism")
-        }
-    }
-
-    @Test
-    fun testLimitParallelism() = runBlocking {
-        val limitingDispatcher = blockingDispatcher(CORES_COUNT)
-        val iterations = 50_000 * stressTestMultiplier
-        val tasks =
-            (1..iterations).map {
+            val tasks = (1..iterations).map {
                 async(limitingDispatcher) {
                     try {
                         val currentlyExecuting = concurrentWorkers.incrementAndGet()
@@ -53,6 +32,25 @@ class BlockingCoroutineDispatcherThreadLimitStressTest : SchedulerTestBase() {
                     }
                 }
             }
+            tasks.awaitAll()
+            assertEquals(1, observedParallelism.single(), "Expected parallelism should be 1, had $observedParallelism")
+        }
+    }
+
+    @Test
+    fun testLimitParallelism() = runBlocking {
+        val limitingDispatcher = blockingDispatcher(CORES_COUNT)
+        val iterations = 50_000 * stressTestMultiplier
+        val tasks = (1..iterations).map {
+            async(limitingDispatcher) {
+                try {
+                    val currentlyExecuting = concurrentWorkers.incrementAndGet()
+                    observedParallelism.add(currentlyExecuting)
+                } finally {
+                    concurrentWorkers.decrementAndGet()
+                }
+            }
+        }
         tasks.awaitAll()
         assertTrue(observedParallelism.max() <= CORES_COUNT, "Unexpected state: $observedParallelism")
     }

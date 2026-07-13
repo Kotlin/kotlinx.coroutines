@@ -33,14 +33,13 @@ class SampleTest : TestBase() {
 
     @Test
     fun testDelayedFirst() = withVirtualTime {
-        val flow =
-            flow {
-                    delay(60)
-                    emit(1)
-                    delay(60)
-                    expect(1)
-                }
-                .sample(100)
+        val flow = flow {
+                delay(60)
+                emit(1)
+                delay(60)
+                expect(1)
+            }
+            .sample(100)
         assertEquals(1, flow.singleOrNull())
         finish(2)
     }
@@ -73,27 +72,25 @@ class SampleTest : TestBase() {
 
     @Test
     fun testFixedDelay() = withVirtualTime {
-        val flow =
-            flow {
-                    emit("A")
-                    delay(150)
-                    emit("B")
-                    expect(1)
-                }
-                .sample(100)
+        val flow = flow {
+                emit("A")
+                delay(150)
+                emit("B")
+                expect(1)
+            }
+            .sample(100)
         assertEquals("A", flow.single())
         finish(2)
     }
 
     @Test
     fun testSingleNull() = withVirtualTime {
-        val flow =
-            flow<Int?> {
-                    emit(null)
-                    delay(2)
-                    expect(1)
-                }
-                .sample(1)
+        val flow = flow<Int?> {
+                emit(null)
+                delay(2)
+                expect(1)
+            }
+            .sample(1)
         assertNull(flow.single())
         finish(2)
     }
@@ -153,45 +150,45 @@ class SampleTest : TestBase() {
 
     @Test
     fun testPace() = withVirtualTime {
-        val flow =
-            flow {
-                    expect(1)
-                    repeat(4) {
-                        emit(-it)
-                        delay(50)
-                    }
-
-                    repeat(4) {
-                        emit(it)
-                        delay(100)
-                    }
-                    expect(2)
+        val flow = flow {
+                expect(1)
+                repeat(4) {
+                    emit(-it)
+                    delay(50)
                 }
-                .sample(100)
+
+                repeat(4) {
+                    emit(it)
+                    delay(100)
+                }
+                expect(2)
+            }
+            .sample(100)
 
         assertEquals(listOf(-1, -3, 0, 1, 2, 3), flow.toList())
         finish(3)
     }
 
-    @Test fun testUpstreamError() = testUpstreamError(TestException())
+    @Test
+    fun testUpstreamError() = testUpstreamError(TestException())
 
-    @Test fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
+    @Test
+    fun testUpstreamErrorCancellationException() = testUpstreamError(CancellationException(""))
 
     private inline fun <reified T : Throwable> testUpstreamError(cause: T) = runTest {
         val latch = Channel<Unit>()
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    expect(2)
-                    latch.receive()
-                    throw cause
-                }
-                .sample(1)
-                .map {
-                    latch.send(Unit)
-                    hang { expect(3) }
-                }
+        val flow = flow {
+                expect(1)
+                emit(1)
+                expect(2)
+                latch.receive()
+                throw cause
+            }
+            .sample(1)
+            .map {
+                latch.send(Unit)
+                hang { expect(3) }
+            }
 
         assertFailsWith<T>(flow)
         finish(4)
@@ -200,21 +197,20 @@ class SampleTest : TestBase() {
     @Test
     fun testUpstreamErrorIsolatedContext() = runTest {
         val latch = Channel<Unit>()
-        val flow =
-            flow {
-                    assertEquals("upstream", NamedDispatchers.name())
-                    expect(1)
-                    emit(1)
-                    expect(2)
-                    latch.receive()
-                    throw TestException()
-                }
-                .flowOn(NamedDispatchers("upstream"))
-                .sample(1)
-                .map {
-                    latch.send(Unit)
-                    hang { expect(3) }
-                }
+        val flow = flow {
+                assertEquals("upstream", NamedDispatchers.name())
+                expect(1)
+                emit(1)
+                expect(2)
+                latch.receive()
+                throw TestException()
+            }
+            .flowOn(NamedDispatchers("upstream"))
+            .sample(1)
+            .map {
+                latch.send(Unit)
+                hang { expect(3) }
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -222,35 +218,33 @@ class SampleTest : TestBase() {
 
     @Test
     fun testUpstreamErrorSampleNotTriggered() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    expect(2)
-                    throw TestException()
-                }
-                .sample(Long.MAX_VALUE)
-                .map {
-                    expectUnreached()
-                }
+        val flow = flow {
+                expect(1)
+                emit(1)
+                expect(2)
+                throw TestException()
+            }
+            .sample(Long.MAX_VALUE)
+            .map {
+                expectUnreached()
+            }
         assertFailsWith<TestException>(flow)
         finish(3)
     }
 
     @Test
     fun testUpstreamErrorSampleNotTriggeredInIsolatedContext() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    expect(2)
-                    throw TestException()
-                }
-                .flowOn(NamedDispatchers("unused"))
-                .sample(Long.MAX_VALUE)
-                .map {
-                    expectUnreached()
-                }
+        val flow = flow {
+                expect(1)
+                emit(1)
+                expect(2)
+                throw TestException()
+            }
+            .flowOn(NamedDispatchers("unused"))
+            .sample(Long.MAX_VALUE)
+            .map {
+                expectUnreached()
+            }
 
         assertFailsWith<TestException>(flow)
         finish(3)
@@ -258,18 +252,17 @@ class SampleTest : TestBase() {
 
     @Test
     fun testDownstreamError() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    hang { expect(3) }
-                }
-                .sample(100)
-                .map {
-                    expect(2)
-                    yield()
-                    throw TestException()
-                }
+        val flow = flow {
+                expect(1)
+                emit(1)
+                hang { expect(3) }
+            }
+            .sample(100)
+            .map {
+                expect(2)
+                yield()
+                throw TestException()
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -277,20 +270,19 @@ class SampleTest : TestBase() {
 
     @Test
     fun testDownstreamErrorIsolatedContext() = runTest {
-        val flow =
-            flow {
-                    assertEquals("upstream", NamedDispatchers.name())
-                    expect(1)
-                    emit(1)
-                    hang { expect(3) }
-                }
-                .flowOn(NamedDispatchers("upstream"))
-                .sample(100)
-                .map {
-                    expect(2)
-                    yield()
-                    throw TestException()
-                }
+        val flow = flow {
+                assertEquals("upstream", NamedDispatchers.name())
+                expect(1)
+                emit(1)
+                hang { expect(3) }
+            }
+            .flowOn(NamedDispatchers("upstream"))
+            .sample(100)
+            .map {
+                expect(2)
+                yield()
+                throw TestException()
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)

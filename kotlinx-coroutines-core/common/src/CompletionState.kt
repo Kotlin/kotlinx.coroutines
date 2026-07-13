@@ -26,8 +26,7 @@ internal open class CompletedExceptionally(
     handled: Boolean = false,
 ) {
     private val _handled = atomic(handled)
-    val handled: Boolean
-        get() = _handled.value
+    val handled: Boolean get() = _handled.value
 
     fun makeHandled(): Boolean = _handled.compareAndSet(false, true)
 

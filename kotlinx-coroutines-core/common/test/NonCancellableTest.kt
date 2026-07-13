@@ -40,18 +40,17 @@ class NonCancellableTest : TestBase() {
     @Test
     fun testNonCancellableWithException() = runTest {
         expect(1)
-        val deferred =
-            async(NonCancellable) {
-                withContext(NonCancellable) {
-                    expect(2)
-                    yield()
-                    expect(4)
-                }
-
-                expect(5)
+        val deferred = async(NonCancellable) {
+            withContext(NonCancellable) {
+                expect(2)
                 yield()
-                expectUnreached()
+                expect(4)
             }
+
+            expect(5)
+            yield()
+            expectUnreached()
+        }
 
         yield()
         deferred.cancel(TestCancellationException("TEST"))

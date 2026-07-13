@@ -9,7 +9,6 @@ import kotlin.coroutines.*
  * In theory, it should belong to kotlinx-coroutines-debug, but placing it here significantly simplifies the
  * Android AS debugger that does on-load DEX transformation
  */
-
 // Stubs which are injected as coroutine probes. Require direct match of signatures
 internal fun probeCoroutineResumed(frame: Continuation<*>) = DebugProbesImpl.probeCoroutineResumed(frame)
 

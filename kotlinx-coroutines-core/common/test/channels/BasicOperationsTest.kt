@@ -32,46 +32,43 @@ class BasicOperationsTest : TestBase() {
     }
 
     @Test
-    fun testInvokeOnClose() =
-        TestChannelKind.entries.forEach { kind ->
-            reset()
-            val channel = kind.create<Int>()
-            channel.invokeOnClose {
-                if (it is AssertionError) {
-                    expect(3)
-                }
+    fun testInvokeOnClose() = TestChannelKind.entries.forEach { kind ->
+        reset()
+        val channel = kind.create<Int>()
+        channel.invokeOnClose {
+            if (it is AssertionError) {
+                expect(3)
             }
-            expect(1)
-            channel.trySend(42)
-            expect(2)
-            channel.close(AssertionError())
-            finish(4)
         }
+        expect(1)
+        channel.trySend(42)
+        expect(2)
+        channel.close(AssertionError())
+        finish(4)
+    }
 
     @Test
-    fun testInvokeOnClosed() =
-        TestChannelKind.entries.forEach { kind ->
-            reset()
-            expect(1)
-            val channel = kind.create<Int>()
-            channel.close()
-            channel.invokeOnClose { expect(2) }
-            assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(3) } }
-            finish(3)
-        }
+    fun testInvokeOnClosed() = TestChannelKind.entries.forEach { kind ->
+        reset()
+        expect(1)
+        val channel = kind.create<Int>()
+        channel.close()
+        channel.invokeOnClose { expect(2) }
+        assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(3) } }
+        finish(3)
+    }
 
     @Test
-    fun testMultipleInvokeOnClose() =
-        TestChannelKind.entries.forEach { kind ->
-            reset()
-            val channel = kind.create<Int>()
-            channel.invokeOnClose { expect(3) }
-            expect(1)
-            assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(4) } }
-            expect(2)
-            channel.close()
-            finish(4)
-        }
+    fun testMultipleInvokeOnClose() = TestChannelKind.entries.forEach { kind ->
+        reset()
+        val channel = kind.create<Int>()
+        channel.invokeOnClose { expect(3) }
+        expect(1)
+        assertFailsWith<IllegalStateException> { channel.invokeOnClose { expect(4) } }
+        expect(2)
+        channel.close()
+        finish(4)
+    }
 
     @Test
     fun testIteratorHasNextMustPrecedeNext() = runTest {

@@ -24,13 +24,17 @@ class StateInTest : TestBase() {
         coroutineContext.cancelChildren()
     }
 
-    @Test fun testUpstreamCompletedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = false)
+    @Test
+    fun testUpstreamCompletedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = false)
 
-    @Test fun testUpstreamFailedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = false)
+    @Test
+    fun testUpstreamFailedNoInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = false)
 
-    @Test fun testUpstreamCompletedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = true)
+    @Test
+    fun testUpstreamCompletedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = false, withInitialValue = true)
 
-    @Test fun testUpstreamFailedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = true)
+    @Test
+    fun testUpstreamFailedWithInitialValue() = testUpstreamCompletedOrFailedReset(failed = true, withInitialValue = true)
 
     private fun testUpstreamCompletedOrFailedReset(failed: Boolean, withInitialValue: Boolean) = runTest {
         val emitted = Job()
@@ -67,11 +71,10 @@ class StateInTest : TestBase() {
     @Test
     fun testUpstreamFailedImmediatelyWithInitialValue() = runTest {
         val ceh = CoroutineExceptionHandler { _, _ -> expect(2) }
-        val flow =
-            flow<Int> {
-                expect(1)
-                throw TestException()
-            }
+        val flow = flow<Int> {
+            expect(1)
+            throw TestException()
+        }
         assertFailsWith<TestException> { flow.stateIn(CoroutineScope(currentCoroutineContext() + Job() + ceh)) }
         finish(3)
     }

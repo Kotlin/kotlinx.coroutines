@@ -25,16 +25,14 @@ class LimitingDispatcherTest : SchedulerTestBase() {
         val barrier = CyclicBarrier(6)
         val tasks = ArrayList<Job>(6)
         repeat(2) {
-            tasks +=
-                async(view) {
-                    barrier.await()
-                }
+            tasks += async(view) {
+                barrier.await()
+            }
 
             repeat(2) {
-                tasks +=
-                    async(blocking) {
-                        barrier.await()
-                    }
+                tasks += async(blocking) {
+                    barrier.await()
+                }
             }
         }
 

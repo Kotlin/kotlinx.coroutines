@@ -15,15 +15,15 @@ suspend fun <T> withEmptyContext(block: suspend () -> T): T = suspendCoroutine {
  */
 fun <T> (suspend () -> T).startCoroutineUnintercepted(completion: Continuation<T>) {
     val actualCompletion = probeCoroutineCreated(completion)
-    val value =
-        try {
-            probeCoroutineResumed(actualCompletion)
-            startCoroutineUninterceptedOrReturn(actualCompletion)
-        } catch (e: Throwable) {
-            actualCompletion.resumeWithException(e)
-            return
-        }
+    val value = try {
+        probeCoroutineResumed(actualCompletion)
+        startCoroutineUninterceptedOrReturn(actualCompletion)
+    } catch (e: Throwable) {
+        actualCompletion.resumeWithException(e)
+        return
+    }
     if (value !== COROUTINE_SUSPENDED) {
-        @Suppress("UNCHECKED_CAST") actualCompletion.resume(value as T)
+        @Suppress("UNCHECKED_CAST")
+        actualCompletion.resume(value as T)
     }
 }

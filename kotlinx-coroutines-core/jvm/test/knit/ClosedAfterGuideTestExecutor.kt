@@ -13,19 +13,18 @@ private class ClosedAfterGuideTestDispatcher(
 ) : ExecutorCoroutineDispatcher() {
     private val threadNo = AtomicInteger()
 
-    override val executor: Executor =
-        Executors.newScheduledThreadPool(
-            nThreads,
-            object : ThreadFactory {
-                override fun newThread(target: java.lang.Runnable): Thread {
-                    return PoolThread(
-                        this@ClosedAfterGuideTestDispatcher,
-                        target,
-                        if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet(),
-                    )
-                }
-            },
-        )
+    override val executor: Executor = Executors.newScheduledThreadPool(
+        nThreads,
+        object : ThreadFactory {
+            override fun newThread(target: java.lang.Runnable): Thread {
+                return PoolThread(
+                    this@ClosedAfterGuideTestDispatcher,
+                    target,
+                    if (nThreads == 1) name else name + "-" + threadNo.incrementAndGet(),
+                )
+            }
+        },
+    )
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         executor.execute(wrapTask(block))

@@ -44,50 +44,42 @@ class ShareInBufferTest : TestBase() {
     }
 
     @Test
-    fun testReplay0DefaultBuffer() =
-        checkBuffer(defaultBufferSize) {
-            shareIn(it, SharingStarted.Eagerly)
-        }
+    fun testReplay0DefaultBuffer() = checkBuffer(defaultBufferSize) {
+        shareIn(it, SharingStarted.Eagerly)
+    }
 
     @Test
-    fun testReplay1DefaultBuffer() =
-        checkBuffer(defaultBufferSize) {
-            shareIn(it, SharingStarted.Eagerly, 1)
-        }
+    fun testReplay1DefaultBuffer() = checkBuffer(defaultBufferSize) {
+        shareIn(it, SharingStarted.Eagerly, 1)
+    }
 
     @Test // buffer is padded to default size as needed
-    fun testReplay10DefaultBuffer() =
-        checkBuffer(maxOf(10, defaultBufferSize)) {
-            shareIn(it, SharingStarted.Eagerly, 10)
-        }
+    fun testReplay10DefaultBuffer() = checkBuffer(maxOf(10, defaultBufferSize)) {
+        shareIn(it, SharingStarted.Eagerly, 10)
+    }
 
     @Test // buffer is padded to default size as needed
-    fun testReplay100DefaultBuffer() =
-        checkBuffer(maxOf(100, defaultBufferSize)) {
-            shareIn(it, SharingStarted.Eagerly, 100)
-        }
+    fun testReplay100DefaultBuffer() = checkBuffer(maxOf(100, defaultBufferSize)) {
+        shareIn(it, SharingStarted.Eagerly, 100)
+    }
 
     @Test
-    fun testDefaultBufferKeepsDefault() =
-        checkBuffer(defaultBufferSize) {
-            buffer().shareIn(it, SharingStarted.Eagerly)
-        }
+    fun testDefaultBufferKeepsDefault() = checkBuffer(defaultBufferSize) {
+        buffer().shareIn(it, SharingStarted.Eagerly)
+    }
 
     @Test
-    fun testOverrideDefaultBuffer0() =
-        checkBuffer(0) {
-            buffer(0).shareIn(it, SharingStarted.Eagerly)
-        }
+    fun testOverrideDefaultBuffer0() = checkBuffer(0) {
+        buffer(0).shareIn(it, SharingStarted.Eagerly)
+    }
 
     @Test
-    fun testOverrideDefaultBuffer10() =
-        checkBuffer(10) {
-            buffer(10).shareIn(it, SharingStarted.Eagerly)
-        }
+    fun testOverrideDefaultBuffer10() = checkBuffer(10) {
+        buffer(10).shareIn(it, SharingStarted.Eagerly)
+    }
 
     @Test // buffer and replay sizes add up
-    fun testBufferReplaySum() =
-        checkBuffer(41) {
-            buffer(10).buffer(20).shareIn(it, SharingStarted.Eagerly, 11)
-        }
+    fun testBufferReplaySum() = checkBuffer(41) {
+        buffer(10).buffer(20).shareIn(it, SharingStarted.Eagerly, 11)
+    }
 }

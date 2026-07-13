@@ -13,10 +13,12 @@ import kotlin.contracts.*
 public suspend fun delay(duration: Duration): Unit = delay(duration.coerceToMillis())
 
 /** "java.time" adapter method for [kotlinx.coroutines.flow.debounce]. */
-@FlowPreview public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.coerceToMillis())
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.coerceToMillis())
 
 /** "java.time" adapter method for [kotlinx.coroutines.flow.sample]. */
-@FlowPreview public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.coerceToMillis())
+@FlowPreview
+public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.coerceToMillis())
 
 /** "java.time" adapter method for [SelectBuilder.onTimeout]. */
 public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () -> R): Unit = onTimeout(duration.coerceToMillis(), block)

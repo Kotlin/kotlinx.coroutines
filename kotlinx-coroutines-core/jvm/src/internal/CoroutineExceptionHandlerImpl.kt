@@ -15,13 +15,10 @@ import kotlin.coroutines.*
  * ServiceLoader call to enable R8 optimization when compiled on Android.
  */
 internal actual val platformExceptionHandlers: Collection<CoroutineExceptionHandler> =
-    ServiceLoader.load(
-            CoroutineExceptionHandler::class.java,
-            CoroutineExceptionHandler::class.java.classLoader,
-        )
-        .iterator()
-        .asSequence()
-        .toList()
+    ServiceLoader.load(CoroutineExceptionHandler::class.java, CoroutineExceptionHandler::class.java.classLoader)
+    .iterator()
+    .asSequence()
+    .toList()
 
 internal actual fun ensurePlatformExceptionHandlerLoaded(callback: CoroutineExceptionHandler) {
     // we use JVM's mechanism of ServiceLoader, so this should be a no-op on JVM.
@@ -49,7 +46,8 @@ internal actual fun propagateExceptionFinalResort(exception: Throwable) {
 // This implementation doesn't store a stacktrace, which is good because a stacktrace doesn't make sense for this.
 internal actual class DiagnosticCoroutineContextException actual constructor(context: CoroutineContext) : RuntimeException() {
 
-    @Transient private val context: CoroutineContext? = context
+    @Transient
+    private val context: CoroutineContext? = context
 
     override fun getLocalizedMessage(): String {
         return context.toString()

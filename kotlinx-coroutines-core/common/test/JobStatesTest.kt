@@ -12,15 +12,14 @@ class JobStatesTest : TestBase() {
     fun testNormalCompletion() = runTest {
         expect(1)
         val parent = coroutineContext.job
-        val job =
-            launch(start = CoroutineStart.LAZY) {
-                expect(2)
-                // launches child
-                launch {
-                    expect(4)
-                }
-                // completes normally
+        val job = launch(start = CoroutineStart.LAZY) {
+            expect(2)
+            // launches child
+            launch {
+                expect(4)
             }
+        // completes normally
+        }
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)
@@ -49,91 +48,86 @@ class JobStatesTest : TestBase() {
     }
 
     @Test
-    fun testCompletingFailed() =
-        runTest(unhandled = listOf({ it -> it is TestException })) {
-            expect(1)
-            val job =
-                launch(NonCancellable, start = CoroutineStart.LAZY) {
-                    expect(2)
-                    // launches child
-                    launch {
-                        expect(4)
-                        throw TestException()
-                    }
-                    // completes normally
-                }
-            // New job
-            assertFalse(job.isActive)
-            assertFalse(job.isCompleted)
-            assertFalse(job.isCancelled)
-            // New -> Active
-            job.start()
-            assertTrue(job.isActive)
-            assertFalse(job.isCompleted)
-            assertFalse(job.isCancelled)
-            // Active -> Completing
-            yield() // scheduled & starts child
-            expect(3)
-            assertTrue(job.isActive)
-            assertFalse(job.isCompleted)
-            assertFalse(job.isCancelled)
-            // Completing -> Cancelled
-            yield()
-            finish(5)
-            assertFalse(job.isActive)
-            assertTrue(job.isCompleted)
-            assertTrue(job.isCancelled)
+    fun testCompletingFailed() = runTest(unhandled = listOf({ it -> it is TestException })) {
+        expect(1)
+        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
+            expect(2)
+            // launches child
+            launch {
+                expect(4)
+                throw TestException()
+            }
+        // completes normally
         }
+        // New job
+        assertFalse(job.isActive)
+        assertFalse(job.isCompleted)
+        assertFalse(job.isCancelled)
+        // New -> Active
+        job.start()
+        assertTrue(job.isActive)
+        assertFalse(job.isCompleted)
+        assertFalse(job.isCancelled)
+        // Active -> Completing
+        yield() // scheduled & starts child
+        expect(3)
+        assertTrue(job.isActive)
+        assertFalse(job.isCompleted)
+        assertFalse(job.isCancelled)
+        // Completing -> Cancelled
+        yield()
+        finish(5)
+        assertFalse(job.isActive)
+        assertTrue(job.isCompleted)
+        assertTrue(job.isCancelled)
+    }
 
     @Test
-    fun testFailed() =
-        runTest(unhandled = listOf({ it -> it is TestException })) {
-            expect(1)
-            val job =
-                launch(NonCancellable, start = CoroutineStart.LAZY) {
-                    expect(2)
-                    // launches child
-                    launch(start = CoroutineStart.ATOMIC) {
-                        expect(4)
-                    }
-                    // failing
-                    throw TestException()
-                }
-            // New job
-            assertFalse(job.isActive)
-            assertFalse(job.isCompleted)
-            assertFalse(job.isCancelled)
-            // New -> Active
-            job.start()
-            assertTrue(job.isActive)
-            assertFalse(job.isCompleted)
-            assertFalse(job.isCancelled)
-            // Active -> Cancelling
-            yield() // scheduled & starts child
-            expect(3)
-            assertFalse(job.isActive)
-            assertFalse(job.isCompleted)
-            assertTrue(job.isCancelled)
-            // Cancelling -> Cancelled
-            yield()
-            finish(5)
-            assertFalse(job.isActive)
-            assertTrue(job.isCompleted)
-            assertTrue(job.isCancelled)
+    fun testFailed() = runTest(unhandled = listOf({ it -> it is TestException })) {
+        expect(1)
+        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
+            expect(2)
+            // launches child
+            launch(start = CoroutineStart.ATOMIC) {
+                expect(4)
+            }
+            // failing
+            throw TestException()
         }
+        // New job
+        assertFalse(job.isActive)
+        assertFalse(job.isCompleted)
+        assertFalse(job.isCancelled)
+        // New -> Active
+        job.start()
+        assertTrue(job.isActive)
+        assertFalse(job.isCompleted)
+        assertFalse(job.isCancelled)
+        // Active -> Cancelling
+        yield() // scheduled & starts child
+        expect(3)
+        assertFalse(job.isActive)
+        assertFalse(job.isCompleted)
+        assertTrue(job.isCancelled)
+        // Cancelling -> Cancelled
+        yield()
+        finish(5)
+        assertFalse(job.isActive)
+        assertTrue(job.isCompleted)
+        assertTrue(job.isCancelled)
+    }
 
     @Test
     fun testCancelling() = runTest {
         expect(1)
-        val job =
-            launch(NonCancellable, start = CoroutineStart.LAZY) {
-                expect(2)
-                // launches child
-                launch(start = CoroutineStart.ATOMIC) {
-                    expect(4)
-                }
-                // completes normally
+        val job = launch(NonCancellable, start = CoroutineStart.LAZY) {
+            expect(2)
+            // launches child
+            launch(start = CoroutineStart.ATOMIC) {
+                expect(4)
             }
+        // completes normally
+        }
         // New job
         assertFalse(job.isActive)
         assertFalse(job.isCompleted)

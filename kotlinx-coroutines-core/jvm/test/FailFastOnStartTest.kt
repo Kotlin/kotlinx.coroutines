@@ -16,85 +16,76 @@ import kotlin.test.*
 
 class FailFastOnStartTest : TestBase() {
 
-    @Rule @JvmField val timeout: Timeout = Timeout.seconds(5)
+    @Rule
+    @JvmField
+    val timeout: Timeout = Timeout.seconds(5)
 
     @Test
-    fun testLaunch() =
-        runTest(expected = ::mainException) {
-            launch(Dispatchers.Main) {}
-        }
+    fun testLaunch() = runTest(expected = ::mainException) {
+        launch(Dispatchers.Main) {}
+    }
 
     @Test
-    fun testLaunchLazy() =
-        runTest(expected = ::mainException) {
-            val job = launch(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-            job.join()
-        }
+    fun testLaunchLazy() = runTest(expected = ::mainException) {
+        val job = launch(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+        job.join()
+    }
 
     @Test
-    fun testLaunchUndispatched() =
-        runTest(expected = ::mainException) {
-            launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-                yield()
-                fail()
-            }
+    fun testLaunchUndispatched() = runTest(expected = ::mainException) {
+        launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
+            yield()
+            fail()
         }
+    }
 
     @Test
-    fun testAsync() =
-        runTest(expected = ::mainException) {
-            async(Dispatchers.Main) {}
-        }
+    fun testAsync() = runTest(expected = ::mainException) {
+        async(Dispatchers.Main) {}
+    }
 
     @Test
-    fun testAsyncLazy() =
-        runTest(expected = ::mainException) {
-            val job = async(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-            job.await()
-        }
+    fun testAsyncLazy() = runTest(expected = ::mainException) {
+        val job = async(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+        job.await()
+    }
 
     @Test
-    fun testWithContext() =
-        runTest(expected = ::mainException) {
-            withContext(Dispatchers.Main) {
-                fail()
-            }
+    fun testWithContext() = runTest(expected = ::mainException) {
+        withContext(Dispatchers.Main) {
+            fail()
         }
+    }
 
     @Test
-    fun testProduce() =
-        runTest(expected = ::mainException) {
-            produce<Int>(Dispatchers.Main) { fail() }
-        }
+    fun testProduce() = runTest(expected = ::mainException) {
+        produce<Int>(Dispatchers.Main) { fail() }
+    }
 
     @Test
-    fun testActor() =
-        runTest(expected = ::mainException) {
-            actor<Int>(Dispatchers.Main) { fail() }
-        }
+    fun testActor() = runTest(expected = ::mainException) {
+        actor<Int>(Dispatchers.Main) { fail() }
+    }
 
     @Test
-    fun testActorLazy() =
-        runTest(expected = ::mainException) {
-            val actor = actor<Int>(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-            actor.send(1)
-        }
+    fun testActorLazy() = runTest(expected = ::mainException) {
+        val actor = actor<Int>(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+        actor.send(1)
+    }
 
     private fun mainException(e: Throwable): Boolean {
         return e is IllegalStateException && e.message?.contains("Module with the Main dispatcher is missing") ?: false
     }
 
     @Test
-    fun testProduceNonChild() =
-        runTest(expected = ::mainException) {
-            produce<Int>(Job() + Dispatchers.Main) { fail() }
-        }
+    fun testProduceNonChild() = runTest(expected = ::mainException) {
+        produce<Int>(Job() + Dispatchers.Main) { fail() }
+    }
 
     @Test
-    fun testAsyncNonChild() =
-        runTest(expected = ::mainException) {
-            async<Int>(Job() + Dispatchers.Main) { fail() }
-        }
+    fun testAsyncNonChild() = runTest(expected = ::mainException) {
+        async<Int>(Job() + Dispatchers.Main) { fail() }
+    }
 
     @Test
     fun testFlowOn() {
@@ -111,10 +102,8 @@ class FailFastOnStartTest : TestBase() {
             }
         }
 
-        caller.startCoroutine(
-            Continuation(EmptyCoroutineContext) {
+        caller.startCoroutine(Continuation(EmptyCoroutineContext) {
                 finish(3)
-            }
-        )
+            })
     }
 }

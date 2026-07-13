@@ -16,30 +16,27 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicEmpty() = runTest {
         expect(1)
-        val publisher =
-            publish<Int>(currentDispatcher()) {
-                expect(5)
-            }
+        val publisher = publish<Int>(currentDispatcher()) {
+            expect(5)
+        }
         expect(2)
-        publisher.subscribe(
-            object : Subscriber<Int> {
-                override fun onSubscribe(s: Subscription?) {
-                    expect(3)
-                }
-
-                override fun onNext(t: Int?) {
-                    expectUnreached()
-                }
-
-                override fun onComplete() {
-                    expect(6)
-                }
-
-                override fun onError(t: Throwable?) {
-                    expectUnreached()
-                }
+        publisher.subscribe(object : Subscriber<Int> {
+            override fun onSubscribe(s: Subscription?) {
+                expect(3)
             }
-        )
+
+            override fun onNext(t: Int?) {
+                expectUnreached()
+            }
+
+            override fun onComplete() {
+                expect(6)
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
         expect(4)
         yield() // to publish coroutine
         finish(7)
@@ -48,34 +45,31 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicSingle() = runTest {
         expect(1)
-        val publisher =
-            publish(currentDispatcher()) {
-                expect(5)
-                send(42)
-                expect(7)
-            }
+        val publisher = publish(currentDispatcher()) {
+            expect(5)
+            send(42)
+            expect(7)
+        }
         expect(2)
-        publisher.subscribe(
-            object : Subscriber<Int> {
-                override fun onSubscribe(s: Subscription) {
-                    expect(3)
-                    s.request(1)
-                }
-
-                override fun onNext(t: Int) {
-                    expect(6)
-                    assertEquals(42, t)
-                }
-
-                override fun onComplete() {
-                    expect(8)
-                }
-
-                override fun onError(t: Throwable?) {
-                    expectUnreached()
-                }
+        publisher.subscribe(object : Subscriber<Int> {
+            override fun onSubscribe(s: Subscription) {
+                expect(3)
+                s.request(1)
             }
-        )
+
+            override fun onNext(t: Int) {
+                expect(6)
+                assertEquals(42, t)
+            }
+
+            override fun onComplete() {
+                expect(8)
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
         expect(4)
         yield() // to publish coroutine
         finish(9)
@@ -84,34 +78,31 @@ class PublishTest : TestBase() {
     @Test
     fun testBasicError() = runTest {
         expect(1)
-        val publisher =
-            publish<Int>(currentDispatcher()) {
-                expect(5)
-                throw RuntimeException("OK")
-            }
+        val publisher = publish<Int>(currentDispatcher()) {
+            expect(5)
+            throw RuntimeException("OK")
+        }
         expect(2)
-        publisher.subscribe(
-            object : Subscriber<Int> {
-                override fun onSubscribe(s: Subscription) {
-                    expect(3)
-                    s.request(1)
-                }
-
-                override fun onNext(t: Int) {
-                    expectUnreached()
-                }
-
-                override fun onComplete() {
-                    expectUnreached()
-                }
-
-                override fun onError(t: Throwable) {
-                    expect(6)
-                    assertIs<RuntimeException>(t)
-                    assertEquals("OK", t.message)
-                }
+        publisher.subscribe(object : Subscriber<Int> {
+            override fun onSubscribe(s: Subscription) {
+                expect(3)
+                s.request(1)
             }
-        )
+
+            override fun onNext(t: Int) {
+                expectUnreached()
+            }
+
+            override fun onComplete() {
+                expectUnreached()
+            }
+
+            override fun onError(t: Throwable) {
+                expect(6)
+                assertIs<RuntimeException>(t)
+                assertEquals("OK", t.message)
+            }
+        })
         expect(4)
         yield() // to publish coroutine
         finish(7)
@@ -125,37 +116,34 @@ class PublishTest : TestBase() {
             assertIs<RuntimeException>(t)
             expect(6)
         }
-        val publisher =
-            publish<Unit>(Dispatchers.Unconfined + eh) {
-                try {
-                    expect(3)
-                    delay(10000)
-                } finally {
-                    expect(5)
-                    throw RuntimeException("FAILED") // crash after cancel
-                }
+        val publisher = publish<Unit>(Dispatchers.Unconfined + eh) {
+            try {
+                expect(3)
+                delay(10000)
+            } finally {
+                expect(5)
+                throw RuntimeException("FAILED") // crash after cancel
             }
+        }
         var sub: Subscription? = null
-        publisher.subscribe(
-            object : Subscriber<Unit> {
-                override fun onComplete() {
-                    expectUnreached()
-                }
-
-                override fun onSubscribe(s: Subscription) {
-                    expect(2)
-                    sub = s
-                }
-
-                override fun onNext(t: Unit?) {
-                    expectUnreached()
-                }
-
-                override fun onError(t: Throwable?) {
-                    expectUnreached()
-                }
+        publisher.subscribe(object : Subscriber<Unit> {
+            override fun onComplete() {
+                expectUnreached()
             }
-        )
+
+            override fun onSubscribe(s: Subscription) {
+                expect(2)
+                sub = s
+            }
+
+            override fun onNext(t: Unit?) {
+                expectUnreached()
+            }
+
+            override fun onError(t: Throwable?) {
+                expectUnreached()
+            }
+        })
         expect(4)
         sub!!.cancel()
         finish(7)
@@ -165,13 +153,12 @@ class PublishTest : TestBase() {
     @Test
     fun testChannelClosing() = runTest {
         expect(1)
-        val publisher =
-            publish<Int>(Dispatchers.Unconfined) {
-                expect(3)
-                close()
-                assert(isClosedForSend)
-                expect(4)
-            }
+        val publisher = publish<Int>(Dispatchers.Unconfined) {
+            expect(3)
+            close()
+            assert(isClosedForSend)
+            expect(4)
+        }
         try {
             expect(2)
             publisher.awaitFirstOrNull()
@@ -186,41 +173,38 @@ class PublishTest : TestBase() {
         val latch = CompletableDeferred<Unit>()
         expect(1)
         assertCallsExceptionHandlerWith<TestException> { exceptionHandler ->
-            val publisher =
-                publish(currentDispatcher() + exceptionHandler) {
-                    expect(4)
-                    try {
-                        send("OK")
-                    } catch (e: Throwable) {
-                        expect(6)
-                        assert(e is TestException)
-                        assert(isClosedForSend)
-                        latch.complete(Unit)
-                    }
+            val publisher = publish(currentDispatcher() + exceptionHandler) {
+                expect(4)
+                try {
+                    send("OK")
+                } catch (e: Throwable) {
+                    expect(6)
+                    assert(e is TestException)
+                    assert(isClosedForSend)
+                    latch.complete(Unit)
                 }
+            }
             expect(2)
-            publisher.subscribe(
-                object : Subscriber<String> {
-                    override fun onComplete() {
-                        expectUnreached()
-                    }
-
-                    override fun onSubscribe(s: Subscription) {
-                        expect(3)
-                        s.request(1)
-                    }
-
-                    override fun onNext(t: String) {
-                        expect(5)
-                        assertEquals("OK", t)
-                        throw TestException()
-                    }
-
-                    override fun onError(t: Throwable) {
-                        expectUnreached()
-                    }
+            publisher.subscribe(object : Subscriber<String> {
+                override fun onComplete() {
+                    expectUnreached()
                 }
-            )
+
+                override fun onSubscribe(s: Subscription) {
+                    expect(3)
+                    s.request(1)
+                }
+
+                override fun onNext(t: String) {
+                    expect(5)
+                    assertEquals("OK", t)
+                    throw TestException()
+                }
+
+                override fun onError(t: Throwable) {
+                    expectUnreached()
+                }
+            })
             latch.await()
         }
         finish(7)
@@ -234,41 +218,38 @@ class PublishTest : TestBase() {
             CompletableDeferred<Unit>()
             expect(1)
             var job: Job? = null
-            val publisher =
-                publish<Int>(handler + Dispatchers.Unconfined) {
-                    producerScope = this
-                    expect(4)
-                    job = launch {
-                        delay(Long.MAX_VALUE)
-                    }
+            val publisher = publish<Int>(handler + Dispatchers.Unconfined) {
+                producerScope = this
+                expect(4)
+                job = launch {
+                    delay(Long.MAX_VALUE)
                 }
+            }
             expect(2)
-            publisher.subscribe(
-                object : Subscriber<Int> {
-                    override fun onSubscribe(s: Subscription) {
-                        expect(3)
-                        s.request(Long.MAX_VALUE)
-                    }
+            publisher.subscribe(object : Subscriber<Int> {
+                override fun onSubscribe(s: Subscription) {
+                    expect(3)
+                    s.request(Long.MAX_VALUE)
+                }
 
-                    override fun onNext(t: Int) {
-                        expect(6)
-                        assertEquals(1, t)
-                        job!!.cancel()
-                        throw TestException()
-                    }
+                override fun onNext(t: Int) {
+                    expect(6)
+                    assertEquals(1, t)
+                    job!!.cancel()
+                    throw TestException()
+                }
 
-                    override fun onError(t: Throwable?) {
-                        /* Correct changes to the implementation could lead to us entering or not entering this method, but
+                override fun onError(t: Throwable?) {
+                    /* Correct changes to the implementation could lead to us entering or not entering this method, but
                         it only matters that if we do, it is the "correct" exception that was validly used to cancel the
                         coroutine that gets passed here and not `TestException`. */
-                        assertIs<CancellationException>(t)
-                    }
-
-                    override fun onComplete() {
-                        expectUnreached()
-                    }
+                    assertIs<CancellationException>(t)
                 }
-            )
+
+                override fun onComplete() {
+                    expectUnreached()
+                }
+            })
             expect(5)
             val result: ChannelResult<Unit> = producerScope!!.trySend(1)
             val e = result.exceptionOrNull()!!
@@ -281,13 +262,12 @@ class PublishTest : TestBase() {
 
     @Test
     fun testFailingConsumer() = runTest {
-        val pub =
-            publish(currentDispatcher()) {
-                repeat(3) {
-                    expect(it + 1) // expect(1), expect(2) *should* be invoked
-                    send(it)
-                }
+        val pub = publish(currentDispatcher()) {
+            repeat(3) {
+                expect(it + 1) // expect(1), expect(2) *should* be invoked
+                send(it)
             }
+        }
         try {
             pub.collect {
                 throw TestException()
@@ -307,18 +287,16 @@ class PublishTest : TestBase() {
     fun testTrySendNotThrowing() = runTest {
         var producerScope: ProducerScope<Int>? = null
         expect(1)
-        val publisher =
-            publish<Int>(Dispatchers.Unconfined) {
-                producerScope = this
-                expect(3)
-                delay(Long.MAX_VALUE)
-            }
-        val job =
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                expect(2)
-                publisher.awaitFirstOrNull()
-                expectUnreached()
-            }
+        val publisher = publish<Int>(Dispatchers.Unconfined) {
+            producerScope = this
+            expect(3)
+            delay(Long.MAX_VALUE)
+        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            publisher.awaitFirstOrNull()
+            expectUnreached()
+        }
         job.cancel()
         expect(4)
         val result = producerScope!!.trySend(1)
@@ -340,20 +318,19 @@ class PublishTest : TestBase() {
     @Test
     fun testOnSendCancelled() = runTest {
         val latch = CountDownLatch(1)
-        val published =
-            publish(Dispatchers.Default) {
-                expect(2)
-                // Collector is ready
-                send(1)
-                try {
-                    send(2)
-                    expectUnreached()
-                } catch (e: CancellationException) {
-                    // publisher cancellation is async
-                    latch.countDown()
-                    throw e
-                }
+        val published = publish(Dispatchers.Default) {
+            expect(2)
+            // Collector is ready
+            send(1)
+            try {
+                send(2)
+                expectUnreached()
+            } catch (e: CancellationException) {
+                // publisher cancellation is async
+                latch.countDown()
+                throw e
             }
+        }
 
         expect(1)
         val collectorLatch = Mutex(true)

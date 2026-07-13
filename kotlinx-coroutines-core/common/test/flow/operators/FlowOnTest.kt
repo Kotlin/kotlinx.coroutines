@@ -64,19 +64,18 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testFlowOnThrowingSource() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(NamedDispatchers.name())
-                    expect(3)
-                    throw TestException()
-                }
-                .map {
-                    expect(2)
-                    assertEquals("throwing", it)
-                    it
-                }
-                .flowOn(NamedDispatchers("throwing"))
+        val flow = flow {
+                expect(1)
+                emit(NamedDispatchers.name())
+                expect(3)
+                throw TestException()
+            }
+            .map {
+                expect(2)
+                assertEquals("throwing", it)
+                it
+            }
+            .flowOn(NamedDispatchers("throwing"))
 
         assertFailsWith<TestException> { flow.single() }
         ensureActive()
@@ -85,18 +84,17 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testFlowOnThrowingOperator() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(NamedDispatchers.name())
-                    expectUnreached()
-                }
-                .map {
-                    expect(2)
-                    assertEquals("throwing", it)
-                    throw TestException()
-                }
-                .flowOn(NamedDispatchers("throwing"))
+        val flow = flow {
+                expect(1)
+                emit(NamedDispatchers.name())
+                expectUnreached()
+            }
+            .map {
+                expect(2)
+                assertEquals("throwing", it)
+                throw TestException()
+            }
+            .flowOn(NamedDispatchers("throwing"))
 
         assertFailsWith<TestException>(flow)
         ensureActive()
@@ -104,30 +102,28 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnDownstreamOperator() =
-        runTest() {
-            val flow =
-                flow {
-                        expect(2)
-                        emit(NamedDispatchers.name())
-                        hang { expect(5) }
-                        delay(Long.MAX_VALUE)
-                    }
-                    .map {
-                        expect(3)
-                        it
-                    }
-                    .flowOn(NamedDispatchers("throwing"))
-                    .map<String, String> {
-                        expect(4)
-                        throw TestException()
-                    }
+    fun testFlowOnDownstreamOperator() = runTest() {
+        val flow = flow {
+                expect(2)
+                emit(NamedDispatchers.name())
+                hang { expect(5) }
+                delay(Long.MAX_VALUE)
+            }
+            .map {
+                expect(3)
+                it
+            }
+            .flowOn(NamedDispatchers("throwing"))
+            .map<String, String> {
+                expect(4)
+                throw TestException()
+            }
 
-            expect(1)
-            assertFailsWith<TestException> { flow.single() }
-            ensureActive()
-            finish(6)
-        }
+        expect(1)
+        assertFailsWith<TestException> { flow.single() }
+        ensureActive()
+        finish(6)
+    }
 
     @Test
     fun testFlowOnThrowingConsumer() = runTest {
@@ -154,32 +150,30 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnWithJob() =
-        runTest({ it is IllegalArgumentException }) {
-            flow {
-                    emit(1)
-                }
-                .flowOn(NamedDispatchers("foo") + Job())
-        }
+    fun testFlowOnWithJob() = runTest({ it is IllegalArgumentException }) {
+        flow {
+                emit(1)
+            }
+            .flowOn(NamedDispatchers("foo") + Job())
+    }
 
     @Test
     fun testFlowOnCancellation() = runTest {
         val latch = Channel<Unit>()
         expect(1)
-        val job =
-            launch(NamedDispatchers("launch")) {
-                flow<Int> {
-                        expect(2)
-                        latch.send(Unit)
-                        expect(3)
-                        hang {
-                            assertEquals("cancelled", NamedDispatchers.name())
-                            expect(5)
-                        }
+        val job = launch(NamedDispatchers("launch")) {
+            flow<Int> {
+                    expect(2)
+                    latch.send(Unit)
+                    expect(3)
+                    hang {
+                        assertEquals("cancelled", NamedDispatchers.name())
+                        expect(5)
                     }
-                    .flowOn(NamedDispatchers("cancelled"))
-                    .single()
-            }
+                }
+                .flowOn(NamedDispatchers("cancelled"))
+                .single()
+        }
 
         latch.receive()
         expect(4)
@@ -215,24 +209,23 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testIndependentOperatorContext() = runTest {
-        val value =
-            flow {
-                    assertEquals("base", NamedDispatchers.nameOr("main"))
-                    expect(1)
-                    emit(-239)
-                }
-                .map {
-                    assertEquals("base", NamedDispatchers.nameOr("main"))
-                    expect(2)
-                    it
-                }
-                .flowOn(NamedDispatchers("base"))
-                .map {
-                    assertEquals("main", NamedDispatchers.nameOr("main"))
-                    expect(3)
-                    it
-                }
-                .single()
+        val value = flow {
+                assertEquals("base", NamedDispatchers.nameOr("main"))
+                expect(1)
+                emit(-239)
+            }
+            .map {
+                assertEquals("base", NamedDispatchers.nameOr("main"))
+                expect(2)
+                it
+            }
+            .flowOn(NamedDispatchers("base"))
+            .map {
+                assertEquals("main", NamedDispatchers.nameOr("main"))
+                expect(3)
+                it
+            }
+            .single()
 
         assertEquals(-239, value)
         finish(4)
@@ -271,51 +264,48 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testTimeoutExceptionUpstream() = runTest {
-        val flow =
-            flow {
-                    emit(1)
-                    yield()
-                    withTimeout(-1) {}
-                    emit(42)
-                }
-                .flowOn(NamedDispatchers("foo"))
-                .onEach {
-                    expect(1)
-                }
+        val flow = flow {
+                emit(1)
+                yield()
+                withTimeout(-1) {}
+                emit(42)
+            }
+            .flowOn(NamedDispatchers("foo"))
+            .onEach {
+                expect(1)
+            }
         assertFailsWith<TimeoutCancellationException>(flow)
         finish(2)
     }
 
     @Test
     fun testTimeoutExceptionDownstream() = runTest {
-        val flow =
-            flow {
-                    emit(1)
-                    hang { expect(2) }
-                }
-                .flowOn(NamedDispatchers("foo"))
-                .onEach {
-                    expect(1)
-                    withTimeout(-1) {}
-                }
+        val flow = flow {
+                emit(1)
+                hang { expect(2) }
+            }
+            .flowOn(NamedDispatchers("foo"))
+            .onEach {
+                expect(1)
+                withTimeout(-1) {}
+            }
         assertFailsWith<TimeoutCancellationException>(flow)
         finish(3)
     }
 
     @Test
     fun testCancellation() = runTest {
-        val result =
-            flow {
-                    emit(1)
-                    emit(2)
-                    emit(3)
-                    expectUnreached()
-                    emit(4)
-                }
-                .flowOn(wrapperDispatcher())
-                .buffer(0)
-                .take(2)
-                .toList()
+        val result = flow {
+                emit(1)
+                emit(2)
+                emit(3)
+                expectUnreached()
+                emit(4)
+            }
+            .flowOn(wrapperDispatcher())
+            .buffer(0)
+            .take(2)
+            .toList()
         assertEquals(listOf(1, 2), result)
     }
 
@@ -324,14 +314,13 @@ class FlowOnTest : TestBase() {
         try {
             coroutineScope {
                 val job = coroutineContext[Job]!!
-                val flow =
-                    flow {
-                            expect(3)
-                            emit(1)
-                        }
-                        .onCompletion { expect(4) }
-                        .flowOn(wrapperDispatcher())
-                        .onCompletion { expect(5) }
+                val flow = flow {
+                        expect(3)
+                        emit(1)
+                    }
+                    .onCompletion { expect(4) }
+                    .flowOn(wrapperDispatcher())
+                    .onCompletion { expect(5) }
 
                 launch {
                     expect(1)
@@ -349,15 +338,14 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testException() = runTest {
-        val flow =
-            flow {
-                    emit(314)
-                    delay(Long.MAX_VALUE)
-                }
-                .flowOn(NamedDispatchers("upstream"))
-                .map {
-                    throw TestException()
-                }
+        val flow = flow {
+                emit(314)
+                delay(Long.MAX_VALUE)
+            }
+            .flowOn(NamedDispatchers("upstream"))
+            .map {
+                throw TestException()
+            }
 
         assertFailsWith<TestException> { flow.single() }
         assertFailsWith<TestException>(flow)

@@ -106,8 +106,7 @@ private class ChannelAsFlow<T>(
 
     override fun dropChannelOperators(): Flow<T> = ChannelAsFlow(channel, consume)
 
-    override suspend fun collectTo(scope: ProducerScope<T>) =
-        SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
+    override suspend fun collectTo(scope: ProducerScope<T>) = SendingCollector(scope).emitAllImpl(channel, consume) // use efficient channel receiving code from emitAll
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
         markConsumed() // fail fast on repeated attempt to collect it

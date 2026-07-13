@@ -53,11 +53,10 @@ public abstract class CoroutineDispatcher : AbstractCoroutineContextElement(Cont
     )
     // WARNING since 1.11, ERROR since 1.12, remove in 1.13
     @ExperimentalStdlibApi
-    public companion object Key :
-        AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
-            ContinuationInterceptor,
-            { it as? CoroutineDispatcher },
-        )
+    public companion object Key : AbstractCoroutineContextKey<ContinuationInterceptor, CoroutineDispatcher>(
+        ContinuationInterceptor,
+        { it as? CoroutineDispatcher },
+    )
 
     /**
      * Returns `true` if the execution of the coroutine should be performed with [dispatch] method. The default behavior for most
@@ -245,7 +244,8 @@ public abstract class CoroutineDispatcher : AbstractCoroutineContextElement(Cont
      *
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @InternalCoroutinesApi public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = safeDispatch(context, block)
+    @InternalCoroutinesApi
+    public open fun dispatchYield(context: CoroutineContext, block: Runnable): Unit = safeDispatch(context, block)
 
     /**
      * Returns a continuation that wraps the provided [continuation], thus intercepting all resumptions.
@@ -271,10 +271,9 @@ public abstract class CoroutineDispatcher : AbstractCoroutineContextElement(Cont
      *   the left.
      */
     @Deprecated(
-        message =
-            "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
-                "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
-                "The dispatcher to the right of `+` just replaces the dispatcher to the left.",
+        message = "Operator '+' on two CoroutineDispatcher objects is meaningless. " +
+        "CoroutineDispatcher is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
+        "The dispatcher to the right of `+` just replaces the dispatcher to the left.",
         level = DeprecationLevel.ERROR,
     )
     public operator fun plus(other: CoroutineDispatcher): CoroutineDispatcher = other

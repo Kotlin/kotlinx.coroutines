@@ -22,35 +22,33 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     @Test
     fun testStressNotify() = runTest {
         println("--- ConflatedBroadcastChannelNotifyStressTest")
-        val senders =
-            List(nSenders) { senderId ->
-                launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
-                    repeat(nEvents) { i ->
-                        if (i % nSenders == senderId) {
-                            broadcast.trySend(i)
-                            sentTotal.incrementAndGet()
-                            yield()
-                        }
-                    }
-                    sendersCompleted.incrementAndGet()
-                }
-            }
-        val receivers =
-            List(nReceivers) { receiverId ->
-                launch(Dispatchers.Default + CoroutineName("Receiver$receiverId")) {
-                    var last = -1
-                    while (isActive) {
-                        val i = waitForEvent()
-                        if (i > last) {
-                            receivedTotal.incrementAndGet()
-                            last = i
-                        }
-                        if (i >= nEvents) break
+        val senders = List(nSenders) { senderId ->
+            launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
+                repeat(nEvents) { i ->
+                    if (i % nSenders == senderId) {
+                        broadcast.trySend(i)
+                        sentTotal.incrementAndGet()
                         yield()
                     }
-                    receiversCompleted.incrementAndGet()
                 }
+                sendersCompleted.incrementAndGet()
             }
+        }
+        val receivers = List(nReceivers) { receiverId ->
+            launch(Dispatchers.Default + CoroutineName("Receiver$receiverId")) {
+                var last = -1
+                while (isActive) {
+                    val i = waitForEvent()
+                    if (i > last) {
+                        receivedTotal.incrementAndGet()
+                        last = i
+                    }
+                    if (i >= nEvents) break
+                    yield()
+                }
+                receiversCompleted.incrementAndGet()
+            }
+        }
         // print progress
         val progressJob = launch {
             var seconds = 0
@@ -79,10 +77,9 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
         assertEquals(nEvents, sentTotal.value)
     }
 
-    private suspend fun waitForEvent(): Int =
-        with(broadcast.openSubscription()) {
-            val value = receive()
-            cancel()
-            value
-        }
+    private suspend fun waitForEvent(): Int = with(broadcast.openSubscription()) {
+        val value = receive()
+        cancel()
+        value
+    }
 }

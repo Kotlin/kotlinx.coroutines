@@ -47,8 +47,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         return 0
     }
 
-    protected open val isEmpty: Boolean
-        get() = isUnconfinedQueueEmpty
+    protected open val isEmpty: Boolean get() = isUnconfinedQueueEmpty
 
     protected open val nextTime: Long
         get() {
@@ -69,15 +68,12 @@ internal abstract class EventLoop : CoroutineDispatcher() {
         queue.addLast(task)
     }
 
-    val isActive: Boolean
-        get() = useCount > 0
+    val isActive: Boolean get() = useCount > 0
 
-    val isUnconfinedLoopActive: Boolean
-        get() = useCount >= delta(unconfined = true)
+    val isUnconfinedLoopActive: Boolean get() = useCount >= delta(unconfined = true)
 
     // May only be used from the event loop's thread
-    val isUnconfinedQueueEmpty: Boolean
-        get() = unconfinedQueue?.isEmpty() ?: true
+    val isUnconfinedQueueEmpty: Boolean get() = unconfinedQueue?.isEmpty() ?: true
 
     private fun delta(unconfined: Boolean) = if (unconfined) (1L shl 32) else 1L
 
@@ -107,8 +103,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
 internal object ThreadLocalEventLoop {
     private val ref = commonThreadLocal<EventLoop?>(Symbol("ThreadLocalEventLoop"))
 
-    internal val eventLoop: EventLoop
-        get() = ref.get() ?: createEventLoop().also { ref.set(it) }
+    internal val eventLoop: EventLoop get() = ref.get() ?: createEventLoop().also { ref.set(it) }
 
     internal fun currentOrNull(): EventLoop? = ref.get()
 
@@ -136,12 +131,11 @@ private const val MAX_MS = Long.MAX_VALUE / MS_TO_NS
  */
 private const val MAX_DELAY_NS = Long.MAX_VALUE / 2
 
-internal fun delayToNanos(timeMillis: Long): Long =
-    when {
-        timeMillis <= 0 -> 0L
-        timeMillis >= MAX_MS -> Long.MAX_VALUE
-        else -> timeMillis * MS_TO_NS
-    }
+internal fun delayToNanos(timeMillis: Long): Long = when {
+    timeMillis <= 0 -> 0L
+    timeMillis >= MAX_MS -> Long.MAX_VALUE
+    else -> timeMillis * MS_TO_NS
+}
 
 internal fun delayNanosToMillis(timeNanos: Long): Long = timeNanos / MS_TO_NS
 
@@ -280,17 +274,16 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
                         Queue.ADD_FROZEN -> _queue.compareAndSet(queue, queue.next())
                     }
                 }
-                else ->
-                    when {
-                        queue === CLOSED_EMPTY -> return false
-                        else -> {
-                            // update to full-blown queue to add one more
-                            val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                            newQueue.addLast(queue as Runnable)
-                            newQueue.addLast(task)
-                            if (_queue.compareAndSet(queue, newQueue)) return true
-                        }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return false
+                    else -> {
+                        // update to full-blown queue to add one more
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
+                        newQueue.addLast(queue as Runnable)
+                        newQueue.addLast(task)
+                        if (_queue.compareAndSet(queue, newQueue)) return true
                     }
+                }
             }
         }
     }
@@ -305,11 +298,10 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
                     if (result !== Queue.REMOVE_FROZEN) return result as Runnable?
                     _queue.compareAndSet(queue, queue.next())
                 }
-                else ->
-                    when {
-                        queue === CLOSED_EMPTY -> return null
-                        else -> if (_queue.compareAndSet(queue, null)) return queue as Runnable
-                    }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return null
+                    else -> if (_queue.compareAndSet(queue, null)) return queue as Runnable
+                }
             }
         }
     }
@@ -341,16 +333,15 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
                     queue.close()
                     return
                 }
-                else ->
-                    when {
-                        queue === CLOSED_EMPTY -> return
-                        else -> {
-                            // update to full-blown queue to close
-                            val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                            newQueue.addLast(queue as Runnable)
-                            if (_queue.compareAndSet(queue, newQueue)) return
-                        }
+                else -> when {
+                    queue === CLOSED_EMPTY -> return
+                    else -> {
+                        // update to full-blown queue to close
+                        val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
+                        newQueue.addLast(queue as Runnable)
+                        if (_queue.compareAndSet(queue, newQueue)) return
                     }
+                }
             }
         }
     }
@@ -368,12 +359,11 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
 
     private fun scheduleImpl(now: Long, delayedTask: DelayedTask): Int {
         if (isCompleted) return SCHEDULE_COMPLETED
-        val delayedQueue =
-            _delayed.value
-                ?: run {
-                    _delayed.compareAndSet(null, DelayedTaskQueue(now))
-                    _delayed.value!!
-                }
+        val delayedQueue = _delayed.value
+            ?: run {
+                _delayed.compareAndSet(null, DelayedTaskQueue(now))
+                _delayed.value!!
+            }
         return delayedTask.scheduleTask(now, delayedQueue, this)
     }
 
@@ -404,9 +394,10 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
          * This field can be only modified in [scheduleTask] before putting this DelayedTask into heap to avoid overflow and corruption of
          * heap data structure.
          */
-        @JvmField var nanoTime: Long
+        @JvmField var nanoTime: Long,
     ) : Runnable, Comparable<DelayedTask>, DisposableHandle, ThreadSafeHeapNode, SynchronizedObject() {
-        @Volatile private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
+        @Volatile
+        private var _heap: Any? = null // null | ThreadSafeHeap | DISPOSED_TASK
 
         override var heap: ThreadSafeHeap<*>?
             get() = _heap as? ThreadSafeHeap<*>
@@ -428,54 +419,52 @@ internal abstract class EventLoopImplBase : EventLoopImplPlatform(), Delay {
 
         fun timeToExecute(now: Long): Boolean = now - nanoTime >= 0L
 
-        fun scheduleTask(now: Long, delayed: DelayedTaskQueue, eventLoop: EventLoopImplBase): Int =
-            synchronized<Int>(this) {
-                if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
-                delayed.addLastIf(this) { firstTask ->
-                    if (eventLoop.isCompleted) return SCHEDULE_COMPLETED // non-local return from scheduleTask
-                    /**
+        fun scheduleTask(now: Long, delayed: DelayedTaskQueue, eventLoop: EventLoopImplBase): Int = synchronized<Int>(this) {
+            if (_heap === DISPOSED_TASK) return SCHEDULE_DISPOSED // don't add -- was already disposed
+            delayed.addLastIf(this) { firstTask ->
+                if (eventLoop.isCompleted) return SCHEDULE_COMPLETED // non-local return from scheduleTask
+                /**
                      * We are about to add new task and we have to make sure that [DelayedTaskQueue] invariant is maintained. The code in
                      * this lambda is additionally executed under the lock of [DelayedTaskQueue] and working with [DelayedTaskQueue.timeNow]
                      * here is thread-safe.
                      */
-                    if (firstTask == null) {
-                        /**
+                if (firstTask == null) {
+                    /**
                          * When adding the first delayed task we simply update queue's [DelayedTaskQueue.timeNow] to the current now time
                          * even if that means "going backwards in time". This makes the structure self-correcting in spite of wild jumps in
                          * `nanoTime()` measurements once all delayed tasks are removed from the delayed queue for execution.
                          */
-                        delayed.timeNow = now
-                    } else {
-                        /**
+                    delayed.timeNow = now
+                } else {
+                    /**
                          * Carefully update [DelayedTaskQueue.timeNow] so that it does not sweep past first's tasks time and only goes
                          * forward in time. We cannot let it go backwards in time or invariant can be violated for tasks that were already
                          * scheduled.
                          */
-                        val firstTime = firstTask.nanoTime
-                        // compute min(now, firstTime) using a wrap-safe check
-                        val minTime = if (firstTime - now >= 0) now else firstTime
-                        // update timeNow only when going forward in time
-                        if (minTime - delayed.timeNow > 0) delayed.timeNow = minTime
-                    }
-                    /**
+                    val firstTime = firstTask.nanoTime
+                    // compute min(now, firstTime) using a wrap-safe check
+                    val minTime = if (firstTime - now >= 0) now else firstTime
+                    // update timeNow only when going forward in time
+                    if (minTime - delayed.timeNow > 0) delayed.timeNow = minTime
+                }
+                /**
                      * Here [DelayedTaskQueue.timeNow] was already modified and we have to double-check that newly added task does not
                      * violate [DelayedTaskQueue] invariant because of that. Note also that this scheduleTask function can be called to
                      * reschedule from one queue to another and this might be another reason where new task's time might now violate
                      * invariant. We correct invariant violation (if any) by simply changing this task's time to now.
                      */
-                    if (nanoTime - delayed.timeNow < 0) nanoTime = delayed.timeNow
-                    true
-                }
-                return SCHEDULE_OK
+                if (nanoTime - delayed.timeNow < 0) nanoTime = delayed.timeNow
+                true
             }
+            return SCHEDULE_OK
+        }
 
-        final override fun dispose(): Unit =
-            synchronized(this) {
-                val heap = _heap
-                if (heap === DISPOSED_TASK) return // already disposed
-                (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
-                _heap = DISPOSED_TASK // never add again to any heap
-            }
+        final override fun dispose(): Unit = synchronized(this) {
+            val heap = _heap
+            if (heap === DISPOSED_TASK) return // already disposed
+            (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
+            _heap = DISPOSED_TASK // never add again to any heap
+        }
 
         override fun toString(): String = "Delayed[nanos=$nanoTime]"
     }

@@ -16,14 +16,13 @@ class SimpleSendReceiveJvmTest(
     companion object {
         @Parameterized.Parameters(name = "{0}, n={1}, concurrent={2}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> =
-            TestChannelKind.values().flatMap { kind ->
-                listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000).flatMap { n ->
-                    listOf(false, true).map { concurrent ->
-                        arrayOf<Any>(kind, n, concurrent)
-                    }
+        fun params(): Collection<Array<Any>> = TestChannelKind.values().flatMap { kind ->
+            listOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000).flatMap { n ->
+                listOf(false, true).map { concurrent ->
+                    arrayOf<Any>(kind, n, concurrent)
                 }
             }
+        }
     }
 
     val channel = kind.create<Int>()

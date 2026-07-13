@@ -249,16 +249,14 @@ class WithContextExceptionHandlingTest(private val mode: Mode) : TestBase() {
 
     private suspend fun withCtx(context: CoroutineContext, job: Job = Job(), block: suspend CoroutineScope.(Job) -> Nothing) {
         when (mode) {
-            Mode.WITH_CONTEXT ->
-                withContext(context + job) {
+            Mode.WITH_CONTEXT -> withContext(context + job) {
+                block(job)
+            }
+            Mode.ASYNC_AWAIT -> CoroutineScope(coroutineContext)
+                .async(context + job) {
                     block(job)
                 }
-            Mode.ASYNC_AWAIT ->
-                CoroutineScope(coroutineContext)
-                    .async(context + job) {
-                        block(job)
-                    }
-                    .await()
+                .await()
         }
     }
 

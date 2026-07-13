@@ -54,17 +54,16 @@ class CancelledParentAttachTest : TestBase() {
     }
 
     @Test
-    fun testProduce() =
-        runTest({ it is CancellationException }) {
-            cancel()
-            expect(1)
-            val d = produce<Int> {}
-            expect(2)
-            (d as Job).invokeOnCompletion {
-                finish(3)
-                reset()
-            }
+    fun testProduce() = runTest({ it is CancellationException }) {
+        cancel()
+        expect(1)
+        val d = produce<Int> {}
+        expect(2)
+        (d as Job).invokeOnCompletion {
+            finish(3)
+            reset()
         }
+    }
 
     @Test
     fun testBroadcast() = runTest {

@@ -12,7 +12,8 @@ import kotlin.coroutines.*
 internal expect fun <E : Throwable> recoverStackTrace(exception: E, continuation: Continuation<*>): E
 
 /** initCause on JVM, nop on other platforms */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER") internal expect fun Throwable.initCause(cause: Throwable)
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+internal expect fun Throwable.initCause(cause: Throwable)
 
 /**
  * Tries to recover stacktrace for given [exception]. Used in non-suspendable points of awaiting. Stacktrace recovery tries to instantiate
@@ -24,7 +25,8 @@ internal expect fun <E : Throwable> recoverStackTrace(exception: E, continuation
 internal expect fun <E : Throwable> recoverStackTrace(exception: E): E
 
 // Name conflict with recoverStackTrace
-@Suppress("NOTHING_TO_INLINE") internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothing
+@Suppress("NOTHING_TO_INLINE")
+internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothing
 
 /** The opposite of [recoverStackTrace]. It is guaranteed that `unwrap(recoverStackTrace(e)) === e` */
 @PublishedApi // Used from kotlinx-coroutines-test and reactor modules via suppress, not part of ABI

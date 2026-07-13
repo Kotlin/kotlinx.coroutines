@@ -230,11 +230,10 @@ public fun <T> Flow<T>.flowOn(context: CoroutineContext): Flow<T> {
  * This operator provides a shortcut for `.onEach { currentCoroutineContext().ensureActive() }`. See
  * [ensureActive][CoroutineContext.ensureActive] for details.
  */
-public fun <T> Flow<T>.cancellable(): Flow<T> =
-    when (this) {
-        is CancellableFlow<*> -> this // Fast-path, already cancellable
-        else -> CancellableFlowImpl(this)
-    }
+public fun <T> Flow<T>.cancellable(): Flow<T> = when (this) {
+    is CancellableFlow<*> -> this // Fast-path, already cancellable
+    else -> CancellableFlowImpl(this)
+}
 
 /** Internal marker for flows that are [cancellable]. */
 internal interface CancellableFlow<out T> : Flow<T>

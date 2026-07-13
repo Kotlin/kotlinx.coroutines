@@ -52,21 +52,19 @@ public const val DEBUG_PROPERTY_VALUE_OFF: String = "off"
 internal val ASSERTIONS_ENABLED = CoroutineId::class.java.desiredAssertionStatus()
 
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
-internal actual val DEBUG =
-    systemProp(DEBUG_PROPERTY_NAME).let { value ->
-        when (value) {
-            DEBUG_PROPERTY_VALUE_AUTO,
-            null -> ASSERTIONS_ENABLED
-            DEBUG_PROPERTY_VALUE_ON,
-            "" -> true
-            DEBUG_PROPERTY_VALUE_OFF -> false
-            else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
-        }
+internal actual val DEBUG = systemProp(DEBUG_PROPERTY_NAME).let { value ->
+    when (value) {
+        DEBUG_PROPERTY_VALUE_AUTO, null -> ASSERTIONS_ENABLED
+        DEBUG_PROPERTY_VALUE_ON, "" -> true
+        DEBUG_PROPERTY_VALUE_OFF -> false
+        else -> error("System property '$DEBUG_PROPERTY_NAME' has unrecognized value '$value'")
     }
+}
 
 // Note: stack-trace recovery is enabled only in debug mode
 // @JvmField: Don't use JvmField here to enable R8 optimizations via "assumenosideeffects"
-@PublishedApi internal actual val RECOVER_STACK_TRACES: Boolean = DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
+@PublishedApi
+internal actual val RECOVER_STACK_TRACES: Boolean = DEBUG && systemProp(STACKTRACE_RECOVERY_PROPERTY_NAME, true)
 
 // It is used only in debug mode
 internal val COROUTINE_ID = AtomicLong(0)

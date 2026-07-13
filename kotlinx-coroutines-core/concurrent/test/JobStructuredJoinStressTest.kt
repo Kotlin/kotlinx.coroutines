@@ -41,10 +41,9 @@ class JobStructuredJoinStressTest : TestBase() {
             assertFailsWith<TestException> {
                 runBlocking {
                     // launch in background
-                    val job =
-                        launch(Dispatchers.Default) {
-                            throw TestException("OK") // crash
-                        }
+                    val job = launch(Dispatchers.Default) {
+                        throw TestException("OK") // crash
+                    }
                     try {
                         join(job)
                         error("Should not complete successfully")

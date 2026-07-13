@@ -7,7 +7,9 @@ class ToMapCollectionSamplesTest : TestBase() {
     @Test
     fun testAssociate() = runTest {
         val names = flowOf("Grace Hopper", "Jacob Bernoulli", "Johann Bernoulli")
-        val byLastName = names.associate { it.split(" ").let { (firstName, lastName) -> lastName to firstName } }
+        val byLastName = names.associate {
+            it.split(" ").let { (firstName, lastName) -> lastName to firstName }
+        }
         assertEquals(listOf("Hopper" to "Grace", "Bernoulli" to "Johann"), byLastName.toList())
     }
 

@@ -3,11 +3,10 @@ package kotlinx.coroutines
 import org.w3c.dom.Window
 
 /** Converts an instance of [Window] to an implementation of [CoroutineDispatcher]. */
-public fun Window.asCoroutineDispatcher(): CoroutineDispatcher =
-    @Suppress("UnsafeCastFromDynamic") asDynamic().coroutineDispatcher
-        ?: WindowDispatcher(this).also {
-            asDynamic().coroutineDispatcher = it
-        }
+public fun Window.asCoroutineDispatcher(): CoroutineDispatcher = @Suppress("UnsafeCastFromDynamic") asDynamic().coroutineDispatcher
+    ?: WindowDispatcher(this).also {
+        asDynamic().coroutineDispatcher = it
+    }
 
 /**
  * Suspends coroutine until next JS animation frame and returns frame time on resumption. The time is consistent with
@@ -18,11 +17,10 @@ public suspend fun Window.awaitAnimationFrame(): Double = suspendCancellableCoro
     asWindowAnimationQueue().enqueue(cont)
 }
 
-private fun Window.asWindowAnimationQueue(): WindowAnimationQueue =
-    @Suppress("UnsafeCastFromDynamic") asDynamic().coroutineAnimationQueue
-        ?: WindowAnimationQueue(this).also {
-            asDynamic().coroutineAnimationQueue = it
-        }
+private fun Window.asWindowAnimationQueue(): WindowAnimationQueue = @Suppress("UnsafeCastFromDynamic") asDynamic().coroutineAnimationQueue
+    ?: WindowAnimationQueue(this).also {
+        asDynamic().coroutineAnimationQueue = it
+    }
 
 private class WindowAnimationQueue(private val window: Window) {
     private val dispatcher = window.asCoroutineDispatcher()

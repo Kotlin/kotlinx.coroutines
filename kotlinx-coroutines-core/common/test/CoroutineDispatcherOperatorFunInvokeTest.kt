@@ -45,32 +45,29 @@ class CoroutineDispatcherOperatorFunInvokeTest : TestBase() {
     }
 
     private class Wrapper(val value: String) : Incomplete {
-        override val isActive: Boolean
-            get() = error("")
+        override val isActive: Boolean get() = error("")
 
-        override val list: NodeList?
-            get() = error("")
+        override val list: NodeList? get() = error("")
     }
 
     private fun String.wrap() = Wrapper(this)
 
     private fun Wrapper.unwrap() = value
 
-    private fun CoroutineScope.wrappedCurrentDispatcher() =
-        object : CoroutineDispatcher() {
-            val dispatcher = coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
+    private fun CoroutineScope.wrappedCurrentDispatcher() = object : CoroutineDispatcher() {
+        val dispatcher = coroutineContext[ContinuationInterceptor] as CoroutineDispatcher
 
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                dispatcher.dispatch(context, block)
-            }
-
-            override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-                return dispatcher.isDispatchNeeded(context)
-            }
-
-            @InternalCoroutinesApi
-            override fun dispatchYield(context: CoroutineContext, block: Runnable) {
-                dispatcher.dispatchYield(context, block)
-            }
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            dispatcher.dispatch(context, block)
         }
+
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+            return dispatcher.isDispatchNeeded(context)
+        }
+
+        @InternalCoroutinesApi
+        override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+            dispatcher.dispatchYield(context, block)
+        }
+    }
 }

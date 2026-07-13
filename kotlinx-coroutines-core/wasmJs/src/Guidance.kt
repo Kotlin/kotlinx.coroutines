@@ -13,8 +13,8 @@ import kotlin.js.Promise
  */
 @Deprecated(
     "Passing a Job to coroutine builders breaks structured concurrency, leading to hard-to-diagnose errors. " +
-        "This pattern should be avoided. " +
-        "This overload will be deprecated with an error in the future.",
+    "This pattern should be avoided. " +
+    "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
 @OptIn(ExperimentalWasmJsInterop::class)

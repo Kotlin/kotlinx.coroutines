@@ -13,18 +13,19 @@ class ShareInTest : TestBase() {
         val shared = flow.shareIn(this, SharingStarted.Eagerly)
         yield() // actually start sharing
         // all subscribers miss "OK"
-        val jobs =
-            List(10) {
-                shared.onEach { expectUnreached() }.launchIn(this)
-            }
+        val jobs = List(10) {
+            shared.onEach { expectUnreached() }.launchIn(this)
+        }
         yield() // ensure nothing is collected
         jobs.forEach { it.cancel() }
         finish(2)
     }
 
-    @Test fun testReplay0Lazy() = testReplayZeroOrOne(0)
+    @Test
+    fun testReplay0Lazy() = testReplayZeroOrOne(0)
 
-    @Test fun testReplay1Lazy() = testReplayZeroOrOne(1)
+    @Test
+    fun testReplay1Lazy() = testReplayZeroOrOne(1)
 
     private fun testReplayZeroOrOne(replay: Int) = runTest {
         expect(1)
@@ -41,33 +42,31 @@ class ShareInTest : TestBase() {
         // first subscriber gets "OK", other subscribers miss "OK"
         val n = 10
         val replayOfs = replay * (n - 1)
-        val subscriberJobs =
-            List(n) { index ->
-                val subscribedBarrier = Job()
-                val job =
-                    shared
-                        .onSubscription {
-                            subscribedBarrier.complete()
-                        }
-                        .onEach { value ->
-                            when (value) {
-                                "OK" -> {
-                                    expect(3 + index)
-                                    if (replay == 0) { // only the first subscriber collects "OK" without replay
-                                        assertEquals(0, index)
-                                    }
-                                }
-                                "DONE" -> {
-                                    expect(4 + index + replayOfs)
-                                }
-                                else -> expectUnreached()
+        val subscriberJobs = List(n) { index ->
+            val subscribedBarrier = Job()
+            val job = shared
+                .onSubscription {
+                    subscribedBarrier.complete()
+                }
+                .onEach { value ->
+                    when (value) {
+                        "OK" -> {
+                            expect(3 + index)
+                            if (replay == 0) { // only the first subscriber collects "OK" without replay
+                                assertEquals(0, index)
                             }
                         }
-                        .takeWhile { it != "DONE" }
-                        .launchIn(this)
-                subscribedBarrier.join() // wait until the launched job subscribed before launching the next one
-                job
-            }
+                        "DONE" -> {
+                            expect(4 + index + replayOfs)
+                        }
+                        else -> expectUnreached()
+                    }
+                }
+                .takeWhile { it != "DONE" }
+                .launchIn(this)
+            subscribedBarrier.join() // wait until the launched job subscribed before launching the next one
+            job
+        }
         doneBarrier.complete()
         subscriberJobs.joinAll()
         expect(4 + n + replayOfs)
@@ -75,9 +74,11 @@ class ShareInTest : TestBase() {
         finish(5 + n + replayOfs)
     }
 
-    @Test fun testUpstreamCompleted() = testUpstreamCompletedOrFailed(failed = false)
+    @Test
+    fun testUpstreamCompleted() = testUpstreamCompletedOrFailed(failed = false)
 
-    @Test fun testUpstreamFailed() = testUpstreamCompletedOrFailed(failed = true)
+    @Test
+    fun testUpstreamFailed() = testUpstreamCompletedOrFailed(failed = true)
 
     private fun testUpstreamCompletedOrFailed(failed: Boolean) = runTest {
         val emitted = Job()
@@ -104,11 +105,14 @@ class ShareInTest : TestBase() {
         }
     }
 
-    @Test fun testWhileSubscribedBasic() = testWhileSubscribed(1, SharingStarted.WhileSubscribed())
+    @Test
+    fun testWhileSubscribedBasic() = testWhileSubscribed(1, SharingStarted.WhileSubscribed())
 
-    @Test fun testWhileSubscribedCustomAtLeast1() = testWhileSubscribed(1, SharingStarted.WhileSubscribedAtLeast(1))
+    @Test
+    fun testWhileSubscribedCustomAtLeast1() = testWhileSubscribed(1, SharingStarted.WhileSubscribedAtLeast(1))
 
-    @Test fun testWhileSubscribedCustomAtLeast2() = testWhileSubscribed(2, SharingStarted.WhileSubscribedAtLeast(2))
+    @Test
+    fun testWhileSubscribedCustomAtLeast2() = testWhileSubscribed(2, SharingStarted.WhileSubscribedAtLeast(2))
 
     private fun testWhileSubscribed(threshold: Int, started: SharingStarted) = runTest {
         expect(1)
@@ -151,16 +155,15 @@ class ShareInTest : TestBase() {
             // start 3 subscribers
             val subs = ArrayList<Job>()
             for (i in 1..n) {
-                subs +=
-                    shared
-                        .onEach { value -> // only the first threshold subscribers get the value
-                            when (i) {
-                                in 1..threshold -> log.trySend("sub$i: $value")
-                                else -> expectUnreached()
-                            }
+                subs += shared
+                    .onEach { value -> // only the first threshold subscribers get the value
+                        when (i) {
+                            in 1..threshold -> log.trySend("sub$i: $value")
+                            else -> expectUnreached()
                         }
-                        .onCompletion { log.trySend("sub$i: completion") }
-                        .launchIn(this)
+                    }
+                    .onCompletion { log.trySend("sub$i: completion") }
+                    .launchIn(this)
                 checkStartTransition(i)
             }
             // now cancel all subscribers
@@ -182,8 +185,7 @@ class ShareInTest : TestBase() {
     private class FlowState {
         private val timeLimit = 10000L
         private val _started = MutableStateFlow(false)
-        val started: Boolean
-            get() = _started.value
+        val started: Boolean get() = _started.value
 
         fun start() = check(_started.compareAndSet(expect = false, update = true))
 
@@ -205,13 +207,12 @@ class ShareInTest : TestBase() {
 
     @Test
     fun testShouldStart() = runTest {
-        val flow =
-            flow {
-                    expect(2)
-                    emit(1)
-                    expect(3)
-                }
-                .shareIn(this, SharingStarted.Lazily)
+        val flow = flow {
+                expect(2)
+                emit(1)
+                expect(3)
+            }
+            .shareIn(this, SharingStarted.Lazily)
 
         expect(1)
         // Casting so that the non-deprecated `catch` overload is chosen

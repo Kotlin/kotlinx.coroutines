@@ -10,22 +10,21 @@ class StateFlowTest : TestBase() {
     fun testNormalAndNull() = runTest {
         expect(1)
         val state = MutableStateFlow<Int?>(0)
-        val job =
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                expect(2)
-                assertFailsWith<CancellationException> {
-                    state.collect { value ->
-                        when (value) {
-                            0 -> expect(3)
-                            1 -> expect(5)
-                            null -> expect(8)
-                            2 -> expect(10)
-                            else -> expectUnreached()
-                        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            assertFailsWith<CancellationException> {
+                state.collect { value ->
+                    when (value) {
+                        0 -> expect(3)
+                        1 -> expect(5)
+                        null -> expect(8)
+                        2 -> expect(10)
+                        else -> expectUnreached()
                     }
                 }
-                expect(12)
             }
+            expect(12)
+        }
         expect(4) // collector is waiting
         state.value = 1 // fire in the hole!
         assertEquals(1, state.value)
@@ -51,21 +50,20 @@ class StateFlowTest : TestBase() {
     fun testEqualsConflation() = runTest {
         expect(1)
         val state = MutableStateFlow(Data(0))
-        val job =
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                expect(2)
-                assertFailsWith<CancellationException> {
-                    state.collect { value ->
-                        when (value.i) {
-                            0 -> expect(3) // initial value
-                            2 -> expect(5)
-                            4 -> expect(7)
-                            else -> error("Unexpected $value")
-                        }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            expect(2)
+            assertFailsWith<CancellationException> {
+                state.collect { value ->
+                    when (value.i) {
+                        0 -> expect(3) // initial value
+                        2 -> expect(5)
+                        4 -> expect(7)
+                        else -> error("Unexpected $value")
                     }
                 }
-                expect(9)
             }
+            expect(9)
+        }
         state.value = Data(1) // conflated
         state.value = Data(0) // equals to last emitted
         yield() // no repeat zero
@@ -105,8 +103,7 @@ class StateFlowTest : TestBase() {
         private val _counter = MutableStateFlow(0)
 
         // publicly exposed as a flow
-        val counter: StateFlow<Int>
-            get() = _counter
+        val counter: StateFlow<Int> get() = _counter
 
         fun inc() {
             _counter.value++

@@ -24,7 +24,6 @@ fun main() = runBlocking {
 .toList().joinToString().let { println(it) } }
 -->
 */
-
 /**
  * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given
  * [timeout][timeoutMillis]. The latest value is always emitted.
@@ -135,7 +134,8 @@ public fun <T> Flow<T>.debounce(timeoutMillis: (T) -> Long): Flow<T> = debounceI
  *
  * Note that the resulting flow does not emit anything as long as the original flow emits items faster than every [timeout] milliseconds.
  */
-@FlowPreview public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
+@FlowPreview
+public fun <T> Flow<T>.debounce(timeout: Duration): Flow<T> = debounce(timeout.toDelayMillis())
 
 /**
  * Returns a flow that mirrors the original flow, but filters out values that are followed by the newer values within the given [timeout].
@@ -253,10 +253,9 @@ private fun <T> Flow<T>.debounceInternal(timeoutMillisSelector: (T) -> Long): Fl
 public fun <T> Flow<T>.sample(periodMillis: Long): Flow<T> {
     require(periodMillis > 0) { "Sample period should be positive" }
     return scopedFlow { downstream ->
-        val values =
-            produce(capacity = Channel.CONFLATED) {
-                collect { value -> send(value ?: NULL) }
-            }
+        val values = produce(capacity = Channel.CONFLATED) {
+            collect { value -> send(value ?: NULL) }
+        }
         var lastValue: Any? = null
         val ticker = fixedPeriodTicker(periodMillis)
         while (lastValue !== DONE) {
@@ -318,7 +317,8 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long): ReceiveChannel
  *
  * Note that the latest element is not emitted if it does not fit into the sampling window.
  */
-@FlowPreview public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
+@FlowPreview
+public fun <T> Flow<T>.sample(period: Duration): Flow<T> = sample(period.toDelayMillis())
 
 /**
  * Returns a flow that will emit a [TimeoutCancellationException] if the upstream doesn't emit an item within the given time.
@@ -359,7 +359,8 @@ internal fun CoroutineScope.fixedPeriodTicker(delayMillis: Long): ReceiveChannel
  *
  * @param timeout Timeout duration. If non-positive, the flow is timed out immediately
  */
-@FlowPreview public fun <T> Flow<T>.timeout(timeout: Duration): Flow<T> = timeoutInternal(timeout)
+@FlowPreview
+public fun <T> Flow<T>.timeout(timeout: Duration): Flow<T> = timeoutInternal(timeout)
 
 private fun <T> Flow<T>.timeoutInternal(timeout: Duration): Flow<T> = scopedFlow { downStream ->
     if (timeout <= Duration.ZERO) throw TimeoutCancellationException("Timed out immediately")

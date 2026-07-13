@@ -16,10 +16,9 @@ class ConcurrentWeakMapCollectionStressTest : TestBase() {
     fun testCollected() {
         // use very big arrays as values, we'll need a queue and a cleaner thread to handle them
         val m = ConcurrentWeakMap<Key, ByteArray>(weakRefQueue = true)
-        val cleaner =
-            thread(name = "ConcurrentWeakMapCollectionStressTest-Cleaner") {
-                m.runWeakRefQueueCleaningLoopUntilInterrupted()
-            }
+        val cleaner = thread(name = "ConcurrentWeakMapCollectionStressTest-Cleaner") {
+            m.runWeakRefQueueCleaningLoopUntilInterrupted()
+        }
         for (i in 1..nElements) {
             m.put(Key(i), ByteArray(size))
         }

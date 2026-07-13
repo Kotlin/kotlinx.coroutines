@@ -7,7 +7,8 @@ import java.util.concurrent.atomic.*
  * and is resized on updates as needed to grow.
  */
 internal class ResizableAtomicArray<T>(initialLength: Int) {
-    @Volatile private var array = AtomicReferenceArray<T>(initialLength)
+    @Volatile
+    private var array = AtomicReferenceArray<T>(initialLength)
 
     // for debug output
     public fun currentLength(): Int = array.length()

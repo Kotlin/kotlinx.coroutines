@@ -8,42 +8,40 @@ import kotlin.test.*
 // See https://github.com/Kotlin/kotlinx.coroutines/issues/1128
 class IdFlowTest : TestBase() {
     @Test
-    fun testCancelInCollect() =
-        runTest(expected = { it is CancellationException }) {
-            expect(1)
-            flow {
-                    expect(2)
-                    emit(1)
-                    expect(3)
-                    hang { finish(6) }
-                }
-                .idScoped()
-                .collect { value ->
-                    expect(4)
-                    assertEquals(1, value)
-                    kotlin.coroutines.coroutineContext.cancel()
-                    expect(5)
-                }
-            expectUnreached()
-        }
+    fun testCancelInCollect() = runTest(expected = { it is CancellationException }) {
+        expect(1)
+        flow {
+                expect(2)
+                emit(1)
+                expect(3)
+                hang { finish(6) }
+            }
+            .idScoped()
+            .collect { value ->
+                expect(4)
+                assertEquals(1, value)
+                kotlin.coroutines.coroutineContext.cancel()
+                expect(5)
+            }
+        expectUnreached()
+    }
 
     @Test
-    fun testCancelInFlow() =
-        runTest(expected = { it is CancellationException }) {
-            expect(1)
-            flow {
-                    expect(2)
-                    emit(1)
-                    kotlin.coroutines.coroutineContext.cancel()
-                    expect(3)
-                }
-                .idScoped()
-                .collect { value ->
-                    finish(4)
-                    assertEquals(1, value)
-                }
-            expectUnreached()
-        }
+    fun testCancelInFlow() = runTest(expected = { it is CancellationException }) {
+        expect(1)
+        flow {
+                expect(2)
+                emit(1)
+                kotlin.coroutines.coroutineContext.cancel()
+                expect(3)
+            }
+            .idScoped()
+            .collect { value ->
+                finish(4)
+                assertEquals(1, value)
+            }
+        expectUnreached()
+    }
 }
 
 /** This flow should be the "identity" function with respect to cancellation. */

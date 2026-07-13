@@ -49,11 +49,9 @@ public abstract class ChannelFlow<T>(
     }
 
     // shared code to create a suspend lambda from collectTo function in one place
-    internal val collectToFun: suspend (ProducerScope<T>) -> Unit
-        get() = { collectTo(it) }
+    internal val collectToFun: suspend (ProducerScope<T>) -> Unit get() = { collectTo(it) }
 
-    internal val produceCapacity: Int
-        get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
+    internal val produceCapacity: Int get() = if (capacity == Channel.OPTIONAL_CHANNEL) Channel.BUFFERED else capacity
 
     /**
      * When this [ChannelFlow] implementation can work without a channel (supports [Channel.OPTIONAL_CHANNEL]), then it should return a
@@ -74,21 +72,21 @@ public abstract class ChannelFlow<T>(
             newOverflow = onBufferOverflow
         } else {
             // combine capacities, keep previous overflow strategy
-            newCapacity =
-                when {
-                    this.capacity == Channel.OPTIONAL_CHANNEL -> capacity
-                    capacity == Channel.OPTIONAL_CHANNEL -> this.capacity
-                    this.capacity == Channel.BUFFERED -> capacity
-                    capacity == Channel.BUFFERED -> this.capacity
-                    else -> {
-                        // sanity checks
-                        assert { this.capacity >= 0 }
-                        assert { capacity >= 0 }
-                        // combine capacities clamping to UNLIMITED on overflow
-                        val sum = this.capacity + capacity
-                        if (sum >= 0) sum else Channel.UNLIMITED // unlimited on int overflow
-                    }
+            newCapacity = when {
+                this.capacity == Channel.OPTIONAL_CHANNEL -> capacity
+                capacity == Channel.OPTIONAL_CHANNEL -> this.capacity
+                this.capacity == Channel.BUFFERED -> capacity
+                capacity == Channel.BUFFERED -> this.capacity
+                else -> {
+                    // sanity checks
+                    assert { this.capacity >= 0 }
+                    assert { capacity >= 0 }
+                    // combine capacities clamping to UNLIMITED on overflow
+                    val sum = this.capacity + capacity
+                    if (sum >= 0) sum
+                    else Channel.UNLIMITED // unlimited on int overflow
                 }
+            }
             newOverflow = this.onBufferOverflow
         }
         if (newContext == this.context && newCapacity == this.capacity && newOverflow == this.onBufferOverflow) return this
@@ -181,21 +179,22 @@ internal class ChannelFlowOperatorImpl<T>(
 
 // Now if the underlying collector was accepting concurrent emits, then this one is too
 // todo: we might need to generalize this pattern for "thread-safe" operators that can fuse with channels
-private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> =
-    when (this) {
-        // SendingCollector & NopCollector do not care about the context at all and can be used as is
-        is SendingCollector,
-        is NopCollector -> this
-        // Otherwise just wrap into UndispatchedContextCollector interface implementation
-        else -> UndispatchedContextCollector(this, emitContext)
-    }
+private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> = when (this) {
+    // SendingCollector & NopCollector do not care about the context at all and can be used as is
+    is SendingCollector,
+    is NopCollector -> this
+    // Otherwise just wrap into UndispatchedContextCollector interface implementation
+    else -> UndispatchedContextCollector(this, emitContext)
+}
 
 private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
     private val emitContext: CoroutineContext,
 ) : FlowCollector<T> {
     private val countOrElement = threadContextElements(emitContext) // precompute for fast withContextUndispatched
-    private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
+    private val emitRef: suspend (T) -> Unit = {
+        downstream.emit(it)
+    } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit = withContextUndispatched(emitContext, value, countOrElement, emitRef)
 }
@@ -206,12 +205,11 @@ internal suspend fun <T, V> withContextUndispatched(
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T,
-): T =
-    withCoroutineContext(newContext, countOrElement) {
-        suspendCoroutineUninterceptedOrReturn { uCont ->
-            block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
-        }
+): T = withCoroutineContext(newContext, countOrElement) {
+    suspendCoroutineUninterceptedOrReturn { uCont ->
+        block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
     }
+}
 
 // Continuation that links the caller with uCont with walkable CoroutineStackFrame
 private class StackFrameContinuation<T>(
@@ -219,8 +217,7 @@ private class StackFrameContinuation<T>(
     override val context: CoroutineContext,
 ) : Continuation<T>, CoroutineStackFrame {
 
-    override val callerFrame: CoroutineStackFrame?
-        get() = uCont as? CoroutineStackFrame
+    override val callerFrame: CoroutineStackFrame? get() = uCont as? CoroutineStackFrame
 
     override fun resumeWith(result: Result<T>) {
         uCont.resumeWith(result)

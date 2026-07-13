@@ -20,25 +20,23 @@ class BroadcastChannelSubStressTest : TestBase() {
         TestBroadcastChannelKind.entries.forEach { kind ->
             println("--- BroadcastChannelSubStressTest $kind")
             val broadcast = kind.create<Long>()
-            val sender =
-                launch(context = Dispatchers.Default + CoroutineName("Sender")) {
-                    while (isActive) {
-                        broadcast.send(sentTotal.incrementAndGet())
-                    }
+            val sender = launch(context = Dispatchers.Default + CoroutineName("Sender")) {
+                while (isActive) {
+                    broadcast.send(sentTotal.incrementAndGet())
                 }
-            val receiver =
-                launch(context = Dispatchers.Default + CoroutineName("Receiver")) {
-                    var last = -1L
-                    while (isActive) {
-                        val channel = broadcast.openSubscription()
-                        val i = channel.receive()
-                        check(i >= last) { "Last was $last, got $i" }
-                        if (!kind.isConflated) check(i != last) { "Last was $last, got it again" }
-                        receivedTotal.incrementAndGet()
-                        last = i
-                        channel.cancel()
-                    }
+            }
+            val receiver = launch(context = Dispatchers.Default + CoroutineName("Receiver")) {
+                var last = -1L
+                while (isActive) {
+                    val channel = broadcast.openSubscription()
+                    val i = channel.receive()
+                    check(i >= last) { "Last was $last, got $i" }
+                    if (!kind.isConflated) check(i != last) { "Last was $last, got it again" }
+                    receivedTotal.incrementAndGet()
+                    last = i
+                    channel.cancel()
                 }
+            }
             var prevSent = -1L
             repeat(nSeconds) { sec ->
                 delay(1000)

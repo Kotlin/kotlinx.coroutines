@@ -23,34 +23,30 @@ class CollectLatestTest : TestBase() {
     }
 
     @Test
-    fun testUpstreamErrorSuspension() =
-        runTest({ it is TestException }) {
-            try {
-                flow {
-                        emit(1)
-                        throw TestException()
-                    }
-                    .collectLatest { expect(1) }
-                expectUnreached()
-            } finally {
-                finish(2)
-            }
+    fun testUpstreamErrorSuspension() = runTest({ it is TestException }) {
+        try {
+            flow {
+                emit(1)
+                throw TestException()
+            }.collectLatest { expect(1) }
+            expectUnreached()
+        } finally {
+            finish(2)
         }
+    }
 
     @Test
-    fun testDownstreamError() =
-        runTest({ it is TestException }) {
-            try {
-                flow {
-                        emit(1)
-                        hang { expect(1) }
-                    }
-                    .collectLatest {
-                        throw TestException()
-                    }
-                expectUnreached()
-            } finally {
-                finish(2)
+    fun testDownstreamError() = runTest({ it is TestException }) {
+        try {
+            flow {
+                emit(1)
+                hang { expect(1) }
+            }.collectLatest {
+                throw TestException()
             }
+            expectUnreached()
+        } finally {
+            finish(2)
         }
+    }
 }

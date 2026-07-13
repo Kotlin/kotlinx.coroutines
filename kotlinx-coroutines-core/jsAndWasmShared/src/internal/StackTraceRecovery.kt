@@ -8,7 +8,8 @@ internal actual fun <E : Throwable> recoverStackTrace(exception: E): E = excepti
 
 internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothing = throw exception
 
-@PublishedApi internal actual fun <E : Throwable> unwrap(exception: E): E = exception
+@PublishedApi
+internal actual fun <E : Throwable> unwrap(exception: E): E = exception
 
 @Suppress("UNUSED")
 internal actual interface CoroutineStackFrame {

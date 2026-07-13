@@ -66,12 +66,11 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
     protected fun toStringInternalImpl(): String? {
         val main = Dispatchers.Main
         if (this === main) return "Dispatchers.Main"
-        val immediate =
-            try {
-                main.immediate
-            } catch (e: UnsupportedOperationException) {
-                null
-            }
+        val immediate = try {
+            main.immediate
+        } catch (e: UnsupportedOperationException) {
+            null
+        }
         if (this === immediate) return "Dispatchers.Main.immediate"
         return null
     }

@@ -8,26 +8,24 @@ class TransformLatestTest : TestBase() {
 
     @Test
     fun testTransformLatest() = runTest {
-        val flow =
-            flowOf(1, 2, 3).transformLatest { value ->
-                emit(value)
-                emit(value + 1)
-            }
+        val flow = flowOf(1, 2, 3).transformLatest { value ->
+            emit(value)
+            emit(value + 1)
+        }
         assertEquals(listOf(1, 2, 2, 3, 3, 4), flow.toList())
     }
 
     @Test
     fun testEmission() = runTest {
-        val list =
-            flow {
-                    repeat(5) {
-                        emit(it)
-                    }
-                }
-                .transformLatest {
+        val list = flow {
+                repeat(5) {
                     emit(it)
                 }
-                .toList()
+            }
+            .transformLatest {
+                emit(it)
+            }
+            .toList()
         assertEquals(listOf(0, 1, 2, 3, 4), list)
     }
 
@@ -76,13 +74,12 @@ class TransformLatestTest : TestBase() {
     @Test
     fun testHangFlows() = runTest {
         val flow = listOf(1, 2, 3, 4).asFlow()
-        val result =
-            flow
-                .transformLatest { value ->
-                    if (value != 4) hang { expect(value) }
-                    emit(42)
-                }
-                .toList()
+        val result = flow
+            .transformLatest { value ->
+                if (value != 4) hang { expect(value) }
+                emit(42)
+            }
+            .toList()
 
         assertEquals(listOf(42), result)
         finish(4)
@@ -95,85 +92,80 @@ class TransformLatestTest : TestBase() {
 
     @Test
     fun testIsolatedContext() = runTest {
-        val flow =
-            flow {
-                    assertEquals("source", NamedDispatchers.name())
-                    expect(1)
-                    emit(4)
-                    expect(2)
-                    emit(5)
-                    expect(3)
-                }
-                .flowOn(NamedDispatchers("source"))
-                .transformLatest<Int, Int> { value ->
-                    emitAll(
-                        flow<Int> {
-                                assertEquals("switch$value", NamedDispatchers.name())
-                                expect(value)
-                                emit(value)
-                            }
-                            .flowOn(NamedDispatchers("switch$value"))
-                    )
-                }
-                .onEach {
-                    expect(it + 2)
-                    assertEquals("main", NamedDispatchers.nameOr("main"))
-                }
+        val flow = flow {
+                assertEquals("source", NamedDispatchers.name())
+                expect(1)
+                emit(4)
+                expect(2)
+                emit(5)
+                expect(3)
+            }
+            .flowOn(NamedDispatchers("source"))
+            .transformLatest<Int, Int> { value ->
+                emitAll(
+                    flow<Int> {
+                            assertEquals("switch$value", NamedDispatchers.name())
+                            expect(value)
+                            emit(value)
+                        }
+                        .flowOn(NamedDispatchers("switch$value")),
+                )
+            }
+            .onEach {
+                expect(it + 2)
+                assertEquals("main", NamedDispatchers.nameOr("main"))
+            }
         assertEquals(2, flow.count())
         finish(8)
     }
 
     @Test
     fun testFailureInTransform() = runTest {
-        val flow =
-            flowOf(1, 2).transformLatest { value ->
-                if (value == 1) {
-                    emit(1)
-                    hang { expect(1) }
-                } else {
-                    expect(2)
-                    throw TestException()
-                }
+        val flow = flowOf(1, 2).transformLatest { value ->
+            if (value == 1) {
+                emit(1)
+                hang { expect(1) }
+            } else {
+                expect(2)
+                throw TestException()
             }
+        }
         assertFailsWith<TestException>(flow)
         finish(3)
     }
 
     @Test
     fun testFailureDownstream() = runTest {
-        val flow =
-            flowOf(1)
-                .transformLatest { value ->
-                    expect(1)
-                    emit(value)
-                    expect(2)
-                    hang { expect(4) }
-                }
-                .flowOn(NamedDispatchers("downstream"))
-                .onEach {
-                    expect(3)
-                    throw TestException()
-                }
+        val flow = flowOf(1)
+            .transformLatest { value ->
+                expect(1)
+                emit(value)
+                expect(2)
+                hang { expect(4) }
+            }
+            .flowOn(NamedDispatchers("downstream"))
+            .onEach {
+                expect(3)
+                throw TestException()
+            }
         assertFailsWith<TestException>(flow)
         finish(5)
     }
 
     @Test
     fun testFailureUpstream() = runTest {
-        val flow =
-            flow {
-                    expect(1)
-                    emit(1)
-                    yield()
-                    expect(3)
-                    throw TestException()
-                }
-                .transformLatest<Int, Long> {
-                    expect(2)
-                    hang {
-                        expect(4)
-                    }
-                }
+        val flow = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(3)
+            throw TestException()
+        }.transformLatest<Int, Long> {
+            expect(2)
+            hang {
+                expect(4)
+            }
+        }
         assertFailsWith<TestException>(flow)
         finish(5)
     }

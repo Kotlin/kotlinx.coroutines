@@ -12,7 +12,8 @@ class CallbackFlowTest : TestBase() {
 
     private class CallbackApi(val block: (SendChannel<Int>) -> Unit) {
         var started = false
-        @Volatile var stopped = false
+        @Volatile
+        var stopped = false
         lateinit var thread: Thread
 
         fun start(sink: SendChannel<Int>) {
@@ -36,32 +37,30 @@ class CallbackFlowTest : TestBase() {
             it.trySend(++i)
         }
 
-        val flow =
-            callbackFlow<Int> {
-                api.start(channel)
-                awaitClose {
-                    api.stop()
-                }
+        val flow = callbackFlow<Int> {
+            api.start(channel)
+            awaitClose {
+                api.stop()
             }
+        }
 
         var receivedConsensus = 0
         var isDone = false
         var exception: Throwable? = null
-        val job =
-            flow
-                .filter { it > 10 }
-                .launchIn(this) {
-                    onEach {
-                        if (it == 11) {
-                            ++receivedConsensus
-                        } else {
-                            receivedConsensus = 42
-                        }
-                        throw RuntimeException()
+        val job = flow
+            .filter { it > 10 }
+            .launchIn(this) {
+                onEach {
+                    if (it == 11) {
+                        ++receivedConsensus
+                    } else {
+                        receivedConsensus = 42
                     }
-                    catch<Throwable> { exception = it }
-                    finally { isDone = true }
+                    throw RuntimeException()
                 }
+                catch<Throwable> { exception = it }
+                finally { isDone = true }
+            }
         job.join()
         assertEquals(1, receivedConsensus)
         assertTrue(isDone)
@@ -82,23 +81,21 @@ class CallbackFlowTest : TestBase() {
             }
         }
 
-        val flow =
-            callbackFlow<Int> {
-                api.start(channel)
-                awaitClose {
-                    api.stop()
-                }
+        val flow = callbackFlow<Int> {
+            api.start(channel)
+            awaitClose {
+                api.stop()
             }
+        }
 
         var received = 0
         var isDone = false
         var exception: Throwable? = null
-        val job =
-            flow.launchIn(this) {
-                onEach { ++received }
-                catch<Throwable> { exception = it }
-                finally { isDone = true }
-            }
+        val job = flow.launchIn(this) {
+            onEach { ++received }
+            catch<Throwable> { exception = it }
+            finally { isDone = true }
+        }
 
         job.join()
         assertTrue(isDone)

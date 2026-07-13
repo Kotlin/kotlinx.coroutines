@@ -9,13 +9,12 @@ internal fun promiseSetDeferred(promise: Promise<JsAny?>, deferred: JsAny): Unit
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @Suppress("UNUSED_PARAMETER")
-internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? =
-    js(
-        """{
+internal fun promiseGetDeferred(promise: Promise<JsAny?>): JsAny? = js(
+    """{
     console.assert(promise instanceof Promise, "promiseGetDeferred must receive a promise, but got ", promise);
     return promise.deferred == null ? null : promise.deferred;
-}"""
-    )
+}""",
+)
 
 /**
  * Starts new coroutine and returns its result as an implementation of [Promise].
@@ -41,17 +40,16 @@ public fun <T : JsAny?> CoroutineScope.promise(
 /** Converts this deferred value to the instance of [Promise]. */
 @OptIn(ExperimentalWasmJsInterop::class)
 public fun <T : JsAny?> Deferred<T>.asPromise(): Promise<T> {
-    val promise =
-        Promise<T> { resolve, reject ->
-            invokeOnCompletion {
-                val e = getCompletionExceptionOrNull()
-                if (e != null) {
-                    reject(e.toJsPromiseError())
-                } else {
-                    resolve(getCompleted())
-                }
+    val promise = Promise<T> { resolve, reject ->
+        invokeOnCompletion {
+            val e = getCompletionExceptionOrNull()
+            if (e != null) {
+                reject(e.toJsPromiseError())
+            } else {
+                resolve(getCompleted())
             }
         }
+    }
     promiseSetDeferred(promise, this.toJsReference())
     return promise
 }
@@ -59,7 +57,8 @@ public fun <T : JsAny?> Deferred<T>.asPromise(): Promise<T> {
 /** Converts this promise value to the instance of [Deferred]. */
 @OptIn(ExperimentalWasmJsInterop::class)
 public fun <T : JsAny?> Promise<T>.asDeferred(): Deferred<T> {
-    @Suppress("UNCHECKED_CAST", "UNCHECKED_CAST_TO_EXTERNAL_INTERFACE") val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
+    @Suppress("UNCHECKED_CAST", "UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
+    val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
     return deferred?.get() ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
@@ -85,6 +84,8 @@ public suspend fun <T : JsAny?> Promise<T>.await(): T = suspendCancellableCorout
     )
 }
 
-@OptIn(ExperimentalWasmJsInterop::class) internal expect fun JsPromiseError.toThrowable(): Throwable
+@OptIn(ExperimentalWasmJsInterop::class)
+internal expect fun JsPromiseError.toThrowable(): Throwable
 
-@OptIn(ExperimentalWasmJsInterop::class) internal expect fun Throwable.toJsPromiseError(): JsPromiseError
+@OptIn(ExperimentalWasmJsInterop::class)
+internal expect fun Throwable.toJsPromiseError(): JsPromiseError

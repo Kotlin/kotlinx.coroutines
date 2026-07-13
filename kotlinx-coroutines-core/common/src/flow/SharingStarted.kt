@@ -116,7 +116,6 @@ public fun SharingStarted.Companion.WhileSubscribed(
 ): SharingStarted = StartedWhileSubscribed(stopTimeout.inWholeMilliseconds, replayExpiration.inWholeMilliseconds)
 
 // -------------------------------- implementation --------------------------------
-
 private class StartedEagerly : SharingStarted {
     override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = flowOf(SharingCommand.START)
 
@@ -146,29 +145,27 @@ private class StartedWhileSubscribed(
         require(replayExpiration >= 0) { "replayExpiration($replayExpiration ms) cannot be negative" }
     }
 
-    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> =
-        subscriptionCount
-            .transformLatest { count ->
-                if (count > 0) {
-                    emit(SharingCommand.START)
-                } else {
-                    delay(stopTimeout)
-                    if (replayExpiration > 0) {
-                        emit(SharingCommand.STOP)
-                        delay(replayExpiration)
-                    }
-                    emit(SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+    override fun command(subscriptionCount: StateFlow<Int>): Flow<SharingCommand> = subscriptionCount
+        .transformLatest { count ->
+            if (count > 0) {
+                emit(SharingCommand.START)
+            } else {
+                delay(stopTimeout)
+                if (replayExpiration > 0) {
+                    emit(SharingCommand.STOP)
+                    delay(replayExpiration)
                 }
+                emit(SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
             }
-            .dropWhile { it != SharingCommand.START } // don't emit any STOP/RESET_BUFFER to start with, only START
-            .distinctUntilChanged() // just in case somebody forgets it, don't leak our multiple sending of START
+        }
+        .dropWhile { it != SharingCommand.START } // don't emit any STOP/RESET_BUFFER to start with, only START
+        .distinctUntilChanged() // just in case somebody forgets it, don't leak our multiple sending of START
 
     override fun toString(): String {
-        val params =
-            buildList(2) {
-                if (stopTimeout > 0) add("stopTimeout=${stopTimeout}ms")
-                if (replayExpiration < Long.MAX_VALUE) add("replayExpiration=${replayExpiration}ms")
-            }
+        val params = buildList(2) {
+            if (stopTimeout > 0) add("stopTimeout=${stopTimeout}ms")
+            if (replayExpiration < Long.MAX_VALUE) add("replayExpiration=${replayExpiration}ms")
+        }
         return "SharingStarted.WhileSubscribed(${params.joinToString()})"
     }
 

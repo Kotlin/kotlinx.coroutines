@@ -11,86 +11,81 @@ import kotlin.test.*
  */
 class SharingStartedTest : TestBase() {
     @Test
-    fun testEagerly() =
-        testSharingStarted(SharingStarted.Eagerly, SharingCommand.START) {
-            subscriptions(1)
-            rampUpAndDown()
-            subscriptions(0)
-            delay(100)
-        }
+    fun testEagerly() = testSharingStarted(SharingStarted.Eagerly, SharingCommand.START) {
+        subscriptions(1)
+        rampUpAndDown()
+        subscriptions(0)
+        delay(100)
+    }
 
     @Test
-    fun testLazily() =
-        testSharingStarted(SharingStarted.Lazily) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0)
-        }
+    fun testLazily() = testSharingStarted(SharingStarted.Lazily) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0)
+    }
 
     @Test
-    fun testWhileSubscribed() =
-        testSharingStarted(SharingStarted.WhileSubscribed()) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0, SharingCommand.STOP)
-            delay(100)
-        }
+    fun testWhileSubscribed() = testSharingStarted(SharingStarted.WhileSubscribed()) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0, SharingCommand.STOP)
+        delay(100)
+    }
 
     @Test
-    fun testWhileSubscribedExpireImmediately() =
-        testSharingStarted(SharingStarted.WhileSubscribed(replayExpirationMillis = 0)) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
-            delay(100)
-        }
+    fun testWhileSubscribedExpireImmediately() = testSharingStarted(SharingStarted.WhileSubscribed(replayExpirationMillis = 0)) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+        delay(100)
+    }
 
     @Test
-    fun testWhileSubscribedWithTimeout() =
-        testSharingStarted(SharingStarted.WhileSubscribed(stopTimeoutMillis = 100)) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0)
-            delay(50) // don't give it time to stop
-            subscriptions(1) // resubscribe again
-            rampUpAndDown()
-            subscriptions(0)
-            afterTime(100, SharingCommand.STOP)
-            delay(100)
-        }
+    fun testWhileSubscribedWithTimeout() = testSharingStarted(SharingStarted.WhileSubscribed(stopTimeoutMillis = 100)) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0)
+        delay(50) // don't give it time to stop
+        subscriptions(1) // resubscribe again
+        rampUpAndDown()
+        subscriptions(0)
+        afterTime(100, SharingCommand.STOP)
+        delay(100)
+    }
 
     @Test
-    fun testWhileSubscribedExpiration() =
-        testSharingStarted(SharingStarted.WhileSubscribed(replayExpirationMillis = 200)) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0, SharingCommand.STOP)
-            delay(150) // don't give it time to reset cache
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0, SharingCommand.STOP)
-            afterTime(200, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
-        }
+    fun testWhileSubscribedExpiration() = testSharingStarted(SharingStarted.WhileSubscribed(replayExpirationMillis = 200)) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0, SharingCommand.STOP)
+        delay(150) // don't give it time to reset cache
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0, SharingCommand.STOP)
+        afterTime(200, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+    }
 
     @Test
-    fun testWhileSubscribedStopAndExpiration() =
-        testSharingStarted(SharingStarted.WhileSubscribed(stopTimeoutMillis = 400, replayExpirationMillis = 300)) {
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0)
-            delay(350) // don't give it time to stop
-            subscriptions(1)
-            rampUpAndDown()
-            subscriptions(0)
-            afterTime(400, SharingCommand.STOP)
-            delay(250) // don't give it time to reset cache
-            subscriptions(1, SharingCommand.START)
-            rampUpAndDown()
-            subscriptions(0)
-            afterTime(400, SharingCommand.STOP)
-            afterTime(300, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
-            delay(100)
-        }
+    fun testWhileSubscribedStopAndExpiration() = testSharingStarted(
+        SharingStarted.WhileSubscribed(stopTimeoutMillis = 400, replayExpirationMillis = 300),
+    ) {
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0)
+        delay(350) // don't give it time to stop
+        subscriptions(1)
+        rampUpAndDown()
+        subscriptions(0)
+        afterTime(400, SharingCommand.STOP)
+        delay(250) // don't give it time to reset cache
+        subscriptions(1, SharingCommand.START)
+        rampUpAndDown()
+        subscriptions(0)
+        afterTime(400, SharingCommand.STOP)
+        afterTime(300, SharingCommand.STOP_AND_RESET_REPLAY_CACHE)
+        delay(100)
+    }
 
     private suspend fun SharingStartedDsl.rampUpAndDown() {
         for (i in 2..10) {

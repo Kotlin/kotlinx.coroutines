@@ -12,8 +12,7 @@ internal class CopyOnWriteList<E> : AbstractMutableList<E>() {
             _array.value = value
         }
 
-    override val size: Int
-        get() = array.size
+    override val size: Int get() = array.size
 
     override fun add(element: E): Boolean {
         val n = size

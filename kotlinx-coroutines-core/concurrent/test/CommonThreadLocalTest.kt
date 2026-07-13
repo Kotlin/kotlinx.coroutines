@@ -14,17 +14,15 @@ class CommonThreadLocalTest : TestBase() {
         newSingleThreadContext("").use {
             threadLocal.set(10)
             assertEquals(10, threadLocal.get())
-            val job1 =
-                launch(it) {
-                    threadLocal.set(20)
-                    assertEquals(20, threadLocal.get())
-                }
+            val job1 = launch(it) {
+                threadLocal.set(20)
+                assertEquals(20, threadLocal.get())
+            }
             assertEquals(10, threadLocal.get())
             job1.join()
-            val job2 =
-                launch(it) {
-                    assertEquals(20, threadLocal.get())
-                }
+            val job2 = launch(it) {
+                assertEquals(20, threadLocal.get())
+            }
             job2.join()
         }
     }
@@ -37,22 +35,20 @@ class CommonThreadLocalTest : TestBase() {
             assertNull(threadLocal.get())
             threadLocal.set(10)
             assertEquals(10, threadLocal.get())
-            val job1 =
-                launch(it) {
-                    assertNull(threadLocal.get())
-                    threadLocal.set(20)
-                    assertEquals(20, threadLocal.get())
-                }
+            val job1 = launch(it) {
+                assertNull(threadLocal.get())
+                threadLocal.set(20)
+                assertEquals(20, threadLocal.get())
+            }
             assertEquals(10, threadLocal.get())
             job1.join()
             threadLocal.set(null)
             assertNull(threadLocal.get())
-            val job2 =
-                launch(it) {
-                    assertEquals(20, threadLocal.get())
-                    threadLocal.set(null)
-                    assertNull(threadLocal.get())
-                }
+            val job2 = launch(it) {
+                assertEquals(20, threadLocal.get())
+                threadLocal.set(null)
+                assertNull(threadLocal.get())
+            }
             job2.join()
         }
     }

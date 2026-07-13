@@ -17,47 +17,50 @@ class SharedFlowStressTest : TestBase() {
     private lateinit var sf: MutableSharedFlow<Long>
     private lateinit var view: SharedFlow<Long>
 
-    @get:Rule val producerDispatcher = ExecutorRule(nProducers)
-    @get:Rule val consumerDispatcher = ExecutorRule(nConsumers)
+    @get:Rule
+    val producerDispatcher = ExecutorRule(nProducers)
+    @get:Rule
+    val consumerDispatcher = ExecutorRule(nConsumers)
 
     private val totalProduced = atomic(0L)
     private val totalConsumed = atomic(0L)
 
-    @Test fun testStressReplay1() = testStress(1, 0)
+    @Test
+    fun testStressReplay1() = testStress(1, 0)
 
-    @Test fun testStressReplay1ExtraBuffer1() = testStress(1, 1)
+    @Test
+    fun testStressReplay1ExtraBuffer1() = testStress(1, 1)
 
-    @Test fun testStressReplay2ExtraBuffer1() = testStress(2, 1)
+    @Test
+    fun testStressReplay2ExtraBuffer1() = testStress(2, 1)
 
     private fun testStress(replay: Int, extraBufferCapacity: Int) = runTest {
         sf = MutableSharedFlow(replay, extraBufferCapacity)
         view = sf.asSharedFlow()
         val jobs = ArrayList<Job>()
-        jobs +=
-            List(nProducers) { producerIndex ->
-                launch(producerDispatcher) {
-                    var cur = producerIndex.toLong()
-                    while (isActive) {
-                        sf.emit(cur)
-                        totalProduced.incrementAndGet()
-                        cur += nProducers
-                    }
+        jobs += List(nProducers) { producerIndex ->
+            launch(producerDispatcher) {
+                var cur = producerIndex.toLong()
+                while (isActive) {
+                    sf.emit(cur)
+                    totalProduced.incrementAndGet()
+                    cur += nProducers
                 }
             }
-        jobs +=
-            List(nConsumers) { consumerIndex ->
-                launch(consumerDispatcher) {
-                    while (isActive) {
-                        view
-                            .dropWhile { it % nConsumers != consumerIndex.toLong() }
-                            .take(1)
-                            .collect {
-                                check(it % nConsumers == consumerIndex.toLong())
-                                totalConsumed.incrementAndGet()
-                            }
-                    }
+        }
+        jobs += List(nConsumers) { consumerIndex ->
+            launch(consumerDispatcher) {
+                while (isActive) {
+                    view
+                        .dropWhile { it % nConsumers != consumerIndex.toLong() }
+                        .take(1)
+                        .collect {
+                            check(it % nConsumers == consumerIndex.toLong())
+                            totalConsumed.incrementAndGet()
+                        }
                 }
             }
+        }
         var lastProduced = 0L
         var lastConsumed = 0L
         for (sec in 1..nSeconds) {

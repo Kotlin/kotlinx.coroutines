@@ -20,12 +20,11 @@ internal actual fun createEventLoop(): EventLoop = DefaultExecutor
 
 internal actual fun nanoTime(): Long = withScopedMemoryAllocator { allocator: MemoryAllocator ->
     val ptrTo8Bytes = allocator.allocate(8)
-    val returnCode =
-        wasiRawClockTimeGet(
-            clockId = CLOCKID_MONOTONIC,
-            precision = 1,
-            resultPtr = ptrTo8Bytes.address.toInt(),
-        )
+    val returnCode = wasiRawClockTimeGet(
+        clockId = CLOCKID_MONOTONIC,
+        precision = 1,
+        resultPtr = ptrTo8Bytes.address.toInt(),
+    )
     check(returnCode == 0) { "clock_time_get failed with the return code $returnCode" }
     ptrTo8Bytes.loadLong()
 }
@@ -33,13 +32,12 @@ internal actual fun nanoTime(): Long = withScopedMemoryAllocator { allocator: Me
 private fun sleep(nanos: Long, ptrTo32Bytes: Pointer, ptrTo8Bytes: Pointer, ptrToSubscription: Pointer) {
     // __wasi_timestamp_t timeout;
     (ptrToSubscription + 24).storeLong(nanos)
-    val returnCode =
-        wasiPollOneOff(
-            ptrToSubscription = ptrToSubscription.address.toInt(),
-            eventPtr = ptrTo32Bytes.address.toInt(),
-            nsubscriptions = 1,
-            resultPtr = ptrTo8Bytes.address.toInt(),
-        )
+    val returnCode = wasiPollOneOff(
+        ptrToSubscription = ptrToSubscription.address.toInt(),
+        eventPtr = ptrTo32Bytes.address.toInt(),
+        nsubscriptions = 1,
+        resultPtr = ptrTo8Bytes.address.toInt(),
+    )
     check(returnCode == 0) { "poll_oneoff failed with the return code $returnCode" }
 }
 

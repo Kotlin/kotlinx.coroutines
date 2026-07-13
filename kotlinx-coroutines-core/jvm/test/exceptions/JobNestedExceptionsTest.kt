@@ -66,16 +66,15 @@ class JobNestedExceptionsTest : TestBase() {
     fun testNestedAtomicThrow() {
         val exception = captureExceptionsRun {
             expect(1)
-            val job =
-                launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
-                    expect(2)
-                    launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
-                        expect(4)
-                        throw IOException()
-                    }
-                    expect(3)
-                    throw ArithmeticException()
+            val job = launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
+                expect(2)
+                launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
+                    expect(4)
+                    throw IOException()
                 }
+                expect(3)
+                throw ArithmeticException()
+            }
             job.join()
             finish(5)
         }
@@ -87,22 +86,21 @@ class JobNestedExceptionsTest : TestBase() {
     fun testChildThrowsDuringCompletion() {
         val exception = captureExceptionsRun {
             expect(1)
-            val job =
-                launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
-                    expect(2)
-                    launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
-                        expect(4)
-                        launch(CoroutineName("nested2"), start = CoroutineStart.ATOMIC) {
-                            // This child attaches to the parent and throws after parent completion
-                            expect(6)
-                            throw NullPointerException()
-                        }
-                        expect(5)
-                        throw IOException()
+            val job = launch(NonCancellable + CoroutineName("outer"), start = CoroutineStart.ATOMIC) {
+                expect(2)
+                launch(CoroutineName("nested"), start = CoroutineStart.ATOMIC) {
+                    expect(4)
+                    launch(CoroutineName("nested2"), start = CoroutineStart.ATOMIC) {
+                        // This child attaches to the parent and throws after parent completion
+                        expect(6)
+                        throw NullPointerException()
                     }
-                    expect(3)
-                    throw ArithmeticException()
+                    expect(5)
+                    throw IOException()
                 }
+                expect(3)
+                throw ArithmeticException()
+            }
 
             job.join()
             finish(7)

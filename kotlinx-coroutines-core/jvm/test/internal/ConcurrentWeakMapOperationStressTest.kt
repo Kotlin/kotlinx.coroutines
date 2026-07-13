@@ -26,33 +26,31 @@ class ConcurrentWeakMapOperationStressTest : TestBase() {
     fun testOperations() {
         // We don't create queue here, because concurrent operations are enough to make it clean itself
         val m = ConcurrentWeakMap<Key, Long>()
-        val threads =
-            Array(nThreads) { index ->
-                thread(start = false, name = "ConcurrentWeakMapOperationStressTest-$index") {
-                    var generationOffset = 0L
-                    while (!stop.value) {
-                        val kvs =
-                            (generationOffset + batchSize * index until generationOffset + batchSize * (index + 1)).associateBy(
-                                { Key(it) },
-                                { it * it },
-                            )
-                        generationOffset += batchSize * nThreads
-                        for ((k, v) in kvs) {
-                            assertEquals(null, m.put(k, v))
-                        }
-                        for ((k, v) in kvs) {
-                            assertEquals(v, m[k])
-                        }
-                        for ((k, v) in kvs) {
-                            assertEquals(v, m.remove(k))
-                        }
-                        for ((k, _) in kvs) {
-                            assertEquals(null, m[k])
-                        }
-                        count.incrementAndGet()
+        val threads = Array(nThreads) { index ->
+            thread(start = false, name = "ConcurrentWeakMapOperationStressTest-$index") {
+                var generationOffset = 0L
+                while (!stop.value) {
+                    val kvs = (generationOffset + batchSize * index until generationOffset + batchSize * (index + 1)).associateBy(
+                        { Key(it) },
+                        { it * it },
+                    )
+                    generationOffset += batchSize * nThreads
+                    for ((k, v) in kvs) {
+                        assertEquals(null, m.put(k, v))
                     }
+                    for ((k, v) in kvs) {
+                        assertEquals(v, m[k])
+                    }
+                    for ((k, v) in kvs) {
+                        assertEquals(v, m.remove(k))
+                    }
+                    for ((k, _) in kvs) {
+                        assertEquals(null, m[k])
+                    }
+                    count.incrementAndGet()
                 }
             }
+        }
         val uncaughtExceptionHandler = Thread.UncaughtExceptionHandler { t, ex ->
             ex.printStackTrace()
             error("Error in thread $t", ex)

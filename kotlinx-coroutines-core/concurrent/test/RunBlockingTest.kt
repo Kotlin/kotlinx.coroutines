@@ -11,13 +11,12 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testWithTimeoutBusyWait() = runTest {
-        val value =
-            withTimeoutOrNull(10) {
-                while (isActive) {
-                    // Busy wait
-                }
-                "value"
+        val value = withTimeoutOrNull(10) {
+            while (isActive) {
+                // Busy wait
             }
+            "value"
+        }
 
         assertEquals("value", value)
     }
@@ -71,14 +70,13 @@ class RunBlockingTest : TestBase() {
     @Test
     fun testCancellation() = runTest {
         newFixedThreadPoolContext(2, "testCancellation").use {
-            val job =
-                GlobalScope.launch(it) {
-                    runBlocking(coroutineContext) {
-                        while (true) {
-                            yield()
-                        }
+            val job = GlobalScope.launch(it) {
+                runBlocking(coroutineContext) {
+                    while (true) {
+                        yield()
                     }
                 }
+            }
 
             runBlocking {
                 job.cancelAndJoin()
@@ -108,49 +106,43 @@ class RunBlockingTest : TestBase() {
     }
 
     @Test
-    fun testDispatchOnShutdown(): Unit =
-        assertFailsWith<CancellationException> {
-                runBlocking {
-                    expect(1)
-                    val job =
-                        launch(NonCancellable) {
-                            try {
-                                expect(2)
-                                delay(Long.MAX_VALUE)
-                            } finally {
-                                finish(4)
-                            }
-                        }
-
-                    yield()
-                    expect(3)
-                    coroutineContext.cancel()
-                    job.cancel()
+    fun testDispatchOnShutdown(): Unit = assertFailsWith<CancellationException> {
+        runBlocking {
+            expect(1)
+            val job = launch(NonCancellable) {
+                try {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    finish(4)
                 }
             }
-            .let {}
+
+            yield()
+            expect(3)
+            coroutineContext.cancel()
+            job.cancel()
+        }
+    }.let {}
 
     @Test
-    fun testDispatchOnShutdown2(): Unit =
-        assertFailsWith<CancellationException> {
-                runBlocking {
-                    coroutineContext.cancel()
-                    expect(1)
-                    val job =
-                        launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
-                            try {
-                                expect(2)
-                                delay(Long.MAX_VALUE)
-                            } finally {
-                                finish(4)
-                            }
-                        }
-
-                    expect(3)
-                    job.cancel()
+    fun testDispatchOnShutdown2(): Unit = assertFailsWith<CancellationException> {
+        runBlocking {
+            coroutineContext.cancel()
+            expect(1)
+            val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    expect(2)
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    finish(4)
                 }
             }
-            .let {}
+
+            expect(3)
+            job.cancel()
+        }
+    }.let {}
 
     @Test
     fun testNestedRunBlocking() = runBlocking {

@@ -11,10 +11,10 @@ import kotlin.coroutines.intrinsics.*
  *
  * We keep the old `select` functions as [selectOld] and [selectUnbiasedOld] for test purpose.
  */
-
 @PublishedApi
 internal class SelectBuilderImpl<R>(
     uCont: Continuation<R> // unintercepted delegate continuation
+    ,
 ) : SelectImplementation<R>(uCont.context) {
     private val cont = CancellableContinuationImpl(uCont.intercepted(), MODE_CANCELLABLE)
 
@@ -35,13 +35,12 @@ internal class SelectBuilderImpl<R>(
         // 5) use CancellableContinuationImpl.getResult() as a result of this function.
         if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result =
-                try {
-                    doSelect()
-                } catch (e: Throwable) {
-                    cont.resumeUndispatchedWithException(e)
-                    return@launch
-                }
+            val result = try {
+                doSelect()
+            } catch (e: Throwable) {
+                cont.resumeUndispatchedWithException(e)
+                return@launch
+            }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()
@@ -56,6 +55,7 @@ internal class SelectBuilderImpl<R>(
 @PublishedApi
 internal class UnbiasedSelectBuilderImpl<R>(
     uCont: Continuation<R> // unintercepted delegate continuation
+    ,
 ) : UnbiasedSelectImplementation<R>(uCont.context) {
     private val cont = CancellableContinuationImpl(uCont.intercepted(), MODE_CANCELLABLE)
 
@@ -64,13 +64,12 @@ internal class UnbiasedSelectBuilderImpl<R>(
         // Here, we do the same trick as in [SelectBuilderImpl].
         if (cont.isCompleted) return cont.getResult()
         CoroutineScope(context).launch(start = CoroutineStart.UNDISPATCHED) {
-            val result =
-                try {
-                    doSelect()
-                } catch (e: Throwable) {
-                    cont.resumeUndispatchedWithException(e)
-                    return@launch
-                }
+            val result = try {
+                doSelect()
+            } catch (e: Throwable) {
+                cont.resumeUndispatchedWithException(e)
+                return@launch
+            }
             cont.resumeUndispatched(result)
         }
         return cont.getResult()

@@ -9,54 +9,49 @@ import kotlin.test.assertTrue
 class ScopedBuildersCancelledStartTest : TestBase() {
 
     @Test
-    fun testCancelledCoroutineScope() =
-        runTest(expected = { it is CancellationException }) {
-            cancel()
-            coroutineScope {
-                finish(1)
-            }
-            expectUnreached()
+    fun testCancelledCoroutineScope() = runTest(expected = { it is CancellationException }) {
+        cancel()
+        coroutineScope {
+            finish(1)
         }
+        expectUnreached()
+    }
 
     @Test
-    fun testCancelledSupervisorScope() =
-        runTest(expected = { it is CancellationException }) {
-            cancel()
-            supervisorScope {
-                finish(1)
-            }
-            expectUnreached()
+    fun testCancelledSupervisorScope() = runTest(expected = { it is CancellationException }) {
+        cancel()
+        supervisorScope {
+            finish(1)
         }
+        expectUnreached()
+    }
 
     @Test
-    fun testCancelledWithTimeout() =
-        runTest(expected = { it is CancellationException }) {
-            cancel()
-            withTimeout(Long.MAX_VALUE) {
-                finish(1)
-            }
-            expectUnreached()
+    fun testCancelledWithTimeout() = runTest(expected = { it is CancellationException }) {
+        cancel()
+        withTimeout(Long.MAX_VALUE) {
+            finish(1)
         }
+        expectUnreached()
+    }
 
     @Test
-    fun testWithContext() =
-        runTest(expected = { it is CancellationException }) {
-            cancel()
-            withContext(EmptyCoroutineContext) {
-                assertTrue(coroutineContext.job.isCancelled)
-                expect(1)
-            }
-            finish(2)
+    fun testWithContext() = runTest(expected = { it is CancellationException }) {
+        cancel()
+        withContext(EmptyCoroutineContext) {
+            assertTrue(coroutineContext.job.isCancelled)
+            expect(1)
         }
+        finish(2)
+    }
 
     @Test
-    fun testWithContextWithDispatcher() =
-        runTest(expected = { it is CancellationException }) {
-            cancel()
-            withContext(Dispatchers.Unconfined) {
-                assertTrue(coroutineContext.job.isCancelled)
-                expect(1)
-            }
-            finish(2)
+    fun testWithContextWithDispatcher() = runTest(expected = { it is CancellationException }) {
+        cancel()
+        withContext(Dispatchers.Unconfined) {
+            assertTrue(coroutineContext.job.isCancelled)
+            expect(1)
         }
+        finish(2)
+    }
 }

@@ -216,8 +216,9 @@ public sealed interface SelectInstance<in R> {
 internal interface SelectInstanceInternal<R> : SelectInstance<R>, Waiter
 
 @PublishedApi
-internal open class SelectImplementation<R>(override val context: CoroutineContext) :
-    CancelHandler, SelectBuilder<R>, SelectInstanceInternal<R> {
+internal open class SelectImplementation<R>(override val context: CoroutineContext) : CancelHandler,
+    SelectBuilder<R>,
+    SelectInstanceInternal<R> {
 
     /**
      * Essentially, the `select` operation is split into three phases: REGISTRATION, WAITING, and COMPLETION.
@@ -306,24 +307,19 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
      * so important in practice and leverage the correctness relaxation for the algorithm simplicity and the non-blocking progress
      * guarantee.
      */
-
     /** The state of this `select` operation. See the description above for details. */
     private val state = atomic<Any>(STATE_REG)
 
     /** Returns `true` if this `select` instance is in the REGISTRATION phase; otherwise, returns `false`. */
-    private val inRegistrationPhase
-        get() =
-            state.value.let {
-                it === STATE_REG || it is List<*>
-            }
+    private val inRegistrationPhase get() = state.value.let {
+        it === STATE_REG || it is List<*>
+    }
 
     /** Returns `true` if this `select` is already selected; thus, other parties are bound to fail when making a rendezvous with it. */
-    private val isSelected
-        get() = state.value is SelectImplementation<*>.ClauseData
+    private val isSelected get() = state.value is SelectImplementation<*>.ClauseData
 
     /** Returns `true` if this `select` is cancelled. */
-    private val isCancelled
-        get() = state.value === STATE_CANCELLED
+    private val isCancelled get() = state.value === STATE_CANCELLED
 
     /**
      * List of clauses waiting on this `select` instance.
@@ -331,7 +327,8 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
      * This property is the subject to bening data race: concurrent cancellation might null-out this property while [trySelect] operation
      * reads it and iterates over its content. A logical race is resolved by the consensus on [state] property.
      */
-    @BenignDataRace private var clauses: MutableList<ClauseData>? = ArrayList(2)
+    @BenignDataRace
+    private var clauses: MutableList<ClauseData>? = ArrayList(2)
 
     /**
      * Stores the completion action provided through [disposeOnCompletion] or [invokeOnCancellation] during clause registration. After that,
@@ -364,7 +361,8 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
      * and as a cancellation handler triggered by an external cancellation. In both scenarios, [NO_RESULT] is written to this property via
      * race.
      */
-    @BenignDataRace private var internalResult: Any? = NO_RESULT
+    @BenignDataRace
+    private var internalResult: Any? = NO_RESULT
 
     /**
      * This function is called after the [SelectBuilder] is applied. In case one of the clauses is already selected, the algorithm applies
@@ -373,8 +371,7 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
      * applying the corresponding [ProcessResultFunction] and invoking the user-specified [block][ClauseData.block].
      */
     @PublishedApi
-    internal open suspend fun doSelect(): R =
-        if (isSelected) complete() // Fast path
+    internal open suspend fun doSelect(): R = if (isSelected) complete() // Fast path
         else doSelectSuspend() // Slow path
 
     // We separate the following logic as it has two suspension points
@@ -392,7 +389,6 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
     // ========================
     // = CLAUSES REGISTRATION =
     // ========================
-
     override fun SelectClause0.invoke(block: suspend () -> R) =
         ClauseData(clauseObject, regFunc, processResFunc, PARAM_CLAUSE_0, block, onCancellationConstructor).register()
 
@@ -481,52 +477,48 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
     // =========================
     // = WAITING FOR SELECTION =
     // =========================
-
     /**
      * Suspends and waits until some clause is selected. However, it is possible for a concurrent coroutine to invoke [trySelect] while this
      * `select` is still in REGISTRATION phase. In this case, [trySelect] marks the corresponding select clause to be re-registered, and
      * this function performs registration of such clauses. After that, it atomically stores the continuation into the [state] field if
      * there is no more clause to be re-registered.
      */
-    private suspend fun waitUntilSelected() =
-        suspendCancellableCoroutine<Unit> sc@{ cont ->
-            // Update the state.
-            state.loop { curState ->
-                when {
-                    // This `select` is in REGISTRATION phase, and there is no clause to be re-registered.
-                    // Perform a transition to WAITING phase by storing the current continuation.
-                    curState === STATE_REG ->
-                        if (state.compareAndSet(curState, cont)) {
-                            // Perform a clean-up in case of cancellation.
-                            //
-                            // Importantly, we MUST install the cancellation handler
-                            // only when the algorithm is bound to suspend. Otherwise,
-                            // a race with [tryRegister] is possible, and the provided
-                            // via [disposeOnCompletion] cancellation action can be ignored.
-                            // Also, we MUST guarantee that this dispose handle is _visible_
-                            // according to the memory model, and we CAN guarantee this when
-                            // the state is updated.
-                            cont.invokeOnCancellation(this)
-                            return@sc
-                        }
-                    // This `select` is in REGISTRATION phase, but there are clauses that has to be registered again.
-                    // Perform the required registrations and try again.
-                    curState is List<*> ->
-                        if (state.compareAndSet(curState, STATE_REG)) {
-                            @Suppress("UNCHECKED_CAST")
-                            curState as List<Any>
-                            curState.forEach { reregisterClause(it) }
-                        }
-                    // This `select` operation became completed during clauses re-registration.
-                    curState is SelectImplementation<*>.ClauseData -> {
-                        cont.resume(Unit, curState.createOnCancellationAction(this, internalResult))
-                        return@sc
-                    }
-                    // This `select` cannot be in any other state.
-                    else -> error("unexpected state: $curState")
+    private suspend fun waitUntilSelected() = suspendCancellableCoroutine<Unit> sc@{ cont ->
+        // Update the state.
+        state.loop { curState ->
+            when {
+                // This `select` is in REGISTRATION phase, and there is no clause to be re-registered.
+                // Perform a transition to WAITING phase by storing the current continuation.
+                curState === STATE_REG -> if (state.compareAndSet(curState, cont)) {
+                    // Perform a clean-up in case of cancellation.
+                    //
+                    // Importantly, we MUST install the cancellation handler
+                    // only when the algorithm is bound to suspend. Otherwise,
+                    // a race with [tryRegister] is possible, and the provided
+                    // via [disposeOnCompletion] cancellation action can be ignored.
+                    // Also, we MUST guarantee that this dispose handle is _visible_
+                    // according to the memory model, and we CAN guarantee this when
+                    // the state is updated.
+                    cont.invokeOnCancellation(this)
+                    return@sc
                 }
+                // This `select` is in REGISTRATION phase, but there are clauses that has to be registered again.
+                // Perform the required registrations and try again.
+                curState is List<*> -> if (state.compareAndSet(curState, STATE_REG)) {
+                    @Suppress("UNCHECKED_CAST")
+                    curState as List<Any>
+                    curState.forEach { reregisterClause(it) }
+                }
+                // This `select` operation became completed during clauses re-registration.
+                curState is SelectImplementation<*>.ClauseData -> {
+                    cont.resume(Unit, curState.createOnCancellationAction(this, internalResult))
+                    return@sc
+                }
+                // This `select` cannot be in any other state.
+                else -> error("unexpected state: $curState")
             }
         }
+    }
 
     /**
      * Re-registers the clause with the specified [clause object][clauseObject] after unsuccessful [trySelect] of this clause while the
@@ -542,7 +534,6 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
     // ==============
     // = RENDEZVOUS =
     // ==============
-
     override fun trySelect(clauseObject: Any, result: Any?): Boolean = trySelectInternal(clauseObject, result) == TRY_SELECT_SUCCESSFUL
 
     /**
@@ -559,7 +550,8 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
                     val clause = findClause(clauseObject) ?: continue // retry if `clauses` is already `null`
                     val onCancellation = clause.createOnCancellationAction(this@SelectImplementation, internalResult)
                     if (state.compareAndSet(curState, clause)) {
-                        @Suppress("UNCHECKED_CAST") val cont = curState as CancellableContinuation<Unit>
+                        @Suppress("UNCHECKED_CAST")
+                        val cont = curState as CancellableContinuation<Unit>
                         // Success! Store the resumption value and
                         // try to resume the continuation.
                         this.internalResult = internalResult
@@ -603,7 +595,6 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
     // ==============
     // = COMPLETION =
     // ==============
-
     /**
      * Completes this `select` operation after the internal result is provided via [SelectInstance.trySelect] or
      * [SelectInstance.selectInRegistrationPhase]. (1) First, this function applies the [ProcessResultFunction] of the selected clause to
@@ -614,7 +605,8 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
     private suspend fun complete(): R {
         assert { isSelected }
         // Get the selected clause.
-        @Suppress("UNCHECKED_CAST") val selectedClause = state.value as SelectImplementation<R>.ClauseData
+        @Suppress("UNCHECKED_CAST")
+        val selectedClause = state.value as SelectImplementation<R>.ClauseData
         // Perform the clean-up before the internal result processing and
         // the user-specified block invocation to guarantee the absence
         // of memory leaks. Collect the internal result before that.
@@ -636,16 +628,15 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
         }
     }
 
-    private suspend fun processResultAndInvokeBlockRecoveringException(clause: ClauseData, internalResult: Any?): R =
-        try {
-            val blockArgument = clause.processResult(internalResult)
-            clause.invokeBlock(blockArgument)
-        } catch (e: Throwable) {
-            // In the debug mode, we need to properly recover
-            // the stack-trace of the exception; the tail-call
-            // optimization cannot be applied here.
-            recoverAndThrow(e)
-        }
+    private suspend fun processResultAndInvokeBlockRecoveringException(clause: ClauseData, internalResult: Any?): R = try {
+        val blockArgument = clause.processResult(internalResult)
+        clause.invokeBlock(blockArgument)
+    } catch (e: Throwable) {
+        // In the debug mode, we need to properly recover
+        // the stack-trace of the exception; the tail-call
+        // optimization cannot be applied here.
+        recoverAndThrow(e)
+    }
 
     /** Invokes all [DisposableHandle]-s provided via [SelectInstance.disposeOnCompletion] during clause registrations. */
     private fun cleanup(selectedClause: ClauseData) {
@@ -695,8 +686,10 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
         private val block: Any, // the user-specified block, which should be called if this clause becomes selected
         @JvmField val onCancellationConstructor: OnCancellationConstructor?,
     ) {
-        @JvmField var disposableHandleOrSegment: Any? = null
-        @JvmField var indexInSegment: Int = -1
+        @JvmField
+        var disposableHandleOrSegment: Any? = null
+        @JvmField
+        var indexInSegment: Int = -1
 
         /**
          * Tries to register the specified [select] instance in [clauseObject] and check whether the registration succeeded or a rendezvous
@@ -759,7 +752,7 @@ internal open class SelectImplementation<R>(override val context: CoroutineConte
 }
 
 private fun CancellableContinuation<Unit>.tryResume(
-    onCancellation: ((cause: Throwable, value: Any?, context: CoroutineContext) -> Unit)?
+    onCancellation: ((cause: Throwable, value: Any?, context: CoroutineContext) -> Unit)?,
 ): Boolean {
     val token = tryResume(Unit, null, onCancellation) ?: return false
     completeResume(token)
@@ -780,14 +773,13 @@ internal enum class TrySelectDetailedResult {
     ALREADY_SELECTED,
 }
 
-private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDetailedResult =
-    when (trySelectInternalResult) {
-        TRY_SELECT_SUCCESSFUL -> SUCCESSFUL
-        TRY_SELECT_REREGISTER -> REREGISTER
-        TRY_SELECT_CANCELLED -> CANCELLED
-        TRY_SELECT_ALREADY_SELECTED -> ALREADY_SELECTED
-        else -> error("Unexpected internal result: $trySelectInternalResult")
-    }
+private fun TrySelectDetailedResult(trySelectInternalResult: Int): TrySelectDetailedResult = when (trySelectInternalResult) {
+    TRY_SELECT_SUCCESSFUL -> SUCCESSFUL
+    TRY_SELECT_REREGISTER -> REREGISTER
+    TRY_SELECT_CANCELLED -> CANCELLED
+    TRY_SELECT_ALREADY_SELECTED -> ALREADY_SELECTED
+    else -> error("Unexpected internal result: $trySelectInternalResult")
+}
 
 // Markers for REGISTRATION, COMPLETED, and CANCELLED states.
 private val STATE_REG = Symbol("STATE_REG")

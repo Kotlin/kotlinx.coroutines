@@ -9,7 +9,6 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 // --------------- core job interfaces ---------------
-
 /**
  * A background job. Conceptually, a job is a cancellable thing with a lifecycle that concludes in its completion.
  *
@@ -99,7 +98,6 @@ public interface Job : CoroutineContext.Element {
     public companion object Key : CoroutineContext.Key<Job>
 
     // ------------ state query ------------
-
     /**
      * Returns the parent of the current job if the parent-child relationship is established or `null` if the job has no parent or was
      * successfully completed.
@@ -111,7 +109,8 @@ public interface Job : CoroutineContext.Element {
      *
      * @see [Job] state transitions for additional details.
      */
-    @ExperimentalCoroutinesApi public val parent: Job?
+    @ExperimentalCoroutinesApi
+    public val parent: Job?
 
     /**
      * Returns `true` when this job is active -- it was already started and has not completed nor was cancelled yet. The job that is waiting
@@ -152,10 +151,10 @@ public interface Job : CoroutineContext.Element {
      *
      * @suppress **This an internal API and should not be used from general code.**
      */
-    @InternalCoroutinesApi public fun getCancellationException(): CancellationException
+    @InternalCoroutinesApi
+    public fun getCancellationException(): CancellationException
 
     // ------------ state update ------------
-
     /**
      * Starts coroutine related to this job (if any) if it was not started yet. The result is `true` if this invocation actually started
      * coroutine or `false` if it was already started or completed.
@@ -177,7 +176,6 @@ public interface Job : CoroutineContext.Element {
     public fun cancel(cause: Throwable? = null): Boolean
 
     // ------------ parent-child ------------
-
     /**
      * Returns a sequence of this job's children.
      *
@@ -213,10 +211,10 @@ public interface Job : CoroutineContext.Element {
      * @suppress This is an internal API. This method is too error-prone for public API. Used in IntelliJ.
      */
     // ChildJob and ChildHandle are made internal on purpose to further deter 3rd-party impl of Job
-    @InternalCoroutinesApi public fun attachChild(child: ChildJob): ChildHandle
+    @InternalCoroutinesApi
+    public fun attachChild(child: ChildJob): ChildHandle
 
     // ------------ state waiting ------------
-
     /**
      * Suspends the coroutine until this job is complete. This invocation resumes normally (without exception) when the job is complete for
      * any reason and the [Job] of the invoking coroutine is still [active][isActive]. This function also [starts][Job.start] the
@@ -245,7 +243,6 @@ public interface Job : CoroutineContext.Element {
     public val onJoin: SelectClause0
 
     // ------------ low-level state-notification ------------
-
     /**
      * Registers handler that is **synchronously** invoked once on completion of this job. When the job is already complete, then the
      * handler is immediately invoked with the job's exception or cancellation cause or `null`. Otherwise, the handler will be invoked once
@@ -282,16 +279,14 @@ public interface Job : CoroutineContext.Element {
     ): DisposableHandle
 
     // ------------ unstable internal API ------------
-
     /**
      * @suppress **Error**: Operator '+' on two Job objects is meaningless. Job is a coroutine context element and `+` is a set-sum operator
      *   for coroutine contexts. The job to the right of `+` just replaces the job the left of `+`.
      */
     @Deprecated(
-        message =
-            "Operator '+' on two Job objects is meaningless. " +
-                "Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
-                "The job to the right of `+` just replaces the job the left of `+`.",
+        message = "Operator '+' on two Job objects is meaningless. " +
+        "Job is a coroutine context element and `+` is a set-sum operator for coroutine contexts. " +
+        "The job to the right of `+` just replaces the job the left of `+`.",
         level = DeprecationLevel.ERROR,
     )
     public operator fun plus(other: Job): Job = other
@@ -316,11 +311,10 @@ public interface Job : CoroutineContext.Element {
 internal fun Job.invokeOnCompletion(
     invokeImmediately: Boolean = true,
     handler: JobNode,
-): DisposableHandle =
-    when (this) {
-        is JobSupport -> invokeOnCompletionInternal(invokeImmediately, handler)
-        else -> invokeOnCompletion(handler.onCancelling, invokeImmediately, handler::invoke)
-    }
+): DisposableHandle = when (this) {
+    is JobSupport -> invokeOnCompletionInternal(invokeImmediately, handler)
+    else -> invokeOnCompletion(handler.onCancelling, invokeImmediately, handler::invoke)
+}
 
 /**
  * Creates a job object in an active state. A failure of any child of this job immediately causes this job to fail, too, and cancels the
@@ -337,7 +331,8 @@ internal fun Job.invokeOnCompletion(
  *
  * @param parent an optional parent job.
  */
-@Suppress("FunctionName") public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
+@Suppress("FunctionName")
+public fun Job(parent: Job? = null): CompletableJob = JobImpl(parent)
 
 /** @suppress Binary compatibility only */
 @Suppress("FunctionName")
@@ -352,7 +347,6 @@ public fun interface DisposableHandle {
 }
 
 // -------------------- Parent-child communication --------------------
-
 /**
  * A reference that parent receives from its child so that it can report its cancellation.
  *
@@ -368,7 +362,8 @@ public interface ChildJob : Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    @InternalCoroutinesApi public fun parentCancelled(parentJob: ParentJob)
+    @InternalCoroutinesApi
+    public fun parentCancelled(parentJob: ParentJob)
 }
 
 /**
@@ -389,7 +384,8 @@ public interface ParentJob : Job {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    @InternalCoroutinesApi public fun getChildJobCancellationCause(): CancellationException
+    @InternalCoroutinesApi
+    public fun getChildJobCancellationCause(): CancellationException
 }
 
 /**
@@ -406,7 +402,8 @@ public interface ChildHandle : DisposableHandle {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    @InternalCoroutinesApi public val parent: Job?
+    @InternalCoroutinesApi
+    public val parent: Job?
 
     /**
      * Child is cancelling its parent by invoking this method. This method is invoked by the child twice. The first time child report its
@@ -415,11 +412,11 @@ public interface ChildHandle : DisposableHandle {
      *
      * @suppress **This is unstable API and it is subject to change.**
      */
-    @InternalCoroutinesApi public fun childCancelled(cause: Throwable): Boolean
+    @InternalCoroutinesApi
+    public fun childCancelled(cause: Throwable): Boolean
 }
 
 // -------------------- Job extensions --------------------
-
 /**
  * Disposes a specified [handle] when this job is complete.
  *
@@ -467,7 +464,6 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
 }
 
 // -------------------- CoroutineContext extensions --------------------
-
 /**
  * Returns `true` when the [Job] of the coroutine in this context is still active (has not completed and was not cancelled yet) or the
  * context does not have a [Job] in it.
@@ -481,8 +477,7 @@ public fun Job.cancelChildren(cause: Throwable? = null) {
  *
  * The `coroutineContext.isActive` expression is a shortcut for `get(Job)?.isActive ?: true`. See [Job.isActive].
  */
-public val CoroutineContext.isActive: Boolean
-    get() = get(Job)?.isActive ?: true
+public val CoroutineContext.isActive: Boolean get() = get(Job)?.isActive ?: true
 
 /** Cancels [Job] of this context with an optional cancellation cause. See [Job.cancel] for details. */
 public fun CoroutineContext.cancel(cause: CancellationException? = null) {
@@ -558,8 +553,7 @@ public fun CoroutineContext.cancelChildren(): Unit = cancelChildren(null)
  * This method is a short-cut for `coroutineContext[Job]!!` and should be used only when it is known in advance that the context does have
  * instance of the job in it.
  */
-public val CoroutineContext.job: Job
-    get() = get(Job) ?: error("Current context doesn't contain Job in it: $this")
+public val CoroutineContext.job: Job get() = get(Job) ?: error("Current context doesn't contain Job in it: $this")
 
 /** @suppress This method has bad semantics when cause is not a [CancellationException]. Use [CoroutineContext.cancelChildren]. */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
@@ -578,8 +572,7 @@ private fun Throwable?.orCancellation(job: Job): Throwable = this ?: JobCancella
 @InternalCoroutinesApi
 public object NonDisposableHandle : DisposableHandle, ChildHandle {
 
-    override val parent: Job?
-        get() = null
+    override val parent: Job? get() = null
 
     /**
      * Does not do anything.
@@ -604,8 +597,7 @@ public object NonDisposableHandle : DisposableHandle, ChildHandle {
 }
 
 private class DisposeOnCompletion(private val handle: DisposableHandle) : JobNode() {
-    override val onCancelling
-        get() = false
+    override val onCancelling get() = false
 
     override fun invoke(cause: Throwable?) = handle.dispose()
 }

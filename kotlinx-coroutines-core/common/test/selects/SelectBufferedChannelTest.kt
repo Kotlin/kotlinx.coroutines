@@ -172,38 +172,36 @@ class SelectBufferedChannelTest : TestBase() {
     }
 
     @Test
-    fun testSelectReceiveClosed() =
-        runTest({ it is ClosedReceiveChannelException }) {
-            expect(1)
-            val channel = Channel<String>(1)
-            channel.close()
-            finish(2)
-            select<Unit> {
-                channel.onReceive {
-                    expectUnreached()
-                }
+    fun testSelectReceiveClosed() = runTest({ it is ClosedReceiveChannelException }) {
+        expect(1)
+        val channel = Channel<String>(1)
+        channel.close()
+        finish(2)
+        select<Unit> {
+            channel.onReceive {
+                expectUnreached()
             }
-            expectUnreached()
         }
+        expectUnreached()
+    }
 
     @Test
-    fun testSelectReceiveWaitClosed() =
-        runTest({ it is ClosedReceiveChannelException }) {
-            expect(1)
-            val channel = Channel<String>(1)
-            launch {
-                expect(3)
-                channel.close()
-                finish(4)
-            }
-            expect(2)
-            select<Unit> {
-                channel.onReceive {
-                    expectUnreached()
-                }
-            }
-            expectUnreached()
+    fun testSelectReceiveWaitClosed() = runTest({ it is ClosedReceiveChannelException }) {
+        expect(1)
+        val channel = Channel<String>(1)
+        launch {
+            expect(3)
+            channel.close()
+            finish(4)
         }
+        expect(2)
+        select<Unit> {
+            channel.onReceive {
+                expectUnreached()
+            }
+        }
+        expectUnreached()
+    }
 
     @Test
     fun testSelectSendResourceCleanup() = runTest {
@@ -357,16 +355,15 @@ class SelectBufferedChannelTest : TestBase() {
         expect(1)
         launch {
             expect(3)
-            val res =
-                select<String> {
-                    c.onReceiveCatching { v ->
-                        expect(6)
-                        assertEquals(42, v.getOrNull())
-                        yield() // back to main
-                        expect(8)
-                        "OK"
-                    }
+            val res = select<String> {
+                c.onReceiveCatching { v ->
+                    expect(6)
+                    assertEquals(42, v.getOrNull())
+                    yield() // back to main
+                    expect(8)
+                    "OK"
                 }
+            }
             expect(9)
             assertEquals("OK", res)
         }

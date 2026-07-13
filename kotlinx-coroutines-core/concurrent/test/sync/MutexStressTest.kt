@@ -10,7 +10,8 @@ class MutexStressTest : TestBase() {
 
     private val n = 1000 * stressTestMultiplier // It mostly stresses K/N as JVM Mutex is tested by lincheck
 
-    @Test fun testDefaultDispatcher() = runTest { testBody(Dispatchers.Default) }
+    @Test
+    fun testDefaultDispatcher() = runTest { testBody(Dispatchers.Default) }
 
     @Test
     fun testSingleThreadContext() = runTest {
@@ -38,16 +39,15 @@ class MutexStressTest : TestBase() {
         val k = 100
         var shared = 0
         val mutex = Mutex()
-        val jobs =
-            List(n) {
-                launch(dispatcher) {
-                    repeat(k) {
-                        mutex.lock()
-                        shared++
-                        mutex.unlock()
-                    }
+        val jobs = List(n) {
+            launch(dispatcher) {
+                repeat(k) {
+                    mutex.lock()
+                    shared++
+                    mutex.unlock()
                 }
             }
+        }
         jobs.forEach { it.join() }
         assertEquals(n * k, shared)
     }
@@ -62,18 +62,16 @@ class MutexStressTest : TestBase() {
                 // otherwise it's a bug.
                 assertTrue(mutex.isLocked)
                 var job1EnteredCriticalSection = false
-                val job1 =
-                    launch(start = CoroutineStart.UNDISPATCHED) {
-                        mutex.lock()
-                        job1EnteredCriticalSection = true
-                        mutex.unlock()
-                    }
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+                    mutex.lock()
+                    job1EnteredCriticalSection = true
+                    mutex.unlock()
+                }
                 // check that `job1` didn't finish the call to `acquire()`
                 assertEquals(false, job1EnteredCriticalSection)
-                val job2 =
-                    launch(pool) {
-                        mutex.unlock()
-                    }
+                val job2 = launch(pool) {
+                    mutex.unlock()
+                }
                 // Because `job2` executes in a separate thread, this
                 // cancellation races with the call to `unlock()`.
                 job1.cancelAndJoin()
@@ -95,21 +93,19 @@ class MutexStressTest : TestBase() {
                 // otherwise it's a bug.
                 assertTrue(mutex.isLocked)
                 var job1EnteredCriticalSection = false
-                val job1 =
-                    launch(start = CoroutineStart.UNDISPATCHED) {
-                        select {
-                            mutex.onLock {
-                                job1EnteredCriticalSection = true
-                                mutex.unlock()
-                            }
+                val job1 = launch(start = CoroutineStart.UNDISPATCHED) {
+                    select {
+                        mutex.onLock {
+                            job1EnteredCriticalSection = true
+                            mutex.unlock()
                         }
                     }
+                }
                 // check that `job1` didn't finish the call to `acquire()`
                 assertEquals(false, job1EnteredCriticalSection)
-                val job2 =
-                    launch(pool) {
-                        mutex.unlock()
-                    }
+                val job2 = launch(pool) {
+                    mutex.unlock()
+                }
                 // Because `job2` executes in a separate thread, this
                 // cancellation races with the call to `unlock()`.
                 job1.cancelAndJoin()
@@ -125,11 +121,10 @@ class MutexStressTest : TestBase() {
         val mutex = Mutex()
         val n = 1000 * stressTestMultiplier
         repeat(n) {
-            val job =
-                launch(Dispatchers.Default) {
-                    mutex.lock()
-                    mutex.unlock()
-                }
+            val job = launch(Dispatchers.Default) {
+                mutex.lock()
+                mutex.unlock()
+            }
             mutex.withLock {
                 job.cancel()
             }

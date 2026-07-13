@@ -15,66 +15,58 @@ import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.managed.modelchecking.*
 
-class RendezvousChannelLincheckTest :
-    ChannelLincheckTestBaseWithOnSend(
-        c = Channel(RENDEZVOUS),
-        sequentialSpecification = SequentialRendezvousChannel::class.java,
-    )
+class RendezvousChannelLincheckTest : ChannelLincheckTestBaseWithOnSend(
+    c = Channel(RENDEZVOUS),
+    sequentialSpecification = SequentialRendezvousChannel::class.java,
+)
 
 class SequentialRendezvousChannel : SequentialIntChannelBase(RENDEZVOUS)
 
-class Buffered1ChannelLincheckTest :
-    ChannelLincheckTestBaseWithOnSend(
-        c = Channel(1),
-        sequentialSpecification = SequentialBuffered1Channel::class.java,
-    )
+class Buffered1ChannelLincheckTest : ChannelLincheckTestBaseWithOnSend(
+    c = Channel(1),
+    sequentialSpecification = SequentialBuffered1Channel::class.java,
+)
 
-class Buffered1BroadcastChannelLincheckTest :
-    ChannelLincheckTestBase(
-        c = ChannelViaBroadcast(BroadcastChannelImpl(1)),
-        sequentialSpecification = SequentialBuffered1Channel::class.java,
-        obstructionFree = false,
-    )
+class Buffered1BroadcastChannelLincheckTest : ChannelLincheckTestBase(
+    c = ChannelViaBroadcast(BroadcastChannelImpl(1)),
+    sequentialSpecification = SequentialBuffered1Channel::class.java,
+    obstructionFree = false,
+)
 
 class SequentialBuffered1Channel : SequentialIntChannelBase(1)
 
-class Buffered2ChannelLincheckTest :
-    ChannelLincheckTestBaseWithOnSend(
-        c = Channel(2),
-        sequentialSpecification = SequentialBuffered2Channel::class.java,
-    )
+class Buffered2ChannelLincheckTest : ChannelLincheckTestBaseWithOnSend(
+    c = Channel(2),
+    sequentialSpecification = SequentialBuffered2Channel::class.java,
+)
 
-class Buffered2BroadcastChannelLincheckTest :
-    ChannelLincheckTestBase(
-        c = ChannelViaBroadcast(BroadcastChannelImpl(2)),
-        sequentialSpecification = SequentialBuffered2Channel::class.java,
-        obstructionFree = false,
-    )
+class Buffered2BroadcastChannelLincheckTest : ChannelLincheckTestBase(
+    c = ChannelViaBroadcast(BroadcastChannelImpl(2)),
+    sequentialSpecification = SequentialBuffered2Channel::class.java,
+    obstructionFree = false,
+)
 
 class SequentialBuffered2Channel : SequentialIntChannelBase(2)
 
-class UnlimitedChannelLincheckTest :
-    ChannelLincheckTestBaseAll(
-        c = Channel(UNLIMITED),
-        sequentialSpecification = SequentialUnlimitedChannel::class.java,
-    )
+class UnlimitedChannelLincheckTest : ChannelLincheckTestBaseAll(
+    c = Channel(UNLIMITED),
+    sequentialSpecification = SequentialUnlimitedChannel::class.java,
+)
 
 class SequentialUnlimitedChannel : SequentialIntChannelBase(UNLIMITED)
 
-class ConflatedChannelLincheckTest :
-    ChannelLincheckTestBaseAll(
-        c = Channel(CONFLATED),
-        sequentialSpecification = SequentialConflatedChannel::class.java,
-        obstructionFree = false,
-    )
+class ConflatedChannelLincheckTest : ChannelLincheckTestBaseAll(
+    c = Channel(CONFLATED),
+    sequentialSpecification = SequentialConflatedChannel::class.java,
+    obstructionFree = false,
+)
 
 @Suppress("DEPRECATION_ERROR")
-class ConflatedBroadcastChannelLincheckTest :
-    ChannelLincheckTestBaseAll(
-        c = ChannelViaBroadcast(ConflatedBroadcastChannel()),
-        sequentialSpecification = SequentialConflatedChannel::class.java,
-        obstructionFree = false,
-    )
+class ConflatedBroadcastChannelLincheckTest : ChannelLincheckTestBaseAll(
+    c = ChannelViaBroadcast(ConflatedBroadcastChannel()),
+    sequentialSpecification = SequentialConflatedChannel::class.java,
+    obstructionFree = false,
+)
 
 class SequentialConflatedChannel : SequentialIntChannelBase(CONFLATED)
 
@@ -83,11 +75,14 @@ abstract class ChannelLincheckTestBaseAll(
     sequentialSpecification: Class<*>,
     obstructionFree: Boolean = true,
 ) : ChannelLincheckTestBaseWithOnSend(c, sequentialSpecification, obstructionFree) {
-    @Operation override fun trySend(value: Int) = super.trySend(value)
+    @Operation
+    override fun trySend(value: Int) = super.trySend(value)
 
-    @Operation override fun isClosedForReceive() = super.isClosedForReceive()
+    @Operation
+    override fun isClosedForReceive() = super.isClosedForReceive()
 
-    @Operation override fun isEmpty() = super.isEmpty()
+    @Operation
+    override fun isEmpty() = super.isEmpty()
 }
 
 abstract class ChannelLincheckTestBaseWithOnSend(
@@ -96,12 +91,14 @@ abstract class ChannelLincheckTestBaseWithOnSend(
     obstructionFree: Boolean = true,
 ) : ChannelLincheckTestBase(c, sequentialSpecification, obstructionFree) {
     @Operation(allowExtraSuspension = true, blocking = true)
-    suspend fun sendViaSelect(@Param(name = "value") value: Int): Any =
-        try {
-            select<Unit> { c.onSend(value) {} }
-        } catch (e: NumberedCancellationException) {
-            e.testResult
-        }
+    suspend fun sendViaSelect(
+        @Param(name = "value")
+        value: Int,
+    ): Any = try {
+        select<Unit> { c.onSend(value) {} }
+    } catch (e: NumberedCancellationException) {
+        e.testResult
+    }
 }
 
 @Param.Params(
@@ -115,75 +112,83 @@ abstract class ChannelLincheckTestBase(
 ) : AbstractLincheckTest() {
 
     @Operation(allowExtraSuspension = true, blocking = true)
-    suspend fun send(@Param(name = "value") value: Int): Any =
-        try {
-            c.send(value)
-        } catch (e: NumberedCancellationException) {
-            e.testResult
-        }
+    suspend fun send(
+        @Param(name = "value")
+        value: Int,
+    ): Any = try {
+        c.send(value)
+    } catch (e: NumberedCancellationException) {
+        e.testResult
+    }
 
     // @Operation TODO: `trySend()` is not linearizable as it can fail due to postponed buffer expansion
     //            TODO: or make a rendezvous with `tryReceive`, which violates the sequential specification.
-    open fun trySend(@Param(name = "value") value: Int): Any =
-        c.trySend(value)
-            .onSuccess {
-                return true
-            }
-            .onFailure {
-                return if (it is NumberedCancellationException) it.testResult else false
-            }
-
-    @Operation(allowExtraSuspension = true, blocking = true)
-    suspend fun receive(): Any =
-        try {
-            c.receive()
-        } catch (e: NumberedCancellationException) {
-            e.testResult
+    open fun trySend(
+        @Param(name = "value")
+        value: Int,
+    ): Any = c.trySend(value)
+        .onSuccess {
+            return true
+        }
+        .onFailure {
+            return if (it is NumberedCancellationException) it.testResult else false
         }
 
     @Operation(allowExtraSuspension = true, blocking = true)
-    suspend fun receiveCatching(): Any =
-        c.receiveCatching()
-            .onSuccess {
-                return it
-            }
-            .onClosed { e ->
-                return (e as NumberedCancellationException).testResult
-            }
+    suspend fun receive(): Any = try {
+        c.receive()
+    } catch (e: NumberedCancellationException) {
+        e.testResult
+    }
+
+    @Operation(allowExtraSuspension = true, blocking = true)
+    suspend fun receiveCatching(): Any = c.receiveCatching()
+        .onSuccess {
+            return it
+        }
+        .onClosed { e ->
+            return (e as NumberedCancellationException).testResult
+        }
 
     @Operation(blocking = true)
-    fun tryReceive(): Any? =
-        c.tryReceive()
-            .onSuccess {
-                return it
-            }
-            .onFailure {
-                return if (it is NumberedCancellationException) it.testResult else null
-            }
-
-    @Operation(allowExtraSuspension = true, blocking = true)
-    suspend fun receiveViaSelect(): Any =
-        try {
-            select<Int> { c.onReceive { it } }
-        } catch (e: NumberedCancellationException) {
-            e.testResult
+    fun tryReceive(): Any? = c.tryReceive()
+        .onSuccess {
+            return it
+        }
+        .onFailure {
+            return if (it is NumberedCancellationException) it.testResult else null
         }
 
-    @Operation(causesBlocking = true, blocking = true)
-    fun close(@Param(name = "closeToken") token: Int): Boolean = c.close(NumberedCancellationException(token))
+    @Operation(allowExtraSuspension = true, blocking = true)
+    suspend fun receiveViaSelect(): Any = try {
+        select<Int> { c.onReceive { it } }
+    } catch (e: NumberedCancellationException) {
+        e.testResult
+    }
 
     @Operation(causesBlocking = true, blocking = true)
-    fun cancel(@Param(name = "closeToken") token: Int) = c.cancel(NumberedCancellationException(token))
+    fun close(
+        @Param(name = "closeToken")
+        token: Int,
+    ): Boolean = c.close(NumberedCancellationException(token))
+
+    @Operation(causesBlocking = true, blocking = true)
+    fun cancel(
+        @Param(name = "closeToken")
+        token: Int,
+    ) = c.cancel(NumberedCancellationException(token))
 
     // @Operation TODO non-linearizable in BufferedChannel
     open fun isClosedForReceive() = c.isClosedForReceive
 
-    @Operation(blocking = true) fun isClosedForSend() = c.isClosedForSend
+    @Operation(blocking = true)
+    fun isClosedForSend() = c.isClosedForSend
 
     // @Operation TODO non-linearizable in BufferedChannel
     open fun isEmpty() = c.isEmpty
 
-    @StateRepresentation fun state() = (c as? BufferedChannel<*>)?.toStringDebug() ?: c.toString()
+    @StateRepresentation
+    fun state() = (c as? BufferedChannel<*>)?.toStringDebug() ?: c.toString()
 
     @Validate
     fun validate() {
@@ -205,15 +210,13 @@ abstract class SequentialIntChannelBase(private val capacity: Int) {
     private val buffer = ArrayList<Int>()
     private var closedMessage: String? = null
 
-    suspend fun send(x: Int): Any =
-        when (val offerRes = trySend(x)) {
-            true -> Unit
-            false ->
-                suspendCancellableCoroutine { cont ->
-                    senders.add(cont to x)
-                }
-            else -> offerRes
+    suspend fun send(x: Int): Any = when (val offerRes = trySend(x)) {
+        true -> Unit
+        false -> suspendCancellableCoroutine { cont ->
+            senders.add(cont to x)
         }
+        else -> offerRes
+    }
 
     fun trySend(element: Int): Any {
         if (closedMessage !== null) return closedMessage!!
@@ -239,11 +242,10 @@ abstract class SequentialIntChannelBase(private val capacity: Int) {
         return false
     }
 
-    suspend fun receive(): Any =
-        tryReceive()
-            ?: suspendCancellableCoroutine { cont ->
-                receivers.add(cont)
-            }
+    suspend fun receive(): Any = tryReceive()
+        ?: suspendCancellableCoroutine { cont ->
+            receivers.add(cont)
+        }
 
     suspend fun receiveCatching() = receive()
 

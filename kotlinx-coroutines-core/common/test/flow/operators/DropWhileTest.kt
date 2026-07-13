@@ -27,21 +27,19 @@ class DropWhileTest : TestBase() {
 
     @Test
     fun testErrorCancelsUpstream() = runTest {
-        val flow =
-            flow {
-                    coroutineScope {
-                        launch(start = CoroutineStart.ATOMIC) {
-                            hang { expect(4) }
-                        }
-                        expect(2)
-                        emit(1)
-                        expectUnreached()
-                    }
+        val flow = flow {
+            coroutineScope {
+                launch(start = CoroutineStart.ATOMIC) {
+                    hang { expect(4) }
                 }
-                .dropWhile {
-                    expect(3)
-                    throw TestException()
-                }
+                expect(2)
+                emit(1)
+                expectUnreached()
+            }
+        }.dropWhile {
+            expect(3)
+            throw TestException()
+        }
 
         expect(1)
         assertFailsWith<TestException>(flow)

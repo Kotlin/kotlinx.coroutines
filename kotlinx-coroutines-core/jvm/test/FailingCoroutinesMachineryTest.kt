@@ -17,8 +17,7 @@ class FailingCoroutinesMachineryTest(
     class TestDispatcher(val name: String, val block: () -> CoroutineDispatcher) {
         private var _value: CoroutineDispatcher? = null
 
-        val value: CoroutineDispatcher
-            get() = _value ?: block().also { _value = it }
+        val value: CoroutineDispatcher get() = _value ?: block().also { _value = it }
 
         override fun toString(): String = name
 
@@ -39,8 +38,7 @@ class FailingCoroutinesMachineryTest(
     private object FailingUpdate : ThreadContextElement<Unit> {
         private object Key : CoroutineContext.Key<MyElement>
 
-        override val key: CoroutineContext.Key<*>
-            get() = Key
+        override val key: CoroutineContext.Key<*> get() = Key
 
         override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {}
 
@@ -54,8 +52,7 @@ class FailingCoroutinesMachineryTest(
     private object FailingRestore : ThreadContextElement<Unit> {
         private object Key : CoroutineContext.Key<MyElement>
 
-        override val key: CoroutineContext.Key<*>
-            get() = Key
+        override val key: CoroutineContext.Key<*> get() = Key
 
         override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {
             throw TestException("Prevent a coroutine from starting right here for some reason")
@@ -97,15 +94,14 @@ class FailingCoroutinesMachineryTest(
         @Parameterized.Parameters(name = "Element: {0}, dispatcher: {1}")
         fun dispatchers(): List<Array<Any>> {
             val elements = listOf<Any>(FailingRestore, FailingUpdate)
-            val dispatchers =
-                listOf<TestDispatcher>(
-                    TestDispatcher("Dispatchers.Unconfined") { Dispatchers.Unconfined },
-                    TestDispatcher("Dispatchers.Default") { Dispatchers.Default },
-                    TestDispatcher("Executors.newFixedThreadPool(1)") { Executors.newFixedThreadPool(1).asCoroutineDispatcher() },
-                    TestDispatcher("Executors.newScheduledThreadPool(1)") { Executors.newScheduledThreadPool(1).asCoroutineDispatcher() },
-                    TestDispatcher("ThrowingDispatcher") { ThrowingDispatcher },
-                    TestDispatcher("ThrowingDispatcher2") { ThrowingDispatcher2 },
-                )
+            val dispatchers = listOf<TestDispatcher>(
+                TestDispatcher("Dispatchers.Unconfined") { Dispatchers.Unconfined },
+                TestDispatcher("Dispatchers.Default") { Dispatchers.Default },
+                TestDispatcher("Executors.newFixedThreadPool(1)") { Executors.newFixedThreadPool(1).asCoroutineDispatcher() },
+                TestDispatcher("Executors.newScheduledThreadPool(1)") { Executors.newScheduledThreadPool(1).asCoroutineDispatcher() },
+                TestDispatcher("ThrowingDispatcher") { ThrowingDispatcher },
+                TestDispatcher("ThrowingDispatcher2") { ThrowingDispatcher2 },
+            )
             return elements.flatMap { element ->
                 dispatchers.map { dispatcher ->
                     arrayOf(element, dispatcher)

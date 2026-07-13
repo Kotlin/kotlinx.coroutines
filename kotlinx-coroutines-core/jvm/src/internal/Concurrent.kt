@@ -14,17 +14,18 @@ internal actual typealias WorkaroundAtomicReference<T> = java.util.concurrent.at
 
 // BenignDataRace is OptionalExpectation and doesn't have to be here
 // but then IC breaks. See KT-66317
-@Retention(AnnotationRetention.SOURCE) @Target(AnnotationTarget.FIELD) internal actual annotation class BenignDataRace()
+@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FIELD)
+internal actual annotation class BenignDataRace()
 
 @Suppress("NOTHING_TO_INLINE") // So that R8 can completely remove ConcurrentKt class
 internal actual inline fun <E> identitySet(expectedSize: Int): MutableSet<E> = Collections.newSetFromMap(IdentityHashMap(expectedSize))
 
-private val REMOVE_FUTURE_ON_CANCEL: Method? =
-    try {
-        ScheduledThreadPoolExecutor::class.java.getMethod("setRemoveOnCancelPolicy", Boolean::class.java)
-    } catch (_: Throwable) {
-        null
-    }
+private val REMOVE_FUTURE_ON_CANCEL: Method? = try {
+    ScheduledThreadPoolExecutor::class.java.getMethod("setRemoveOnCancelPolicy", Boolean::class.java)
+} catch (_: Throwable) {
+    null
+}
 
 /* We can not simply call `setRemoveOnCancelPolicy`, even though the code would compile and tests would pass,
  * because older Android versions don't support it. */

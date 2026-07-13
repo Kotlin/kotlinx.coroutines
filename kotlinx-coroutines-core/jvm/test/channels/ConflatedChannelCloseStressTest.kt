@@ -26,44 +26,41 @@ class ConflatedChannelCloseStressTest : TestBase() {
     fun testStressClose() = runBlocking {
         println("--- ConflatedChannelCloseStressTest with nSenders=$nSenders")
         val senderJobs = List(nSenders) { Job() }
-        val senders =
-            List(nSenders) { senderId ->
-                launch(pool) {
-                    var x = senderId
-                    try {
-                        while (isActive) {
-                            curChannel.get().trySend(x).onSuccess {
-                                x += nSenders
-                                sent.incrementAndGet()
-                            }
-                        }
-                    } finally {
-                        senderJobs[senderId].cancel()
-                    }
-                }
-            }
-        val closerJob = Job()
-        val closer =
+        val senders = List(nSenders) { senderId ->
             launch(pool) {
+                var x = senderId
                 try {
                     while (isActive) {
-                        flipChannel()
-                        closed.incrementAndGet()
-                        yield()
+                        curChannel.get().trySend(x).onSuccess {
+                            x += nSenders
+                            sent.incrementAndGet()
+                        }
                     }
                 } finally {
-                    closerJob.cancel()
+                    senderJobs[senderId].cancel()
                 }
             }
-        val receiver =
-            async(pool + NonCancellable) {
+        }
+        val closerJob = Job()
+        val closer = launch(pool) {
+            try {
                 while (isActive) {
-                    curChannel.get().receiveCatching().getOrElse {
-                        it?.let { throw it }
-                    }
-                    received.incrementAndGet()
+                    flipChannel()
+                    closed.incrementAndGet()
+                    yield()
                 }
+            } finally {
+                closerJob.cancel()
             }
+        }
+        val receiver = async(pool + NonCancellable) {
+            while (isActive) {
+                curChannel.get().receiveCatching().getOrElse {
+                    it?.let { throw it }
+                }
+                received.incrementAndGet()
+            }
+        }
         // print stats while running
         repeat(testSeconds) {
             delay(1000)

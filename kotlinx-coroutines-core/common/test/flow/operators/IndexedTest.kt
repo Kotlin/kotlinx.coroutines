@@ -29,10 +29,9 @@ class IndexedTest : TestBase() {
 
     @Test
     fun testCollectIndexedEmptyFlow() = runTest {
-        val flow =
-            flow<Int> {
-                expect(1)
-            }
+        val flow = flow<Int> {
+            expect(1)
+        }
 
         flow.collectIndexed { _, _ ->
             expectUnreached()

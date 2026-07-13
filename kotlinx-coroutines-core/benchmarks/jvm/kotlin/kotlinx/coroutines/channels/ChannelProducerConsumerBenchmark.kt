@@ -24,19 +24,24 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 open class ChannelProducerConsumerBenchmark {
-    @Param private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
+    @Param
+    private var _0_dispatcher: DispatcherCreator = DispatcherCreator.DEFAULT
 
-    @Param private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
+    @Param
+    private var _1_channel: ChannelCreator = ChannelCreator.RENDEZVOUS
 
-    @Param("0", "1000") private var _2_coroutines: Int = 0
+    @Param("0", "1000")
+    private var _2_coroutines: Int = 0
 
-    @Param("false", "true") private var _3_withSelect: Boolean = false
+    @Param("false", "true")
+    private var _3_withSelect: Boolean = false
 
     @Param("1", "2", "4", "8", "16") // local machine
     //    @Param("1", "2", "4", "8", "16", "32", "64", "128") // Server
     private var _4_parallelism: Int = 0
 
-    @Param("50") private var _5_workSize: Int = 0
+    @Param("50")
+    private var _5_workSize: Int = 0
 
     private lateinit var dispatcher: CoroutineDispatcher
     private lateinit var channel: Channel<Int>

@@ -100,13 +100,12 @@ class ConsumeTest : TestBase() {
     @Test
     fun testConsumeEachExitsOnCancellation() = runTest {
         val undeliveredElements = mutableListOf<Int>()
-        val channel =
-            Channel<Int>(
-                2,
-                onUndeliveredElement = {
-                    undeliveredElements.add(it)
-                },
-            )
+        val channel = Channel<Int>(
+            2,
+            onUndeliveredElement = {
+                undeliveredElements.add(it)
+            },
+        )
         launch {
             // These two elements will be sent and put into the buffer:
             channel.send(0)

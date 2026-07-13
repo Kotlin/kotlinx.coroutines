@@ -52,11 +52,10 @@ internal open class UnbiasedSelectImplementation<R>(context: CoroutineContext) :
         return super.doSelect()
     }
 
-    private fun shuffleAndRegisterClauses() =
-        try {
-            clausesToRegister.shuffle()
-            clausesToRegister.forEach { it.register() }
-        } finally {
-            clausesToRegister.clear()
-        }
+    private fun shuffleAndRegisterClauses() = try {
+        clausesToRegister.shuffle()
+        clausesToRegister.forEach { it.register() }
+    } finally {
+        clausesToRegister.clear()
+    }
 }

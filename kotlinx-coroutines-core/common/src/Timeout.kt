@@ -232,8 +232,7 @@ private class TimeoutCoroutine<U, in T : U>(
 }
 
 /** This exception is thrown by [withTimeout] to indicate timeout. */
-public class TimeoutCancellationException
-internal constructor(
+public class TimeoutCancellationException internal constructor(
     message: String,
     @JvmField @Transient internal val coroutine: Job?,
 ) : CancellationException(message), CopyableThrowable<TimeoutCancellationException> {
@@ -252,11 +251,10 @@ internal fun TimeoutCancellationException(
     coroutineName: String?,
 ): TimeoutCancellationException {
     val baseMessage = (delay as? DelayWithTimeoutDiagnostics)?.timeoutMessage(time.milliseconds) ?: "Timed out waiting for $time ms"
-    val message =
-        if (coroutineName != null) {
-            "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
-        } else {
-            baseMessage
-        }
+    val message = if (coroutineName != null) {
+        "Coroutine \"$coroutineName\" ${baseMessage.replaceFirstChar { it.lowercaseChar() }}"
+    } else {
+        baseMessage
+    }
     return TimeoutCancellationException(message, coroutine)
 }

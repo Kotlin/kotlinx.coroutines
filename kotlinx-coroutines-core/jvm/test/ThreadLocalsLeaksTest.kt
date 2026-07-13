@@ -18,16 +18,18 @@ import kotlin.test.*
 @Ignore
 class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
 
-    private class CustomContinuationInterceptor(private val delegate: ContinuationInterceptor) :
-        AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+    private class CustomContinuationInterceptor(private val delegate: ContinuationInterceptor) : AbstractCoroutineContextElement(
+        ContinuationInterceptor,
+    ), ContinuationInterceptor {
 
         override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
             return delegate.interceptContinuation(continuation)
         }
     }
 
-    private class CustomNeverEqualContinuationInterceptor(private val delegate: ContinuationInterceptor) :
-        AbstractCoroutineContextElement(ContinuationInterceptor), ContinuationInterceptor {
+    private class CustomNeverEqualContinuationInterceptor(private val delegate: ContinuationInterceptor) : AbstractCoroutineContextElement(
+        ContinuationInterceptor,
+    ), ContinuationInterceptor {
 
         override fun <T> interceptContinuation(continuation: Continuation<T>): Continuation<T> {
             return delegate.interceptContinuation(continuation)
@@ -36,41 +38,39 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
         override fun equals(other: Any?) = false
     }
 
-    @Test(timeout = 20_000L) fun testDefaultDispatcherNoSuspension() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = false)
-
-    @Test(timeout = 20_000L) fun testDefaultDispatcher() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
+    @Test(timeout = 20_000L)
+    fun testDefaultDispatcherNoSuspension() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = false)
 
     @Test(timeout = 20_000L)
-    fun testNonCoroutineDispatcher() =
-        ensureCoroutineContextGCed(
-            CustomContinuationInterceptor(Dispatchers.Default),
-            suspend = true,
-        )
+    fun testDefaultDispatcher() = ensureCoroutineContextGCed(Dispatchers.Default, suspend = true)
 
     @Test(timeout = 20_000L)
-    fun testNonCoroutineDispatcherSuspension() =
-        ensureCoroutineContextGCed(
-            CustomContinuationInterceptor(Dispatchers.Default),
-            suspend = false,
-        )
+    fun testNonCoroutineDispatcher() = ensureCoroutineContextGCed(
+        CustomContinuationInterceptor(Dispatchers.Default),
+        suspend = true,
+    )
+
+    @Test(timeout = 20_000L)
+    fun testNonCoroutineDispatcherSuspension() = ensureCoroutineContextGCed(
+        CustomContinuationInterceptor(Dispatchers.Default),
+        suspend = false,
+    )
 
     // Note asymmetric equals codepath never goes through the undispatched withContext, thus the separate test case
+    @Test(timeout = 20_000L)
+    fun testNonCoroutineDispatcherAsymmetricEquals() = ensureCoroutineContextGCed(
+        CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
+        suspend = true,
+    )
 
     @Test(timeout = 20_000L)
-    fun testNonCoroutineDispatcherAsymmetricEquals() =
-        ensureCoroutineContextGCed(
-            CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
-            suspend = true,
-        )
+    fun testNonCoroutineDispatcherAsymmetricEqualsSuspension() = ensureCoroutineContextGCed(
+        CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
+        suspend = false,
+    )
 
-    @Test(timeout = 20_000L)
-    fun testNonCoroutineDispatcherAsymmetricEqualsSuspension() =
-        ensureCoroutineContextGCed(
-            CustomNeverEqualContinuationInterceptor(Dispatchers.Default),
-            suspend = false,
-        )
-
-    @Volatile private var letThatSinkIn: Any = "What is my purpose? To frag the garbage collctor"
+    @Volatile
+    private var letThatSinkIn: Any = "What is my purpose? To frag the garbage collctor"
 
     private fun ensureCoroutineContextGCed(coroutineContext: CoroutineContext, suspend: Boolean) {
         // Tests are pretty timing-sensitive and flake ehavily on our virtualized Windows environment
@@ -87,16 +87,15 @@ class ThreadLocalCustomContinuationInterceptorTest : TestBase() {
 
         runTest {
             lateinit var ref: WeakReference<CoroutineName>
-            val job =
-                GlobalScope.launch(coroutineContext) {
-                    val coroutineName = CoroutineName("Yo")
-                    ref = WeakReference(coroutineName)
-                    withContext(coroutineName) {
-                        if (suspend) {
-                            delay(1)
-                        }
+            val job = GlobalScope.launch(coroutineContext) {
+                val coroutineName = CoroutineName("Yo")
+                ref = WeakReference(coroutineName)
+                withContext(coroutineName) {
+                    if (suspend) {
+                        delay(1)
                     }
                 }
+            }
             job.join()
 
             forceGcUntilRefIsCleaned(ref)

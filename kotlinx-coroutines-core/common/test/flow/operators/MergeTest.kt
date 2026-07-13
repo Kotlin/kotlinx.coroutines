@@ -32,11 +32,10 @@ abstract class MergeTest : TestBase() {
 
     @Test
     fun testContext() = runTest {
-        val flow =
-            flow {
-                    emit(NamedDispatchers.name())
-                }
-                .flowOn(NamedDispatchers("source"))
+        val flow = flow {
+                emit(NamedDispatchers.name())
+            }
+            .flowOn(NamedDispatchers("source"))
 
         val result = listOf(flow).merge().flowOn(NamedDispatchers("irrelevant")).toList()
         assertEquals(listOf("source"), result)
@@ -106,11 +105,10 @@ abstract class MergeTest : TestBase() {
             emit(NamedDispatchers.name())
         }
 
-        val result =
-            listOf(flow.flowOn(NamedDispatchers("1")), flow.flowOn(NamedDispatchers("2")))
-                .merge()
-                .flowOn(NamedDispatchers("irrelevant"))
-                .toList()
+        val result = listOf(flow.flowOn(NamedDispatchers("1")), flow.flowOn(NamedDispatchers("2")))
+            .merge()
+            .flowOn(NamedDispatchers("irrelevant"))
+            .toList()
         assertEquals(listOf("1", "2"), result)
     }
 }

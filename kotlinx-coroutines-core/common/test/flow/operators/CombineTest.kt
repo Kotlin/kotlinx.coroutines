@@ -117,41 +117,38 @@ abstract class CombineTestBase : TestBase() {
 
     @Test
     fun testContextIsIsolated() = runTest {
-        val f1 =
-            flow {
-                    emit("a")
-                    assertEquals("first", NamedDispatchers.name())
-                    expect(1)
-                }
-                .flowOn(NamedDispatchers("first"))
-                .onEach {
-                    assertEquals("nested", NamedDispatchers.name())
-                    expect(2)
-                }
-                .flowOn(NamedDispatchers("nested"))
-
-        val f2 =
-            flow {
-                    emit(1)
-                    assertEquals("second", NamedDispatchers.name())
-                    expect(3)
-                }
-                .flowOn(NamedDispatchers("second"))
-                .onEach {
-                    assertEquals("onEach", NamedDispatchers.name())
-                    expect(4)
-                }
-                .flowOn(NamedDispatchers("onEach"))
-
-        val value =
-            withContext(NamedDispatchers("main")) {
-                f1.combineLatest(f2) { i, j ->
-                        assertEquals("main", NamedDispatchers.name())
-                        expect(5)
-                        i + j
-                    }
-                    .single()
+        val f1 = flow {
+                emit("a")
+                assertEquals("first", NamedDispatchers.name())
+                expect(1)
             }
+            .flowOn(NamedDispatchers("first"))
+            .onEach {
+                assertEquals("nested", NamedDispatchers.name())
+                expect(2)
+            }
+            .flowOn(NamedDispatchers("nested"))
+
+        val f2 = flow {
+                emit(1)
+                assertEquals("second", NamedDispatchers.name())
+                expect(3)
+            }
+            .flowOn(NamedDispatchers("second"))
+            .onEach {
+                assertEquals("onEach", NamedDispatchers.name())
+                expect(4)
+            }
+            .flowOn(NamedDispatchers("onEach"))
+
+        val value = withContext(NamedDispatchers("main")) {
+            f1.combineLatest(f2) { i, j ->
+                assertEquals("main", NamedDispatchers.name())
+                expect(5)
+                i + j
+            }
+                .single()
+        }
 
         assertEquals("a1", value)
         finish(6)
@@ -159,34 +156,31 @@ abstract class CombineTestBase : TestBase() {
 
     @Test
     fun testErrorInDownstreamCancelsUpstream() = runTest {
-        val f1 =
-            flow {
-                    emit("a")
-                    hang {
-                        expect(2)
-                    }
+        val f1 = flow {
+                emit("a")
+                hang {
+                    expect(2)
                 }
-                .flowOn(NamedDispatchers("first"))
+            }
+            .flowOn(NamedDispatchers("first"))
 
-        val f2 =
-            flow {
-                    emit(1)
-                    hang {
-                        expect(3)
-                    }
+        val f2 = flow {
+                emit(1)
+                hang {
+                    expect(3)
                 }
-                .flowOn(NamedDispatchers("second"))
+            }
+            .flowOn(NamedDispatchers("second"))
 
-        val flow =
-            f1.combineLatest(f2) { i, j ->
-                    assertEquals("combine", NamedDispatchers.name())
-                    expect(1)
-                    i + j
-                }
-                .flowOn(NamedDispatchers("combine"))
-                .onEach {
-                    throw TestException()
-                }
+        val flow = f1.combineLatest(f2) { i, j ->
+            assertEquals("combine", NamedDispatchers.name())
+            expect(1)
+            i + j
+        }
+            .flowOn(NamedDispatchers("combine"))
+            .onEach {
+                throw TestException()
+            }
 
         assertFailsWith<TestException>(flow)
         finish(4)
@@ -194,21 +188,19 @@ abstract class CombineTestBase : TestBase() {
 
     @Test
     fun testErrorCancelsSibling() = runTest {
-        val f1 =
-            flow {
-                    emit("a")
-                    hang {
-                        expect(1)
-                    }
+        val f1 = flow {
+                emit("a")
+                hang {
+                    expect(1)
                 }
-                .flowOn(NamedDispatchers("first"))
+            }
+            .flowOn(NamedDispatchers("first"))
 
-        val f2 =
-            flow {
-                    emit(1)
-                    throw TestException()
-                }
-                .flowOn(NamedDispatchers("second"))
+        val f2 = flow {
+                emit(1)
+                throw TestException()
+            }
+            .flowOn(NamedDispatchers("second"))
 
         val flow = f1.combineLatest(f2) { _, _ -> 1 }
         assertFailsWith<TestException>(flow)
@@ -245,34 +237,32 @@ abstract class CombineTestBase : TestBase() {
             hang { expect(6) }
         }
 
-        val flow =
-            f1.combineLatest(f2) { _, _ -> 1 }
-                .onEach {
-                    expect(1)
-                    yield()
-                    expect(4)
-                    throw CancellationException("")
-                }
+        val flow = f1.combineLatest(f2) { _, _ -> 1 }
+            .onEach {
+                expect(1)
+                yield()
+                expect(4)
+                throw CancellationException("")
+            }
         assertFailsWith<CancellationException>(flow)
         finish(7)
     }
 
     @Test
-    fun testCancelledCombine() =
-        runTest(expected = { it is CancellationException }) {
-            coroutineScope {
-                val flow = flow {
-                    emit(Unit) // emit
-                }
-                cancel() // cancel the scope
-                flow
-                    .combineLatest(flow) { _, _ -> }
-                    .collect {
-                        // should not be reached, because cancelled before it runs
-                        expectUnreached()
-                    }
+    fun testCancelledCombine() = runTest(expected = { it is CancellationException }) {
+        coroutineScope {
+            val flow = flow {
+                emit(Unit) // emit
             }
+            cancel() // cancel the scope
+            flow
+                .combineLatest(flow) { _, _ -> }
+                .collect {
+                    // should not be reached, because cancelled before it runs
+                    expectUnreached()
+                }
         }
+    }
 }
 
 class CombineTest : CombineTestBase() {
@@ -286,32 +276,36 @@ class CombineOverloadTest : CombineTestBase() {
 }
 
 class CombineTransformTest : CombineTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineTransformOriginal(other) { a, b ->
-            emit(transform(a, b))
-        }
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineTransformOriginal(
+        other,
+    ) { a, b ->
+        emit(transform(a, b))
+    }
 }
 
 // Array null-out is an additional test for our array elimination optimization
-
 class CombineVarargAdapterTest : CombineTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineOriginal(this, other) { args: Array<Any?> ->
-            transform(args[0] as T1, args[1] as T2).also {
-                args[0] = null
-                args[1] = null
-            }
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineOriginal(
+        this,
+        other,
+    ) { args: Array<Any?> ->
+        transform(args[0] as T1, args[1] as T2).also {
+            args[0] = null
+            args[1] = null
         }
+    }
 }
 
 class CombineIterableTest : CombineTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineOriginal(listOf(this, other)) { args ->
-            transform(args[0] as T1, args[1] as T2).also {
-                args[0] = null
-                args[1] = null
-            }
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineOriginal(listOf(
+        this,
+        other,
+    )) { args ->
+        transform(args[0] as T1, args[1] as T2).also {
+            args[0] = null
+            args[1] = null
         }
+    }
 }
 
 class CombineTransformAdapterTest : CombineTestBase() {
@@ -320,12 +314,14 @@ class CombineTransformAdapterTest : CombineTestBase() {
 }
 
 class CombineTransformVarargAdapterTest : CombineTestBase() {
-    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
-        combineTransformOriginal(this, other) { args: Array<Any?> ->
-            emit(transform(args[0] as T1, args[1] as T2)) // Mess up with array
-            args[0] = null
-            args[1] = null
-        }
+    override fun <T1, T2, R> Flow<T1>.combineLatest(other: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> = combineTransformOriginal(
+        this,
+        other,
+    ) { args: Array<Any?> ->
+        emit(transform(args[0] as T1, args[1] as T2)) // Mess up with array
+        args[0] = null
+        args[1] = null
+    }
 }
 
 class CombineTransformIterableTest : CombineTestBase() {

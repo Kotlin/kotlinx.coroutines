@@ -11,17 +11,16 @@ class FlattenConcatTest : FlatMapBaseTest() {
     @Test
     fun testFlatMapConcurrency() = runTest {
         var concurrentRequests = 0
-        val flow =
-            (1..100)
-                .asFlow()
-                .map { value ->
-                    flow {
-                        ++concurrentRequests
-                        emit(value)
-                        delay(Long.MAX_VALUE)
-                    }
+        val flow = (1..100)
+            .asFlow()
+            .map { value ->
+                flow {
+                    ++concurrentRequests
+                    emit(value)
+                    delay(Long.MAX_VALUE)
                 }
-                .flattenConcat()
+            }
+            .flattenConcat()
 
         val consumer = launch {
             flow.collect { value ->
@@ -42,12 +41,10 @@ class FlattenConcatTest : FlatMapBaseTest() {
     fun testCancellation() = runTest {
         val flow = flow {
             repeat(5) {
-                emit(
-                    flow {
-                        if (it == 2) throw CancellationException("")
-                        emit(1)
-                    }
-                )
+                emit(flow {
+                    if (it == 2) throw CancellationException("")
+                    emit(1)
+                })
             }
         }
         assertFailsWith<CancellationException>(flow.flattenConcat())

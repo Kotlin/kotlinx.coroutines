@@ -15,9 +15,11 @@ class RangePublisherTest : PublisherVerification<Int>(TestEnvironment(50, 50)) {
         return null
     }
 
-    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 }
 
 class RangePublisherWrappedTwiceTest : PublisherVerification<Int>(TestEnvironment(50, 50)) {
@@ -30,7 +32,9 @@ class RangePublisherWrappedTwiceTest : PublisherVerification<Int>(TestEnvironmen
         return null
     }
 
-    @Ignore override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestZeroMustSignalIllegalArgumentException() {}
 
-    @Ignore override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
+    @Ignore
+    override fun required_spec309_requestNegativeNumberMustSignalIllegalArgumentException() {}
 }

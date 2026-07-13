@@ -6,15 +6,17 @@ import kotlin.coroutines.*
 import kotlin.jvm.*
 
 private val UNDEFINED = Symbol("UNDEFINED")
-@JvmField internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
+@JvmField
+internal val REUSABLE_CLAIMED = Symbol("REUSABLE_CLAIMED")
 
 internal class DispatchedContinuation<in T>(
     @JvmField internal val dispatcher: CoroutineDispatcher,
     @JvmField val continuation: Continuation<T>,
 ) : DispatchedTask<T>(MODE_UNINITIALIZED), CoroutineStackFrame, Continuation<T> by continuation {
-    @JvmField @Suppress("PropertyName") internal var _state: Any? = UNDEFINED
-    override val callerFrame: CoroutineStackFrame?
-        get() = continuation as? CoroutineStackFrame
+    @JvmField
+    @Suppress("PropertyName")
+    internal var _state: Any? = UNDEFINED
+    override val callerFrame: CoroutineStackFrame? get() = continuation as? CoroutineStackFrame
 
     override fun getStackTraceElement(): StackTraceElement? = null
 
@@ -51,8 +53,8 @@ internal class DispatchedContinuation<in T>(
      */
     private val _reusableCancellableContinuation = atomic<Any?>(null)
 
-    private val reusableCancellableContinuation: CancellableContinuationImpl<*>?
-        get() = _reusableCancellableContinuation.value as? CancellableContinuationImpl<*>
+    private val reusableCancellableContinuation: CancellableContinuationImpl<*>? get() = _reusableCancellableContinuation.value as?
+        CancellableContinuationImpl<*>
 
     internal fun isReusable(): Boolean {
         /*
@@ -173,8 +175,7 @@ internal class DispatchedContinuation<in T>(
         return state
     }
 
-    override val delegate: Continuation<T>
-        get() = this
+    override val delegate: Continuation<T> get() = this
 
     override fun resumeWith(result: Result<T>) {
         val state = result.toState()
@@ -261,24 +262,22 @@ internal fun CoroutineDispatcher.safeIsDispatchNeeded(context: CoroutineContext)
  *
  * @suppress **This an internal API and should not be used from general code.**
  */
-internal fun <T> Continuation<T>.resumeCancellableWithInternal(result: Result<T>): Unit =
-    when (this) {
-        is DispatchedContinuation -> resumeCancellableWith(result)
-        else -> resumeWith(result)
-    }
+internal fun <T> Continuation<T>.resumeCancellableWithInternal(result: Result<T>): Unit = when (this) {
+    is DispatchedContinuation -> resumeCancellableWith(result)
+    else -> resumeWith(result)
+}
 
 @InternalCoroutinesApi
 @Deprecated(
     "This function was intended for internal use only and will be removed. " +
-        "If you have a use case for it, please file an issue in the issue tracker.",
+    "If you have a use case for it, please file an issue in the issue tracker.",
     level = DeprecationLevel.WARNING,
 ) // WARNING in 1.11, ERROR in 1.12, REMOVE in 1.13, was @InternalCoroutinesApi
 public fun <T> Continuation<T>.resumeCancellableWith(result: Result<T>): Unit = resumeCancellableWithInternal(result)
 
-internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean =
-    executeUnconfined(Unit, MODE_CANCELLABLE, doYield = true) {
-        run()
-    }
+internal fun DispatchedContinuation<Unit>.yieldUndispatched(): Boolean = executeUnconfined(Unit, MODE_CANCELLABLE, doYield = true) {
+    run()
+}
 
 /**
  * Executes given [block] as part of current event loop, updating current continuation mode and state if continuation is not resumed

@@ -20,22 +20,18 @@ class OnEmptyTest : TestBase() {
 
     @Test
     fun testOnEmptyNotInvokedOnError() = runTest {
-        val flow =
-            flow<Int> {
-                    throw TestException()
-                }
-                .onEmpty { expectUnreached() }
+        val flow = flow<Int> {
+            throw TestException()
+        }.onEmpty { expectUnreached() }
         assertFailsWith<TestException>(flow)
     }
 
     @Test
     fun testOnEmptyNotInvokedOnCancellation() = runTest {
-        val flow =
-            flow<Int> {
-                    expect(2)
-                    hang { expect(4) }
-                }
-                .onEmpty { expectUnreached() }
+        val flow = flow<Int> {
+            expect(2)
+            hang { expect(4) }
+        }.onEmpty { expectUnreached() }
 
         expect(1)
         val job = flow.onEach { expectUnreached() }.launchIn(this)
@@ -47,12 +43,11 @@ class OnEmptyTest : TestBase() {
 
     @Test
     fun testOnEmptyCancellation() = runTest {
-        val flow =
-            emptyFlow<Int>().onEmpty {
-                expect(2)
-                hang { expect(4) }
-                emit(1)
-            }
+        val flow = emptyFlow<Int>().onEmpty {
+            expect(2)
+            hang { expect(4) }
+            emit(1)
+        }
         expect(1)
         val job = flow.onEach { expectUnreached() }.launchIn(this)
         yield()
@@ -63,19 +58,18 @@ class OnEmptyTest : TestBase() {
 
     @Test
     fun testTransparencyViolation() = runTest {
-        val flow =
-            emptyFlow<Int>().onEmpty {
-                expect(2)
-                coroutineScope {
-                    launch {
-                        try {
-                            emit(1)
-                        } catch (e: IllegalStateException) {
-                            expect(3)
-                        }
+        val flow = emptyFlow<Int>().onEmpty {
+            expect(2)
+            coroutineScope {
+                launch {
+                    try {
+                        emit(1)
+                    } catch (e: IllegalStateException) {
+                        expect(3)
                     }
                 }
             }
+        }
         expect(1)
         assertNull(flow.singleOrNull())
         finish(4)

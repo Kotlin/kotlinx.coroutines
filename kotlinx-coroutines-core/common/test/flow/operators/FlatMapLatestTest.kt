@@ -8,23 +8,21 @@ class FlatMapLatestTest : TestBase() {
 
     @Test
     fun testFlatMapLatest() = runTest {
-        val flow =
-            flowOf(1, 2, 3).flatMapLatest { value ->
-                flowOf(value, value + 1)
-            }
+        val flow = flowOf(1, 2, 3).flatMapLatest { value ->
+            flowOf(value, value + 1)
+        }
         assertEquals(listOf(1, 2, 2, 3, 3, 4), flow.toList())
     }
 
     @Test
     fun testEmission() = runTest {
-        val list =
-            flow {
-                    repeat(5) {
-                        emit(it)
-                    }
+        val list = flow {
+                repeat(5) {
+                    emit(it)
                 }
-                .flatMapLatest { flowOf(it) }
-                .toList()
+            }
+            .flatMapLatest { flowOf(it) }
+            .toList()
         assertEquals(listOf(0, 1, 2, 3, 4), list)
     }
 
@@ -64,15 +62,14 @@ class FlatMapLatestTest : TestBase() {
     @Test
     fun testHangFlows() = runTest {
         val flow = listOf(1, 2, 3, 4).asFlow()
-        val result =
-            flow
-                .flatMapLatest { value ->
-                    flow {
-                        if (value != 4) hang { expect(value) }
-                        emit(42)
-                    }
+        val result = flow
+            .flatMapLatest { value ->
+                flow {
+                    if (value != 4) hang { expect(value) }
+                    emit(42)
                 }
-                .toList()
+            }
+            .toList()
 
         assertEquals(listOf(42), result)
         finish(4)
@@ -85,61 +82,57 @@ class FlatMapLatestTest : TestBase() {
 
     @Test
     fun testFailureInTransform() = runTest {
-        val flow =
-            flowOf(1, 2).flatMapLatest { value ->
-                flow {
-                    if (value == 1) {
-                        emit(1)
-                        hang { expect(1) }
-                    } else {
-                        expect(2)
-                        throw TestException()
-                    }
+        val flow = flowOf(1, 2).flatMapLatest { value ->
+            flow {
+                if (value == 1) {
+                    emit(1)
+                    hang { expect(1) }
+                } else {
+                    expect(2)
+                    throw TestException()
                 }
             }
+        }
         assertFailsWith<TestException>(flow)
         finish(3)
     }
 
     @Test
     fun testFailureDownstream() = runTest {
-        val flow =
-            flowOf(1)
-                .flatMapLatest { value ->
-                    flow {
-                        expect(1)
-                        emit(value)
-                        expect(2)
-                        hang { expect(4) }
-                    }
+        val flow = flowOf(1)
+            .flatMapLatest { value ->
+                flow {
+                    expect(1)
+                    emit(value)
+                    expect(2)
+                    hang { expect(4) }
                 }
-                .flowOn(NamedDispatchers("downstream"))
-                .onEach {
-                    expect(3)
-                    throw TestException()
-                }
+            }
+            .flowOn(NamedDispatchers("downstream"))
+            .onEach {
+                expect(3)
+                throw TestException()
+            }
         assertFailsWith<TestException>(flow)
         finish(5)
     }
 
     @Test
     fun testFailureUpstream() = runTest {
-        val flow =
+        val flow = flow {
+            expect(1)
+            emit(1)
+            yield()
+            expect(3)
+            throw TestException()
+        }.flatMapLatest<Int, Long> {
             flow {
-                    expect(1)
-                    emit(1)
-                    yield()
-                    expect(3)
-                    throw TestException()
+                expect(2)
+                hang {
+                    expect(4)
                 }
-                .flatMapLatest<Int, Long> {
-                    flow {
-                        expect(2)
-                        hang {
-                            expect(4)
-                        }
-                    }
-                }
+            }
+        }
         assertFailsWith<TestException>(flow)
         finish(5)
     }

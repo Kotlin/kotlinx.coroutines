@@ -51,13 +51,11 @@ public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
  * See also [collect] and [withIndex].
  */
 public suspend inline fun <T> Flow<T>.collectIndexed(crossinline action: suspend (index: Int, value: T) -> Unit): Unit =
-    collect(
-        object : FlowCollector<T> {
-            private var index = 0
+    collect(object : FlowCollector<T> {
+        private var index = 0
 
-            override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
-        }
-    )
+        override suspend fun emit(value: T) = action(checkIndexOverflow(index++), value)
+    })
 
 /**
  * Terminal flow operator that collects the given flow with a provided [action]. The crucial difference from [collect] is that when the
@@ -106,16 +104,12 @@ public suspend fun <T> FlowCollector<T>.emitAll(flow: Flow<T>) {
 
 /** @suppress */
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "Backwards compatibility with JS and K/N")
-public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit =
-    collect(
-        object : FlowCollector<T> {
-            override suspend fun emit(value: T) = action(value)
-        }
-    )
+public suspend inline fun <T> Flow<T>.collect(crossinline action: suspend (value: T) -> Unit): Unit = collect(object : FlowCollector<T> {
+    override suspend fun emit(value: T) = action(value)
+})
 
 // -------------------- Collecting operations on a SharedFlow --------------------
 // -------------------- These mirror the operations above and are introduced when requested --------------------
-
 /**
  * Terminal flow operator that collects the given flow with a provided [action]. The crucial difference from [collect] is that when the
  * original flow emits a new value then the [action] block for the previous value is cancelled.

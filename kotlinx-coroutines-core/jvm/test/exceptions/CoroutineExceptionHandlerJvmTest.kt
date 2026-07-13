@@ -13,9 +13,9 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
         expect(1)
         val caughtException = catchingUncaughtException {
             GlobalScope.launch(CoroutineExceptionHandler { _, _ -> throw TestException2() }) {
-                    expect(2)
-                    throw TestException()
-                }
+                expect(2)
+                throw TestException()
+            }
                 .join()
         }
         assertIs<RuntimeException>(caughtException)
@@ -30,9 +30,9 @@ class CoroutineExceptionHandlerJvmTest : TestBase() {
         expect(1)
         val caughtException = catchingUncaughtException {
             GlobalScope.launch(CoroutineName("last-resort")) {
-                    expect(2)
-                    throw TestException()
-                }
+                expect(2)
+                throw TestException()
+            }
                 .join()
         }
         assertIs<TestException>(caughtException)

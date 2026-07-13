@@ -9,16 +9,14 @@ import kotlin.time.Duration.Companion.nanoseconds
 class DelayDurationTest : TestBase() {
 
     @Test
-    fun testCancellation() =
-        runTest(expected = { it is CancellationException }) {
-            runAndCancel(1.seconds)
-        }
+    fun testCancellation() = runTest(expected = { it is CancellationException }) {
+        runAndCancel(1.seconds)
+    }
 
     @Test
-    fun testInfinite() =
-        runTest(expected = { it is CancellationException }) {
-            runAndCancel(Duration.INFINITE)
-        }
+    fun testInfinite() = runTest(expected = { it is CancellationException }) {
+        runAndCancel(Duration.INFINITE)
+    }
 
     @Test
     fun testRegularDelay() = runTest {

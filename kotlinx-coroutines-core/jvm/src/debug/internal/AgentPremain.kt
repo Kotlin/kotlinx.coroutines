@@ -15,12 +15,11 @@ import java.security.*
 @SuppressLint("all")
 @IgnoreJRERequirement // Never touched on Android
 internal object AgentPremain {
-    private val enableCreationStackTraces =
-        try {
-            System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()!!
-        } catch (_: Throwable) {
-            DebugProbesImpl.enableCreationStackTraces
-        }
+    private val enableCreationStackTraces = try {
+        System.getProperty("kotlinx.coroutines.debug.enable.creation.stack.trace")?.toBoolean()!!
+    } catch (_: Throwable) {
+        DebugProbesImpl.enableCreationStackTraces
+    }
 
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")

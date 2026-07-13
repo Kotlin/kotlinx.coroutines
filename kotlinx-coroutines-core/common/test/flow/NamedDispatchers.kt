@@ -13,18 +13,17 @@ object NamedDispatchers {
 
     operator fun invoke(name: String) = named(name)
 
-    private fun named(name: String): CoroutineDispatcher =
-        object : CoroutineDispatcher() {
-            override fun dispatch(context: CoroutineContext, block: Runnable) {
-                stack.push(name)
-                try {
-                    block.run()
-                } finally {
-                    val last = stack.pop() ?: error("No names on stack")
-                    require(last == name) { "Inconsistent stack: expected $name, but had $last" }
-                }
+    private fun named(name: String): CoroutineDispatcher = object : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            stack.push(name)
+            try {
+                block.run()
+            } finally {
+                val last = stack.pop() ?: error("No names on stack")
+                require(last == name) { "Inconsistent stack: expected $name, but had $last" }
             }
         }
+    }
 }
 
 private class ArrayStack {

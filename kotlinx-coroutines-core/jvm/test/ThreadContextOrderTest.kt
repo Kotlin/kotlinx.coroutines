@@ -14,40 +14,38 @@ class ThreadContextOrderTest : TestBase() {
     private val transactionalContext = ThreadLocal<String>()
     private val loggingContext = ThreadLocal<String>()
 
-    private val transactionalElement =
-        object : ThreadContextElement<String> {
-            override val key = ThreadLocalKey(transactionalContext)
+    private val transactionalElement = object : ThreadContextElement<String> {
+        override val key = ThreadLocalKey(transactionalContext)
 
-            override fun updateThreadContext(context: CoroutineContext): String {
-                assertEquals("test", loggingContext.get())
-                val previous = transactionalContext.get()
-                transactionalContext.set("tr coroutine")
-                return previous
-            }
-
-            override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
-                assertEquals("test", loggingContext.get())
-                assertEquals("tr coroutine", transactionalContext.get())
-                transactionalContext.set(oldState)
-            }
+        override fun updateThreadContext(context: CoroutineContext): String {
+            assertEquals("test", loggingContext.get())
+            val previous = transactionalContext.get()
+            transactionalContext.set("tr coroutine")
+            return previous
         }
 
-    private val loggingElement =
-        object : ThreadContextElement<String> {
-            override val key = ThreadLocalKey(loggingContext)
-
-            override fun updateThreadContext(context: CoroutineContext): String {
-                val previous = loggingContext.get()
-                loggingContext.set("log coroutine")
-                return previous
-            }
-
-            override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
-                assertEquals("log coroutine", loggingContext.get())
-                assertEquals("tr coroutine", transactionalContext.get())
-                loggingContext.set(oldState)
-            }
+        override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
+            assertEquals("test", loggingContext.get())
+            assertEquals("tr coroutine", transactionalContext.get())
+            transactionalContext.set(oldState)
         }
+    }
+
+    private val loggingElement = object : ThreadContextElement<String> {
+        override val key = ThreadLocalKey(loggingContext)
+
+        override fun updateThreadContext(context: CoroutineContext): String {
+            val previous = loggingContext.get()
+            loggingContext.set("log coroutine")
+            return previous
+        }
+
+        override fun restoreThreadContext(context: CoroutineContext, oldState: String) {
+            assertEquals("log coroutine", loggingContext.get())
+            assertEquals("tr coroutine", transactionalContext.get())
+            loggingContext.set(oldState)
+        }
+    }
 
     @Test
     fun testCorrectOrder() = runTest {

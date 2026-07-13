@@ -52,13 +52,12 @@ class SharingStartedWhileSubscribedTest : TestBase() {
     @Test
     fun testShouldRestart() = runTest {
         var started = 0
-        val flow =
-            flow {
-                    expect(1 + ++started)
-                    emit(1)
-                    hang {}
-                }
-                .shareIn(this, SharingStarted.WhileSubscribed(100 /* ms */))
+        val flow = flow {
+                expect(1 + ++started)
+                emit(1)
+                hang {}
+            }
+            .shareIn(this, SharingStarted.WhileSubscribed(100 /* ms */))
 
         expect(1)
         flow.first()
@@ -70,13 +69,12 @@ class SharingStartedWhileSubscribedTest : TestBase() {
 
     @Test
     fun testImmediateUnsubscribe() = runTest {
-        val flow =
-            flow {
-                    expect(2)
-                    emit(1)
-                    hang { finish(4) }
-                }
-                .shareIn(this, SharingStarted.WhileSubscribed(400, 0 /* ms */), 1)
+        val flow = flow {
+                expect(2)
+                emit(1)
+                hang { finish(4) }
+            }
+            .shareIn(this, SharingStarted.WhileSubscribed(400, 0 /* ms */), 1)
 
         expect(1)
         repeat(5) {

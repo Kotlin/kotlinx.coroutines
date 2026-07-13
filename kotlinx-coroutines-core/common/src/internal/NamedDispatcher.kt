@@ -14,7 +14,8 @@ internal class NamedDispatcher(
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = dispatcher.dispatch(context, block)
 
-    @InternalCoroutinesApi override fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatcher.dispatchYield(context, block)
+    @InternalCoroutinesApi
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) = dispatcher.dispatchYield(context, block)
 
     override fun toString(): String {
         return name

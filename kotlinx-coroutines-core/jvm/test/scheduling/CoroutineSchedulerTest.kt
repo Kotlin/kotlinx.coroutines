@@ -31,18 +31,16 @@ class CoroutineSchedulerTest : TestBase() {
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
             val latch = CountDownLatch(contexts.size)
-            it.dispatch(
-                Runnable {
-                    for (context in contexts) {
-                        it.dispatch(
-                            Runnable {
-                                latch.countDown()
-                            },
-                            context,
-                        )
-                    }
+            it.dispatch(Runnable {
+                for (context in contexts) {
+                    it.dispatch(
+                        Runnable {
+                            latch.countDown()
+                        },
+                        context,
+                    )
                 }
-            )
+            })
 
             latch.await()
         }
@@ -54,23 +52,17 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(
-                Runnable {
-                    it.dispatch(
-                        Runnable {
-                            expect(2)
-                            finishLatch.countDown()
-                        }
-                    )
+            it.dispatch(Runnable {
+                it.dispatch(Runnable {
+                    expect(2)
+                    finishLatch.countDown()
+                })
 
-                    it.dispatch(
-                        Runnable {
-                            expect(1)
-                            finishLatch.countDown()
-                        }
-                    )
-                }
-            )
+                it.dispatch(Runnable {
+                    expect(1)
+                    finishLatch.countDown()
+                })
+            })
 
             startLatch.countDown()
             finishLatch.await()
@@ -84,24 +76,20 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(
-                Runnable {
-                    it.dispatch(
-                        Runnable {
-                            expect(1)
-                            finishLatch.countDown()
-                        }
-                    )
+            it.dispatch(Runnable {
+                it.dispatch(Runnable {
+                    expect(1)
+                    finishLatch.countDown()
+                })
 
-                    it.dispatch(
-                        Runnable {
-                            expect(2)
-                            finishLatch.countDown()
-                        },
-                        fair = true,
-                    )
-                }
-            )
+                it.dispatch(
+                    Runnable {
+                        expect(2)
+                        finishLatch.countDown()
+                    },
+                    fair = true,
+                )
+            })
 
             startLatch.countDown()
             finishLatch.await()

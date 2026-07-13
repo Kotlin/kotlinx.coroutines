@@ -12,20 +12,17 @@ class PublisherAsFlowThreadContextElementTest : TestBase() {
 
     @Test
     fun testFlowOnThreadContext() = runBlocking {
-        val publisher =
-            Publisher<Int> { it ->
-                it.onSubscribe(
-                    object : Subscription {
-                        override fun request(n: Long) {
-                            assertEquals("value", threadLocal.get())
-                            it.onNext(1)
-                            it.onComplete()
-                        }
+        val publisher = Publisher<Int> { it ->
+            it.onSubscribe(object : Subscription {
+                override fun request(n: Long) {
+                    assertEquals("value", threadLocal.get())
+                    it.onNext(1)
+                    it.onComplete()
+                }
 
-                        override fun cancel() {}
-                    }
-                )
-            }
+                override fun cancel() {}
+            })
+        }
 
         val context1 = Dispatchers.IO + threadLocal.asContextElement("value")
         val context2 = threadLocal.asContextElement("value")
@@ -41,19 +38,17 @@ class PublisherAsFlowThreadContextElementTest : TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         Publisher<Int> { it ->
-                it.onSubscribe(
-                    object : Subscription {
-                        override fun request(n: Long) {
-                            val threadLocalData = threadLocalData.get()
-                            assertNotSame(originalData, threadLocalData)
-                            assertEquals(originalData, threadLocalData)
-                            it.onNext(1)
-                            it.onComplete()
-                        }
-
-                        override fun cancel() {}
+                it.onSubscribe(object : Subscription {
+                    override fun request(n: Long) {
+                        val threadLocalData = threadLocalData.get()
+                        assertNotSame(originalData, threadLocalData)
+                        assertEquals(originalData, threadLocalData)
+                        it.onNext(1)
+                        it.onComplete()
                     }
-                )
+
+                    override fun cancel() {}
+                })
             }
             .asFlow()
             .flowOn(root)
@@ -65,19 +60,17 @@ class PublisherAsFlowThreadContextElementTest : TestBase() {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
         Publisher<Int> { it ->
-                it.onSubscribe(
-                    object : Subscription {
-                        override fun request(n: Long) {
-                            val threadLocalData = threadLocalData.get()
-                            assertNotSame(originalData, threadLocalData)
-                            assertEquals(originalData, threadLocalData)
-                            it.onNext(1)
-                            it.onComplete()
-                        }
-
-                        override fun cancel() {}
+                it.onSubscribe(object : Subscription {
+                    override fun request(n: Long) {
+                        val threadLocalData = threadLocalData.get()
+                        assertNotSame(originalData, threadLocalData)
+                        assertEquals(originalData, threadLocalData)
+                        it.onNext(1)
+                        it.onComplete()
                     }
-                )
+
+                    override fun cancel() {}
+                })
             }
             .asFlow()
             .flowOn(root + Dispatchers.Default)
@@ -86,22 +79,25 @@ class PublisherAsFlowThreadContextElementTest : TestBase() {
 
     @Test
     fun testThreadLocalFlowOn() = runTest {
-        val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> =
-            listOf(EmptyCoroutineContext, Dispatchers.Default, Dispatchers.Unconfined).flatMap { dispatcher ->
-                listOf(true, false).flatMap { doYield ->
-                    listOf(true, false).map { useThreadLocalInOuterContext ->
-                        Triple(dispatcher, doYield, useThreadLocalInOuterContext)
-                    }
+        val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> = listOf(
+            EmptyCoroutineContext,
+            Dispatchers.Default,
+            Dispatchers.Unconfined,
+        ).flatMap { dispatcher ->
+            listOf(true, false).flatMap { doYield ->
+                listOf(true, false).map { useThreadLocalInOuterContext ->
+                    Triple(dispatcher, doYield, useThreadLocalInOuterContext)
                 }
             }
+        }
         for ((dispatcher, doYield, useThreadLocalInOuterContext) in parameters) {
             try {
                 testThreadLocalFlowOn(dispatcher, doYield, useThreadLocalInOuterContext)
             } catch (e: Throwable) {
                 throw AssertionError(
                     "Failed with parameters: dispatcher=$dispatcher, " +
-                        "doYield=$doYield, " +
-                        "useThreadLocalInOuterContext=$useThreadLocalInOuterContext",
+                    "doYield=$doYield, " +
+                    "useThreadLocalInOuterContext=$useThreadLocalInOuterContext",
                     e,
                 )
             }
@@ -148,8 +144,7 @@ class PublisherAsFlowThreadContextElementTest : TestBase() {
 
         companion object Key : CoroutineContext.Key<MyMutableElement>
 
-        override val key: CoroutineContext.Key<*>
-            get() = Key
+        override val key: CoroutineContext.Key<*> get() = Key
 
         override fun updateThreadContext(context: CoroutineContext): MutableList<String> {
             val st = threadLocalData.get()
@@ -183,8 +178,7 @@ class MyElement(val data: MyData) : ThreadContextElement<MyData?> {
     companion object Key : CoroutineContext.Key<MyElement>
 
     // provide the key of the corresponding context element
-    override val key: CoroutineContext.Key<MyElement>
-        get() = Key
+    override val key: CoroutineContext.Key<MyElement> get() = Key
 
     // this is invoked before coroutine is resumed on current thread
     override fun updateThreadContext(context: CoroutineContext): MyData? {

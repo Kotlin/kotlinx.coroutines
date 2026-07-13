@@ -191,11 +191,10 @@ class JobTest : TestBase() {
     @Test
     fun testOverriddenParent() = runTest {
         val parent = Job()
-        val deferred =
-            launch(parent, CoroutineStart.ATOMIC) {
-                expect(2)
-                delay(Long.MAX_VALUE)
-            }
+        val deferred = launch(parent, CoroutineStart.ATOMIC) {
+            expect(2)
+            delay(Long.MAX_VALUE)
+        }
 
         parent.cancel()
         expect(1)
@@ -243,10 +242,8 @@ class JobTest : TestBase() {
     }
 
     private class Wrapper : Incomplete {
-        override val isActive: Boolean
-            get() = error("")
+        override val isActive: Boolean get() = error("")
 
-        override val list: NodeList?
-            get() = error("")
+        override val list: NodeList? get() = error("")
     }
 }

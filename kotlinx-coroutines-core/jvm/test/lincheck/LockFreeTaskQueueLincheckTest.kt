@@ -13,11 +13,17 @@ import org.jetbrains.kotlinx.lincheck.verifier.quiescent.*
 
 @Param(name = "value", gen = IntGen::class, conf = "1:3")
 internal abstract class AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(val singleConsumer: Boolean) : AbstractLincheckTest() {
-    @JvmField protected val q = LockFreeTaskQueue<Int>(singleConsumer = singleConsumer)
+    @JvmField
+    protected val q = LockFreeTaskQueue<Int>(singleConsumer = singleConsumer)
 
-    @Operation fun close() = q.close()
+    @Operation
+    fun close() = q.close()
 
-    @Operation fun addLast(@Param(name = "value") value: Int) = q.addLast(value)
+    @Operation
+    fun addLast(
+        @Param(name = "value")
+        value: Int,
+    ) = q.addLast(value)
 
     override fun <O : Options<O, *>> O.customize(isStressTest: Boolean): O = verifier(QuiescentConsistencyVerifier::class.java)
 
@@ -25,9 +31,13 @@ internal abstract class AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(val s
 }
 
 internal class MCLockFreeTaskQueueWithRemoveLincheckTest : AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(singleConsumer = false) {
-    @QuiescentConsistent @Operation(blocking = true) fun removeFirstOrNull() = q.removeFirstOrNull()
+    @QuiescentConsistent
+    @Operation(blocking = true)
+    fun removeFirstOrNull() = q.removeFirstOrNull()
 }
 
 internal class SCLockFreeTaskQueueWithRemoveLincheckTest : AbstractLockFreeTaskQueueWithoutRemoveLincheckTest(singleConsumer = true) {
-    @QuiescentConsistent @Operation(nonParallelGroup = "consumer") fun removeFirstOrNull() = q.removeFirstOrNull()
+    @QuiescentConsistent
+    @Operation(nonParallelGroup = "consumer")
+    fun removeFirstOrNull() = q.removeFirstOrNull()
 }

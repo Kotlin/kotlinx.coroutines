@@ -7,10 +7,9 @@ import kotlin.test.*
 class PromiseTest : TestBase() {
     @Test
     fun testPromiseResolvedAsDeferred() = GlobalScope.promise {
-        val promise =
-            Promise<String> { resolve, _ ->
-                resolve("OK")
-            }
+        val promise = Promise<String> { resolve, _ ->
+            resolve("OK")
+        }
         val deferred = promise.asDeferred()
         assertEquals("OK", deferred.await())
     }
@@ -18,10 +17,9 @@ class PromiseTest : TestBase() {
     @Test
     fun testPromiseRejectedAsDeferred() = GlobalScope.promise {
         lateinit var promiseReject: (Throwable) -> Unit
-        val promise =
-            Promise<String> { _, reject ->
-                promiseReject = reject
-            }
+        val promise = Promise<String> { _, reject ->
+            promiseReject = reject
+        }
         val deferred = promise.asDeferred()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
         promiseReject(TestException("Rejected"))
@@ -36,11 +34,10 @@ class PromiseTest : TestBase() {
 
     @Test
     fun testCompletedDeferredAsPromise() = GlobalScope.promise {
-        val deferred =
-            async(start = CoroutineStart.UNDISPATCHED) {
-                // completed right away
-                "OK"
-            }
+        val deferred = async(start = CoroutineStart.UNDISPATCHED) {
+            // completed right away
+            "OK"
+        }
         val promise = deferred.asPromise()
         assertEquals("OK", promise.await())
     }
@@ -59,10 +56,9 @@ class PromiseTest : TestBase() {
     fun testCancellableAwaitPromise() = GlobalScope.promise {
         lateinit var r: (String) -> Unit
         val toAwait = Promise<String> { resolve, _ -> r = resolve }
-        val job =
-            launch(start = CoroutineStart.UNDISPATCHED) {
-                toAwait.await() // suspends
-            }
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            toAwait.await() // suspends
+        }
         job.cancel() // cancel the job
         r("fail") // too late, the waiting job was already cancelled
     }
@@ -92,10 +88,9 @@ class PromiseTest : TestBase() {
     fun testAwaitPromiseRejectedWithNonKotlinException() = GlobalScope.promise {
         lateinit var r: (dynamic) -> Unit
         val toAwait = Promise<dynamic> { _, reject -> r = reject }
-        val throwable =
-            async(start = CoroutineStart.UNDISPATCHED) {
-                assertFails { toAwait.await() }
-            }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await() }
+        }
         r("Rejected")
         assertContains(throwable.await().message ?: "", "Rejected")
     }
@@ -104,10 +99,9 @@ class PromiseTest : TestBase() {
     fun testAwaitPromiseRejectedWithKotlinException() = GlobalScope.promise {
         lateinit var r: (dynamic) -> Unit
         val toAwait = Promise<dynamic> { _, reject -> r = reject }
-        val throwable =
-            async(start = CoroutineStart.UNDISPATCHED) {
-                assertFails { toAwait.await() }
-            }
+        val throwable = async(start = CoroutineStart.UNDISPATCHED) {
+            assertFails { toAwait.await() }
+        }
         r(RuntimeException("Rejected"))
         assertIs<RuntimeException>(throwable.await())
         assertEquals("Rejected", throwable.await().message)

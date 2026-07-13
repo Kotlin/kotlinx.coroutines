@@ -8,13 +8,14 @@ public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.p
 
 /** Groups various implementations of [CoroutineDispatcher]. */
 public actual object Dispatchers {
-    @JvmStatic public actual val Default: CoroutineDispatcher = DefaultScheduler
+    @JvmStatic
+    public actual val Default: CoroutineDispatcher = DefaultScheduler
 
     @JvmStatic
-    public actual val Main: MainCoroutineDispatcher
-        get() = MainDispatcherLoader.dispatcher
+    public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
 
-    @JvmStatic public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
+    @JvmStatic
+    public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
 
     /**
      * The [CoroutineDispatcher] that is designed for offloading blocking IO tasks to a shared pool of threads.
@@ -54,8 +55,7 @@ public actual object Dispatchers {
      * and not actually executing work.
      */
     @JvmStatic
-    public val IO: CoroutineDispatcher
-        get() = DefaultIoScheduler
+    public val IO: CoroutineDispatcher get() = DefaultIoScheduler
 
     /**
      * Shuts down built-in dispatchers, such as [Default] and [IO], stopping all the threads associated with them and making them reject all
@@ -88,5 +88,4 @@ public actual object Dispatchers {
  */
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 @Deprecated(message = "Should not be used directly", level = DeprecationLevel.HIDDEN)
-public actual val Dispatchers.IO: CoroutineDispatcher
-    get() = Dispatchers.IO
+public actual val Dispatchers.IO: CoroutineDispatcher get() = Dispatchers.IO

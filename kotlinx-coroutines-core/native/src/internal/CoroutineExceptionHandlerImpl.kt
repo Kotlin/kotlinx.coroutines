@@ -6,8 +6,9 @@ import kotlin.native.*
 
 private val lock = SynchronizedObject()
 
-internal actual val platformExceptionHandlers: Collection<CoroutineExceptionHandler>
-    get() = synchronized(lock) { platformExceptionHandlers_ }
+internal actual val platformExceptionHandlers: Collection<CoroutineExceptionHandler> get() = synchronized(lock) {
+    platformExceptionHandlers_
+}
 
 private val platformExceptionHandlers_ = mutableSetOf<CoroutineExceptionHandler>()
 
@@ -22,5 +23,6 @@ internal actual fun propagateExceptionFinalResort(exception: Throwable) {
     processUnhandledException(exception)
 }
 
-internal actual class DiagnosticCoroutineContextException actual constructor(context: CoroutineContext) :
-    RuntimeException(context.toString())
+internal actual class DiagnosticCoroutineContextException actual constructor(context: CoroutineContext) : RuntimeException(
+    context.toString(),
+)

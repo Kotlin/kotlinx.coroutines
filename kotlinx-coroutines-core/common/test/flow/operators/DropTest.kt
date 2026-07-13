@@ -33,25 +33,24 @@ class DropTest : TestBase() {
 
     @Test
     fun testErrorCancelsUpstream() = runTest {
-        val flow =
-            flow {
-                    coroutineScope {
-                        launch(start = CoroutineStart.ATOMIC) {
-                            hang { expect(5) }
-                        }
-                        expect(2)
-                        emit(1)
-                        expect(3)
-                        emit(2)
-                        expectUnreached()
+        val flow = flow {
+                coroutineScope {
+                    launch(start = CoroutineStart.ATOMIC) {
+                        hang { expect(5) }
                     }
+                    expect(2)
+                    emit(1)
+                    expect(3)
+                    emit(2)
+                    expectUnreached()
                 }
-                .drop(1)
-                .map<Int, Int> {
-                    expect(4)
-                    throw TestException()
-                }
-                .catch { emit(42) }
+            }
+            .drop(1)
+            .map<Int, Int> {
+                expect(4)
+                throw TestException()
+            }
+            .catch { emit(42) }
 
         expect(1)
         assertEquals(42, flow.single())

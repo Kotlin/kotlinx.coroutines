@@ -63,13 +63,12 @@ class ExecutorsTest : TestBase() {
     @Test
     fun testCustomDispatcherToExecutor() {
         expect(1)
-        val dispatcher =
-            object : CoroutineDispatcher() {
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    expect(2)
-                    block.run()
-                }
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                expect(2)
+                block.run()
             }
+        }
         val executor = dispatcher.asExecutor()
         assertSame(dispatcher, executor.asCoroutineDispatcher())
         executor.execute {
@@ -81,14 +80,13 @@ class ExecutorsTest : TestBase() {
     @Test
     fun testCustomDispatcherToExecutorDispatchNotNeeded() {
         expect(1)
-        val dispatcher =
-            object : CoroutineDispatcher() {
-                override fun isDispatchNeeded(context: CoroutineContext) = false
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun isDispatchNeeded(context: CoroutineContext) = false
 
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    fail("should not dispatch")
-                }
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                fail("should not dispatch")
             }
+        }
         dispatcher.asExecutor().execute {
             expect(2)
         }
@@ -123,15 +121,14 @@ class ExecutorsTest : TestBase() {
 
     @Test
     fun testExceptionInIsDispatchNeeded() {
-        val dispatcher =
-            object : CoroutineDispatcher() {
-                override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-                    expect(2)
-                    throw TestException()
-                }
-
-                override fun dispatch(context: CoroutineContext, block: Runnable) = expectUnreached()
+        val dispatcher = object : CoroutineDispatcher() {
+            override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+                expect(2)
+                throw TestException()
             }
+
+            override fun dispatch(context: CoroutineContext, block: Runnable) = expectUnreached()
+        }
         try {
             runBlocking {
                 expect(1)

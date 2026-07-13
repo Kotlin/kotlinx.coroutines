@@ -46,138 +46,117 @@ class BufferTest : TestBase() {
     fun testBaseline() = checkBuffer(-1) { this }
 
     @Test
-    fun testBufferDefault() =
-        checkBuffer(defaultBufferSize) {
-            buffer()
-        }
+    fun testBufferDefault() = checkBuffer(defaultBufferSize) {
+        buffer()
+    }
 
     @Test
-    fun testBufferRendezvous() =
-        checkBuffer(0) {
-            buffer(0)
-        }
+    fun testBufferRendezvous() = checkBuffer(0) {
+        buffer(0)
+    }
 
     @Test
-    fun testBuffer1() =
-        checkBuffer(1) {
-            buffer(1)
-        }
+    fun testBuffer1() = checkBuffer(1) {
+        buffer(1)
+    }
 
     @Test
-    fun testBuffer2() =
-        checkBuffer(2) {
-            buffer(2)
-        }
+    fun testBuffer2() = checkBuffer(2) {
+        buffer(2)
+    }
 
     @Test
-    fun testBuffer3() =
-        checkBuffer(3) {
-            buffer(3)
-        }
+    fun testBuffer3() = checkBuffer(3) {
+        buffer(3)
+    }
 
     @Test
-    fun testBuffer00Fused() =
-        checkBuffer(0) {
-            buffer(0).buffer(0)
-        }
+    fun testBuffer00Fused() = checkBuffer(0) {
+        buffer(0).buffer(0)
+    }
 
     @Test
-    fun testBuffer01Fused() =
-        checkBuffer(1) {
-            buffer(0).buffer(1)
-        }
+    fun testBuffer01Fused() = checkBuffer(1) {
+        buffer(0).buffer(1)
+    }
 
     @Test
-    fun testBuffer11Fused() =
-        checkBuffer(2) {
-            buffer(1).buffer(1)
-        }
+    fun testBuffer11Fused() = checkBuffer(2) {
+        buffer(1).buffer(1)
+    }
 
     @Test
-    fun testBuffer111Fused() =
-        checkBuffer(3) {
-            buffer(1).buffer(1).buffer(1)
-        }
+    fun testBuffer111Fused() = checkBuffer(3) {
+        buffer(1).buffer(1).buffer(1)
+    }
 
     @Test
-    fun testBuffer123Fused() =
-        checkBuffer(6) {
-            buffer(1).buffer(2).buffer(3)
-        }
+    fun testBuffer123Fused() = checkBuffer(6) {
+        buffer(1).buffer(2).buffer(3)
+    }
 
     @Test // multiple calls to buffer() create one channel of default size
-    fun testBufferDefaultTwiceFused() =
-        checkBuffer(defaultBufferSize) {
-            buffer().buffer()
-        }
+    fun testBufferDefaultTwiceFused() = checkBuffer(defaultBufferSize) {
+        buffer().buffer()
+    }
 
     @Test // explicit buffer takes precedence of default buffer on fuse
-    fun testBufferDefaultBufferFused() =
-        checkBuffer(7) {
-            buffer().buffer(7)
-        }
+    fun testBufferDefaultBufferFused() = checkBuffer(7) {
+        buffer().buffer(7)
+    }
 
     @Test // explicit buffer takes precedence of default buffer on fuse
-    fun testBufferBufferDefaultFused() =
-        checkBuffer(8) {
-            buffer(8).buffer()
-        }
+    fun testBufferBufferDefaultFused() = checkBuffer(8) {
+        buffer(8).buffer()
+    }
 
     @Test // flowOn operator does not use buffer when dispatches does not change
-    fun testFlowOnNameNoBuffer() =
-        checkBuffer(-1) {
-            flowOn(CoroutineName("Name"))
-        }
+    fun testFlowOnNameNoBuffer() = checkBuffer(-1) {
+        flowOn(CoroutineName("Name"))
+    }
 
     @Test // flowOn operator uses default buffer size when dispatcher changes
-    fun testFlowOnDispatcherBufferDefault() =
-        checkBuffer(defaultBufferSize) {
-            flowOn(wrapperDispatcher())
-        }
+    fun testFlowOnDispatcherBufferDefault() = checkBuffer(defaultBufferSize) {
+        flowOn(wrapperDispatcher())
+    }
 
     @Test // flowOn(...).buffer(n) sets explicit buffer size to n
-    fun testFlowOnDispatcherBufferFused() =
-        checkBuffer(5) {
-            flowOn(wrapperDispatcher()).buffer(5)
-        }
+    fun testFlowOnDispatcherBufferFused() = checkBuffer(5) {
+        flowOn(wrapperDispatcher()).buffer(5)
+    }
 
     @Test // buffer(n).flowOn(...) sets explicit buffer size to n
-    fun testBufferFlowOnDispatcherFused() =
-        checkBuffer(6) {
-            buffer(6).flowOn(wrapperDispatcher())
-        }
+    fun testBufferFlowOnDispatcherFused() = checkBuffer(6) {
+        buffer(6).flowOn(wrapperDispatcher())
+    }
 
     @Test // flowOn(...).buffer(n) sets explicit buffer size to n
-    fun testFlowOnNameBufferFused() =
-        checkBuffer(7) {
-            flowOn(CoroutineName("Name")).buffer(7)
-        }
+    fun testFlowOnNameBufferFused() = checkBuffer(7) {
+        flowOn(CoroutineName("Name")).buffer(7)
+    }
 
     @Test // buffer(n).flowOn(...) sets explicit buffer size to n
-    fun testBufferFlowOnNameFused() =
-        checkBuffer(8) {
-            buffer(8).flowOn(CoroutineName("Name"))
-        }
+    fun testBufferFlowOnNameFused() = checkBuffer(8) {
+        buffer(8).flowOn(CoroutineName("Name"))
+    }
 
     @Test // multiple flowOn/buffer all fused together
-    fun testBufferFlowOnMultipleFused() =
-        checkBuffer(12) {
-            flowOn(wrapperDispatcher()).buffer(3).flowOn(CoroutineName("Name")).buffer(4).flowOn(wrapperDispatcher()).buffer(5)
-        }
+    fun testBufferFlowOnMultipleFused() = checkBuffer(12) {
+        flowOn(wrapperDispatcher()).buffer(3).flowOn(CoroutineName("Name")).buffer(4).flowOn(wrapperDispatcher()).buffer(5)
+    }
 
     @Test
     fun testCancellation() = runTest {
-        val result =
-            flow {
-                    emit(1)
-                    emit(2)
-                    emit(3)
-                    expectUnreached()
-                    emit(4)
-                }
-                .buffer(0)
-                .take(2)
-                .toList()
+        val result = flow {
+                emit(1)
+                emit(2)
+                emit(3)
+                expectUnreached()
+                emit(4)
+            }
+            .buffer(0)
+            .take(2)
+            .toList()
         assertEquals(listOf(1, 2), result)
     }
 

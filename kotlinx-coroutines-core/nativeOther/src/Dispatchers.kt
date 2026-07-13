@@ -17,8 +17,7 @@ private object DefaultDispatcher : CoroutineDispatcher() {
 }
 
 private object MissingMainDispatcher : MainCoroutineDispatcher() {
-    override val immediate: MainCoroutineDispatcher
-        get() = notImplemented()
+    override val immediate: MainCoroutineDispatcher get() = notImplemented()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) = notImplemented()
 
