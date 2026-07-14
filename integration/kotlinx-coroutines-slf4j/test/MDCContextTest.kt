@@ -141,4 +141,22 @@ class MDCContextTest : TestBase() {
         assertEquals("value", MDC.get("key"))
         assertEquals("b", MDC.get("a"))
     }
+
+    @Test
+    fun testRestoringMdcContextWithPlusOperatorFunction() = runTest {
+        val contextMap = withContext(MDCContext(mapOf("a" to "b"))) {
+            assertEquals("b", MDC.get("a"))
+            withContext(MDCContext() + mapOf("key" to "value")) {
+                withContext(MDCContext() + mapOf("key2" to "value2")) {
+                    assertEquals("value2", MDC.get("key2"))
+                    yield()
+                    MDC.getCopyOfContextMap()
+                }
+            }
+        }
+        MDC.setContextMap(contextMap)
+        assertEquals("value2", MDC.get("key2"))
+        assertEquals("value", MDC.get("key"))
+        assertEquals("b", MDC.get("a"))
+    }
 }
