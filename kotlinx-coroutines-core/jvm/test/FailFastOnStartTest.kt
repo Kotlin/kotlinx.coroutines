@@ -2,7 +2,6 @@
 
 package kotlinx.coroutines
 
-import java.util.concurrent.RejectedExecutionException
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.emptyFlow
@@ -11,6 +10,7 @@ import org.junit.Rule
 import org.junit.rules.*
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.startCoroutine
 import kotlin.test.*
 
@@ -20,23 +20,25 @@ class FailFastOnStartTest : TestBase() {
     @JvmField
     val timeout: Timeout = Timeout.seconds(5)
 
-    val brokenDispatcher = newSingleThreadContext("BrokenDispatcher").also {
-        it.close() // immediately close it so that it can't be used
+    val brokenDispatcher = object: CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            throw TestException("Dispatcher refuses to execute code")
+        }
     }
 
     @Test
-    fun testLaunch() = runTest(expected = ::isRejectedExecutionException) {
+    fun testLaunch() = runTest(expected = ::isTestException) {
         launch(brokenDispatcher) {}
     }
 
     @Test
-    fun testLaunchLazy() = runTest(expected = ::isRejectedExecutionException) {
+    fun testLaunchLazy() = runTest(expected = ::isTestException) {
         val job = launch(brokenDispatcher, start = CoroutineStart.LAZY) { fail() }
         job.join()
     }
 
     @Test
-    fun testLaunchUndispatched() = runTest(expected = ::isRejectedExecutionException) {
+    fun testLaunchUndispatched() = runTest(expected = ::isTestException) {
         launch(brokenDispatcher, start = CoroutineStart.UNDISPATCHED) {
             yield()
             fail()
@@ -44,46 +46,46 @@ class FailFastOnStartTest : TestBase() {
     }
 
     @Test
-    fun testAsync() = runTest(expected = ::isRejectedExecutionException) {
+    fun testAsync() = runTest(expected = ::isTestException) {
         async(brokenDispatcher) {}
     }
 
     @Test
-    fun testAsyncLazy() = runTest(expected = ::isRejectedExecutionException) {
+    fun testAsyncLazy() = runTest(expected = ::isTestException) {
         val job = async(brokenDispatcher, start = CoroutineStart.LAZY) { fail() }
         job.await()
     }
 
     @Test
-    fun testWithContext() = runTest(expected = ::isRejectedExecutionException) {
+    fun testWithContext() = runTest(expected = ::isTestException) {
         withContext(brokenDispatcher) {
             fail()
         }
     }
 
     @Test
-    fun testProduce() = runTest(expected = ::isRejectedExecutionException) {
+    fun testProduce() = runTest(expected = ::isTestException) {
         produce<Int>(brokenDispatcher) { fail() }
     }
 
     @Test
-    fun testActor() = runTest(expected = ::isRejectedExecutionException) {
+    fun testActor() = runTest(expected = ::isTestException) {
         actor<Int>(brokenDispatcher) { fail() }
     }
 
     @Test
-    fun testActorLazy() = runTest(expected = ::isRejectedExecutionException) {
+    fun testActorLazy() = runTest(expected = ::isTestException) {
         val actor = actor<Int>(brokenDispatcher, start = CoroutineStart.LAZY) { fail() }
         actor.send(1)
     }
 
     @Test
-    fun testProduceNonChild() = runTest(expected = ::isRejectedExecutionException) {
+    fun testProduceNonChild() = runTest(expected = ::isTestException) {
         produce<Int>(Job() + brokenDispatcher) { fail() }
     }
 
     @Test
-    fun testAsyncNonChild() = runTest(expected = ::isRejectedExecutionException) {
+    fun testAsyncNonChild() = runTest(expected = ::isTestException) {
         async<Int>(Job() + brokenDispatcher) { fail() }
     }
 
@@ -97,7 +99,7 @@ class FailFastOnStartTest : TestBase() {
             try {
                 emptyFlow<Int>().flowOn(brokenDispatcher).collect { fail() }
             } catch (e: Throwable) {
-                assertTrue(isRejectedExecutionException(e))
+                assertTrue(isTestException(e))
                 expect(2)
             }
         }
@@ -107,6 +109,6 @@ class FailFastOnStartTest : TestBase() {
         })
     }
 
-    private fun isRejectedExecutionException(e: Throwable): Boolean =
-        e is RejectedExecutionException
+    private fun isTestException(e: Throwable): Boolean =
+        e is TestException
 }
