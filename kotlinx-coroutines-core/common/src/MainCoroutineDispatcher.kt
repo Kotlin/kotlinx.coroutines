@@ -68,10 +68,11 @@ public abstract class MainCoroutineDispatcher : CoroutineDispatcher() {
             return null
         }
         if (this === main) return "Dispatchers.Main"
-        val immediate =
-            try { main.immediate }
-            catch (e: UnsupportedOperationException) { null }
-        if (this === immediate) return "Dispatchers.Main.immediate"
-        return null
+        val immediate = try {
+            main.immediate
+        } catch (_: Throwable) {
+            return null
+        }
+        return if (this === immediate) "Dispatchers.Main.immediate" else null
     }
 }
