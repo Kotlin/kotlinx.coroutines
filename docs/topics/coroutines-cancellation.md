@@ -225,6 +225,8 @@ In CPU-intensive computations and in code that rarely reaches a suspension point
 The [`yield()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html) function suspends the coroutine, releasing its current thread and giving other coroutines a chance to run on it.
 Suspending the coroutine lets it check for cancellation and throw `CancellationException` if it's canceled.
 
+![Comparison of coroutine cancellation handling without checks, with `ensureActive()` or `isActive`, and with `yield()`](yield-and-cancellation.svg)
+
 So `yield()` has two effects: it lets other coroutines run and checks for cancellation.
 
 Here's an example:
