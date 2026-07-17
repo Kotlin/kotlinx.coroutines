@@ -27,7 +27,7 @@ class MavenPublicationMetaInfValidator {
         val clazz = Class.forName("kotlinx.coroutines.android.HandlerDispatcher")
         val expectedEntries = buildSet {
             add("MANIFEST.MF")
-            if (kotlin24OrNewer(kotlinVersion)) {
+            if (kotlinVersion >= "2.4") { // TODO: remove the check after updating Kotlin version to 2.4+
                 add("org.jetbrains.kotlinx_kotlinx-coroutines-android.kotlin_module")
             } else {
                 add("kotlinx-coroutines-android.kotlin_module")
@@ -66,13 +66,4 @@ class MavenPublicationMetaInfValidator {
 
     private val kotlinVersion: String
         get() = System.getProperty("kotlin.version.integration")
-
-    private fun kotlin24OrNewer(version: String): Boolean {
-        val majorVersion = version.substringBefore('.').toIntOrNull() ?: return false
-        if (majorVersion > 2) return true
-        if (majorVersion < 2) return false
-
-        val minorVersion = version.substringAfter('.').substringBefore('.').toIntOrNull() ?: return false
-        return minorVersion >= 4
-    }
 }
