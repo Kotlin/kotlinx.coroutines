@@ -62,7 +62,7 @@ elif dp == ".":
     csv_columns.append("Score Error (99.9%)")
     rename_columns["Score Error (99.9%)"] = "score_error"
 else:
-    print("Unexpected locale delimeter: " + dp)
+    print("Unexpected locale delimiter: " + dp)
     sys.exit(1)
 data = pd.read_csv(input_file, sep=",", decimal=dp)
 data = data[csv_columns].rename(columns=rename_columns)

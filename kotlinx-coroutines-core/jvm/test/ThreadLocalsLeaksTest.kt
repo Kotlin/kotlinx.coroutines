@@ -10,7 +10,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 /*
- * This is an adapted verion of test from #4296.
+ * This is an adapted version of test from #4296.
  *
  * qwwdfsad: the test relies on System.gc() actually collecting the garbage.
  * If these tests flake on CI, first check that JDK/GC setup in not an issue.

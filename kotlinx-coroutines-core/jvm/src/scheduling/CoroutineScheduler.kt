@@ -22,7 +22,7 @@ import kotlin.math.*
  * The scheduler consists of [corePoolSize] worker threads to execute CPU-bound tasks and up to
  * [maxPoolSize] lazily created threads to execute blocking tasks.
  * The scheduler has two global queues -- one for CPU tasks and one for blocking tasks.
- * These queues are used for tasks that a submited externally (from threads not belonging to the scheduler)
+ * These queues are used for tasks that a submitted externally (from threads not belonging to the scheduler)
  * and as overflow buffers for thread-local queues.
  *
  * Every worker has a local queue in addition to global scheduler queues.

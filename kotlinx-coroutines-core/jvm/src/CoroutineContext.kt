@@ -178,7 +178,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
     /**
      * The state of [ThreadContextElement]s associated with the current undispatched coroutine.
      * It is stored in a thread local because this coroutine can be used concurrently in suspend-resume race scenario.
-     * See the followin, boiled down example with inlined `withContinuationContext` body:
+     * See the following, boiled down example with inlined `withContinuationContext` body:
      * ```
      * val state = saveThreadContext(ctx)
      * try {

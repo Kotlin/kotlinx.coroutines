@@ -62,7 +62,7 @@ class LeakedExceptionTest : TestBase() {
     }
 
     /**
-     * This test doesn't test much and was added to display a problem with straighforward use of
+     * This test doesn't test much and was added to display a problem with straightforward use of
      * [withExceptionHandler].
      *
      * If one was to remove `dispatcher` and launch `rxFlowable` with an empty coroutine context,

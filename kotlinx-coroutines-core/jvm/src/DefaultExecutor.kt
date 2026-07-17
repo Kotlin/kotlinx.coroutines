@@ -133,7 +133,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
             _thread = this
             /*
              * `DefaultExecutor` is a global singleton that creates its thread lazily.
-             * To isolate the classloaders properly, we are inherting the context classloader from
+             * To isolate the classloaders properly, we are inheriting the context classloader from
              * the singleton itself instead of using parent' thread one
              * in order not to accidentally capture temporary application classloader.
              */

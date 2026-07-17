@@ -30,7 +30,7 @@ internal actual class JobCancellationException public actual constructor(
     @Transient
     private val _job: Job? = job
 
-    // The safest option for transient -- return something that meanigfully reject any attemp to interact with the job
+    // The safest option for transient -- return something that meanigfully reject any attempt to interact with the job
     internal actual val job get() = _job ?: NonCancellable
 
     init {
