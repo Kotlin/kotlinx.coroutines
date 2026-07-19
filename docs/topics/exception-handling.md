@@ -338,8 +338,8 @@ CoroutineExceptionHandler got java.io.IOException
 
 ## Supervision
 
-As we have studied before, cancellation is a bidirectional relationship propagating through the whole
-hierarchy of coroutines. Let us take a look at the case when unidirectional cancellation is required. 
+As we have studied before, a failure of a coroutine is a bidirectional relationship propagating through the whole
+hierarchy of coroutines. Let us take a look at the case when unidirectional failure propagation is required. 
 
 A good example of such a requirement is a UI component with the job defined in its scope. If any of the UI's child tasks
 have failed, it is not always necessary to cancel (effectively kill) the whole UI component,
@@ -351,8 +351,8 @@ their execution, tracking their failures and only restarting the failed ones.
 ### Supervision job
 
 The [SupervisorJob][SupervisorJob()] can be used for these purposes. 
-It is similar to a regular [Job][Job()] with the only exception that cancellation is propagated
-only downwards. This can easily be demonstrated using the following example:
+It is similar to a regular [Job][Job()] with the only exception that a failure or cancellation of a child
+does not propagate to the supervisor job or its other children. This can easily be demonstrated using the following example:
 
 ```kotlin
 import kotlinx.coroutines.*
