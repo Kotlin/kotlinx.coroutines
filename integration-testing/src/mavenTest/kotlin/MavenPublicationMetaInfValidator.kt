@@ -27,7 +27,7 @@ class MavenPublicationMetaInfValidator {
         val clazz = Class.forName("kotlinx.coroutines.android.HandlerDispatcher")
         val expectedEntries = buildSet {
             add("MANIFEST.MF")
-            if (kotlinVersion.startsWith("2.4")) {
+            if (kotlinVersion >= "2.4") { // TODO: remove the check after updating Kotlin version to 2.4+
                 add("org.jetbrains.kotlinx_kotlinx-coroutines-android.kotlin_module")
             } else {
                 add("kotlinx-coroutines-android.kotlin_module")
