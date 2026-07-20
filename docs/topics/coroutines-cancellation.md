@@ -235,8 +235,8 @@ Without suspending, coroutines on the same thread run sequentially.
 If a coroutine doesn't suspend for a long time, it doesn't stop when it's canceled.
 
 In CPU-intensive computations and other code that runs for a long time without suspending, call the [`yield()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html) function periodically.
-Calling `yield()` periodically gives other coroutines a chance to run on the current thread and ensures that the coroutine checks for cancellation reguralry.
-If the coroutine is canceled, the `yield()` function throws `CancellationException`.
+This function releases the current thread and gives other coroutines a chance to run on it.
+It also ensures that the coroutine checks for cancellation regularly. If the coroutine is canceled, the `yield()` function throws a `CancellationException`.
 
 ![Comparison of coroutine cancellation handling without checks, with `ensureActive()` or `isActive`, and with `yield()`](yield-and-cancellation.svg)
 
@@ -273,10 +273,14 @@ In this example, each coroutine uses `yield()` to let other coroutines run betwe
 
 ### Check for cancellation explicitly
 
-You almost never need to check for cancellation explicitly. In most cases, you can use `yield()`.
+You can check for cancellation explicitly, which lets long-running code react to cancellation without suspending.
+A long-running coroutine that doesn't suspend can prevent other coroutines on the same thread from running until it completes.
+Unless this behavior is intentional for your use case, use the [`yield()`](#the-yield-suspending-function) function instead.
 
-In certain scenarios, you may use the [`isActive`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/is-active.html) property or the [`ensureActive()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html) function to check if the coroutine was canceled.
-`isActive` is `false` when the coroutine is canceled, and `ensureActive()` throws `CancellationException` if the coroutine is canceled.
+Depending on the API, the check either returns a Boolean value or throws an exception:
+
+* The  [`isActive`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/is-active.html) property returns `false` when the coroutine is canceled.
+* The [`ensureActive()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html) function throws a `CancellationException` when the coroutine is canceled.
 
 ### Interrupt blocking code when coroutines are canceled
 
