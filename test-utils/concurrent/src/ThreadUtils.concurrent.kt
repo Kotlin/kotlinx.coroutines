@@ -4,8 +4,6 @@ import kotlinx.atomicfu.locks.*
 import kotlinx.coroutines.*
 import kotlin.time.*
 
-expect fun assertTrueJvm(value: Boolean)
-
 @OptIn(ExperimentalThreadBlockingApi::class)
 fun threadSleep(duration: Duration) {
     if (duration <= Duration.ZERO) return

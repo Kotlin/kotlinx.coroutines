@@ -39,7 +39,7 @@ class ReusableCancellableContinuationTest : TestBase() {
             }
         }
         channel.close()
-        assertTrueJvm(expectedInstances == result.size - 1)
+        assertEquals(expectedInstances, result.size - 1)
     }
 
     @Test
@@ -95,7 +95,7 @@ class ReusableCancellableContinuationTest : TestBase() {
             cont = it
         }
         ensureActive()
-        assertTrueJvm(FieldWalker.walk(coroutineContext[Job]).contains(cont!!))
+        assertTrue(FieldWalker.walk(coroutineContext[Job]).contains(cont!!))
         finish(2)
     }
 
