@@ -8,7 +8,6 @@ import kotlin.native.concurrent.*
 
 actual fun assertTrueJvm(value: Boolean) = Unit
 
-
 actual class MultiplatformThread actual constructor(
     private val block: Runnable, private val name: String?
 ) {

@@ -88,12 +88,10 @@ abstract class ChannelUndeliveredElementStressTest(private val kind: TestChannel
                     stopSender()
                     launchSender()
                 }
-
                 1 -> { // cancel & restart receiver
                     stopReceiver()
                     launchReceiver()
                 }
-
                 2 -> yield() // just yield (burn a little time)
             }
         }

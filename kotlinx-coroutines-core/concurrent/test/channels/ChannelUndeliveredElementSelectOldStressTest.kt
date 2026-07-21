@@ -98,12 +98,10 @@ abstract class ChannelUndeliveredElementSelectOldStressTest(private val kind: Te
                     stopSender()
                     launchSender()
                 }
-
                 1 -> { // cancel & restart receiver
                     stopReceiver()
                     launchReceiver()
                 }
-
                 2 -> yield() // just yield (burn a little time)
             }
         }

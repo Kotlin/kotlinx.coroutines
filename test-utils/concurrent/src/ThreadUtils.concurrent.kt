@@ -19,7 +19,6 @@ fun threadSleep(duration: Duration) {
     }
 }
 
-
 expect class MultiplatformThread(
     block: Runnable, name: String?
 ) {

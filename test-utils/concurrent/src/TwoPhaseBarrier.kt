@@ -39,11 +39,9 @@ class TwoPhaseBarrier(private val parties: Int) {
     }
 }
 
-
 private class HandleWrapper(val handle: ParkingHandle) {
     val woken = AtomicBoolean(false)
 }
-
 
 private class MSQueueCyclicBarrier<E> {
     private val head = atomic(Node<E>(null, 0))

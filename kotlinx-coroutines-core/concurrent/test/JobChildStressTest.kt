@@ -82,7 +82,6 @@ class JobChildStressTest : TestBase() {
             val canCloseThePool = CountDownLatch(1)
             runBlocking {
                 val rogueJob = AtomicReference<Job?>(null)
-
                 /** not using [createCompletableDeferredForTesting] because we don't need extra children. */
                 val deferred = CompletableDeferred<Unit>()
                 // optionally, add a completion handler to the parent job, so that the child tries to enter a list with
