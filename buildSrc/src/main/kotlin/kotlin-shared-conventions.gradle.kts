@@ -86,14 +86,18 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         tvosArm64()
         iosArm64()
         // Tier 3
-        androidNativeArm32()
-        androidNativeArm64()
-        androidNativeX86()
-        androidNativeX64()
         iosX64()
         mingwX64()
         watchosDeviceArm64()
 
+        // Deprecated for removal: see KT-86581
+        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
+        run {
+            androidNativeArm32()
+            androidNativeArm64()
+            androidNativeX86()
+            androidNativeX64()
+        }
         // Deprecated for removal: see KT-78660
         @Suppress("DEPRECATION", "DEPRECATION_ERROR")
         run {
