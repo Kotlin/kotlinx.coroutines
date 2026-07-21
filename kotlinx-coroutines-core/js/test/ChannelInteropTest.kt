@@ -229,11 +229,9 @@ class ChannelInteropTest : TestBase() {
         }
         val result1 = iterator.next().await()
         assertEquals(1, result1.value)
-
         // Call throw() with no argument to cancel the iterator
-        assertFailsWith<Throwable> {
-            iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-        }
+        assertFailsWith<Throwable> { iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await() }
+            .apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
         // Channel should be cancelled
         assertTrue(channel.isClosedForReceive)
         val result2 = iterator.next().await()
