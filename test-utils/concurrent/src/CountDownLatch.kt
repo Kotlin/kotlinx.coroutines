@@ -12,13 +12,22 @@ class CountDownLatch(count: Int) {
     private val waiters = MPSCQueueLatch<ParkingHandle>()
 
     fun await() {
+        tryAwait(Duration.INFINITE)
+    }
+
+    fun tryAwait(duration: Duration): Boolean {
         val thread = ParkingSupport.currentThreadHandle()
-        if (c.value <= 0) return
+        if (c.value <= 0) return true
+        val start = TimeSource.Monotonic.markNow()
         if (waiters.enqueue(thread)) {
             while (c.value > 0) {
-                ParkingSupport.park(Duration.INFINITE)
+                val remaining = start + duration - TimeSource.Monotonic.markNow()
+                if (remaining.isNegative())
+                    return false
+                ParkingSupport.park(remaining)
             }
         }
+        return true
     }
 
     fun countDown() {
