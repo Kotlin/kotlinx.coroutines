@@ -148,6 +148,7 @@ internal external interface JsAsyncIterable<out T> {
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols
 internal external interface JsAsyncIterator<out T> {
     public val next: () -> Promise<JsIteratorResult<T>>
+    // `return` and `throw` must be able to accept either zero arguments or a single one
     public val `return`: () -> Promise<JsIteratorResult<T>>
     public val `throw`: (value: Any?) -> Promise<JsIteratorResult<T>>
 }
