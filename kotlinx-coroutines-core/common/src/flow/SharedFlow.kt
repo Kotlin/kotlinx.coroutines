@@ -440,6 +440,7 @@ internal open class SharedFlowImpl<T>(
         if (bufferSize > bufferCapacity) dropOldestLocked()
         // keep replaySize not larger that needed
         if (replaySize > replay) { // increment replayIndex by one
+            dropStacktrace(this, replayIndex)
             updateBufferLocked(replayIndex + 1, minCollectorIndex, bufferEndIndex, queueEndIndex)
         }
         return true
@@ -457,6 +458,7 @@ internal open class SharedFlowImpl<T>(
     }
 
     private fun dropOldestLocked() {
+        dropStacktrace(this, head)
         buffer!!.setBufferAt(head, null)
         bufferSize--
         val newHead = head + 1
@@ -481,6 +483,7 @@ internal open class SharedFlowImpl<T>(
             null -> growBuffer(null, 0, 2)
             else -> if (curSize >= curBuffer.size) growBuffer(curBuffer, curSize,curBuffer.size * 2) else curBuffer
         }
+        collectStacktrace(this, head + curSize)
         buffer.setBufferAt(head + curSize, item)
     }
 
@@ -641,6 +644,7 @@ internal open class SharedFlowImpl<T>(
             } else {
                 val oldIndex = slot.index
                 val newValue = getPeekedValueLockedAt(index)
+                matchStacktrace(this, index)
                 slot.index = index + 1 // points to the next index after peeked one
                 resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
