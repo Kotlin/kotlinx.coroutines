@@ -79,7 +79,7 @@ import kotlin.coroutines.*
  *
  * Use [SharedFlow] when you need a [StateFlow] with tweaks in its behavior such as extra buffering, replaying more
  * values, or omitting the initial value.
- * 
+ *
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
@@ -116,7 +116,7 @@ import kotlin.coroutines.*
  * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
  * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators to a state flow has no effect.
- * 
+ *
  * ### Implementation notes
  *
  * State flow implementation is optimized for memory consumption and allocation-freedom. It uses a lock to ensure
@@ -330,7 +330,15 @@ private class StateFlowImpl<T>(
             val oldState = _state.value
             if (expectedState != null && oldState != expectedState) return false // CAS support
             if (oldState == newState) return true // Don't do anything if value is not changing, but CAS -> true
+
+            // Collect the stacktrace before publishing the new state
+            // because it becomes immediately visible for collectors, and hence can be requested from the debugger.
+            // Also need to indicate the state, because the old state might be requested from the debugger
+            // before this state is published.
+            collectStacktrace(this, NULL.unbox<T>(newState))
             _state.value = newState
+            dropStacktrace(this, NULL.unbox<T>(oldState))
+
             curSequence = sequence
             if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
                 curSequence++ // make it odd
@@ -398,7 +406,7 @@ private class StateFlowImpl<T>(
                 collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collector.emit(NULL.unbox(newState))
+                    collector.emit(matchStacktrace(this, NULL.unbox<T>(newState)))
                     oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot

@@ -347,7 +347,7 @@ internal open class BufferedChannel<E>(
         }
     }
 
-    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of these issues: KT-81416, KT-86264. 
+    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of these issues: KT-81416, KT-86264.
     // For now, an inline function, which invokes atomic operations, may only be called within a parent class.
     protected fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
@@ -439,6 +439,7 @@ internal open class BufferedChannel<E>(
         // performing the synchronization after that.
         // This way, receivers safely retrieve the
         // element, following the safe publication pattern.
+        collectStacktrace(this, segment, index)
         segment.storeElement(index, element)
         if (closed) return updateCellSendSlow(segment, index, element, s, waiter, closed)
         // Read the current cell state.
@@ -1016,6 +1017,7 @@ internal open class BufferedChannel<E>(
         // This is a fast-path of `updateCellReceiveSlow(..)`.
         //
         // Read the current cell state.
+        matchStacktrace(this, segment, index)
         val state = segment.getState(index)
         when {
             // The cell is empty.
