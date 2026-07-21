@@ -11,6 +11,7 @@ import org.junit.*
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 import kotlin.test.*

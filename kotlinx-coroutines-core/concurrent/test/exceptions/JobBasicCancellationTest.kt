@@ -1,9 +1,7 @@
 package kotlinx.coroutines.exceptions
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.Test
-import java.io.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 /*
@@ -97,7 +95,7 @@ class JobBasicCancellationTest : TestBase() {
         val deferred = async(NonCancellable) {
             val nested = async(NonCancellable) {
                 expect(3)
-                throw IOException()
+                throw TestException()
             }
 
             expect(2)
@@ -109,7 +107,7 @@ class JobBasicCancellationTest : TestBase() {
         expect(1)
         try {
             deferred.await()
-        } catch (e: IOException) {
+        } catch (_: TestException) {
             finish(5)
         }
     }
@@ -151,6 +149,6 @@ class JobBasicCancellationTest : TestBase() {
         val cause = deferred.getCancellationException().cause!!
         assertIs<IndexOutOfBoundsException>(cause)
         assertNull(cause.cause)
-        assertTrue(cause.suppressed.isEmpty())
+        assertTrue(cause.suppressedExceptions.isEmpty())
     }
 }
