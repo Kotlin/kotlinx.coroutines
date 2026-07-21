@@ -145,6 +145,7 @@ internal external interface JsAsyncIterable<out T> {
 
 @JsPlainObject
 @JsName("AsyncIterator")
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols
 internal external interface JsAsyncIterator<out T> {
     public val next: () -> Promise<JsIteratorResult<T>>
     public val `return`: () -> Promise<JsIteratorResult<T>>
