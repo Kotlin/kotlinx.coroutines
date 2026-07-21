@@ -1,10 +1,8 @@
 package kotlinx.coroutines.exceptions
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import org.junit.*
-import org.junit.Test
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class FlowSuppressionTest : TestBase() {
@@ -22,7 +20,7 @@ class FlowSuppressionTest : TestBase() {
             flow.collect()
         } catch (e: Throwable) {
             assertIs<TestException>(e)
-            assertIs<TestException2>(e.suppressed[0])
+            assertIs<TestException2>(e.suppressedExceptions[0])
         }
     }
 
@@ -40,7 +38,7 @@ class FlowSuppressionTest : TestBase() {
             flow.collect()
         } catch (e: Throwable) {
             assertIs<TestException>(e)
-            assertIs<TestException2>(e.suppressed[0])
+            assertIs<TestException2>(e.suppressedExceptions[0])
 
         }
     }
@@ -64,7 +62,7 @@ class FlowSuppressionTest : TestBase() {
             flow.collect()
         } catch (e: Throwable) {
             assertIs<TestException>(e)
-            assertIs<CancellationException>(e.suppressed[0])
+            assertIs<CancellationException>(e.suppressedExceptions[0])
         }
         finish(4)
     }

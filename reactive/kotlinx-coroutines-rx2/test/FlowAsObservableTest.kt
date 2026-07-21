@@ -6,7 +6,7 @@ import io.reactivex.disposables.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.junit.Test
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 class FlowAsObservableTest : TestBase() {

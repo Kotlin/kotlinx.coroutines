@@ -1,23 +1,24 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import java.util.concurrent.*
+import kotlin.concurrent.atomics.*
 import kotlin.test.*
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class StateFlowCancellabilityTest : TestBase() {
     @Test
     fun testCancellabilityNoConflation() = runTest {
         expect(1)
         val state = MutableStateFlow(0)
-        var subscribed = true
+        var subscribed = false
         var lastReceived = -1
-        val barrier = CyclicBarrier(2)
+        val barrier = TwoPhaseBarrier(2)
         val job = state
             .onSubscription {
                 subscribed = true
-                barrier.await()
+                barrier.await() // 1
             }
             .onEach { i ->
                 when (i) {
@@ -30,19 +31,19 @@ class StateFlowCancellabilityTest : TestBase() {
                     else -> expectUnreached() // shall check for cancellation
                 }
                 lastReceived = i
-                barrier.await()
-                barrier.await()
+                barrier.await() // 2
+                barrier.await() // 3
             }
             .launchIn(this + Dispatchers.Default)
-        barrier.await()
+        barrier.await() // 1
         assertTrue(subscribed) // should have subscribed in the first barrier
-        barrier.await()
+        barrier.await() // 2
         assertEquals(0, lastReceived) // should get initial value, too
         for (i in 1..3) { // emit after subscription
             state.value = i
-            barrier.await() // let it go
+            barrier.await() // 3, let it go
             if (i < 3) {
-                barrier.await() // wait for receive
+                barrier.await() // 2, wait for receive
                 assertEquals(i, lastReceived) // shall receive it
             }
         }
@@ -50,4 +51,3 @@ class StateFlowCancellabilityTest : TestBase() {
         finish(5)
     }
 }
-

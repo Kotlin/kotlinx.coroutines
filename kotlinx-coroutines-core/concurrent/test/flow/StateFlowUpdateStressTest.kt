@@ -1,16 +1,11 @@
 package kotlinx.coroutines.flow
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
-import kotlin.test.Test
 
 class StateFlowUpdateStressTest : TestBase() {
     private val iterations = 1_000_000 * stressTestMultiplier
-
-    @get:Rule
-    val executor = ExecutorRule(2)
 
     @Test
     fun testUpdate() = doTest { update { it + 1 } }

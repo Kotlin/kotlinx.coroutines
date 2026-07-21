@@ -1,11 +1,10 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.channels
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
-import java.util.concurrent.atomic.*
+import kotlinx.coroutines.testing.*
+import kotlin.concurrent.atomics.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -17,7 +16,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = pool
 
-    @After
+    @AfterTest
     fun tearDown() {
         pool.close()
     }
@@ -34,7 +33,7 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
 
     private suspend fun runStressTest(kind: TestChannelKind) {
         repeat(iterations) {
-            val counter = AtomicInteger(0)
+            val counter = AtomicInt(0)
             val channel = kind.create<Int>()
 
             val latch = CountDownLatch(1)
@@ -45,17 +44,17 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
 
             val j2 = async {
                 latch.await()
-                channel.invokeOnClose { counter.incrementAndGet() }
+                channel.invokeOnClose { counter.incrementAndFetch() }
             }
 
             val j3 = async {
                 latch.await()
-                channel.invokeOnClose { counter.incrementAndGet() }
+                channel.invokeOnClose { counter.incrementAndFetch() }
             }
 
             latch.countDown()
             joinAll(j1, j2, j3)
-            assertEquals(1, counter.get())
+            assertEquals(1, counter.load())
         }
     }
 }

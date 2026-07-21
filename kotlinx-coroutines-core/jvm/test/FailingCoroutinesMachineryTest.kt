@@ -1,13 +1,13 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
-import org.junit.Test
+import kotlinx.coroutines.testing.CountDownLatch
 import org.junit.runner.*
 import org.junit.runners.*
-import java.util.concurrent.*
+import java.util.concurrent.Executors
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
 class FailingCoroutinesMachineryTest(
@@ -83,7 +83,7 @@ class FailingCoroutinesMachineryTest(
         override fun toString() = "ThrowingDispatcher2"
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         dispatcher.reset()
         if (lazyOuterDispatcher.isInitialized()) lazyOuterDispatcher.value.close()
@@ -139,7 +139,7 @@ class FailingCoroutinesMachineryTest(
     }
 
     private fun checkException() {
-        latch.await(2, TimeUnit.SECONDS)
+        assertTrue(latch.tryAwait(2.seconds))
         val e = caught
         assertNotNull(e)
         // First condition -- failure in context element
