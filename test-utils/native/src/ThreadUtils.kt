@@ -15,22 +15,35 @@ actual class MultiplatformThread actual constructor(
     private val started = AtomicBoolean(false)
     private val joined = AtomicBoolean(false)
     private var worker: Worker? = null
-    private var future: Future<Unit>? = null
+    private val threadTaskCompleted = CountDownLatch(1)
+    /** Indicates whether some thread has already taken the responsibility for cleaning up the worker */
+    private val workerCleanedUp = AtomicBoolean(false)
 
     actual fun start() {
         if (!starting.compareAndSet(false, true)) {
             error("Cannot call start() on a MultiplatformThread which has already started")
         }
         worker = Worker.start(name = name)
-        future = worker!!.execute(TransferMode.SAFE, { block }) { it.run() }
+        worker!!.execute(TransferMode.SAFE, {
+            Runnable {
+                try {
+                    block.run()
+                } finally {
+                    threadTaskCompleted.countDown()
+                }
+            }
+        }) { it.run() }
         started.store(true)
     }
 
     actual fun join() {
         if (started.load() && !joined.load()) {
-            future!!.consume { }
-            worker!!.requestTermination().result
+            threadTaskCompleted.await()
             joined.store(true)
+            if (workerCleanedUp.compareAndSet(false, true)) {
+                worker!!.requestTermination().result
+                worker = null
+            }
         }
     }
 }
