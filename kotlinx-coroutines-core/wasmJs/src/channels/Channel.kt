@@ -58,7 +58,6 @@ public actual interface ReceiveChannel<out E> {
         throw recoverStackTrace(result.exceptionOrNull() ?: return null)
     }
 
-
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
     @LowPriorityInOverloadResolution
     @Deprecated(

@@ -1,3 +1,4 @@
+@file:JvmName("ChannelKt")
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*

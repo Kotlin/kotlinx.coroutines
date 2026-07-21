@@ -48,13 +48,32 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
     public actual suspend fun receive(): E
     public actual fun cancel(cause: CancellationException?)
 
-    override fun asyncIterator(): JsAsyncIterator<E> =
-        asyncIterator(CoroutineScope(EmptyCoroutineContext))
-
-    @JsExport.Ignore
-    // For Kotlin side only to be able to set up a custom scope for the iterator
-    public fun asyncIterator(scope: CoroutineScope): JsAsyncIterator<E> =
-        JsAsyncIterator(
+    /**
+     * Returns a JavaScript `AsyncIterator` for this channel.
+     *
+     * This method is used to implement the JavaScript async-iteration protocol, so that a
+     * `ReceiveChannel` exported to JavaScript can be consumed with `for await ... of`.
+     *
+     * Each call to the iterator's `next` method receives at most one element from this channel:
+     *
+     * * if an element is available, the returned `Promise` is fulfilled with an iterator result
+     *   whose `value` is the received element and whose `done` is `false`;
+     * * if the channel is closed normally, or is cancelled with a [CancellationException], the
+     *   returned `Promise` is fulfilled with an iterator result whose `done` is `true`;
+     * * if the channel is closed with another cause, the returned `Promise` is rejected with that
+     *   cause.
+     *
+     * Calling the iterator's `return` method cancels this channel and returns a fulfilled
+     * `Promise` with `done` set to `true`. Calling the iterator's `throw` method cancels this
+     * channel and returns a rejected `Promise` with the supplied error.
+     *
+     * The coroutines backing calls to `next` are started in a standalone scope with an empty
+     * coroutine context. In particular, they are not children of any caller-provided coroutine
+     * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
+     */
+    override fun asyncIterator(): JsAsyncIterator<E> {
+        val scope = CoroutineScope(EmptyCoroutineContext)
+        return JsAsyncIterator(
             next = {
                 scope.promise {
                     val result = receiveCatching()
@@ -73,10 +92,17 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
                 Promise.resolve(JsIteratorResult(value = value, done = true))
             }.unsafeCast<() -> Promise<JsIteratorResult<E>>>(),
             `throw` = { err: dynamic ->
-                cancel(CancellationException("Channel was closed via AsyncIterator#throw method", err))
+                @Suppress("OPT_IN_USAGE")
+                cancel(
+                    CancellationException(
+                        "Channel was closed via AsyncIterator#throw method",
+                        err.unsafeCast<JsPromiseError>().toThrowableOrNull()
+                    )
+                )
                 Promise.reject(err)
             }
         )
+    }
 
     @JsExport.Ignore // Is replaced by AsyncIterable implementation
     public actual operator fun iterator(): ChannelIterator<E>
