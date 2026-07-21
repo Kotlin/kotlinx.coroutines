@@ -445,6 +445,7 @@ internal open class BufferedChannel<E>(
         // performing the synchronization after that.
         // This way, receivers safely retrieve the
         // element, following the safe publication pattern.
+        collectStacktrace(this, segment, index)
         segment.storeElement(index, element)
         if (closed) return updateCellSendSlow(segment, index, element, s, waiter, closed)
         // Read the current cell state.
@@ -1022,6 +1023,7 @@ internal open class BufferedChannel<E>(
         // This is a fast-path of `updateCellReceiveSlow(..)`.
         //
         // Read the current cell state.
+        matchStacktrace(this, segment, index)
         val state = segment.getState(index)
         when {
             // The cell is empty.
