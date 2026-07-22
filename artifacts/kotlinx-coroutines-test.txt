@@ -17,7 +17,6 @@ org.jetbrains.kotlinx:kotlinx-coroutines-test-tvossimulatorarm64/.klib,.module,.
 org.jetbrains.kotlinx:kotlinx-coroutines-test-tvosx64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-wasm-js/.klib,.module,.pom,javadoc.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-wasm-wasi/.klib,.module,.pom,javadoc.jar,sources.jar
-org.jetbrains.kotlinx:kotlinx-coroutines-test-watchosarm32/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-watchosarm64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-watchosdevicearm64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-watchossimulatorarm64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
