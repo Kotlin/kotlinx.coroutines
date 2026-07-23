@@ -244,4 +244,37 @@ class StateFlowTest : TestBase() {
     fun testSubscriptionByFirstSuspensionInStateFlow() = runTest {
         testSubscriptionByFirstSuspensionInCollect(MutableStateFlow(0)) { value = it; yield() }
     }
+
+    @Test
+    fun testGetAndUpdateContract() = runTest {
+        val state = MutableStateFlow(12)
+        var value: Int
+        state.getAndUpdate {
+            value = it
+            it + 1
+        }
+        assertEquals(12, value)
+    }
+
+    @Test
+    fun testUpdateAndGetContract() = runTest {
+        val state = MutableStateFlow(12)
+        var value: Int
+        state.updateAndGet {
+            value = it
+            it + 1
+        }
+        assertEquals(12, value)
+    }
+
+    @Test
+    fun testUpdateContract() = runTest {
+        val state = MutableStateFlow(12)
+        var value: Int
+        state.update {
+            value = it
+            it + 1
+        }
+        assertEquals(12, value)
+    }
 }
