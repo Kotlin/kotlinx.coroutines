@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
 
@@ -26,9 +25,6 @@ buildscript {
 
     with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
 }
-
-// Configure subprojects with Kotlin sources
-apply(plugin = "configure-compilation-conventions")
 
 allprojects {
     val deployVersion = properties["DeployVersion"]
@@ -64,10 +60,6 @@ val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == t
 // Configure repositories
 allprojects {
     repositories {
-        /*
-         * google should be first in the repository list because some of the play services
-         * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
-         */
         google()
         if (cacheRedirectorEnabled) {
             maven("https://cache-redirector.jetbrains.com/maven-central")
@@ -84,27 +76,20 @@ allprojects {
 configure(subprojects.filter { !sourceless.contains(it.name) }) {
     if (isMultiplatform) {
         apply(plugin = "kotlin-multiplatform")
-        apply(plugin = "kotlin-multiplatform-conventions")
-    } else if (platformOf(this) == "jvm") {
-        apply(plugin = "kotlin-jvm-conventions")
     } else {
-        val platform = platformOf(this)
-        throw IllegalStateException("No configuration rules for $platform")
+        apply(plugin = "kotlin")
     }
+    apply(plugin = "kotlin-shared-conventions")
 }
 
 // needs to be before evaluationDependsOn due to weird Gradle ordering
 configure(subprojects) {
     fun Project.shouldSniff(): Boolean =
-        platformOf(project) == "jvm" && project.name !in unpublished && project.name !in sourceless
+        project.name !in unpublished && project.name !in sourceless
             && project.name !in androidNonCompatibleProjects
     // Skip JDK 8 projects or unpublished ones
     if (shouldSniff()) {
-        if (isMultiplatform) {
-            apply(plugin = "animalsniffer-multiplatform-conventions")
-        } else {
-            apply(plugin = "animalsniffer-jvm-conventions")
-        }
+        apply(plugin = "animalsniffer-shared-conventions")
     }
 }
 
@@ -153,8 +138,3 @@ configure(subprojects.filter {
 
 AuxBuildConfiguration.configure(rootProject)
 rootProject.registerTopLevelDeployTask()
-
-if (isSnapshotTrainEnabled(rootProject)) {
-    // Report Kotlin compiler version when building project
-    println("Using Kotlin compiler version: ${KotlinCompilerVersion.VERSION}")
-}

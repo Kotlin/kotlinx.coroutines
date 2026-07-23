@@ -13,3 +13,11 @@ public final class kotlinx/coroutines/slf4j/MDCContext : kotlin/coroutines/Abstr
 public final class kotlinx/coroutines/slf4j/MDCContext$Key : kotlin/coroutines/CoroutineContext$Key {
 }
 
+public final class kotlinx/coroutines/slf4j/MDCContextKt {
+	public static final fun plus (Lkotlinx/coroutines/slf4j/MDCContext;Ljava/lang/Iterable;)Lkotlinx/coroutines/slf4j/MDCContext;
+	public static final fun plus (Lkotlinx/coroutines/slf4j/MDCContext;Ljava/util/Map;)Lkotlinx/coroutines/slf4j/MDCContext;
+	public static final fun plus (Lkotlinx/coroutines/slf4j/MDCContext;Lkotlin/Pair;)Lkotlinx/coroutines/slf4j/MDCContext;
+	public static final fun plus (Lkotlinx/coroutines/slf4j/MDCContext;Lkotlin/sequences/Sequence;)Lkotlinx/coroutines/slf4j/MDCContext;
+	public static final fun plus (Lkotlinx/coroutines/slf4j/MDCContext;[Lkotlin/Pair;)Lkotlinx/coroutines/slf4j/MDCContext;
+}
+
