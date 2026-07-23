@@ -184,7 +184,7 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
         (this as Object).notifyAll()
     }
 
-    // User only for testing and nothing else
+    // Used only for testing and nothing else
     internal val isThreadPresent
         get() = _thread != null
 
