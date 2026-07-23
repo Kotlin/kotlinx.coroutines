@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
+import kotlin.contracts.*
 import kotlin.coroutines.*
 
 /**
@@ -194,7 +195,11 @@ public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(v
  *
  * [function] may be evaluated multiple times, if [value] is being concurrently updated.
  */
+@OptIn(ExperimentalContracts::class)
 public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
+    contract {
+        callsInPlace(function, InvocationKind.AT_LEAST_ONCE)
+    }
     while (true) {
         val prevValue = value
         val nextValue = function(prevValue)
@@ -210,7 +215,11 @@ public inline fun <T> MutableStateFlow<T>.updateAndGet(function: (T) -> T): T {
  *
  * [function] may be evaluated multiple times, if [value] is being concurrently updated.
  */
+@OptIn(ExperimentalContracts::class)
 public inline fun <T> MutableStateFlow<T>.getAndUpdate(function: (T) -> T): T {
+    contract {
+        callsInPlace(function, InvocationKind.AT_LEAST_ONCE)
+    }
     while (true) {
         val prevValue = value
         val nextValue = function(prevValue)
@@ -226,7 +235,11 @@ public inline fun <T> MutableStateFlow<T>.getAndUpdate(function: (T) -> T): T {
  *
  * [function] may be evaluated multiple times, if [value] is being concurrently updated.
  */
+@OptIn(ExperimentalContracts::class)
 public inline fun <T> MutableStateFlow<T>.update(function: (T) -> T) {
+    contract {
+        callsInPlace(function, InvocationKind.AT_LEAST_ONCE)
+    }
     while (true) {
         val prevValue = value
         val nextValue = function(prevValue)
