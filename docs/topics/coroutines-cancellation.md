@@ -83,10 +83,8 @@ println("All coroutines have completed")
 
 In this example, [`CompletableDeferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-completable-deferred/) is used as a signal that the coroutine has started running.
 The coroutine calls `complete()` when it starts executing, and `await()` only returns once that `CompletableDeferred` is completed.
-This way, cancellation happens only after the coroutine has started running.
-Without this check, the coroutine may be canceled before it runs the code inside its block.
-You don't need this check to cancel a coroutine. 
-It's included here to make the example reproducible, because the coroutine always starts and prints its messages before it's canceled.
+You don't need this check to cancel a coroutine.
+It's included here to make the example reproducible by ensuring that the coroutine starts and prints its messages before it's canceled.
 
 Because `Deferred` implements `Job`, cancellation works the same way for coroutines created by the `async()` coroutine builder function:
 
@@ -161,7 +159,7 @@ If they're canceled first, nothing is printed.
 In Kotlin, coroutine cancellation is _cooperative_.
 Coroutines react to cancellation only when they cooperate by [suspending](#suspension-points-and-cancellation) or [checking for cancellation explicitly](#check-for-cancellation-explicitly).
 
-In this section, you can learn how to make coroutines react to cancellation using [suspension points](#suspension-points-and-cancellation), the [`yield()` function](#the-yield-suspending-function), and the [`runInterruptible()` function](#interrupt-blocking-code-when-coroutines-are-canceled) on the JVM.
+In this section, you can learn how adding [suspension points](#suspension-points-and-cancellation), such as calls to the [yield()](#the-yield-suspending-function) function, lets coroutines react to cancellation.
 
 ### Suspension points and cancellation
 
@@ -229,8 +227,9 @@ println("All child jobs completed!")
 
 ### The `yield()` suspending function
 
-Without suspending, coroutines on the same thread run sequentially.
-If a coroutine doesn't suspend for a long time, it doesn't stop when it's canceled.
+If a coroutine doesn't suspend, other coroutines can't run on the same thread until it completes.
+As a result, coroutines that don't suspend run sequentially on that thread.
+If a coroutine doesn't suspend for a long time, it also doesn't stop when it's canceled.
 
 In CPU-intensive computations and other code that runs for a long time without suspending, call the [`yield()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html) function periodically.
 This function releases the current thread and gives other coroutines a chance to run on it.
@@ -334,7 +333,6 @@ Here's an example:
 ```kotlin
 // Defines a coroutine scope that uses the UI thread
 class ScreenWithButtons(private val scope: CoroutineScope) {
-    // Call this function only from the UI thread
     fun loadAndUpdateButtons(filename: String) {
         scope.launch {
             // withContext() checks for cancellation before entering the block
