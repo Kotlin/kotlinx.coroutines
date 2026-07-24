@@ -25,16 +25,8 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
     val combined = foldCopies(coroutineContext, context, true)
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
-    val interceptor = combined[ContinuationInterceptor]
-    return when {
-        // A private runBlocking event loop used to host all of its children on the caller thread.
-        // A new coroutine must instead get a dedicated virtual thread unless the caller explicitly
-        // supplied a dispatcher for that child.
-        context[ContinuationInterceptor] == null && interceptor is BlockingEventLoop ->
-            debug.minusKey(ContinuationInterceptor) + Dispatchers.Default
-        combined !== Dispatchers.Default && interceptor == null -> debug + Dispatchers.Default
-        else -> debug
-    }
+    return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
+        debug + Dispatchers.Default else debug
 }
 
 /**

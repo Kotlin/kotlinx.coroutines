@@ -13,7 +13,7 @@ public const val IO_PARALLELISM_PROPERTY_NAME: String = "kotlinx.coroutines.io.p
  */
 public actual object Dispatchers {
     @JvmStatic
-    public actual val Default: CoroutineDispatcher = VirtualThreadDispatcher
+    public actual val Default: CoroutineDispatcher = DefaultVirtualThreadDispatcher
 
     @JvmStatic
     public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
@@ -87,7 +87,7 @@ public actual object Dispatchers {
     @DelicateCoroutinesApi
     public fun shutdown() {
         DefaultExecutor.shutdown()
-        VirtualThreadDispatcher.shutdown()
+        DefaultVirtualThreadDispatcher.shutdownDefault()
         // Also shuts down Dispatchers.IO
         DefaultScheduler.shutdown()
     }

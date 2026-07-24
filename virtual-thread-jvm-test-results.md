@@ -1,0 +1,588 @@
+# JVM virtual-thread experiment: test results
+
+Measured on 2026-07-24 with the JDK 25 JVM test worker. These are preliminary probable causes based on test names and observed failures; they are not deep root-cause investigations.
+
+## Summary
+
+- Existing tests discovered: 2,193
+- Passed: 1,622
+- Failed: 429
+- Skipped: 7
+- Timed out: 121
+- Unclassified due to Gradle parameterized-test filtering: 14
+- Additional semaphore/virtual-thread test added afterward: passed
+
+## Failed tests (429)
+
+- `kotlinx.coroutines.AsyncJvmTest.testAsyncWithFinally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AsyncLazyTest.testCancelWhileComputing` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AsyncLazyTest.testStart` — Thread affinity or execution ordering differs under one-virtual-thread-per-coroutine execution.
+- `kotlinx.coroutines.AsyncTest.testDeferWithTwoWaiters` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AsyncTest.testOverriddenParent` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AsyncTest.testUndispatched` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationCommonTest.testDeferredAwaitCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationCommonTest.testJobJoinCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationCommonTest.testLockCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationCommonTest.testSelectLockCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testReceiveCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testSelectDeferredAwaitCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testSelectJobJoinCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testSelectReceiveCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testSelectSendCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AtomicCancellationTest.testSendCancellable` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllCancellation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllExceptionally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllFullyCompletedExceptionally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllFullyCompleted` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllMultipleExceptions` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAllPartiallyCompletedExceptionally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testAwaitAll` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testJoinAllCancellation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testJoinAllExceptionally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.AwaitTest.testJoinAll` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableContinuationHandlersTest.testSecondSubscriptionAfterResumeCancelAndDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableContinuationTest.testCancelAndResumeWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableContinuationTest.testCancelAndResume` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableContinuationTest.testResumeAndResume` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.CancellableResumeOldTest.testResumeCancelWhileDispatchedWithHandlerFailure` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeOldTest.testResumeCancelWhileDispatched` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeOldTest.testResumeLaterAfterCancelWithHandlerFailure` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeOldTest.testResumeLaterAfterCancel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeOldTest.testResumeLaterNormally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeTest.testResumeCancelWhileDispatchedWithHandlerFailure` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeTest.testResumeCancelWhileDispatched` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeTest.testResumeLaterAfterCancelWithHandlerFailure` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeTest.testResumeLaterAfterCancel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CancellableResumeTest.testResumeLaterNormally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CompletableDeferredTest.testAwait` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CompletableDeferredTest.testCancelAndAwaitParentWaitChildren` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CompletableDeferredTest.testCompleteAndAwaitParentWaitChildren` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutineScopeTest.testAsyncCancellationFirst` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutineScopeTest.testAsyncCancellationSecond` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutineScopeTest.testCoroutineScopeCancellationVsException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutineScopeTest.testOuterJobIsCancelled` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutineScopeTest.testScope` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelAndJoinChildCrash` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelAndJoinChildren` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelAndJoin` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelChildWithFinally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelParentOnChildException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testCancelParentOnNestedException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testJoinWithFinally` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testLaunchUndispatched` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testNotCancellableChildWithExceptionCancelled` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testParentCrashCancelsChildren` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.CoroutinesTest.testWaitNestedChild` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.DelayDurationTest.testInfinite` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.DelayTest.testCancellation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.DispatchedContinuationTest.testCancelThenResume` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.DispatchedContinuationTest.testResumeThenCancel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.DispatchersToStringTest.testLimitedParallelism` — The virtual-thread dispatcher has different identity or diagnostic text from the scheduler-backed default dispatcher.
+- `kotlinx.coroutines.EventLoopsTest.testEventLoopInDefaultExecutor` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.ExecutorAsCoroutineDispatcherDelayTest.testCancelling` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.ExecutorsTest.testExecutorToDispatcher` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.ExecutorsTest.testFixedThreadPool` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.ExecutorsTest.testShutdownExecutorService` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.ExecutorsTest.testSingleThread` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.ExecutorsTest.testTwoThreads` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.FailFastOnStartTest.testLaunchUndispatched` — `UNDISPATCHED` is intentionally remapped to dispatched `ATOMIC`, so inline-start ordering no longer holds.
+- `kotlinx.coroutines.FailedJobTest.testCancelledJob` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.IODispatcherTest.testWithIOContext` — `runBlocking` now forces the virtual-thread default dispatcher, so the requested executor/thread identity is not preserved.
+- `kotlinx.coroutines.JobStatesTest.testCancelling` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobStatesTest.testCompletingFailed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobStatesTest.testFailed` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.JobStatesTest.testNormalCompletion` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobTest.testCancelAndJoinParentWaitChildren` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobTest.testInvokeOnCancellingFiringOnNormalExit` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobTest.testOnCancellingHandler` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.JobTest.testOverriddenParent` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.LaunchLazyTest.testInvokeOnCompletionAndStart` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.MemoryFootprintTest.testCancellableContinuationFootprint` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.NonCancellableTest.testNonCancellableTwice` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.NonCancellableTest.testNonCancellableWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.RejectedExecutionTest.testRejectOnResumeInContext` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testChannelMemoryLeak` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testNotCancelledOnClaimedResume` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testPropagatedCancel` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testRegular` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testResumeRegularDoesntPreservesReference` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testReusableAndRegularSuspendCancellableCoroutineMemoryLeak` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.RunBlockingJvmTest.testInitialPortionRunningDespiteInterruptions` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.RunBlockingJvmTest.testNonInterruptibleRunBlockingStartingInterrupted` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.RunBlockingTest.testDispatchOnShutdown2` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.RunBlockingTest.testOtherDispatcher` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.RunBlockingTest.testOuterEventLoop` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.RunBlockingTest.testPrivateEventLoop` — The old private `runBlocking` event-loop behavior is intentionally bypassed, invalidating event-loop identity or work-stealing assertions.
+- `kotlinx.coroutines.SupervisorTest.testSupervisorJob` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.SupervisorTest.testSupervisorScopeCancellationVsException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.ThreadContextElementTest.testExample` — Thread-context installation/restoration assumed inline execution or CPS resumption; direct virtual-thread wake-up changes that boundary.
+- `kotlinx.coroutines.ThreadContextElementTest.testThreadLocalFlowOn` — Thread-context installation/restoration assumed inline execution or CPS resumption; direct virtual-thread wake-up changes that boundary.
+- `kotlinx.coroutines.WithContextTest.testCancelWithJobNoSuspend` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testCancelWithJobWithSuspend` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testRunCancellationDispatchedVsException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testRunCancellationUndispatchedVsException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testRunSelfCancellationWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testRunSelfCancellation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testSameContextNoSuspend` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testSameContextWithSuspend` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithContextTest.testSequentialCancellation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutDurationTest.testDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutDurationTest.testSuppressExceptionWithResult` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutOrNullDurationTest.testDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutOrNullDurationTest.testSuppressExceptionWithResult` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.WithTimeoutOrNullTest.testDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutOrNullTest.testSuppressExceptionWithResult` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.WithTimeoutTest.testDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.WithTimeoutTest.testSuppressExceptionWithResult` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorLazyTest.testEmptyStart` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorLazyTest.testOne` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.channels.ActorTest.testCancelEnclosingJob[Capacity: -1]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCancelEnclosingJob[Capacity: 0]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCancelEnclosingJob[Capacity: 2,147,483,647]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithCause[Capacity: -1]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithCause[Capacity: 0]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithCause[Capacity: 1]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithCause[Capacity: 2,147,483,647]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithoutCause[Capacity: 0]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testCloseWithoutCause[Capacity: 1]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ActorTest.testOne[Capacity: 0]` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BasicOperationsTest.testTrySendAfterClose` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.channels.BroadcastTest.testBroadcastBasic` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BroadcastTest.testBroadcastCloseWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BroadcastTest.testChannelBroadcastEagerCancel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BroadcastTest.testChannelBroadcastEagerClose` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.channels.BroadcastTest.testChannelBroadcastLazyCancel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BroadcastTest.testChannelBroadcastLazyClose` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedBroadcastChannelTest.testBasic` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedBroadcastChannelTest.testConcurrentSendCompletion` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedBroadcastChannelTest.testForgetUnsubscribed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedBroadcastChannelTest.testSendSuspend` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testBufferSizeFromTheMiddle` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testBufferSize` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testClosedBufferedReceiveCatching` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testClosedExceptions` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testIteratorHasNextIsIdempotent` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.BufferedChannelTest.testSimple` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.CancelledChannelLeakTest.testBufferedChannelLeak` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.channels.ChannelReceiveCatchingTest.testNullableIntChanel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ChannelReceiveCatchingTest.testUIntChannel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementFailureTest.testHasNextCancelledFail` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementFailureTest.testReceiveOrClosedSelectCancelledFail` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementFailureTest.testReceiveSelectCancelledFail` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ConflatedBroadcastChannelTest.testBasicScenario` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ConflatedBroadcastChannelTest.testInitialValueAndReceiveClosed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ConflatedChannelTest.testConflationSendReceive` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ConsumeTest.testConsumeEachExitsOnCancellation` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.channels.ProduceConsumeTest.testRendezvous` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.channels.ProduceTest.testAwaitCloseOnlyAllowedOnce` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.channels.ProduceTest.testCancelWithCause` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.ProduceTest.testCancelWithoutCause` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testClosedExceptions` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testClosedReceiveCatching` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testIteratorOneWithYield` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testIteratorOne` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testIteratorTwoWithYield` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testSuspendSendOnClosedChannel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testTrySendTryReceive` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleDelay01` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleDelay02` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleDelay03` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleDelayDuration02` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleDelayDuration03` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.examples.test.FlowDelayTest.testExampleTimeoutDuration01` — Timer, virtual-time, or timeout ordering assumes cooperative suspension; the virtual thread now blocks across the wait.
+- `kotlinx.coroutines.exceptions.JobExceptionHandlingTest.testBadException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.exceptions.JobExceptionHandlingTest.testExceptionOnChildCancellationWithCause` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.exceptions.JobExceptionHandlingTest.testExceptionOnChildCancellation` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.exceptions.JobExceptionHandlingTest.testMultipleChildrenAndParentThrowsAtomic` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.exceptions.ProduceExceptionsTest.testCancelChannelWithJobWithException` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.exceptions.ProduceExceptionsTest.testCancelChannelWithJob` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.exceptions.ProduceExceptionsTest.testCancelProduceChannelWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.exceptions.ProduceExceptionsTest.testCancelProduceChannel` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.exceptions.ProduceExceptionsTest.testSuppressedExceptionUncaught` — The continuation state machine was exercised in a path that still assumes CPS suspension or dispatcher resumption.
+- `kotlinx.coroutines.exceptions.StackTraceRecoveryChannelsTest.testSendToChannel` — Stack traces or debug metadata differ because execution remains on a virtual thread instead of resuming through CPS frames.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer0DropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer0DropOldest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer10DropOldest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer1DropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer1DropOldest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBuffer3DropOldestOverrideBuffer8DropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferConflated` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferDropLatestBuffer7Combine` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferDropLatestOverrideBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferDropLatestOverrideConflate` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferDropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testBufferDropOldest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testConflateBuffer10Combine` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testConflateOverrideBufferDropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testConflateOverridesBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testConflate` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferConflationTest.testDoubleConflate` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer00Fused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer01Fused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer111Fused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer11Fused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer123Fused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer1` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer2` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBuffer3` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferBufferDefaultFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferDefaultBufferFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferDefaultTwiceFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferFlowOnDispatcherFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferFlowOnMultipleFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferFlowOnNameFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testBufferRendezvous` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testFlowOnDispatcherBufferDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testFlowOnDispatcherBufferFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.BufferTest.testFlowOnNameBufferFused` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CatchTest.testCatchContext` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ChannelBuildersFlowTest.testConsumeAsFlowProduceBuffered` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ChannelFlowTest.testClosedPrematurely` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ChannelFlowTest.testConflated` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ChunkedTest.testChunkedCancelledWithSuspension` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineIterableTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineIterableTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineIterableTest.testCombineLatest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineIterableTest.testNullsOther` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineIterableTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineIterableTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testCombineLatest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testNullsOther` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineParametersTest.testEpochOverflow` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineParametersTest.testFairnessInVariousConfigurations` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTest.testCombineLatest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTest.testNullsOther` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTest.testNulls` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testCombineLatest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTransformTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testCancellationExceptionDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testCancellationExceptionUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testCombineLatest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testNullsOther` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testPreservingOrderReversed` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testPreservingOrder` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.FlatMapConcatTest.testFlatMapConcurrency` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlatMapLatestTest.testFailureInTransform` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.FlatMapLatestTest.testSwitchRendevouzBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.FlatMapMergeFastPathTest.testCancellationExceptionDownstream` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.flow.FlatMapMergeFastPathTest.testFlatMapConcurrency` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlatMapMergeTest.testAtomicStart` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.FlatMapMergeTest.testCancellationExceptionDownstream` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.flow.FlatMapMergeTest.testFlatMapConcurrency` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlattenConcatTest.testFlatMapConcurrency` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlattenMergeTest.testFlatMapConcurrency` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlattenMergeTest.testNulls` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlowCallbackTest.testClosedPrematurely` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.FlowOnTest.testCancelledFlowOn` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.IdFlowTest.testCancelInFlow` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ReduceTest.testErrorCancelsUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SafeCollectorMemoryLeakTest.testCompletionIsNotCleanedUp` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SafeCollectorMemoryLeakTest.testCompletionIsProperlyCleanedUp` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testBufferReplaySum` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testDefaultBufferKeepsDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testOverrideDefaultBuffer0` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testOverrideDefaultBuffer10` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testReplay0DefaultBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testReplay100DefaultBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testReplay10DefaultBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInBufferTest.testReplay1DefaultBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer0DropLatestReplay10` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer0DropLatestReplay1` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer20DropOldestReplay0` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer5DropLatestReplay0` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer5DropLatestReplay10` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBuffer7DropOldestReplay11` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferConflateOverride` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropLatestOverride` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropLatestReplay0` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropLatestReplay10` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropOldestOverride` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropOldestReplay0` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropOldestReplay10` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testBufferDropOldestReplay1` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testConflateReplay0` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInConflationTest.testConflateReplay1` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInTest.testReplay0Lazy` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInTest.testReplay1Lazy` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ShareInTest.testSubscriptionByFirstSuspensionInSharedFlow` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.ShareInTest.testWhileSubscribedCustomAtLeast2` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testReplay1Extra2` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testReplay1` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testReplay2Extra2DropOldest` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testResumeFastSubscriberOnResumedEmitter` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testSuspendedConcurrentEmitAndCancelSubscriberReplay1ExtraBuffer1` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowScenarioTest.testSuspendedConcurrentEmitAndCancelSubscriberReplay1` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testBigBufferManySubscribers` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testBigReplayManySubscribers` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testDifferentBufferedFlowCapacities` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testDropLatest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testDropOldest` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testRendezvousSharedFlowBasic` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testRendezvousSharedFlowReset` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testRepeatedResetWithReplay` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testReplay1SharedFlowBasic` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testReplay1` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testReplay2Extra1` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.SharedFlowTest.testStateFlowModel` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testSubscriptionByFirstSuspensionInSharedFlow` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testSubscriptionCount` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharedFlowTest.testSynchronousSharedFlowEmitterCancel` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharingReferenceTest.testShareInReference` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharingReferenceTest.testStateInReference` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.SharingReferenceTest.testStateInSuspendingReference` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.StateFlowTest.testEqualsConflation` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.StateFlowTest.testNormalAndNull` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.StateFlowTest.testSubscriptionByFirstSuspensionInStateFlow` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.StateInTest.testRethrowsCEOnCancelledScope` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.flow.StateInTest.testSubscriptionByFirstSuspensionInStateFlow` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.StateInTest.testUpstreamFailedImmediatelyWithInitialValue` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.TimeoutTest.testSharedFlowCancelledNoTimeout` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.TransformLatestTest.testIsolatedContext` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.TransformLatestTest.testSwitchBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.TransformLatestTest.testSwitchRendezvousBuffer` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ZipTest.testCancelWhenFlowIsDone` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ZipTest.testCancellationDownstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ZipTest.testCancellationUpstream` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.flow.ZipTest.testErrorCancelsSibling` — Flow operator synchronization assumes cooperative CPS suspension between internal children; blocking virtual threads changes ordering or propagation.
+- `kotlinx.coroutines.flow.internal.FlowScopeTest.testCancellationWithSuspensionPoint` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.future.AsFutureTest.testCompletedDeferredAsCompletableFuture` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.future.FutureTest.testCancellableAwaitFuture` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.future.FutureTest.testConsistentExceptionUnwrapping` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.future.FutureTest.testFutureCancellation` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.future.FutureTest.testWaitForFutureWithException` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.guide.test.BasicsGuideTest.testExampleBasic04` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel01` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel02` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel04` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel05` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel06` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel07` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel08` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.CancellationGuideTest.testExampleCancel10` — Prompt cancellation/resume semantics assume dispatcher-mediated continuation resumption, which direct thread wake-up bypasses.
+- `kotlinx.coroutines.guide.test.ChannelsGuideTest.testExampleChannel06` — The continuation state machine was exercised in a path that still assumes CPS suspension or dispatcher resumption.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext01` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext02` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext03` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext04` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext06` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext07` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext08` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext09` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext10` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.DispatcherGuideTest.testExampleContext11` — Scheduler/parallelism assertions target the worker-pool model that was replaced by one virtual thread per dispatched coroutine.
+- `kotlinx.coroutines.guide.test.ExceptionsGuideTest.testExampleExceptions01` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.ExceptionsGuideTest.testExampleSupervision01` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.FlowGuideTest.testExampleFlow07` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.FlowGuideTest.testExampleFlow08` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.FlowGuideTest.testExampleFlow11` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.FlowGuideTest.testExampleFlow13` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.FlowGuideTest.testExampleFlow14` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.SelectGuideTest.testExampleSelect01` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.SelectGuideTest.testExampleSelect02` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.SelectGuideTest.testExampleSelect04` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.guide.test.SelectGuideTest.testExampleSelect05` — Likely an existing cooperative scheduling or CPS-resumption assumption exposed by the blocking virtual-thread prototype.
+- `kotlinx.coroutines.scheduling.BlockingCoroutineDispatcherTest.testUndispatchedYield` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.scheduling.CoroutineDispatcherTest.testUndispatchedYield` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectReceiveCatching` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectReceiveDispatchNonSuspending2` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectReceiveDispatchNonSuspending` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectReceiveOrClosedDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectReceiveWaitWithDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectSendSuccessWithDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectBufferedChannelTest.testSelectSendWait` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectDeferredTest.testSelectIncompleteLazy` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectDeferredTest.testSelectTwo` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectDeferredTest.testSimpleWithYield` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectJobTest.testSelectCompleted` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectJobTest.testSelectIncomplete` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectLoopTest.testChannelSelectLoop` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.selects.SelectMutexTest.testSelectLockWait` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectMutexTest.testSelectLock` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectOldTest.testSelectCompleted` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectOldTest.testSelectIncomplete` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectOldTest.testSelectUnbiasedCompleted` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectOldTest.testSelectUnbiasedIncomplete` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectAtomicFailure` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectReceiveCatchingDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectReceiveSuccessWithDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectReceiveSuccess` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectReceiveWaitWithDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectSendSuccessWithDefault` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectSendWhenClosed` — Channel/select synchronization assumes a suspended continuation can be redispatched; blocking thread ownership changes the race or ordering.
+- `kotlinx.coroutines.selects.SelectRendezvousChannelTest.testSelectWaitDispatch` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.sync.MutexTest.testSimple` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.sync.SemaphoreTest.testSimpleAsMutex` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+- `kotlinx.coroutines.sync.SemaphoreTest.testSimple` — Strict cooperative ordering was expected; concurrent virtual threads changed callback or child execution order.
+
+## Timed-out tests (121)
+
+- `kotlinx.coroutines.EventLoopsTest.testSecondThreadRunBlocking` — Cross-thread/private-event-loop `runBlocking` work can no longer be pumped because the caller only parks.
+- `kotlinx.coroutines.ExecutorAsCoroutineDispatcherDelayTest.testScheduledExecutorService` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.ExecutorAsCoroutineDispatcherDelayTest.testScheduledThreadPool` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.ExecutorsTest.testDefaultDispatcherToExecutor` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.JobExtensionsTest.testIsActive` — Job/cancellation progress depends on a cooperative dispatch point that is absent when the owner thread blocks.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testResumeReusablePreservesReference` — Reusable-continuation bookkeeping expects suspension and redispatch; the parked owner never reaches the expected reuse transition.
+- `kotlinx.coroutines.ReusableCancellableContinuationTest.testReusable` — Reusable-continuation bookkeeping expects suspension and redispatch; the parked owner never reaches the expected reuse transition.
+- `kotlinx.coroutines.RunBlockingJvmTest.testNonInterruptibleRunBlockingPropagatingInterruptions` — Cross-thread/private-event-loop `runBlocking` work can no longer be pumped because the caller only parks.
+- `kotlinx.coroutines.ThreadContextOrderTest.testCorrectOrder` — Thread-context or unconfined resumption expects CPS frame migration; direct wake-up leaves the protocol waiting.
+- `kotlinx.coroutines.WithTimeoutOrNullDurationTest.testSmallTimeout` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.WithTimeoutOrNullTest.testSmallTimeout` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.WithTimeoutOrNullThreadDispatchTest.testCancellationDispatchScheduled` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.WithTimeoutThreadDispatchTest.testCancellationDispatchScheduled` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.channels.BufferedBroadcastChannelTest.testConcurrentModification` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementFailureTest.testSendCancelledFail` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementTest.testBufferedSendCancelled` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelUndeliveredElementTest.testRendezvousSendCancelled` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelsTest.testCloseWithMultipleSuspendedReceivers` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelsTest.testCloseWithMultipleSuspendedSenders` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelsTest.testConsumeToWithDestination` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelsTest.testIterableAsReceiveChannel` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ChannelsTest.testToList` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ConflatedBroadcastChannelTest.testConcurrentModification` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ProduceTest.testCancelOnCompletion` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.ProduceTest.testCancelOnCompletionUnconfined` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testConsumeAll` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.RendezvousChannelTest.testSimple` — A channel sender/receiver or cancellation handshake formed a circular wait under blocking thread ownership.
+- `kotlinx.coroutines.channels.TickerChannelTest.testDelayChannelBackpressure` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.channels.TickerChannelTest.testDelayChannelBackpressure2` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.channels.TickerChannelTest.testFixedDelayChannelBackpressure` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testNestedUnconfinedChangedContextSuspending` — Thread-context or unconfined resumption expects CPS frame migration; direct wake-up leaves the protocol waiting.
+- `kotlinx.coroutines.exceptions.StackTraceRecoveryResumeModeTest.testNestedUnconfinedSuspending` — Thread-context or unconfined resumption expects CPS frame migration; direct wake-up leaves the protocol waiting.
+- `kotlinx.coroutines.flow.CombineIterableTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineIterableTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineOverloadTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformAdapterTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformIterableTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineTransformVarargAdapterTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testCancelledCombine` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.CombineVarargAdapterTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.ConflateTest.testExample` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.DebounceTest.testBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testBasicWithNulls` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testDebounceDurationSelectorBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testDebounceSelectorBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testDownstreamErrorIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testDurationBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testPace` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testScalar` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testUpstreamErrorIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.DebounceTest.testZeroDebounceTimeSelector` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.FirstTest.testErrorCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FirstTest.testFirstOrNullWhenErrorCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlatMapLatestTest.testFailureDownstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlowOnTest.testException` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlowOnTest.testFlowOnCancellation` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlowOnTest.testFlowOnDownstreamOperator` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlowOnTest.testFlowOnThrowingConsumer` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.FlowOnTest.testTimeoutExceptionDownstream` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.LintTest.testSharedFlowToCollection` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.SampleTest.testBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testBasic2` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testBasicWithNulls` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testDelayedFirst` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testDownstreamErrorIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testDurationBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testFixedDelay` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testLongWait` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testPace` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testSingleNull` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testUpstreamError` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testUpstreamErrorCancellationException` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SampleTest.testUpstreamErrorIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testEagerly` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testLazily` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testWhileSubscribed` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testWhileSubscribedExpiration` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testWhileSubscribedExpireImmediately` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testWhileSubscribedStopAndExpiration` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.SharingStartedTest.testWhileSubscribedWithTimeout` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.StateFlowTest.testDataModel` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.TimeoutTest.testBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testBasicCustomAction` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testDelayedFirst` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testEmpty` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testScalar` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testSharedFlowTimeout` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testSingleNull` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testUpstreamExceptionsTakingPriority` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testUpstreamTimeoutActionIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TimeoutTest.testUpstreamTimeoutIsolatedContext` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.flow.TransformLatestTest.testFailureDownstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.ZipTest.testContextIsIsolatedReversed` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.flow.ZipTest.testErrorInDownstreamCancelsUpstream` — The flow operator's internal child/channel protocol expects cooperative CPS suspension and formed a circular structured-concurrency wait.
+- `kotlinx.coroutines.future.FutureTest.testContinuationWrapped` — External future completion expects dispatcher-mediated continuation resumption; the blocked owner was not progressed.
+- `kotlinx.coroutines.future.FutureTest.testExceptionOnExternalCompletion` — External future completion expects dispatcher-mediated continuation resumption; the blocked owner was not progressed.
+- `kotlinx.coroutines.future.FutureTest.testExternalCompletion` — External future completion expects dispatcher-mediated continuation resumption; the blocked owner was not progressed.
+- `kotlinx.coroutines.future.FutureTest.testUnhandledExceptionOnExternalCompletionIsNotReported` — External future completion expects dispatcher-mediated continuation resumption; the blocked owner was not progressed.
+- `kotlinx.coroutines.guide.test.ChannelsGuideTest.testExampleChannel07` — The guide example contains a channel/select workflow that deadlocks under blocking virtual-thread suspension.
+- `kotlinx.coroutines.guide.test.ChannelsGuideTest.testExampleChannel08` — The guide example contains a channel/select workflow that deadlocks under blocking virtual-thread suspension.
+- `kotlinx.coroutines.guide.test.ChannelsGuideTest.testExampleChannel09` — The guide example contains a channel/select workflow that deadlocks under blocking virtual-thread suspension.
+- `kotlinx.coroutines.guide.test.ChannelsGuideTest.testExampleChannel10` — The guide example contains a channel/select workflow that deadlocks under blocking virtual-thread suspension.
+- `kotlinx.coroutines.guide.test.SelectGuideTest.testExampleSelect03` — The guide example contains a channel/select workflow that deadlocks under blocking virtual-thread suspension.
+- `kotlinx.coroutines.scheduling.CoroutineDispatcherTest.testFairScheduling` — The test targets scheduler worker oversubscription/fairness, but `Dispatchers.Default` now bypasses that worker-pool model.
+- `kotlinx.coroutines.scheduling.CoroutineDispatcherTest.testSingleThread` — A custom or single-thread executor is blocked by its coroutine while completion is scheduled back onto that same executor.
+- `kotlinx.coroutines.scheduling.CoroutineSchedulerOversubscriptionTest.testOverSubscriptionDeterministic` — The test targets scheduler worker oversubscription/fairness, but `Dispatchers.Default` now bypasses that worker-pool model.
+- `kotlinx.coroutines.scheduling.CoroutineSchedulerOversubscriptionTest.testOverSubscriptionStress` — The test targets scheduler worker oversubscription/fairness, but `Dispatchers.Default` now bypasses that worker-pool model.
+- `kotlinx.coroutines.sync.MutexTest.testUnconfinedStackOverflow` — Lock/permit progress or cancellation requires another constrained task that cannot run while the current virtual thread blocks.
+- `kotlinx.coroutines.sync.SemaphoreTest.fairnessTest` — Lock/permit progress or cancellation requires another constrained task that cannot run while the current virtual thread blocks.
+- `kotlinx.coroutines.sync.SemaphoreTest.testCancellationDoesNotResumeWaitingAcquirers` — Lock/permit progress or cancellation requires another constrained task that cannot run while the current virtual thread blocks.
+- `kotlinx.coroutines.sync.SemaphoreTest.testCancellationReturnsPermitBack` — Lock/permit progress or cancellation requires another constrained task that cannot run while the current virtual thread blocks.
+- `kotlinx.coroutines.time.FlowDebounceTest.testBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+- `kotlinx.coroutines.time.FlowSampleTest.testBasic` — Timer or virtual-time progress expects cooperative suspension/dispatch, while the coroutine retains a blocked virtual thread.
+
+## Unclassified parameterized tests (14)
+
+The harness generated seven method selectors, but Gradle produced no XML because each method has two parameterized variants. Probable reason for this family: ticker tests depend on cooperative timer/virtual-time progress, while the coroutine retains a blocked virtual thread.
+
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testComplexOperator[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testComplexOperator[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testDelay[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testDelay[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testInitialDelay[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testInitialDelay[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testNegativeDelay[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testNegativeDelay[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testNegativeInitialDelay[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testNegativeInitialDelay[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testReceive[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testReceive[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testStress[FIXED_DELAY]` — Not executed individually because the Gradle method filter did not select this parameterized variant.
+- `kotlinx.coroutines.channels.TickerChannelCommonTest.testStress[FIXED_PERIOD]` — Not executed individually because the Gradle method filter did not select this parameterized variant.

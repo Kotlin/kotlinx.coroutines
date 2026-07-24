@@ -131,13 +131,9 @@ public abstract class AbstractCoroutine<in T>(
      * - [LAZY] does nothing.
      */
     public fun <R> start(start: CoroutineStart, receiver: R, block: suspend R.() -> T) {
-        // An undispatched child would execute on its parent's virtual thread. Since a low-level
-        // suspension blocks that thread in this experiment, the parent could never continue to
-        // cancel or resume the child. ATOMIC retains the guaranteed-start property while letting
-        // the virtual-thread dispatcher give the child its own thread.
-        val effectiveStart = if (
-            start === UNDISPATCHED && context[ContinuationInterceptor] is BlockingContinuationSupport
-        ) ATOMIC else start
+        // Every coroutine owns a virtual thread, so even UNDISPATCHED must go through dispatch.
+        // ATOMIC retains its guaranteed-start property without borrowing the caller's thread.
+        val effectiveStart = if (start === UNDISPATCHED) ATOMIC else start
         effectiveStart(block, receiver, this)
     }
 }
