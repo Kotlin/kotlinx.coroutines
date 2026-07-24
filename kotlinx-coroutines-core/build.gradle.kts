@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.*
+import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -138,6 +139,9 @@ val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
 }
 
 val jvmTest by tasks.getting(Test::class) {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
     minHeapSize = "1g"
     maxHeapSize = "1g"
     enableAssertions = true

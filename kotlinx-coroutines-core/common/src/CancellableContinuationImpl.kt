@@ -80,6 +80,13 @@ internal open class CancellableContinuationImpl<in T>(
     private val _state = atomic<Any?>(Active)
 
     /*
+     * When the current dispatcher supports thread-blocking suspension, getResult waits here instead
+     * of returning COROUTINE_SUSPENDED. Resumption wakes that thread instead of dispatching the
+     * compiler-generated continuation.
+     */
+    private val _blockingWaiter = atomic<BlockingContinuationWaiter?>(null)
+
+    /*
      * This field has a concurrent rendezvous in the following scenario:
      *
      * - installParentHandle publishes this instance on T1
@@ -289,6 +296,9 @@ internal open class CancellableContinuationImpl<in T>(
     @PublishedApi
     internal fun getResult(): Any? {
         val isReusable = isReusable()
+        val blockingWaiter =
+            (context[ContinuationInterceptor] as? BlockingContinuationSupport)?.createBlockingWaiter()
+        _blockingWaiter.value = blockingWaiter
         // trySuspend may fail either if 'block' has resumed/cancelled a continuation,
         // or we got async cancellation from parent.
         if (trySuspend()) {
@@ -309,11 +319,13 @@ internal open class CancellableContinuationImpl<in T>(
              * If we were successful, then do nothing, it's ok to reuse the instance now.
              * Otherwise, dispose the handle by ourselves.
             */
-            if (isReusable) {
-                releaseClaimedReusableContinuation()
+            if (blockingWaiter == null) {
+                if (isReusable) releaseClaimedReusableContinuation()
+                return COROUTINE_SUSPENDED
             }
-            return COROUTINE_SUSPENDED
+            while (!isCompleted) blockingWaiter.await()
         }
+        _blockingWaiter.value = null
         // otherwise, onCompletionInternal was already invoked & invoked tryResume, and the result is in the state
         if (isReusable) {
             // release claimed reusable continuation for the future reuse
@@ -467,6 +479,10 @@ internal open class CancellableContinuationImpl<in T>(
     private fun dispatchResume(mode: Int) {
         if (tryResume()) return // completed before getResult invocation -- bail out
         // otherwise, getResult has already commenced, i.e. completed later or in other thread
+        _blockingWaiter.value?.let {
+            it.signal()
+            return
+        }
         dispatch(mode)
     }
 

@@ -25,7 +25,17 @@ public fun <T> runBlocking(
 internal actual fun <T> runBlockingImpl(
     newContext: CoroutineContext, eventLoop: EventLoop?, block: suspend CoroutineScope.() -> T
 ): T {
-    val coroutine = BlockingCoroutine<T>(newContext, Thread.currentThread(), eventLoop)
+    val hasPrivateEventLoop = newContext[ContinuationInterceptor] is BlockingEventLoop
+    val coroutineContext = if (hasPrivateEventLoop) {
+        newContext.minusKey(ContinuationInterceptor) + Dispatchers.Default
+    } else {
+        newContext
+    }
+    val coroutine = BlockingCoroutine<T>(
+        coroutineContext,
+        Thread.currentThread(),
+        eventLoop = if (hasPrivateEventLoop) null else eventLoop
+    )
     coroutine.start(CoroutineStart.DEFAULT, coroutine, block)
     return coroutine.joinBlocking()
 }
