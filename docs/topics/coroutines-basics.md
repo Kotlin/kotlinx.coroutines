@@ -411,7 +411,7 @@ After running this example, you can see that the `main()` function isn't blocked
 
 > The `CoroutineScope.launch()` function returns a [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle.
 > Use this handle to wait for the launched coroutine to complete.
-> For more information, see [Cancellation and timeouts](cancellation-and-timeouts.md#cancel-coroutines).
+> For more information, see [Cancellation and timeouts](coroutines-cancellation.md#cancel-coroutines).
 > 
 {style="tip"}
 
@@ -621,7 +621,7 @@ the JVM thread version may throw an out-of-memory error or slow down thread crea
 ## What's next
 
 * Discover more about combining suspending functions in [Composing suspending functions](composing-suspending-functions.md).
-* Learn how to cancel coroutines and handle timeouts in [Cancellation and timeouts](cancellation-and-timeouts.md).
+* Learn how to cancel coroutines and handle timeouts in [Cancellation and timeouts](coroutines-cancellation.md).
 * Dive deeper into coroutine execution and thread management in [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md).
 * Learn how to return multiple asynchronously computed values in [Asynchronous flows](flow.md).
 
