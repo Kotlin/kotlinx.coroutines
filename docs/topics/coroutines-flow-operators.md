@@ -337,9 +337,7 @@ suspend fun main() = withContext(Dispatchers.Default) {
 {kotlin-runnable="true"}
 
 You can also use the [`.conflate()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/conflate.html) operator, which is a shorthand for `buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)`.
-Use it when you only want to process the latest values, skipping the values emitted while the previous value is being collected.
-
-Here's an example:
+Use it when you only want to process the latest values, skipping the values emitted while the previous value is being collected:
 
 ```kotlin
 import kotlinx.coroutines.*
