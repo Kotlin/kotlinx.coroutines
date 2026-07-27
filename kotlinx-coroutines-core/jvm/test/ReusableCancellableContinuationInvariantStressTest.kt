@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 

@@ -5,7 +5,6 @@ import kotlinx.coroutines.debug.internal.*
 import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
-import kotlinx.coroutines.testing.CountDownLatch
 
 class RunningThreadStackMergeTest : DebugTestBase() {
 

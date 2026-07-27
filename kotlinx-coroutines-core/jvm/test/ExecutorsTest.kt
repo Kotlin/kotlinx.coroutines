@@ -5,8 +5,6 @@ import kotlinx.coroutines.testing.CountDownLatch
 import java.util.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
-import java.util.concurrent.Executors
-import java.util.concurrent.RejectedExecutionException
 
 class ExecutorsTest : TestBase() {
     private fun checkThreadName(prefix: String) {
@@ -47,7 +45,7 @@ class ExecutorsTest : TestBase() {
 
     @Test
     fun testConvertedDispatcherToExecutor() {
-        val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
+        val executor: ExecutorService = Executors.newSingleThreadExecutor { r -> Thread(r, "TestExecutor") }
         val dispatcher: CoroutineDispatcher = executor.asCoroutineDispatcher()
         assertSame(executor, dispatcher.asExecutor())
         executor.shutdown()

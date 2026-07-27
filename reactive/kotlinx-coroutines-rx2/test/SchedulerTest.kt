@@ -17,7 +17,7 @@ import kotlin.coroutines.*
 import kotlin.test.*
 
 class SchedulerTest : TestBase() {
-    @BeforeTest
+    @Before
     fun setup() {
         ignoreLostThreads("RxCachedThreadScheduler-", "RxCachedWorkerPoolEvictor-", "RxSchedulerPurge-")
     }
@@ -165,7 +165,7 @@ class SchedulerTest : TestBase() {
                     cdl1.countDown()
                     try {
                         cdl2.await()
-                    } catch (_: InterruptedException) {
+                    } catch (e: InterruptedException) {
                         // this is the expected outcome
                         cdl3.countDown()
                     }

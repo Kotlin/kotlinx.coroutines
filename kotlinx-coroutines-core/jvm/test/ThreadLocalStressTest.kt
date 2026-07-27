@@ -139,7 +139,7 @@ class ThreadLocalStressTest : TestBase() {
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (_: CancellationException) {
+            } catch (e: CancellationException) {
                 // Ignore cancellation
             }
         }
@@ -154,7 +154,7 @@ class ThreadLocalStressTest : TestBase() {
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (_: CancellationException) {
+            } catch (e: CancellationException) {
                 // Ignore cancellation
             }
         }

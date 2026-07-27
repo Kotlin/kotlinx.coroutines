@@ -161,7 +161,7 @@ class IntegrationTest(
                 }
             }.let {
                 assertTrue("Expected the message to contain '$message', got '${it.message}'") {
-                    it.message?.contains(message) == true
+                    it.message?.contains(message) ?: false
                 }
             }
         }
@@ -203,7 +203,7 @@ class IntegrationTest(
             } catch (e: NoSuchElementException) {
                 // intentionally blank
             }
-        }.let { assertTrue(it.message?.contains("onSubscribe") == true) }
+        }.let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
     }
 
     @Test
@@ -222,3 +222,4 @@ class IntegrationTest(
     }
 
 }
+
