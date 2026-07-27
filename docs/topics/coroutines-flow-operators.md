@@ -3,11 +3,10 @@
 [//]: # (title: Flow operators)
 
 Flow operators let you transform and process values in a flow pipeline.
-
 Kotlin provides two main kinds of flow operators:
 
 * [**Intermediate operators**](#intermediate-operators) return a new downstream flow that consumes values from upstream flows and applies an operation to them.
-* [**Terminal operators**](#terminal-operators) trigger execution of the flow pipeline by collecting an upstream flow. They may also return a result.
+* [**Terminal operators**](#terminal-operators) trigger the execution of the flow pipeline by collecting an upstream flow. They may also return a result.
 
 While the [`kotlinx.coroutines`](https://github.com/Kotlin/kotlinx.coroutines) library offers a wide range of flow operators,
 you can also define custom ones when you need behavior that the built-in operators don't provide.
@@ -21,7 +20,7 @@ you can also define custom ones when you need behavior that the built-in operato
 Intermediate operators return a new downstream flow that consumes values from upstream flows.
 You can chain several intermediate operators to build a flow pipeline before collecting the final result.
 
-Intermediate operators can fall into the following categories:
+Intermediate operators can be classified by purpose into the following categories:
 
 * [**Transforming operators**](#transforming-operators) transform values before emitting them downstream.
 * [**Filtering and size-limiting operators**](#filtering-and-size-limiting-operators) control which upstream values continue downstream.
@@ -172,7 +171,7 @@ import kotlinx.coroutines.flow.*
 
 // A simplified custom version of the default .distinctUntilChanged() operator
 fun <T> Flow<T>.myDistinctUntilChanged(): Flow<T> = flow {
-    var lastEmitted: Any? = Any() // a value not equal to anything but itself
+    var lastEmitted: Any? = Any() // A value that is equal only to itself
     this@myDistinctUntilChanged.collect { value ->
         if (lastEmitted != value) {
             this@flow.emit(value)
@@ -275,12 +274,10 @@ By default, a flow pipeline processes values sequentially.
 The upstream flow emits a value, and collectors process it before the next value is emitted.
 
 To run the upstream flow concurrently with downstream collection, use concurrent processing operators to introduce a buffer.
-A buffer stores values that the upstream flow has emitted but the collector hasn't processed yet.
+A buffer stores values that the upstream flow has emitted, but the collector hasn't processed yet.
 
 One operator that introduces this buffer is the [`.buffer()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/buffer.html) operator.
-It lets you configure the buffer capacity and what happens when the buffer is full.
-
-Here's an example:
+It lets you configure the buffer capacity and what happens when the buffer is full, for example:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -646,9 +643,7 @@ suspend fun main() {
 {kotlin-runnable="true"}
 
 To run code after collection completes, use the [`.onCompletion()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/on-completion.html) operator.
-Its lambda can emit values downstream when the upstream flow completes successfully.
-
-Here's an example:
+Its lambda can emit values downstream when the upstream flow completes successfully, for example:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -825,7 +820,7 @@ suspend fun main() {
 ```
 {kotlin-runnable="true"}
 
-You can collect emitted values into a collection with the [`.toList()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-list.html) or [`.toSet()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html) operators.
+You can collect emitted values into a collection with the [`.toList()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-list.html) or [`.toSet()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html) operators:
 
 ```kotlin
 import kotlinx.coroutines.*
