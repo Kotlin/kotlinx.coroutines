@@ -56,11 +56,11 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      *
      * Each call to the iterator's `next` method receives at most one element from this channel:
      *
-     * * if an element is available, the returned `Promise` is fulfilled with an iterator result
+     * - if an element is available, the returned `Promise` is fulfilled with an iterator result
      *   whose `value` is the received element and whose `done` is `false`;
-     * * if the channel is closed normally, or is cancelled with a [CancellationException], the
+     * - if the channel is closed normally, or is cancelled with a [CancellationException], the
      *   returned `Promise` is fulfilled with an iterator result whose `done` is `true`;
-     * * if the channel is closed with another cause, the returned `Promise` is rejected with that
+     * - if the channel is closed with another cause, the returned `Promise` is rejected with that
      *   cause.
      *
      * Calling the iterator's `return` method cancels this channel and returns a fulfilled
