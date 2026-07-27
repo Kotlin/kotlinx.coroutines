@@ -67,8 +67,8 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      * `Promise` with `done` set to `true`. Calling the iterator's `throw` method cancels this
      * channel and returns a rejected `Promise` with the supplied error.
      *
-     * The coroutines backing calls to `next` are started in a standalone scope with an empty
-     * coroutine context. In particular, they are not children of any caller-provided coroutine
+     * The coroutines backing calls to `next` are started in [GlobalScope].
+     * In particular, they are not children of any caller-provided coroutine
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
      */
     override fun asyncIterator(): JsAsyncIterator<E> {
