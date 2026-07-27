@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
@@ -215,6 +216,9 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
                 "-Xno-receiver-assertions",
             )
         }
+        if (this@configureEach is Kotlin2JsCompile) {
+            freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
+        }
         if (this@configureEach is KotlinNativeCompile) {
             optIn.addAll(
                 "kotlinx.cinterop.ExperimentalForeignApi",
@@ -222,6 +226,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
                 "kotlin.experimental.ExperimentalNativeApi",
                 "kotlin.native.concurrent.ObsoleteWorkersApi",
             )
+            freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
         }
         addExtraCompilerFlags(project)
     }
