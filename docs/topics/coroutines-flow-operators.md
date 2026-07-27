@@ -171,7 +171,7 @@ import kotlinx.coroutines.flow.*
 
 // A simplified custom version of the default .distinctUntilChanged() operator
 fun <T> Flow<T>.myDistinctUntilChanged(): Flow<T> = flow {
-    var lastEmitted: Any? = Any() // A value that is equal only to itself
+    var lastEmitted: Any? = Any() // A value that's equal only to itself
     this@myDistinctUntilChanged.collect { value ->
         if (lastEmitted != value) {
             this@flow.emit(value)
