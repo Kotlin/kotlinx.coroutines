@@ -14,12 +14,10 @@ import org.jetbrains.kotlinx.lincheck.annotations.*
  */
 abstract class OnDemandAllocatingPoolLincheckTest(maxCapacity: Int) : AbstractLincheckTest() {
     private val counter = atomic(0)
-    private val pool = OnDemandAllocatingPool(maxCapacity = maxCapacity, create = {
-        counter.getAndIncrement()
-    })
+    private val pool = OnDemandAllocatingPool<Int>(maxCapacity = maxCapacity)
 
     @Operation
-    fun allocate(): Boolean = pool.allocate()
+    fun allocate() = pool.allocate { counter.getAndIncrement() }
 
     @Operation
     fun close(): String = pool.close().sorted().toString()

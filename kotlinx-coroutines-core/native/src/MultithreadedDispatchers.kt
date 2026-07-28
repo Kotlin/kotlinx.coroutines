@@ -80,11 +80,7 @@ private class MultiWorkerDispatcher(
     private val workersCount: Int
 ) : CloseableCoroutineDispatcher() {
     private val tasksQueue = Channel<Runnable>(Channel.UNLIMITED)
-    private val workerPool = OnDemandAllocatingPool(workersCount) {
-        Worker.start(name = "$name-$it").apply {
-            executeAfter { workerRunLoop() }
-        }
-    }
+    private val workerPool = OnDemandAllocatingPool<Worker>(workersCount)
 
     /**
      * `number of tasks - number of workers`.
@@ -113,12 +109,22 @@ private class MultiWorkerDispatcher(
         val previousTasksMinusWorkers = tasksMinusWorkers.getAndAdd(1)
         if (previousTasksMinusWorkers >= 0) {
             // no workers are available, we must allocate a new one
-            workerPool.allocate()
+            var worker: Worker? = null
+            val allocated = workerPool.allocate {
+                Worker.start(name = "$name-$it").also { worker = it }
+            }
+            if (worker != null) {
+                if (allocated) {
+                    worker.executeAfter { workerRunLoop() }
+                } else {
+                    worker.requestTermination().result
+                }
+            }
         }
         tasksQueue.trySend(block)
             .onClosed {
                 tasksMinusWorkers.getAndAdd(-1) // remove the task we failed to send
-                throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
+                error("Dispatcher $name was closed, attempted to schedule: $block")
             }
     }
 

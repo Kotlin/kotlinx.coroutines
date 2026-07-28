@@ -1,29 +1,35 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
+import kotlin.concurrent.atomics.*
 
 /**
  * A thread-safe resource pool.
  *
  * [maxCapacity] is the maximum amount of elements.
- * [create] is the function that creates a new element.
  *
  * This is only used in the Native implementation,
  * but is part of the `concurrent` source set in order to test it on the JVM.
  */
-internal class OnDemandAllocatingPool<T>(
-    private val maxCapacity: Int,
-    private val create: (Int) -> T
-) {
+@OptIn(ExperimentalAtomicApi::class)
+internal class OnDemandAllocatingPool<T>(private val maxCapacity: Int) {
     /**
      * Number of existing elements + isClosed flag in the highest bit.
      * Once the flag is set, the value is guaranteed not to change anymore.
      */
     private val controlState = atomic(0)
-    private val elements = atomicArrayOfNulls<T>(maxCapacity)
 
     /**
-     * Returns the number of elements that need to be cleaned up due to the pool being closed.
+     * Each cell is:
+     * - `null` if it was untouched.
+     * - `T` if it was created but not yet cleaned up.
+     * - `BROKEN` after [close] processes this cell (possibly before it was filled with `T`).
+     */
+    private val elements = atomicArrayOfNulls<Any?>(maxCapacity)
+
+    /**
+     * Returns the upper bound on the number of elements that need to be cleaned up due to the pool being closed.
      */
     @Suppress("NOTHING_TO_INLINE")
     private inline fun tryForbidNewElements(): Int {
@@ -45,13 +51,12 @@ internal class OnDemandAllocatingPool<T>(
      *
      * Rethrows the exceptions thrown from [create]. In this case, this operation has no effect.
      */
-    fun allocate(): Boolean {
+    inline fun allocate(create: (Int) -> T): Boolean {
         controlState.loop { ctl ->
             if (ctl.isClosed()) return false
             if (ctl >= maxCapacity) return true
             if (controlState.compareAndSet(ctl, ctl + 1)) {
-                elements[ctl].value = create(ctl)
-                return true
+                return elements.compareAndSetAt(ctl, null, create(ctl))
             }
         }
     }
@@ -70,12 +75,12 @@ internal class OnDemandAllocatingPool<T>(
      */
     fun close(): List<T> {
         val elementsExisting = tryForbidNewElements()
-        return (0 until elementsExisting).map { i ->
-            // we wait for the element to be created, because we know that eventually it is going to be there
-            loop {
-                val element = elements[i].getAndSet(null)
+        return buildList {
+            for (i in 0 until elementsExisting) {
+                val element = elements.exchangeAt(i, BROKEN)
                 if (element != null) {
-                    return@map element
+                    @Suppress("UNCHECKED_CAST")
+                    add(element as T)
                 }
             }
         }
@@ -84,7 +89,7 @@ internal class OnDemandAllocatingPool<T>(
     // for tests
     internal fun stateRepresentation(): String {
         val ctl = controlState.value
-        val elementsStr = (0 until (ctl and IS_CLOSED_MASK.inv())).map { elements[it].value }.toString()
+        val elementsStr = (0 until (ctl and IS_CLOSED_MASK.inv())).map { elements.loadAt(it) }.toString()
         val closedStr = if (ctl.isClosed()) "[closed]" else ""
         return elementsStr + closedStr
     }
@@ -92,11 +97,5 @@ internal class OnDemandAllocatingPool<T>(
     override fun toString(): String = "OnDemandAllocatingPool(${stateRepresentation()})"
 }
 
-// KT-25023
-private inline fun loop(block: () -> Unit): Nothing {
-    while (true) {
-        block()
-    }
-}
-
 private const val IS_CLOSED_MASK = 1 shl 31
+private val BROKEN = Symbol("BROKEN")
