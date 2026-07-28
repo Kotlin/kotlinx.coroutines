@@ -116,3 +116,39 @@ public annotation class ExperimentalForInheritanceCoroutinesApi
         "https://github.com/Kotlin/kotlinx.coroutines/issues, so that we can provide a stable API for inheritance. "
 )
 public annotation class InternalForInheritanceCoroutinesApi
+
+
+/**
+ * Helper annotations for asynchronous computation.
+ * Used in IntelliJ IDEA's debugger for async stacktraces feature.
+ */
+public final class Async private constructor() {
+    /**
+     * Indicates that the marked method schedules async computation.
+     * Scheduled object is either `this`, or the annotated parameter value.
+     */
+    @Retention(AnnotationRetention.BINARY)
+    @Target(
+        AnnotationTarget.FUNCTION,
+        AnnotationTarget.PROPERTY_GETTER,
+        AnnotationTarget.PROPERTY_SETTER,
+        AnnotationTarget.CONSTRUCTOR,
+        AnnotationTarget.VALUE_PARAMETER
+    )
+    public annotation class Schedule
+
+    /**
+     * Indicates that the marked method executes async computation.
+     * Executed object is either `this`, or the annotated parameter value.
+     * This object needs to match with the one annotated with [Schedule]
+     */
+    @Retention(AnnotationRetention.BINARY)
+    @Target(
+        AnnotationTarget.FUNCTION,
+        AnnotationTarget.PROPERTY_GETTER,
+        AnnotationTarget.PROPERTY_SETTER,
+        AnnotationTarget.CONSTRUCTOR,
+        AnnotationTarget.VALUE_PARAMETER,
+    )
+    public annotation class Execute
+}

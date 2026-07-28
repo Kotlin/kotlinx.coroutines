@@ -323,6 +323,7 @@ private class StateFlowImpl<T>(
     override fun compareAndSet(expect: T, update: T): Boolean =
         updateState(expect ?: NULL, update ?: NULL)
 
+    //@Async.Schedule
     private fun updateState(expectedState: Any?, newState: Any): Boolean {
         var curSequence: Int
         var curSlots: Array<StateFlowSlot?>? // benign race, we will not use it
@@ -335,6 +336,7 @@ private class StateFlowImpl<T>(
             // because it becomes immediately visible for collectors, and hence can be requested from the debugger.
             // Also need to indicate the state, because the old state might be requested from the debugger
             // before this state is published.
+            sched(777)
             collectStacktrace(this, NULL.unbox<T>(newState))
             _state.value = newState
             dropStacktrace(this, NULL.unbox<T>(oldState))
@@ -391,6 +393,7 @@ private class StateFlowImpl<T>(
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }
 
+    //@Async.Execute
     override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
         try {
@@ -406,7 +409,7 @@ private class StateFlowImpl<T>(
                 collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collector.emit(matchStacktrace(this, NULL.unbox<T>(newState)))
+                    collector.emit(exec(NULL.unbox<T>(newState), 777))
                     oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot
