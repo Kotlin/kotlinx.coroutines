@@ -87,9 +87,18 @@ private class MultiWorkerDispatcher(
     }
 
     /**
-     * `number of tasks - number of workers`
+     * `number of tasks - number of workers`.
+     *
+     * Used only to determine if we need to allocate a new worker when a new task arrives: if there are idling workers,
+     * we can reuse them.
+     *
+     * It is safe for this variable to overflow.
+     * For [tasksMinusWorkers] to exceed [Int.MAX_VALUE], we need to have at least [Int.MAX_VALUE] tasks enqueued,
+     * each of which requested a worker allocation.
+     * Even in the (practically impossible) race with [workersCount] being [Int.MAX_VALUE],
+     * we will correctly allocate every worker.
      */
-    private val tasksMinusWorkers = atomic(0L)
+    private val tasksMinusWorkers = atomic(0)
 
     private fun workerRunLoop() = runBlocking {
         while (true) {
@@ -101,10 +110,6 @@ private class MultiWorkerDispatcher(
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (tasksQueue.isClosedForSend) {
-            // a fast path to avoid touching `tasksMinusWorkers` unnecessarily
-            throw IllegalStateException("Dispatcher $name was closed, attempted to schedule: $block")
-        }
         val previousTasksMinusWorkers = tasksMinusWorkers.getAndAdd(1)
         if (previousTasksMinusWorkers >= 0) {
             // no workers are available, we must allocate a new one
