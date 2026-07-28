@@ -798,7 +798,7 @@ suspend fun main() {
 {kotlin-runnable="true"}
 
 Some terminal operators collect a flow and return a result based on the collected values.
-For example, you can use the [`.first()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/first.html) operator to return the first emitted value and then cancel the collection:
+For example, you can use the [`.first()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/first.html) operator to return the first emitted value and then cancel collection:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -884,7 +884,7 @@ suspend fun main() {
 ### Collect a flow in a specific `CoroutineScope`
 
 When a screen or another long-lived object needs values from a flow, start the collector in that object's `CoroutineScope`.
-This ensures that canceling the object's `CoroutineScope` when the object is destroyed also cancels the collection.
+This ensures that canceling the object's `CoroutineScope` when the object is destroyed also cancels collection.
 
 To collect a flow in a specific `CoroutineScope`, use the [`.launchIn()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/launch-in.html) terminal operator.
 This operator returns the `Job` of the collecting coroutine.
