@@ -12,6 +12,7 @@ class FlowTest : TestBase() {
         val flow = MutableStateFlow(0)
         flow.compareAndSet(0, 42)
         flow.collect {
+            // breakpoint below
             println(it)
         }
     }
