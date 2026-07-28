@@ -2817,7 +2817,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     // ########################################
 
     internal fun storeElement(index: Int, element: E) {
-        setElementLazy(index, element)
+        setElement(index, element)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -2826,10 +2826,10 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     internal fun retrieveElement(index: Int): E = getElement(index).also { cleanElement(index) }
 
     internal fun cleanElement(index: Int) {
-        setElementLazy(index, null)
+        setElement(index, null)
     }
 
-    private fun setElementLazy(index: Int, value: Any?) {
+    private fun setElement(index: Int, value: Any?) {
         data.storeAt(index * 2, value)
     }
 
