@@ -1282,7 +1282,6 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ReceiveChan
     abstract suspend fun receive(): #A // kotlinx.coroutines.channels/ReceiveChannel.receive|receive(){}[0]
     abstract suspend fun receiveCatching(): kotlinx.coroutines.channels/ChannelResult<#A> // kotlinx.coroutines.channels/ReceiveChannel.receiveCatching|receiveCatching(){}[0]
     open fun asyncIterator(): kotlinx.coroutines.channels/JsAsyncIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(){}[0]
-    open fun asyncIterator(kotlinx.coroutines/CoroutineScope): kotlinx.coroutines.channels/JsAsyncIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlinx.coroutines.CoroutineScope){}[0]
     open fun cancel() // kotlinx.coroutines.channels/ReceiveChannel.cancel|cancel(){}[0]
     open fun poll(): #A? // kotlinx.coroutines.channels/ReceiveChannel.poll|poll(){}[0]
     open suspend fun receiveOrNull(): #A? // kotlinx.coroutines.channels/ReceiveChannel.receiveOrNull|receiveOrNull(){}[0]
