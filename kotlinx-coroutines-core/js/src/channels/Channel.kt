@@ -65,17 +65,18 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      *
      * Calling the iterator's `return` method cancels this channel and returns a fulfilled
      * `Promise` with `done` set to `true`. Calling the iterator's `throw` method cancels this
-     * channel and returns a rejected `Promise` with the supplied error.
+     * channel with a [CancellationException] whose cause is derived from the supplied error, and
+     * returns a rejected `Promise` with that same error.
      *
      * The coroutines backing calls to `next` are started in [GlobalScope].
      * In particular, they are not children of any caller-provided coroutine
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
      */
+
     override fun asyncIterator(): JsAsyncIterator<E> {
-        val scope = CoroutineScope(EmptyCoroutineContext)
         return JsAsyncIterator(
             next = {
-                scope.promise {
+                GlobalScope.promise {
                     val result = receiveCatching()
                     if (result.isClosed) {
                         when (val cause = result.exceptionOrNull()) {
@@ -87,6 +88,10 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
                     }
                 }
             },
+            // Those lambdas declare a parameter, but they still work when JS call them with no arguments.
+            // In JavaScript, missing arguments are assigned `undefined`, so `value` becomes `undefined`.
+            // This matches the iterator protocol, where `return(value)` accepts zero or one argument.
+            // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters#description
             `return` = { value: @UnsafeVariance E ->
                 cancel(null)
                 Promise.resolve(JsIteratorResult(value = value, done = true))

@@ -19,26 +19,17 @@ class ChannelInteropTest : TestBase() {
             channel.send(3)
             channel.close()
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
-        assertEquals(false, result1.done)
-        val result2 = iterator.next().await()
-        assertEquals(2, result2.value)
-        assertEquals(false, result2.done)
-        val result3 = iterator.next().await()
-        assertEquals(3, result3.value)
-        assertEquals(false, result3.done)
-        val result4 = iterator.next().await()
-        assertEquals(true, result4.done)
+        assertNextStepToBe(iterator, value = 1, done = false)
+        assertNextStepToBe(iterator, value = 2, done = false)
+        assertNextStepToBe(iterator, value = 3, done = false)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
     fun testChannelToAsyncIteratorEmpty() = runTest {
-        val channel = Channel<Int>()
-        channel.close()
+        val channel = Channel<Int>().apply { close() }
         val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
-        val result = iterator.next().await()
-        assertEquals(true, result.done)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -49,11 +40,8 @@ class ChannelInteropTest : TestBase() {
             channel.send(42)
             channel.close()
         }
-        val result1 = iterator.next().await()
-        assertEquals(42, result1.value)
-        assertEquals(false, result1.done)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, value = 42, done = false)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -67,15 +55,13 @@ class ChannelInteropTest : TestBase() {
             channel.send(4)
             channel.send(5)
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
+        assertNextStepToBe(iterator, value = 1, done = false)
         // Call return() to stop iteration early
         val returnResult = iterator.`return`().await()
         assertEquals(true, returnResult.done)
         // Channel should be cancelled
         assertTrue(channel.isClosedForReceive)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, done = true)
         assertFailsWith<CancellationException> { channel.receive() }
             .apply { assertEquals("Channel was cancelled", message) }
     }
@@ -89,16 +75,14 @@ class ChannelInteropTest : TestBase() {
             channel.send(2)
             channel.send(3)
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
+        assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() to cancel the iterator
         val error = js("new Error('test error')")
         assertFailsWith<Throwable> { iterator.`throw`(error).await() }
             .apply { assertEquals("test error", message) }
         // Channel should be cancelled
         assertTrue(channel.isClosedForReceive)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, done = true)
         assertFailsWith<CancellationException> { channel.receive() }
             .apply { assertEquals("Channel was closed via AsyncIterator#throw method", message) }
     }
@@ -111,36 +95,10 @@ class ChannelInteropTest : TestBase() {
         channel.send(3)
         channel.close()
         val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
-        assertEquals(false, result1.done)
-        val result2 = iterator.next().await()
-        assertEquals(2, result2.value)
-        assertEquals(false, result2.done)
-        val result3 = iterator.next().await()
-        assertEquals(3, result3.value)
-        assertEquals(false, result3.done)
-        val result4 = iterator.next().await()
-        assertEquals(true, result4.done)
-    }
-
-    @Test
-    fun testChannelToAsyncIteratorWithRendezvousChannel() = runTest {
-        val channel = Channel<Int>(Channel.RENDEZVOUS)
-        val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
-        launch {
-            channel.send(10)
-            channel.send(20)
-            channel.close()
-        }
-        val result1 = iterator.next().await()
-        assertEquals(10, result1.value)
-        assertEquals(false, result1.done)
-        val result2 = iterator.next().await()
-        assertEquals(20, result2.value)
-        assertEquals(false, result2.done)
-        val result3 = iterator.next().await()
-        assertEquals(true, result3.done)
+        assertNextStepToBe(iterator, value = 1, done = false)
+        assertNextStepToBe(iterator, value = 2, done = false)
+        assertNextStepToBe(iterator, value = 3, done = false)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -151,11 +109,8 @@ class ChannelInteropTest : TestBase() {
         channel.send(3) // Previous values should be conflated
         channel.close()
         val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
-        val result1 = iterator.next().await()
-        assertEquals(3, result1.value) // Only the last value
-        assertEquals(false, result1.done)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, value = 3, done = false)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -166,8 +121,7 @@ class ChannelInteropTest : TestBase() {
             channel.send(1)
             channel.close(IllegalStateException("Test exception"))
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
+        assertNextStepToBe(iterator, value = 1, done = false)
         // Next call should throw the exception
         assertFailsWith<IllegalStateException> { iterator.next().await() }
             .apply { assertEquals("Test exception", message) }
@@ -187,18 +141,12 @@ class ChannelInteropTest : TestBase() {
         }
         // Both iterators should be able to consume from the channel
         // (they compete for elements)
-        val result1 = iterator1.next().await()
-        assertEquals(1, result1.value)
-        val result2 = iterator2.next().await()
-        assertEquals(2, result2.value)
-        val result3 = iterator1.next().await()
-        assertEquals(3, result3.value)
-        val result4 = iterator2.next().await()
-        assertEquals(4, result4.value)
-        val result5 = iterator1.next().await()
-        assertEquals(true, result5.done)
-        val result6 = iterator2.next().await()
-        assertEquals(true, result6.done)
+        assertNextStepToBe(iterator1, value = 1, done = false)
+        assertNextStepToBe(iterator2, value = 2, done = false)
+        assertNextStepToBe(iterator1, value = 3, done = false)
+        assertNextStepToBe(iterator2, value = 4, done = false)
+        assertNextStepToBe(iterator1, done = true)
+        assertNextStepToBe(iterator2, done = true)
     }
 
     @Test
@@ -210,12 +158,9 @@ class ChannelInteropTest : TestBase() {
         val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
         // Read all elements
         repeat(100) { i ->
-            val result = iterator.next().await()
-            assertEquals(i, result.value)
-            assertEquals(false, result.done)
+            assertNextStepToBe(iterator, value = i, done = false)
         }
-        val finalResult = iterator.next().await()
-        assertEquals(true, finalResult.done)
+        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -227,15 +172,13 @@ class ChannelInteropTest : TestBase() {
             channel.send(2)
             channel.send(3)
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
+        assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() with no argument to cancel the iterator
         assertFailsWith<Throwable> { iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await() }
             .apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
         // Channel should be cancelled
         assertTrue(channel.isClosedForReceive)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, done = true)
         assertFailsWith<CancellationException> { channel.receive() }
             .apply { assertEquals("Channel was closed via AsyncIterator#throw method", message) }
     }
@@ -251,17 +194,25 @@ class ChannelInteropTest : TestBase() {
             channel.send(4)
             channel.send(5)
         }
-        val result1 = iterator.next().await()
-        assertEquals(1, result1.value)
+        assertNextStepToBe(iterator, value = 1, done = false)
         // Call return(value) to stop iteration early, passing a return value
         val returnResult = iterator.asDynamic().`return`(42).unsafeCast<Promise<JsIteratorResult<Int>>>().await()
         assertEquals(true, returnResult.done)
         assertEquals(42, returnResult.value)
         // Channel should be cancelled
         assertTrue(channel.isClosedForReceive)
-        val result2 = iterator.next().await()
-        assertEquals(true, result2.done)
+        assertNextStepToBe(iterator, done = true)
         assertFailsWith<CancellationException> { channel.receive() }
             .apply { assertEquals("Channel was cancelled", message) }
+    }
+
+    private suspend fun <T> assertNextStepToBe(
+        iterator: JsAsyncIterator<T>,
+        value: T? = js("undefined"),
+        done: Boolean = false
+    ) {
+        val result = iterator.next().await()
+        assertEquals(done, result.done)
+        assertEquals(value, result.value)
     }
 }
