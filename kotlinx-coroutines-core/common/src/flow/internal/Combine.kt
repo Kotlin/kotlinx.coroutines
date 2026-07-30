@@ -6,8 +6,13 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.decrementAndFetch
+
 private typealias Update = IndexedValue<Any?>
 
+@OptIn(ExperimentalAtomicApi::class)
 @PublishedApi
 internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     flows: Array<out Flow<T>>,
@@ -19,7 +24,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
     val latestValues = arrayOfNulls<Any?>(size)
     latestValues.fill(UNINITIALIZED) // Smaller bytecode & faster than Array(size) { UNINITIALIZED }
     val resultChannel = Channel<Update>(size)
-    val nonClosed = LocalAtomicInt(size)
+    val nonClosed = AtomicInt(size)
     var remainingAbsentValues = size
     for (i in 0 until size) {
         // Coroutine per flow that keeps track of its value and sends result to downstream
@@ -31,7 +36,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
                 }
             } finally {
                 // Close the channel when there is no more flows
-                if (nonClosed.decrementAndGet() == 0) {
+                if (nonClosed.decrementAndFetch() == 0) {
                     resultChannel.close()
                 }
             }
