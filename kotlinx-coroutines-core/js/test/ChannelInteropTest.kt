@@ -51,9 +51,7 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            channel.send(3)
-            channel.send(4)
-            channel.send(5)
+            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call return() to stop iteration early
@@ -73,7 +71,7 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            channel.send(3)
+            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() to cancel the iterator
@@ -170,7 +168,7 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            channel.send(3)
+            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() with no argument to cancel the iterator
@@ -190,9 +188,7 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            channel.send(3)
-            channel.send(4)
-            channel.send(5)
+            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call return(value) to stop iteration early, passing a return value
