@@ -5,27 +5,6 @@ import kotlinx.coroutines.internal.recoverStackTrace
 import kotlinx.coroutines.selects.*
 import kotlin.internal.*
 
-public actual interface SendChannel<in E> {
-    @DelicateCoroutinesApi
-    public actual val isClosedForSend: Boolean
-    public actual suspend fun send(element: E)
-    public actual val onSend: SelectClause2<E, SendChannel<E>>
-    public actual fun trySend(element: E): ChannelResult<Unit>
-    public actual fun close(cause: Throwable?): Boolean
-    public actual fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        message = "Deprecated in the favour of 'trySend' method",
-        replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public actual fun offer(element: E): Boolean {
-        val result = trySend(element)
-        if (result.isSuccess) return true
-        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
-    }
-}
-
 public actual interface ReceiveChannel<out E> {
     @DelicateCoroutinesApi
     public actual val isClosedForReceive: Boolean

@@ -14,6 +14,7 @@ private fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns(
     freeCompilerArgs.addAll("-progressive")
     optIn.addAll(
         "kotlin.experimental.ExperimentalTypeInference",
+        "kotlin.js.ExperimentalJsExport",
         // our own opt-ins that we don't want to bother with in our own code:
         "kotlinx.coroutines.DelicateCoroutinesApi",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",

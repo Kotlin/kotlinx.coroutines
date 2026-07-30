@@ -8,35 +8,6 @@ import kotlinx.coroutines.selects.*
 import kotlinx.js.JsPlainObject
 import kotlin.internal.*
 import kotlin.js.Promise
-import kotlin.coroutines.EmptyCoroutineContext
-
-@JsImplicitExport(couldBeConvertedToExplicitExport = true)
-public actual interface SendChannel<in E> {
-    @DelicateCoroutinesApi
-    public actual val isClosedForSend: Boolean
-
-    public actual suspend fun send(element: E)
-    public actual fun close(cause: Throwable?): Boolean
-    public actual fun invokeOnClose(handler: (cause: Throwable?) -> Unit)
-
-    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
-    public actual fun trySend(element: E): ChannelResult<Unit>
-
-    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
-    public actual val onSend: SelectClause2<E, SendChannel<E>>
-
-    @Deprecated(
-        level = DeprecationLevel.ERROR,
-        message = "Deprecated in the favour of 'trySend' method",
-        replaceWith = ReplaceWith("trySend(element).isSuccess")
-    ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    @JsExport.Ignore
-    public actual fun offer(element: E): Boolean {
-        val result = trySend(element)
-        if (result.isSuccess) return true
-        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
-    }
-}
 
 @JsImplicitExport(couldBeConvertedToExplicitExport = true)
 public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {

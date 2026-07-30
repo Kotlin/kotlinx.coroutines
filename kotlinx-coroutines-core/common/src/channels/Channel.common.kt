@@ -9,9 +9,11 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlinx.coroutines.utils.JsOptionalExport
 import kotlin.contracts.*
 import kotlin.internal.*
 import kotlin.jvm.*
+import kotlin.js.*
 
 /**
  * Sender's interface to a [Channel].
@@ -21,7 +23,8 @@ import kotlin.jvm.*
  * It is not expected that this interface will be implemented directly.
  * Instead, the existing [Channel] implementations can be used or delegated to.
  */
-public expect interface SendChannel<in E> {
+@JsOptionalExport(true)
+public interface SendChannel<in E> {
     /**
      * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
      * This means that calling [send] will result in an exception.
@@ -193,6 +196,7 @@ public expect interface SendChannel<in E> {
      * Like [send], [onSend] obeys the rules of prompt cancellation:
      * [select] may finish with a [CancellationException] even if the element was successfully sent.
      */
+    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
     public val onSend: SelectClause2<E, SendChannel<E>>
 
     /**
@@ -224,6 +228,7 @@ public expect interface SendChannel<in E> {
      * }
      * ```
      */
+    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
     public fun trySend(element: E): ChannelResult<Unit>
 
     /**
@@ -342,7 +347,11 @@ public expect interface SendChannel<in E> {
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public open fun offer(element: E): Boolean
+    public open fun offer(element: E): Boolean {
+        val result = trySend(element)
+        if (result.isSuccess) return true
+        throw recoverStackTrace(result.exceptionOrNull() ?: return false)
+    }
 }
 
 /**
