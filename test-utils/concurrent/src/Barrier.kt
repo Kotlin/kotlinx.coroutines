@@ -2,8 +2,10 @@
 
 package kotlinx.coroutines.testing
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.locks.*
+import kotlin.concurrent.atomics.atomicArrayOfNulls
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.*
 
 /**
@@ -12,6 +14,7 @@ import kotlin.time.*
  * Adapted from kotlinx-atomicfu
  * https://github.com/Kotlin/kotlinx-atomicfu/blob/d09c2b07cd16b0b273bd94edaa4929acd2ec42bc/atomicfu/src/concurrentTest/kotlin/kotlinx/atomicfu/locks/BarrierTest.kt#L60
  */
+@OptIn(ExperimentalAtomicApi::class)
 class Barrier(private val parties: Int) {
     init {
         require(parties > 1)
@@ -32,9 +35,9 @@ class Barrier(private val parties: Int) {
         // else myIndex < parties - 1, enqueue and park
         val currentThread = ParkingSupport.currentThreadHandle()
         while (true) {
-            val waiter = waiters[myIndex].value
+            val waiter = waiters.loadAt(myIndex)
             when {
-                waiter === null -> waiters[myIndex].compareAndSet(waiter, currentThread)
+                waiter === null -> waiters.compareAndSetAt(myIndex, waiter, currentThread)
                 waiter is ParkingHandle -> ParkingSupport.park(Duration.INFINITE)
                 waiter === FINISHED -> return
                 else -> error("Unreachable")
@@ -44,7 +47,7 @@ class Barrier(private val parties: Int) {
 
     fun checkTriggeredAndAllWokenUp() {
         for (i in 0..<parties - 1) {
-            val waiter = waiters[i].value
+            val waiter = waiters.loadAt(i)
             check(waiter === FINISHED) { "Thread #$i either never awaited or is still awaiting" }
         }
     }
@@ -52,8 +55,8 @@ class Barrier(private val parties: Int) {
     private fun wakeUpEveryone() {
         for (i in 0..<parties - 1) {
             while (true) {
-                val waiter = waiters[i].value
-                if (waiters[i].compareAndSet(waiter, FINISHED)) {
+                val waiter = waiters.loadAt(i)
+                if (waiters.compareAndSetAt(i, waiter, FINISHED)) {
                     if (waiter is ParkingHandle) {
                         ParkingSupport.unpark(waiter)
                     } else {
