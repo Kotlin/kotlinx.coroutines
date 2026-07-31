@@ -2,10 +2,6 @@ configurations {
     create("r8")
 }
 
-repositories {
-    mavenCentral()
-}
-
 project.configureAar()
 
 dependencies {
