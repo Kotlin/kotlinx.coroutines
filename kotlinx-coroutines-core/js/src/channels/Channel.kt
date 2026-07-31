@@ -34,26 +34,29 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      * - if the channel is closed with another cause, the returned `Promise` is rejected with that
      *   cause.
      *
-     * Calling the iterator's `return` method cancels this channel and returns a fulfilled
-     * `Promise` with `done` set to `true`. Calling the iterator's `throw` method cancels this
-     * channel with a [CancellationException] whose cause is derived from the supplied error, and
-     * returns a rejected `Promise` with that same error.
+     * Calling the iterator's `return` method finishes this iterator instance and returns a fulfilled
+     * `Promise` with `done` set to `true`. It does not cancel the underlying channel.
+     *
+     * Calling the iterator's `throw` method finishes this iterator instance and returns a rejected
+     * `Promise` with the supplied error. It does not cancel the underlying channel.
      *
      * The coroutines backing calls to `next` are started in [GlobalScope].
      * In particular, they are not children of any caller-provided coroutine
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
      */
-
     override fun asyncIterator(): JsAsyncIterator<E> {
+        var wasEarlyFinished = false
+
         return JsAsyncIterator(
             next = {
                 GlobalScope.promise {
+                    if (wasEarlyFinished) return@promise JsIteratorResult(done = true)
+
                     val result = receiveCatching()
+                    result.exceptionOrNull()?.let { throw it }
+
                     if (result.isClosed) {
-                        when (val cause = result.exceptionOrNull()) {
-                            null, is CancellationException -> JsIteratorResult(done = true)
-                            else -> throw cause
-                        }
+                        JsIteratorResult(done = true)
                     } else {
                         JsIteratorResult(value = result.getOrThrow(), done = false)
                     }
@@ -63,18 +66,12 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
             // In JavaScript, missing arguments are assigned `undefined`, so `value` becomes `undefined`.
             // This matches the iterator protocol, where `return(value)` accepts zero or one argument.
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters#description
-            `return` = { value: @UnsafeVariance E ->
-                cancel(null)
+            `return` = { value: E? ->
+                wasEarlyFinished = true
                 Promise.resolve(JsIteratorResult(value = value, done = true))
-            }.unsafeCast<() -> Promise<JsIteratorResult<E>>>(),
+            },
             `throw` = { err: dynamic ->
-                @Suppress("OPT_IN_USAGE")
-                cancel(
-                    CancellationException(
-                        "Channel was closed via AsyncIterator#throw method",
-                        err.unsafeCast<JsPromiseError>().toThrowableOrNull()
-                    )
-                )
+                wasEarlyFinished = true
                 Promise.reject(err)
             }
         )
@@ -151,7 +148,7 @@ internal external interface JsAsyncIterable<out T> {
 internal external interface JsAsyncIterator<out T> {
     public val next: () -> Promise<JsIteratorResult<T>>
     // `return` and `throw` must be able to accept either zero arguments or a single one
-    public val `return`: () -> Promise<JsIteratorResult<T>>
+    public val `return`: (value: @UnsafeVariance T?) -> Promise<JsIteratorResult<T>>
     public val `throw`: (value: Any?) -> Promise<JsIteratorResult<T>>
 }
 

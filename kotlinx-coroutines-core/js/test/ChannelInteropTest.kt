@@ -51,17 +51,15 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call return() to stop iteration early
-        val returnResult = iterator.`return`().await()
+        val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
         assertEquals(true, returnResult.done)
-        // Channel should be cancelled
-        assertTrue(channel.isClosedForReceive)
+        // Channel should not be cancelled
+        assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
-        assertFailsWith<CancellationException> { channel.receive() }
-            .apply { assertEquals("Channel was cancelled", message) }
+        assertEquals(2, channel.receive())
     }
 
     @Test
@@ -71,18 +69,18 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            expectUnreached()
+            channel.send(3)
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() to cancel the iterator
         val error = js("new Error('test error')")
         assertFailsWith<Throwable> { iterator.`throw`(error).await() }
             .apply { assertEquals("test error", message) }
-        // Channel should be cancelled
-        assertTrue(channel.isClosedForReceive)
+        // Channel should not be cancelled
+        assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
-        assertFailsWith<CancellationException> { channel.receive() }
-            .apply { assertEquals("Channel was closed via AsyncIterator#throw method", message) }
+        assertEquals( 2, channel.receive())
+        assertEquals( 3, channel.receive())
     }
 
     @Test
@@ -168,17 +166,15 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call throw() with no argument to cancel the iterator
         assertFailsWith<Throwable> { iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await() }
             .apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
-        // Channel should be cancelled
-        assertTrue(channel.isClosedForReceive)
+        // Channel should not be cancelled
+        assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
-        assertFailsWith<CancellationException> { channel.receive() }
-            .apply { assertEquals("Channel was closed via AsyncIterator#throw method", message) }
+        assertEquals( 2, channel.receive())
     }
 
     @Test
@@ -188,18 +184,16 @@ class ChannelInteropTest : TestBase() {
         launch {
             channel.send(1)
             channel.send(2)
-            expectUnreached()
         }
         assertNextStepToBe(iterator, value = 1, done = false)
         // Call return(value) to stop iteration early, passing a return value
-        val returnResult = iterator.asDynamic().`return`(42).unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+        val returnResult = iterator.`return`(42).await()
         assertEquals(true, returnResult.done)
         assertEquals(42, returnResult.value)
-        // Channel should be cancelled
-        assertTrue(channel.isClosedForReceive)
+        // Channel should not be cancelled
+        assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
-        assertFailsWith<CancellationException> { channel.receive() }
-            .apply { assertEquals("Channel was cancelled", message) }
+        assertEquals(2, channel.receive())
     }
 
     private suspend fun <T> assertNextStepToBe(
