@@ -343,10 +343,9 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         is CancellableContinuation<*> -> {
             this as CancellableContinuation<Unit>
             val token = tryResume(Unit, null, onCancellationRelease)
-            if (token != null) {
+            (token != null).onTrue {
                 completeResume(token)
-                true
-            } else false
+            }
         }
         is SelectInstance<*> -> {
             trySelect(this@SemaphoreAndMutexImpl, Unit)

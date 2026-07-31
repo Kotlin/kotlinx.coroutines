@@ -110,14 +110,14 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         var n = 0
         whileSelect {
             this@averageInTimeWindow.onReceiveCatching {
-                if (it.isClosed) {
-                    // Send leftovers and bail out
-                    if (n != 0) send(sum / n.toDouble())
-                    false
-                } else {
-                    sum += it.getOrThrow()
-                    ++n
-                    true
+                (!it.isClosed).also { notClosed ->
+                    if (notClosed) {
+                        sum += it.getOrThrow()
+                        ++n
+                    } else {
+                        // Send leftovers and bail out
+                        if (n != 0) send(sum / n.toDouble())
+                    }
                 }
             }
 

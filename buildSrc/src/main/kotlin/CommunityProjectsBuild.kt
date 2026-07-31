@@ -150,11 +150,8 @@ fun shouldUseLocalMaven(project: Project): Boolean {
     val hasSnapshotDependency = firstPartyDependencies.any { dependencyName ->
         val key = "${dependencyName}_version"
         val value = project.providers.gradleProperty(key).orNull
-        if (value != null && value.endsWith("-SNAPSHOT")) {
+        (value != null && value.endsWith("-SNAPSHOT")).onTrue {
             LOGGER.info("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            true
-        } else {
-            false
         }
     }
     return hasSnapshotDependency || isSnapshotTrainEnabled(project)

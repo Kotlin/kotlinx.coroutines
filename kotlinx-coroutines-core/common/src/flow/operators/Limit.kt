@@ -81,11 +81,8 @@ private suspend fun <T> FlowCollector<T>.emitAbort(value: T, ownershipMarker: An
 public fun <T> Flow<T>.takeWhile(predicate: suspend (T) -> Boolean): Flow<T> = flow {
     // This return is needed to work around a bug in JS BE: KT-39227
     return@flow collectWhile { value ->
-        if (predicate(value)) {
+        predicate(value).onTrue {
             emit(value)
-            true
-        } else {
-            false
         }
     }
 }

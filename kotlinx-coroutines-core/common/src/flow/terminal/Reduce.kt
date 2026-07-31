@@ -67,13 +67,13 @@ public suspend fun <T> Flow<T>.singleOrNull(): T? {
     var result: Any? = NULL
     collectWhile {
         // No values yet, update result
-        if (result === NULL) {
-            result = it
-            true
-        } else {
-            // Second value, reset result and bail out
-            result = NULL
-            false
+        (result === NULL).also { isNull ->
+            result = if (isNull) {
+                it
+            } else {
+                // Second value, reset result and bail out
+                NULL
+            }
         }
     }
     return if (result === NULL) null else result as T
@@ -100,11 +100,8 @@ public suspend fun <T> Flow<T>.first(): T {
 public suspend fun <T> Flow<T>.first(predicate: suspend (T) -> Boolean): T {
     var result: Any? = NULL
     collectWhile {
-        if (predicate(it)) {
+        (!predicate(it)).onFalse {
             result = it
-            false
-        } else {
-            true
         }
     }
     if (result === NULL) throw NoSuchElementException("Expected at least one element matching the predicate")
@@ -131,11 +128,8 @@ public suspend fun <T> Flow<T>.firstOrNull(): T? {
 public suspend fun <T> Flow<T>.firstOrNull(predicate: suspend (T) -> Boolean): T? {
     var result: T? = null
     collectWhile {
-        if (predicate(it)) {
+        (!predicate(it)).onFalse {
             result = it
-            false
-        } else {
-            true
         }
     }
     return result

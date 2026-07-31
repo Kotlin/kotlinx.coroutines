@@ -481,11 +481,8 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
         //  `auxFuture.cancel()` will execute auxFuture's listeners. This delays cancellation of
         //  `jobToCancel` until after auxFuture's listeners have already run.
         //  Consider moving `jobToCancel.cancel()` into [AbstractFuture.afterDone] when the API is finalized.
-        return if (auxFuture.cancel(mayInterruptIfRunning)) {
+        return (auxFuture.cancel(mayInterruptIfRunning)).onTrue {
             jobToCancel.cancel()
-            true
-        } else {
-            false
         }
     }
 

@@ -1284,16 +1284,16 @@ internal open class BufferedChannel<E>(
                 // state, updating it to either `BUFFERED` (on successful resumption)
                 // or `INTERRUPTED_SEND` (on failure).
                 if (segment.casState(index, state, RESUMING_BY_EB)) {
-                    return if (state.tryResumeSender(segment, index)) {
-                        // The sender has been resumed successfully!
-                        // Move the cell to the logical buffer and finish.
-                        segment.setState(index, BUFFERED)
-                        true
-                    } else {
-                        // The resumption has failed.
-                        segment.setState(index, INTERRUPTED_SEND)
-                        segment.onCancelledRequest(index, false)
-                        false
+                    return state.tryResumeSender(segment, index).also {
+                        if (it) {
+                            // The sender has been resumed successfully!
+                            // Move the cell to the logical buffer and finish.
+                            segment.setState(index, BUFFERED)
+                        } else {
+                            // The resumption has failed.
+                            segment.setState(index, INTERRUPTED_SEND)
+                            segment.onCancelledRequest(index, false)
+                        }
                     }
                 }
             }
@@ -1345,16 +1345,16 @@ internal open class BufferedChannel<E>(
                         // state, updating it to either `BUFFERED` (on successful resumption)
                         // or `INTERRUPTED_SEND` (on failure).
                         if (segment.casState(index, state, RESUMING_BY_EB)) {
-                            return if (state.tryResumeSender(segment, index)) {
-                                // The sender has been resumed successfully!
-                                // Move the cell to the logical buffer and finish.
-                                segment.setState(index, BUFFERED)
-                                true
-                            } else {
-                                // The resumption has failed.
-                                segment.setState(index, INTERRUPTED_SEND)
-                                segment.onCancelledRequest(index, false)
-                                false
+                            return state.tryResumeSender(segment, index).also {
+                                if (it) {
+                                    // The sender has been resumed successfully!
+                                    // Move the cell to the logical buffer and finish.
+                                    segment.setState(index, BUFFERED)
+                                } else {
+                                    // The resumption has failed.
+                                    segment.setState(index, INTERRUPTED_SEND)
+                                    segment.onCancelledRequest(index, false)
+                                }
                             }
                         }
                     }
@@ -2959,10 +2959,9 @@ private fun <T> CancellableContinuation<T>.tryResume0(
     onCancellation: ((cause: Throwable, value: T, context: CoroutineContext) -> Unit)? = null
 ): Boolean =
     tryResume(value, null, onCancellation).let { token ->
-        if (token != null) {
+        (token != null).onTrue {
             completeResume(token)
-            true
-        } else false
+        }
     }
 
 /*

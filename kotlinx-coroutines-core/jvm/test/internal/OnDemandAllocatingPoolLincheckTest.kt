@@ -29,13 +29,10 @@ abstract class OnDemandAllocatingSequentialPool(private val maxCapacity: Int) {
     var closed = false
     var elements = 0
 
-    fun allocate() = if (closed) {
-        false
-    } else {
+    fun allocate() = (!closed).onTrue {
         if (elements < maxCapacity) {
             elements++
         }
-        true
     }
 
     fun close(): String = if (closed) {

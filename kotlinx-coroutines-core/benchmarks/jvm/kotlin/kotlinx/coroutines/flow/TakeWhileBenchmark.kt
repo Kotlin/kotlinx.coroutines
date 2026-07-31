@@ -52,11 +52,8 @@ open class TakeWhileBenchmark {
     private fun <T> Flow<T>.takeWhileViaCollectWhile(predicate: suspend (T) -> Boolean): Flow<T> = unsafeFlow {
         // This return is needed to work around a bug in JS BE: KT-39227
         return@unsafeFlow collectWhile { value ->
-            if (predicate(value)) {
+            predicate(value).onTrue {
                 emit(value)
-                true
-            } else {
-                false
             }
         }
     }

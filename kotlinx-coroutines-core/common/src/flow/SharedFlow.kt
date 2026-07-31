@@ -404,11 +404,8 @@ internal open class SharedFlowImpl<T>(
     override fun tryEmit(value: T): Boolean {
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitted = synchronized(this) {
-            if (tryEmitLocked(value)) {
+            tryEmitLocked(value).onTrue {
                 resumes = findSlotsToResumeLocked(resumes)
-                true
-            } else {
-                false
             }
         }
         for (cont in resumes) cont?.resume(Unit)
