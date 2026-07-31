@@ -51,6 +51,7 @@ dependencyResolutionManagement {
             content {
                 includeGroupByRegex("androidx.*")
                 includeGroupByRegex("com\\.google\\.android.*")
+                includeGroupByRegex("com\\.android\\.tools.*")
             }
         }
 
