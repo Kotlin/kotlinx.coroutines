@@ -1,15 +1,14 @@
+apply(from = "./src/main/kotlin/repositories.settings.gradle.kts")
+
 pluginManagement {
-    val build_snapshot_train: String? by settings
-    repositories {
-        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-        if (cacheRedirectorEnabled) {
-            println("Redirecting repositories for buildSrc buildscript")
-            maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-        } else {
-            maven("https://plugins.gradle.org/m2")
-        }
-        if (build_snapshot_train?.toBoolean() == true) {
-            mavenLocal()
-        }
+    plugins {
+        kotlin("jvm") version("kotlin") apply false
+        kotlin("multiplatform") version("kotlin") apply false
+        id("org.jetbrains.kotlinx.binary-compatibility-validator") version("bcv") apply false
+        id("org.jetbrains.dokka") version("dokka") apply false
+        id("org.jetbrains.kotlinx.knit") version("knit") apply false
+        id("ru.vyarus.gradle-animalsniffer-plugin") version("animalsniffer") apply false
+        id("org.jetbrains.kotlinx.atomicfu") version("atomicfu") apply false
+        id("org.jetbrains.kotlinx.kover") version("kover") apply false
     }
 }

@@ -4,34 +4,6 @@ plugins {
     `kotlin-dsl`
 }
 
-val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
-val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
-val kotlinVersion = project.providers.gradleProperty("kotlin_version").orNull
-
-repositories {
-    if (cacheRedirectorEnabled) {
-        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-        maven("https://cache-redirector.jetbrains.com/maven-central")
-    } else {
-        maven("https://plugins.gradle.org/m2")
-        mavenCentral()
-    }
-    if (!kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()) {
-        exclusiveContent {
-            forRepository {
-                maven(kotlinDevUrl)
-            }
-            filter {
-                includeVersionByRegex("org.jetbrains.kotlin", ".*", kotlinVersion)
-            }
-        }
-    }
-    if (buildSnapshotTrain) {
-        mavenLocal()
-    }
-}
-
 val gradleProperties = Properties().apply {
     file("../gradle.properties").inputStream().use { load(it) }
 }

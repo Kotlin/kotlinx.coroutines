@@ -45,37 +45,10 @@ buildscript {
         set("using_snapshot_version", usingSnapshotVersion)
         set("build_snapshot_train", hasSnapshotTrainProperty)
     }
-
-    if (usingSnapshotVersion) {
-        repositories {
-            mavenLocal()
-            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-            maven("https://redirector.kotlinlang.org/maven/dev")
-            if (!kotlinRepoUrl.isNullOrBlank()) {
-                maven(kotlinRepoUrl)
-            }
-        }
-
-    }
 }
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version extra["kotlin_version"].toString()
-}
-
-allprojects {
-    repositories {
-        val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
-        if (!kotlinRepoUrl.isNullOrBlank()) {
-            maven(kotlinRepoUrl)
-        }
-        google()
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-        maven("https://redirector.kotlinlang.org/maven/dev")
-        mavenLocal()
-        maven(rootProject.layout.projectDirectory.dir("../build/build-local-repository/"))
-    }
 }
 
 java {

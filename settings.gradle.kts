@@ -1,3 +1,5 @@
+apply(from = "./buildSrc/src/main/kotlin/repositories.settings.gradle.kts")
+
 pluginManagement {
     val javafx_plugin_version: String by settings
     plugins {
@@ -7,18 +9,6 @@ pluginManagement {
 
     repositories {
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
-        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-        if (cacheRedirectorEnabled) {
-            maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-        } else {
-            gradlePluginPortal()
-        }
-        val prop = System.getProperty("build_snapshot_train")
-        var build_snapshot_train: String by extra
-        build_snapshot_train = if (prop != null && prop != "") "true" else "false"
-        if (build_snapshot_train.toBoolean()) {
-            mavenLocal()
-        }
     }
 }
 

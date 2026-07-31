@@ -7,10 +7,6 @@ plugins {
     id("me.champeau.jmh")
 }
 
-repositories {
-    maven("https://repo.typesafe.com/typesafe/releases/")
-}
-
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8

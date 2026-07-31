@@ -1,13 +1,8 @@
-pluginManagement {
+apply(from = "../buildSrc/src/main/kotlin/repositories.settings.gradle.kts")
+
+dependencyResolutionManagement {
     repositories {
-        mavenCentral()
-        maven("https://plugins.gradle.org/m2/")
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-        mavenLocal()
-        val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
-        if (!kotlinRepoUrl.isNullOrBlank()) {
-            maven(kotlinRepoUrl)
-        }
+        maven(rootProject.projectDir.toURI().resolve("../build/build-local-repository/"))
     }
 }
 
