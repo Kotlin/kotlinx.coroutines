@@ -79,8 +79,8 @@ class ChannelInteropTest : TestBase() {
         // Channel should not be cancelled
         assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
-        assertEquals( 2, channel.receive())
-        assertEquals( 3, channel.receive())
+        assertEquals(2, channel.receive())
+        assertEquals(3, channel.receive())
     }
 
     @Test
