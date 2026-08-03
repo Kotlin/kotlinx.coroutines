@@ -46,15 +46,12 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      */
     override fun asyncIterator(): JsAsyncIterator<E> {
         var wasEarlyFinished = false
-
         return JsAsyncIterator(
             next = {
                 GlobalScope.promise {
                     if (wasEarlyFinished) return@promise JsIteratorResult(done = true)
-
                     val result = receiveCatching()
                     result.exceptionOrNull()?.let { throw it }
-
                     if (result.isClosed) {
                         JsIteratorResult(done = true)
                     } else {
@@ -113,7 +110,6 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
         if (result.isSuccess) return result.getOrThrow()
         throw recoverStackTrace(result.exceptionOrNull() ?: return null)
     }
-
 
     @JsExport.Ignore
     @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")

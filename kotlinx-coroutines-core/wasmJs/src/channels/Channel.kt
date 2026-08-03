@@ -47,6 +47,7 @@ public actual interface ReceiveChannel<out E> {
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
     ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
     public actual suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
+
     @Suppress("DEPRECATION_ERROR")
     @Deprecated(
         message = "Deprecated in favor of onReceiveCatching extension",

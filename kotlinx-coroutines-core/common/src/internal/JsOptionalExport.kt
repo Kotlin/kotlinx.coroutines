@@ -1,4 +1,4 @@
-package kotlinx.coroutines.utils
+package kotlinx.coroutines.internal
 
 @OptionalExpectation
 @Target(AnnotationTarget.CLASS)
