@@ -1280,7 +1280,6 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
      * Constants for the channel factory function `Channel()`.
      */
-    @JsExport.Ignore
     public companion object Factory {
         /**
          * An unlimited buffer capacity.
@@ -1416,6 +1415,34 @@ public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
         internal val CHANNEL_DEFAULT_CAPACITY = systemProp(DEFAULT_BUFFER_PROPERTY_NAME,
             64, 1, UNLIMITED - 1
         )
+
+        /**
+         * Creates a new [Channel] for JavaScript/TypeScript interop.
+         *
+         * This factory is intended for JS export scenarios that rely on `@JsOptionalExport`.
+         * It allows creating channels from JavaScript only when [Channel] is reachable through
+         * an exported declaration signature, instead of unconditionally exporting the top-level
+         * `Channel(...)` factory.
+         *
+         * This helps avoid keeping extra JS-exported API surface when it is not used.
+         *
+         * Behavior is equivalent to:
+         * `Channel(capacity, onBufferOverflow, onUndeliveredElement)`.
+         *
+         * @param capacity Channel buffer capacity. Defaults to [RENDEZVOUS].
+         * @param onBufferOverflow Buffer overflow strategy. Defaults to [BufferOverflow.SUSPEND].
+         * @param onUndeliveredElement Optional callback invoked for each element that was sent
+         * but could not be delivered to a receiver.
+         *
+         * @return A newly created [Channel] instance.
+         */
+        @JsStatic
+        @Suppress("NOTHING_TO_INLINE")
+        public inline fun <E> of(
+            capacity: Int = RENDEZVOUS,
+            onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+            noinline onUndeliveredElement: ((E) -> Unit)? = null
+        ): Channel<E> = Channel(capacity, onBufferOverflow, onUndeliveredElement)
     }
 }
 
