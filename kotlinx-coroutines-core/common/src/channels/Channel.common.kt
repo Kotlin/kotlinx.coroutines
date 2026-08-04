@@ -1274,10 +1274,13 @@ public interface ChannelIterator<out E> {
  * > Note that if any work happens between `openResource()` and `channel.send(...)`,
  * > it is your responsibility to ensure that resource gets closed in case this additional code fails.
  */
+
+@JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public interface Channel<E> : SendChannel<E>, ReceiveChannel<E> {
     /**
      * Constants for the channel factory function `Channel()`.
      */
+    @JsExport.Ignore
     public companion object Factory {
         /**
          * An unlimited buffer capacity.
