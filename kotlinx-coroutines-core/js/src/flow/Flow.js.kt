@@ -5,7 +5,10 @@ package kotlinx.coroutines.flow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.JsAsyncIterable
 import kotlinx.coroutines.internal.JsAsyncIterator
+import kotlinx.coroutines.internal.JsIteratorResult
+import kotlinx.coroutines.internal.JsOptionalExport
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.js.Promise
 
 /**
  * An asynchronous data stream that sequentially emits values and completes normally or with an exception.
@@ -176,6 +179,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * These implementations ensure that the context preservation property is not violated, and prevent most
  * of the developer mistakes related to concurrency, inconsistent flow dispatchers, and cancellation.
  */
+@JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public actual interface Flow<out T> {
 
     /**
@@ -198,14 +202,8 @@ public actual interface Flow<out T> {
     public actual suspend fun collect(collector: FlowCollector<T>)
 
 
-
-    @JsExport.Ignore
-    // For Kotlin side only to be able to set up a custom scope for the iterator
-    public fun asAsyncIterable(scope: CoroutineScope): JsAsyncIterable<T> =
-        buffer(0).produceIn(scope)
-
     public fun asAsyncIterable(): JsAsyncIterable<T> =
-       asAsyncIterable(CoroutineScope(EmptyCoroutineContext))
+        buffer(0).produceIn(GlobalScope)
 
     @JsExport.Ignore
     // Important note: it would be much nicer to place those factory functions outside of Flow
@@ -248,7 +246,7 @@ public actual interface Flow<out T> {
                 }
             } finally {
                 if (!completed) {
-                        iterator.`return`().await()
+                    iterator.asDynamic().`return`().unsafeCast<Promise<*>>().await()
                 }
             }
         }
