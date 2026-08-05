@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
  */
 
 internal fun collectStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null
+internal fun collectSuspendStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null
 internal fun dropStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null
 internal fun matchStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null
 

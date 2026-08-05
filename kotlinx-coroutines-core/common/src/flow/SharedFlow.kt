@@ -381,6 +381,9 @@ internal open class SharedFlowImpl<T>(
     protected val lastReplayedLocked: T
         get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
 
+    // flow.collect()
+    //
+
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
@@ -509,6 +512,7 @@ internal open class SharedFlowImpl<T>(
             }
             // add suspended emitter to the buffer
             Emitter(this, head + totalSize, value, cont).also {
+                collectSuspendStacktrace(this, head + totalSize)
                 enqueueLocked(it)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
