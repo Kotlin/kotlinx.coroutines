@@ -380,9 +380,6 @@ internal open class SharedFlowImpl<T>(
     protected val lastReplayedLocked: T
         get() = buffer!!.getBufferAt(replayIndex + replaySize - 1) as T
 
-    // flow.collect()
-    //
-
     @Suppress("UNCHECKED_CAST")
     override suspend fun collect(collector: FlowCollector<T>): Nothing {
         val slot = allocateSlot()
