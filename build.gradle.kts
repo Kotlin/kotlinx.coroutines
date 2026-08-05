@@ -162,7 +162,7 @@ if (isSnapshotTrainEnabled(rootProject)) {
 
 allprojects {
     repositories {
-        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
+        maven("https://packages.jetbrains.team/maven/p/kt/dev")
     }
 
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
@@ -171,7 +171,7 @@ allprojects {
         extensions.configure<KotlinMultiplatformExtension> {
             sourceSets.configureEach {
                 dependencies {
-                    implementation("org.jetbrains.kotlin.commonizer:commonizer-support-library:2.4.255-SNAPSHOT")
+                    implementation("org.jetbrains.kotlin.commonizer:commonizer-support-library:2.4.20-dev-8851")
                 }
             }
 
