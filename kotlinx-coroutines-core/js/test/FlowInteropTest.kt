@@ -173,11 +173,10 @@ class FlowInteropTest : TestBase() {
         )
         val flow = Flow.from(asyncIterator)
         val results = mutableListOf<Int>()
-        try {
+        assertFailsWith<TestException> {
             flow.collect { results.add(it) }
-            fail("Should have thrown TestException")
-        } catch (e: TestException) {
-            assertEquals("iterator error", e.message)
+        }.apply {
+            assertEquals("iterator error", message)
         }
         assertEquals(listOf(1, 2), results)
     }
