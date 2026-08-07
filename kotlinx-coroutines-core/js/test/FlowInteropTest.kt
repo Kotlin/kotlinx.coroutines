@@ -111,6 +111,7 @@ class FlowInteropTest : TestBase() {
         assertNextStepToBe(iterator, 2, done = false)
         val returnResult = iterator.`return`(42).await()
         assertEquals(true, returnResult.done)
+        assertEquals(42, returnResult.value)
         assertNextStepToBe(iterator, done = true)
         assertNextStepToBe(iterator, done = true)
     }
@@ -147,9 +148,13 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testAsyncIteratorToFlowCancellation() = runTest {
         var returnCalled = false
+        var lastIndex = -1
         val asyncIterator = createAsyncIteratorWithCleanup(
             listOf(1, 2, 3, 4, 5),
-            onReturn = { returnCalled = true }
+            onReturn = {
+                returnCalled = true
+                lastIndex = it
+            }
         )
         val flow = Flow.from(asyncIterator)
         val results = mutableListOf<Int>()
@@ -157,6 +162,7 @@ class FlowInteropTest : TestBase() {
         assertEquals(listOf(1, 2), results)
         yield() // Allow cleanup to happen
         assertTrue(returnCalled, "return() should be called on cancellation")
+        assertEquals(2, lastIndex, "Not only 1 and 2 were requested by asyncIterator")
     }
 
     @Test
@@ -261,7 +267,7 @@ class FlowInteropTest : TestBase() {
         return iterator
     }
 
-    private fun createAsyncIteratorWithCleanup(values: List<Int>, onReturn: () -> Unit): JsAsyncIterator<Int> {
+    private fun createAsyncIteratorWithCleanup(values: List<Int>, onReturn: (Int) -> Unit): JsAsyncIterator<Int> {
         var index = 0
         val iterator = js("({})")
         iterator.next = fun(): Promise<JsIteratorResult<Int>> {
@@ -273,7 +279,7 @@ class FlowInteropTest : TestBase() {
             }
         }
         iterator.`return` = fun(): Promise<JsIteratorResult<Int>> {
-            onReturn()
+            onReturn(index)
             return Promise.resolve(js("({ value: undefined, done: true })"))
         }
         iterator.`throw` = fun(error: Throwable): Promise<JsIteratorResult<Int>> {
