@@ -66,9 +66,15 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         scheduleInvokeOnTimeout(timeMillis, block)
 
+    /**
+     * Note: this function is called after a [trackTask] invocation and needs to perform the matching [unTrackTask].
+     */
     override fun run() {
         val currentThread = Thread.currentThread()
-        if (!_thread.compareAndSet(null, currentThread)) return // some other thread won the race to start the thread
+        if (!_thread.compareAndSet(null, currentThread)) {
+            unTrackTask(this)
+            return // some other thread won the race to start the thread
+        }
         val oldName = currentThread.name
         currentThread.name = THREAD_NAME
         try {

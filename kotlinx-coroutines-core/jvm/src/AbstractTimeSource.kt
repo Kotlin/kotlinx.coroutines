@@ -110,7 +110,8 @@ internal inline fun trackTask(obj: Any) {
 }
 
 /**
- * Marks the task [obj] as complete. If [obj] wasn't tracked, does nothing. See [trackTask] for more details.
+ * Marks one instance of the task [obj] as complete. If [obj] wasn't tracked, does nothing.
+ * See [trackTask] for more details.
  */
 @InlineOnly
 internal inline fun unTrackTask(obj: Any) {

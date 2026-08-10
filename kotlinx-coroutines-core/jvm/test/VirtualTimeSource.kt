@@ -50,7 +50,8 @@ internal class VirtualTimeSource(
     @Volatile
     private var time: Long = 0
 
-    private val trackedTasks = HashSet<Any>()
+    // Semantically, Multiset<Any>
+    private val trackedTasks = HashMap<Any, Int>()
 
     private val threads = ConcurrentHashMap<Thread, ThreadStatus>()
 
@@ -67,12 +68,17 @@ internal class VirtualTimeSource(
 
     @Synchronized
     override fun trackTask(obj: Any) {
-        trackedTasks.add(obj)
+        trackedTasks.put(obj, (trackedTasks.get(obj) ?: 0) + 1)
     }
 
     @Synchronized
     override fun unTrackTask(obj: Any) {
-        trackedTasks.remove(obj)
+        val copies = (trackedTasks.get(obj) ?: return) - 1
+        if (copies == 0) {
+            trackedTasks.remove(obj)
+        } else {
+            trackedTasks.put(obj, copies)
+        }
     }
 
     @Synchronized
