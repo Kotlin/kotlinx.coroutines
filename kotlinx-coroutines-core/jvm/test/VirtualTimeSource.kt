@@ -8,15 +8,17 @@ import kotlin.time.Duration.Companion.seconds
 private val SHUTDOWN_TIMEOUT = 1.seconds
 
 internal inline fun withVirtualTimeSource(log: PrintStream? = null, block: () -> Unit) {
-    ensureDefaultDelayDeinitialized(SHUTDOWN_TIMEOUT) // shutdown execution with old time source (in case it was working)
     val testTimeSource = VirtualTimeSource(log)
-    mockTimeSource(testTimeSource)
+    withDisabledDefaultDelay(SHUTDOWN_TIMEOUT) {
+        mockTimeSource(testTimeSource)
+    }
     try {
         block()
     } finally {
-        ensureDefaultDelayDeinitialized(SHUTDOWN_TIMEOUT)
-        testTimeSource.shutdown()
-        mockTimeSource(null) // restore time source
+        withDisabledDefaultDelay(SHUTDOWN_TIMEOUT) {
+            testTimeSource.shutdown()
+            mockTimeSource(null) // restore time source
+        }
     }
 }
 

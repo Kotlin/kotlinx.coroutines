@@ -36,8 +36,8 @@ private fun initializeDefaultDelay(): Delay {
  * @throws IllegalStateException if the shutdown process notices new tasks entering the system
  * @throws IllegalStateException if the shutdown process times out
  */
-internal fun ensureDefaultDelayDeinitialized(timeout: Duration) {
-    (DefaultDelay as? DefaultDelayImpl)?.shutdownForTests(timeout)
+internal fun withDisabledDefaultDelay(quiescenceTimeout: Duration, action: () -> Unit) {
+    (DefaultDelay as? DefaultDelayImpl)?.withDisabledDefaultDelay(quiescenceTimeout, action)
 }
 
 private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
@@ -122,12 +122,19 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
         return null
     }
 
-    fun shutdownForTests(timeout: Duration) {
-        if (_thread.value != null) {
-            val end = System.currentTimeMillis() + timeout.inWholeMilliseconds
-            while (true) {
-                synchronized(this) {
-                    unpark(_thread.value ?: return)
+    inline fun withDisabledDefaultDelay(quiescenceTimeout: Duration, action: () -> Unit) {
+        val end = System.currentTimeMillis() + quiescenceTimeout.inWholeMilliseconds
+        _thread.loop { currentThread ->
+            when (currentThread) {
+                null -> {
+                    if (_thread.compareAndSet(null, Thread.currentThread())) {
+                        action()
+                        _thread.value = null
+                        return
+                    }
+                }
+                else -> synchronized(this) {
+                    unpark(_thread.value ?: return@loop) // rereading `currentThread` under lock
                     val toWait = end - System.currentTimeMillis()
                     check(toWait > 0) { "Timeout waiting for DefaultExecutor to shutdown" }
                     @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
@@ -145,7 +152,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     override fun toString(): String = "DefaultDelay"
 }
 
-private object DelegatingUnconfinedEventLoop: UnconfinedEventLoop {
+private object DelegatingUnconfinedEventLoop : UnconfinedEventLoop {
     override val thisLoopsTaskCanAvoidYielding: Boolean
         get() = defaultDelayRunningUnconfinedLoop()
 
@@ -174,3 +181,5 @@ private fun defaultDelayRunningUnconfinedLoop(): Nothing {
 /** A view separate from [Dispatchers.IO].
  * [Int.MAX_VALUE] instead of `1` to avoid needlessly using the [LimitedDispatcher] machinery. */
 private val ioView = Dispatchers.IO.limitedParallelism(Int.MAX_VALUE)
+
+private val FORBIDDEN_FROM_STARTING = Symbol("FORBIDDEN_FROM_STARTING")
