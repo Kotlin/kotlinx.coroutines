@@ -42,8 +42,7 @@ open class RedundantMaterializationOnResumeBenchmark {
         }
     }
 
-
-    suspend fun recursion(depth: Int) {
+    private suspend fun recursion(depth: Int) {
         if (depth - 1 == 0) {
             stateMachine()
             sink = 42

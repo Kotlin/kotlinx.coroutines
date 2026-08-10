@@ -473,7 +473,9 @@ internal object DebugProbesImpl {
          * which tends to be unreasonably slow (KT-57634) because of reflection overhead. We don't need the line number
          * here or even a stacktrace element, we need only the marker it exists.
          * By its contract, BaseContinuationImpl always has one, so it's much (~x2) cheaper to check for the type
-         * rather than materializing StackTraceElement
+         * rather than materializing StackTraceElement.
+         *
+         * Can be removed when KT-43395 is implemented and widely adopted.
          */
         @Suppress("INVISIBLE_REFERENCE")
         return if (caller is BaseContinuationImpl || caller.getStackTraceElement() != null) caller else caller.realCaller()
