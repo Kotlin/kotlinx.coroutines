@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 import kotlin.test.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class RunBlockingJvmTest : TestBase() {
 
@@ -87,7 +88,7 @@ class RunBlockingJvmTest : TestBase() {
                 mayInterrupt()
                 repeat(10) {
                     expect(it + 1)
-                    delay(1)
+                    delay(1.milliseconds)
                 }
                 42
             }
@@ -113,7 +114,7 @@ class RunBlockingJvmTest : TestBase() {
                         expect(it + 1)
                         // even thread switches should not be a problem
                         withContext(Dispatchers.IO) {
-                            delay(1)
+                            delay(1.milliseconds)
                         }
                     }
                     throw exception

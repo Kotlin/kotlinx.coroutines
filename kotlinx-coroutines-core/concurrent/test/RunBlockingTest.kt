@@ -93,7 +93,7 @@ class RunBlockingTest : TestBase() {
                 coroutineContext.cancel()
                 expect(2)
                 try {
-                    delay(1)
+                    delay(1.milliseconds)
                     expectUnreached()
                 } finally {
                     expect(3)
@@ -112,7 +112,7 @@ class RunBlockingTest : TestBase() {
             val job = launch(NonCancellable) {
                 try {
                     expect(2)
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 } finally {
                     finish(4)
                 }
@@ -133,7 +133,7 @@ class RunBlockingTest : TestBase() {
             val job = launch(NonCancellable, start = CoroutineStart.UNDISPATCHED) {
                 try {
                     expect(2)
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 } finally {
                     finish(4)
                 }
@@ -146,11 +146,11 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testNestedRunBlocking() = runBlocking {
-        delay(100)
+        delay(100.milliseconds)
         val value = runBlocking {
             delay(100)
             runBlocking {
-                delay(100)
+                delay(100.milliseconds)
                 1
             }
         }

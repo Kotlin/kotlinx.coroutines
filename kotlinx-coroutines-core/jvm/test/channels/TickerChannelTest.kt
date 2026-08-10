@@ -3,6 +3,7 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class TickerChannelTest : TestBase() {
     @Test
@@ -12,11 +13,11 @@ class TickerChannelTest : TestBase() {
             delayChannel.receiveSingle()
             delayChannel.checkEmpty()
 
-            delay(1500)
+            delay(1500.milliseconds)
             delayChannel.receiveSingle()
-            delay(500)
+            delay(500.milliseconds)
             delayChannel.checkEmpty()
-            delay(520)
+            delay(520.milliseconds)
             delayChannel.receiveSingle()
             delayChannel.cancel()
         }
@@ -29,13 +30,13 @@ class TickerChannelTest : TestBase() {
             delayChannel.receiveSingle()
             delayChannel.checkEmpty()
 
-            delay(1500)
+            delay(1500.milliseconds)
             delayChannel.receiveSingle()
-            delay(520)
+            delay(520.milliseconds)
             delayChannel.receiveSingle()
-            delay(500)
+            delay(500.milliseconds)
             delayChannel.checkEmpty()
-            delay(520)
+            delay(520.milliseconds)
             delayChannel.receiveSingle()
             delayChannel.cancel()
         }
@@ -48,13 +49,13 @@ class TickerChannelTest : TestBase() {
             delayChannel.receiveSingle()
             delayChannel.checkEmpty()
 
-            delay(500)
+            delay(500.milliseconds)
             delayChannel.receiveSingle()
-            delay(110)
+            delay(110.milliseconds)
             delayChannel.receiveSingle()
-            delay(110)
+            delay(110.milliseconds)
             delayChannel.checkEmpty()
-            delay(110)
+            delay(110.milliseconds)
             delayChannel.receiveSingle()
             delayChannel.cancel()
         }

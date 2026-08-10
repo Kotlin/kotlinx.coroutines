@@ -7,6 +7,7 @@ import org.junit.Test
 import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Tests event loops integration.
@@ -77,7 +78,7 @@ class EventLoopsTest : TestBase() {
     @Test
     fun testPendingDelayedBeingDueEarlier() = runTest {
         launch(start = CoroutineStart.UNDISPATCHED) {
-            delay(1)
+            delay(1.milliseconds)
             expect(1)
         }
         Thread.sleep(100)
