@@ -20,11 +20,11 @@ In order to use coroutines as well as follow the examples in this guide, you nee
 ## Table of contents
 
 * [Coroutines basics](coroutines-basics.md)
-* [Tutorial: Intro to coroutines and channels](coroutines-and-channels.md)
 * [Cancellation and timeouts](coroutines-cancellation.md)
+* [Flows](coroutines-flow.md)
+* [Tutorial: Intro to coroutines and channels](coroutines-and-channels.md)
 * [Composing suspending functions](composing-suspending-functions.md)
 * [Coroutine context and dispatchers](coroutine-context-and-dispatchers.md)
-* [Flows](coroutines-flow.md)
 * [Channels](channels.md)
 * [Coroutine exceptions handling](exception-handling.md)
 * [Shared mutable state and concurrency](shared-mutable-state-and-concurrency.md)
