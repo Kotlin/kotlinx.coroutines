@@ -5,6 +5,7 @@ package kotlinx.coroutines
 
 import java.util.concurrent.locks.*
 import kotlin.internal.InlineOnly
+import kotlinx.coroutines.scheduling.Task
 
 internal abstract class AbstractTimeSource {
     abstract fun currentTimeMillis(): Long
@@ -18,12 +19,17 @@ internal abstract class AbstractTimeSource {
     abstract fun unpark(thread: Thread)
 }
 
-internal class UntrackableTask(val block: Runnable) : Runnable {
+/**
+ * A task that won't be tracked if sent to [Dispatchers.Default] or [Dispatchers.IO].
+ */
+internal class UntrackableSchedulerTask(
+    @JvmField val block: Runnable,
+) : Task(0, false) {
     override fun run() {
         block.run()
     }
 
-    override fun toString(): String = "UntrackableTask(block=$block)"
+    override fun toString(): String = "UntrackableSchedulerTask(block=$block)"
 }
 
 // For tests only
@@ -69,7 +75,7 @@ internal inline fun wrapTask(block: Runnable): Runnable =
  * If there are some uncontrollable tasks, it will not jump to the moment of the next sleeping thread,
  * because the uncontrollable tasks may change the shared state in a way that affects the sleeping thread.
  *
- * If [obj] is an instance of [UntrackableTask], it will not be tracked.
+ * If [obj] is an instance of [UntrackableSchedulerTask], it will not be tracked.
  *
  * Example:
  *
@@ -98,7 +104,7 @@ internal inline fun wrapTask(block: Runnable): Runnable =
 internal inline fun trackTask(obj: Any) {
     timeSource?.apply {
         // only check `obj` after the `null` check, to avoid this extra work outside tests
-        if (obj is UntrackableTask) return
+        if (obj is UntrackableSchedulerTask) return
         trackTask(obj)
     }
 }

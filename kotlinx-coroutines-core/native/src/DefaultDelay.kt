@@ -72,7 +72,7 @@ private object DefaultDelayImpl : EventLoopImplBase(), Runnable {
     override fun toString(): String = "DefaultDelay"
 }
 
-private object DelegatingUnconfinedEventLoop: UnconfinedEventLoop {
+private object DelegatingUnconfinedEventLoop : UnconfinedEventLoop {
     override val thisLoopsTaskCanAvoidYielding: Boolean
         get() = defaultDelayRunningUnconfinedLoop()
 

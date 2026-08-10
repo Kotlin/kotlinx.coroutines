@@ -59,7 +59,7 @@ private object UnlimitedIoScheduler : CoroutineDispatcher() {
 }
 
 internal fun scheduleBackgroundIoTask(block: Runnable) {
-    DefaultScheduler.dispatchWithContext(UntrackableTask(block), BlockingContext, fair = false)
+    DefaultScheduler.dispatchWithContext(UntrackableSchedulerTask(block), BlockingContext, fair = false)
 }
 
 // Dispatchers.IO
