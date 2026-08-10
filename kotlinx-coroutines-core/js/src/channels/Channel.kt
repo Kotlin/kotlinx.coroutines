@@ -23,7 +23,7 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      * Returns a JavaScript `AsyncIterator` for this channel.
      *
      * This method is used to implement the JavaScript async-iteration protocol, so that a
-     * `ReceiveChannel` exported to JavaScript can be consumed with `for await ... of`.
+     * `ReceiveChannel` exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
      *
      * Each call to the iterator's `next` method receives at most one element from this channel:
      *
@@ -35,15 +35,18 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      *   cause.
      *
      * Calling the iterator's `return` method finishes this iterator instance and returns a fulfilled
-     * `Promise` with `done` set to `true`. It does not cancel the underlying channel.
+     * `Promise` with `done` set to `true`. It [cancels][ReceiveChannel.cancel] the channel without a `cause`.
      *
      * Calling the iterator's `throw` method finishes this iterator instance and returns a rejected
-     * `Promise` with the supplied error. It does not cancel the underlying channel.
+     * `Promise` with the supplied error. It [cancels][ReceiveChannel.cancel] the channel
+     * with the `cause` of the [CancellationException] being set to the exception provided to `throw`.
      *
      * The coroutines backing calls to `next` are started in [GlobalScope].
      * In particular, they are not children of any caller-provided coroutine
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
      */
+    @OptIn(ExperimentalWasmJsInterop::class)
+    @ExperimentalCoroutinesApi
     override fun asyncIterator(): JsAsyncIterator<E> {
         var wasEarlyFinished = false
         return JsAsyncIterator(
@@ -65,10 +68,16 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters#description
             `return` = { value: E? ->
                 wasEarlyFinished = true
+                cancel()
                 Promise.resolve(JsIteratorResult(value = value, done = true))
             },
             `throw` = { err: dynamic ->
                 wasEarlyFinished = true
+                val cause = err.unsafeCast<JsPromiseError>().toThrowableOrNull()
+                /** Adapted from [ReceiveChannel.cancelConsumed] */
+                cancel(cause?.let {
+                    it as? CancellationException ?: CancellationException("Channel was closed via AsyncIterator#throw method", it)
+                })
                 Promise.reject(err)
             }
         )
