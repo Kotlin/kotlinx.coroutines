@@ -130,10 +130,11 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         val jvmPomTask = tasks.named<GenerateMavenPom>(pomTaskName(jvmPublication))
         // Execution dependency
         val jvmPomFile = jvmPomTask.map { it.destination }
-        // Wire the input (just in case, for the future, GenerateMavenPom is UntrackedTask, but that's not something
-        // to rely on implicitly)
         inputs.file(jvmPomFile)
         val kmpArtifactId = kmpPublication.artifactId
+        val jvmGroupId = jvmPublication.groupId
+        val jvmArtifactId = jvmPublication.artifactId
+        val jvmVersion = jvmPublication.version
 
         // 3: take KMP publication and do the trick:
         // 3.1: remove all the content from KMP pom.xml
@@ -144,10 +145,8 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         pom.withXml {
             // This closure is a serialized task state. The only thing it can capture from another
             // configured publication (note: it's not executed!) is path where we can expect an XML on the execution phase
+            // plus some string literals with gid/aid/version
             val jvmPom = XmlParser(false, false).parse(jvmPomFile.get())
-            val jvmGroupId = ((jvmPom["groupId"] as NodeList).first() as Node).text()
-            val jvmArtifactId = ((jvmPom["artifactId"] as NodeList).first() as Node).text()
-            val jvmVersion = ((jvmPom["version"] as NodeList).first() as Node).text()
 
             val root = asNode()
             // Remove the original content and add the content from the platform POM:
@@ -155,13 +154,13 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
             jvmPom.children().toList().forEach { root.append(it as Node) }
 
             // Adjust the self artifact ID, as it should match the root module's coordinates:
-            ((root["artifactId"] as NodeList).first() as Node).setValue(kmpArtifactId)
+            root.child("artifactId").setValue(kmpArtifactId)
 
             // Set packaging to POM to indicate that there's no artifact:
             root.appendNode("packaging", "pom")
 
             // Remove the original platform dependencies and add a single dependency on the platform module:
-            val dependencies = (root["dependencies"] as NodeList).first() as Node
+            val dependencies = root.child("dependencies")
             dependencies.children().toList().forEach { dependencies.remove(it as Node) }
             dependencies.appendNode("dependency").apply {
                 appendNode("groupId", jvmGroupId)
@@ -176,6 +175,10 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
 // maven-publish's naming convention for pom-generating tasks
 private fun pomTaskName(publication: MavenPublication) =
     "generatePomFileFor${publication.name.replaceFirstChar(Char::uppercaseChar)}Publication"
+
+private fun Node.child(childName: String): Node =
+    (this[childName] as NodeList).filterIsInstance<Node>().firstOrNull()
+        ?: error("<$childName> element not found in the generated pom")
 
 // Top-level deploy task that publishes all artifacts
 public fun Project.registerTopLevelDeployTask() {
