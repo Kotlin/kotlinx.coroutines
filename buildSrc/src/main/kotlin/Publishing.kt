@@ -118,11 +118,21 @@ fun Project.establishSignDependencies() {
 public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPublication) {
     val mavenPublications =
         extensions.getByType(PublishingExtension::class.java).publications.withType<MavenPublication>()
+
+    // 1: find KMP publication
     val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
 
+    // 2: find pure JVM publication and capture its pom.xml
+    // (note: it is valid because of the hack in pub-conventions.gradle and below this block for some reasons)
     var jvmPublicationXml: XmlProvider? = null
     jvmPublication.pom.withXml { jvmPublicationXml = this }
 
+    // 3: take KMP publication and do the trick:
+    // 3.1: remove all the content from KMP pom.xml
+    // 3.2 take JVM pom.xml and copy it into KMP pom.xml
+    // 3.3 patch "KMP" pom.xml to have root artifactId (without -jvm) back
+    // 3.4 patch "KMP" pom.xml so it's pure packaging (only POM, no artifacts)
+    // 3.5 patch "KMP" pom.xml to depend only on the JVM publication
     kmpPublication.pom.withXml {
         val root = asNode()
         // Remove the original content and add the content from the platform POM:
@@ -146,7 +156,7 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         }
     }
 
-    // TODO verify if this is still relevant
+    // Hack #1
     tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
         @Suppress("DEPRECATION")
         dependsOn(tasks["generatePomFileFor${jvmPublication.name.capitalize()}Publication"])
