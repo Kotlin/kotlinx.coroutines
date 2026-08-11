@@ -55,9 +55,11 @@ tasks.test {
     systemProperty("dexPath", optimizedDexFile.absolutePath)
     systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
 
-    // Output custom metric with the size of the optimized dex
+    // Output custom metric with the size of the optimized dex.
+    // Kludge: local var keeps the build script instance out of the action's serialized state.
+    val optimizedDex = optimizedDexFile
     doLast {
-        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
+        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDex.length()}']")
     }
 }
 
@@ -81,6 +83,9 @@ abstract class RunR8 : JavaExec() {
     @InputFiles
     val jarFile: File = project.tasks.named<Zip>("jar").get().archiveFile.get().asFile
 
+    @InputFiles
+    val runtimeClasspath: FileCollection = project.configurations["runtimeClasspath"]
+
     init {
         classpath = project.configurations["r8"]
         mainClass = "com.android.tools.r8.R8"
@@ -95,12 +100,12 @@ abstract class RunR8 : JavaExec() {
             "--output", outputDex.absolutePath,
             "--pg-conf", inputConfig.absolutePath
         )
-        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.addAll(runtimeClasspath.files.map { it.absolutePath })
         arguments.add(jarFile.absolutePath)
 
         args = arguments
 
-        project.delete(outputDex)
+        outputDex.deleteRecursively()
         outputDex.mkdirs()
 
         super.exec()
