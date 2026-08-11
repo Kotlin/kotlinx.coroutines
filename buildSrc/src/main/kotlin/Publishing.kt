@@ -123,58 +123,62 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
     // 1: find KMP publication
     val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
 
-    val jvmPomTaskName = "generatePomFileFor${jvmPublication.name.replaceFirstChar(Char::uppercaseChar)}Publication"
-    tasks.withType(GenerateMavenPom::class.java)
-        .matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }
-        .configureEach {
-            // 2: find pure JVM publication and capture path to where pom.xml will be stored.
-            // This is the only part of the serialized task state we have here, we don't have a publication, an XML,
-            // and we for sure cannot rebuild it on a cache-hit path
-            val jvmPomTask = tasks.named(jvmPomTaskName, GenerateMavenPom::class.java)
-            // Execution dependency
-            dependsOn(jvmPomTask)
-            // .get() gets a _configured_ task, so this is safe
-            // (both tasks are configured at the same time, and .get() is kind of an event loop for conf)
-            val jvmPomFile = jvmPomTask.get().destination
-            val kmpArtifactId = kmpPublication.artifactId
+    tasks.named<GenerateMavenPom>(pomTaskName(kmpPublication)) {
+        // 2: find pure JVM publication and capture path to where pom.xml will be stored.
+        // This is the only part of the serialized task state we have here, we don't have a publication, an XML,
+        // and we for sure cannot rebuild it on a cache-hit path
+        val jvmPomTask = tasks.named<GenerateMavenPom>(pomTaskName(jvmPublication))
+        // Execution dependency
+        dependsOn(jvmPomTask)
+        // .get() gets a _configured_ task, so this is safe
+        // (both tasks are configured at the same time, and .get() is kind of an event loop for conf)
+        val jvmPomFile = jvmPomTask.get().destination
+        // Wire the input (just in case, for the future, GenerateMavenPom is UntrackedTask, but that's not something
+        // to rely on implicitly)
+        inputs.file(jvmPomFile)
+        val kmpArtifactId = kmpPublication.artifactId
 
-            // 3: take KMP publication and do the trick:
-            // 3.1: remove all the content from KMP pom.xml
-            // 3.2 take JVM pom.xml and copy it into KMP pom.xml
-            // 3.3 patch "KMP" pom.xml to have root artifactId (without -jvm) back
-            // 3.4 patch "KMP" pom.xml so it's pure packaging (only POM, no artifacts)
-            // 3.5 patch "KMP" pom.xml to depend only on the JVM publication
-            pom.withXml {
-                // This closure is a serialized task state. The only thing it can capture from another
-                // configured publication (note: it's not executed!) is path where we can expect an XML on the execution phase
-                val jvmPom = XmlParser(false, false).parse(jvmPomFile)
-                val jvmGroupId = ((jvmPom["groupId"] as NodeList).first() as Node).text()
-                val jvmArtifactId = ((jvmPom["artifactId"] as NodeList).first() as Node).text()
-                val jvmVersion = ((jvmPom["version"] as NodeList).first() as Node).text()
+        // 3: take KMP publication and do the trick:
+        // 3.1: remove all the content from KMP pom.xml
+        // 3.2 take JVM pom.xml and copy it into KMP pom.xml
+        // 3.3 patch "KMP" pom.xml to have root artifactId (without -jvm) back
+        // 3.4 patch "KMP" pom.xml so it's pure packaging (only POM, no artifacts)
+        // 3.5 patch "KMP" pom.xml to depend only on the JVM publication
+        pom.withXml {
+            // This closure is a serialized task state. The only thing it can capture from another
+            // configured publication (note: it's not executed!) is path where we can expect an XML on the execution phase
+            val jvmPom = XmlParser(false, false).parse(jvmPomFile)
+            val jvmGroupId = ((jvmPom["groupId"] as NodeList).first() as Node).text()
+            val jvmArtifactId = ((jvmPom["artifactId"] as NodeList).first() as Node).text()
+            val jvmVersion = ((jvmPom["version"] as NodeList).first() as Node).text()
 
-                val root = asNode()
-                // Remove the original content and add the content from the platform POM:
-                root.children().toList().forEach { root.remove(it as Node) }
-                jvmPom.children().toList().forEach { root.append(it as Node) }
+            val root = asNode()
+            // Remove the original content and add the content from the platform POM:
+            root.children().toList().forEach { root.remove(it as Node) }
+            jvmPom.children().toList().forEach { root.append(it as Node) }
 
-                // Adjust the self artifact ID, as it should match the root module's coordinates:
-                ((root["artifactId"] as NodeList).first() as Node).setValue(kmpArtifactId)
+            // Adjust the self artifact ID, as it should match the root module's coordinates:
+            ((root["artifactId"] as NodeList).first() as Node).setValue(kmpArtifactId)
 
-                // Set packaging to POM to indicate that there's no artifact:
-                root.appendNode("packaging", "pom")
+            // Set packaging to POM to indicate that there's no artifact:
+            root.appendNode("packaging", "pom")
 
-                // Remove the original platform dependencies and add a single dependency on the platform module:
-                val dependencies = (root["dependencies"] as NodeList).first() as Node
-                dependencies.children().toList().forEach { dependencies.remove(it as Node) }
-                dependencies.appendNode("dependency").apply {
-                    appendNode("groupId", jvmGroupId)
-                    appendNode("artifactId", jvmArtifactId)
-                    appendNode("version", jvmVersion)
-                    appendNode("scope", "compile")
-                }
+            // Remove the original platform dependencies and add a single dependency on the platform module:
+            val dependencies = (root["dependencies"] as NodeList).first() as Node
+            dependencies.children().toList().forEach { dependencies.remove(it as Node) }
+            dependencies.appendNode("dependency").apply {
+                appendNode("groupId", jvmGroupId)
+                appendNode("artifactId", jvmArtifactId)
+                appendNode("version", jvmVersion)
+                appendNode("scope", "compile")
             }
         }
+    }
 }
+
+// maven-publish's naming convention for pom-generating tasks
+private fun pomTaskName(publication: MavenPublication) =
+    "generatePomFileFor${publication.name.replaceFirstChar(Char::uppercaseChar)}Publication"
 
 // Top-level deploy task that publishes all artifacts
 public fun Project.registerTopLevelDeployTask() {
