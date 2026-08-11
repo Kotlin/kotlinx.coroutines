@@ -129,10 +129,7 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         // and we for sure cannot rebuild it on a cache-hit path
         val jvmPomTask = tasks.named<GenerateMavenPom>(pomTaskName(jvmPublication))
         // Execution dependency
-        dependsOn(jvmPomTask)
-        // .get() gets a _configured_ task, so this is safe
-        // (both tasks are configured at the same time, and .get() is kind of an event loop for conf)
-        val jvmPomFile = jvmPomTask.get().destination
+        val jvmPomFile = jvmPomTask.map { it.destination }
         // Wire the input (just in case, for the future, GenerateMavenPom is UntrackedTask, but that's not something
         // to rely on implicitly)
         inputs.file(jvmPomFile)
@@ -147,7 +144,7 @@ public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPubl
         pom.withXml {
             // This closure is a serialized task state. The only thing it can capture from another
             // configured publication (note: it's not executed!) is path where we can expect an XML on the execution phase
-            val jvmPom = XmlParser(false, false).parse(jvmPomFile)
+            val jvmPom = XmlParser(false, false).parse(jvmPomFile.get())
             val jvmGroupId = ((jvmPom["groupId"] as NodeList).first() as Node).text()
             val jvmArtifactId = ((jvmPom["artifactId"] as NodeList).first() as Node).text()
             val jvmVersion = ((jvmPom["version"] as NodeList).first() as Node).text()
