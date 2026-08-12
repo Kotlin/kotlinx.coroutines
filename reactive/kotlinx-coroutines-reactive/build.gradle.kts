@@ -10,7 +10,7 @@ dependencies {
     testImplementation("org.reactivestreams:reactive-streams-tck:$reactiveStreamsVersion")
 }
 
-val testNG by tasks.registering(Test::class) {
+val testNG = tasks.register<Test>("testNG") {
     useTestNG()
     reports.html.outputLocation = layout.buildDirectory.dir("reports/testng")
     include("**/*ReactiveStreamTckTest.*")
