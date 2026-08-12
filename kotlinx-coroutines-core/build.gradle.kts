@@ -175,6 +175,15 @@ fun setupManifest(jar: Jar) {
 val compileTestKotlinJvm = tasks.getByName<KotlinJvmCompile>("compileTestKotlinJvm")
 val jvmTestClasses = tasks.getByName("jvmTestClasses")
 
+abstract class TestsLimiter : BuildService<BuildServiceParameters.None>
+
+val testsLimiter = gradle.sharedServices.registerIfAbsent("TestsLimiter", TestsLimiter::class) {
+    maxParallelUsages = 2
+}
+tasks.withType<AbstractTestTask>().configureEach {
+    usesService(testsLimiter)
+}
+
 val jvmStressTest = tasks.register<Test>("jvmStressTest") {
     dependsOn(compileTestKotlinJvm)
     classpath = jvmTest.classpath
@@ -214,6 +223,8 @@ val jvmLincheckTestAdditional = tasks.register<Test>("jvmLincheckTestAdditional"
     include("**/Semaphore*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
+    // Never overlap with the main lincheck task: two concurrent 4g JVMs don't fit CI agents
+    mustRunAfter(jvmLincheckTest)
     configureJvmForLincheck(segmentSize = 2)
 }
 
