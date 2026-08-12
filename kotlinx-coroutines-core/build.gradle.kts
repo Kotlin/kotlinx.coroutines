@@ -99,11 +99,6 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         kotlin.srcDir("benchmarks/main/kotlin")
     }
 
-    ss.create("jvmBenchmark") {
-        // For each source set we have to manually set path to the sources, otherwise lookup will fail
-        kotlin.srcDir("benchmarks/jvm/kotlin")
-    }
-
     targets.matching {
         it.name != "metadata"
             // Doesn't work, don't want to figure it out for now
@@ -119,6 +114,11 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
                 dependsOn(benchmarkMain)
             }
         }
+    }
+
+    ss.named("jvmBenchmark") {
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/jvm/kotlin")
     }
 
     targets.matching { it.name != "metadata" }.all {
