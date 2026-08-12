@@ -35,7 +35,7 @@ tasks.register("testGcAnchor") {
     }
 }
 
-open class RunR8 : JavaExec() {
+abstract class RunR8 : JavaExec() {
 
     @OutputDirectory
     lateinit var outputDir: File

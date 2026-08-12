@@ -67,7 +67,7 @@ externalDocumentationLink(
 /*
  * Task used by our ui/android tests to test minification results and keep track of size of the binary.
  */
-open class RunR8 : JavaExec() {
+abstract class RunR8 : JavaExec() {
 
     @OutputDirectory
     lateinit var outputDex: File
