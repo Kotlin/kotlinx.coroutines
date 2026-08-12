@@ -54,7 +54,7 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
 }
 
 private fun Project.getSensitiveProperty(name: String): String? {
-    return project.findProperty(name) as? String ?: System.getenv(name)
+    return project.providers.gradleProperty(name).orNull ?: project.providers.environmentVariable(name).orNull
 }
 
 /**

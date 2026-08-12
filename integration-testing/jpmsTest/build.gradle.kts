@@ -1,9 +1,8 @@
-@file:Suppress("PropertyName")
 plugins {
     kotlin("jvm")
 }
 
-val coroutines_version: String by project
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
 
 java {
     modularity.inferModulePath.set(true)
@@ -18,8 +17,8 @@ kotlin {
 
 
         defaultSourceSet.dependencies {
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutines_version")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutinesVersion")
         }
 
         tasks.register<Test>("debugDynamicAgentJpmsTest") {

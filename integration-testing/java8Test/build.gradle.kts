@@ -6,8 +6,8 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val coroutinesVersion = property("coroutines_version")
-val junit5Version = property("junit5_version")
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
+val junit5Version = providers.gradleProperty("junit5_version").get()
 
 kotlin {
     jvmToolchain(8)

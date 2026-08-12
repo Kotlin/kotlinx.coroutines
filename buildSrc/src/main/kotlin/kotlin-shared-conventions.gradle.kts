@@ -184,7 +184,7 @@ tasks.withType<Test> {
         showStandardStreams = true
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
-    project.properties["stressTest"]?.let { systemProperty("stressTest", it) }
+    project.providers.gradleProperty("stressTest").orNull?.let { systemProperty("stressTest", it) }
 }
 
 tasks.named("check") {

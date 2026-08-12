@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val coroutinesVersion = property("coroutines_version").toString()
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get().toString()
 
 configurations {
     create("r8")

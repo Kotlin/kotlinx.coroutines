@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-val reactiveStreamsVersion = property("reactive_streams_version")
+val reactiveStreamsVersion = providers.gradleProperty("reactive_streams_version").get()
 
 dependencies {
     api("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
