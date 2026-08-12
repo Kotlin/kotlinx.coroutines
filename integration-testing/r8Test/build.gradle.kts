@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val coroutinesVersion = providers.gradleProperty("coroutines_version").get().toString()
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
 
 configurations {
     create("r8")
@@ -24,15 +24,11 @@ val runR8 = tasks.register("runR8", RunR8::class) {
     dependsOn("jar")
 }
 
-tasks.register("testGcAnchor") {
+tasks.register<JavaExec>("testGcAnchor") {
     dependsOn(runR8)
 
-    doLast {
-        project.javaexec {
-            mainClass.set("GcAnchorKt")
-            classpath = files(r8OutputDir)
-        }
-    }
+    mainClass.set("GcAnchorKt")
+    classpath = files(r8OutputDir)
 }
 
 abstract class RunR8 : JavaExec() {

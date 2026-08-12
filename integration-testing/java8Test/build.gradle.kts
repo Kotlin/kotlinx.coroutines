@@ -14,5 +14,6 @@ kotlin {
     dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:$coroutinesVersion")
         testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 }

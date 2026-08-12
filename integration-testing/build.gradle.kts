@@ -98,7 +98,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
 
-val coroutinesVersion = providers.gradleProperty("coroutines_version").get().toString()
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
 
 sourceSets {
     // An assortment of tests for behavior of the core coroutines module on JVM
