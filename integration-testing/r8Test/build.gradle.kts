@@ -17,7 +17,7 @@ dependencies {
 
 val r8OutputDir = layout.buildDirectory.dir("r8out")
 
-val runR8 = tasks.register("runR8", RunR8::class) {
+val runR8 = tasks.register<RunR8>("runR8") {
     outputDir = r8OutputDir.get().asFile
     inputConfig = file("r8-rules.pro")
 

@@ -78,7 +78,7 @@ object Java9Modularity {
             )
         }
 
-        val processModuleInfoFile = tasks.register("processModuleInfoFile", ProcessModuleInfoFile::class) {
+        val processModuleInfoFile = tasks.register<ProcessModuleInfoFile>("processModuleInfoFile") {
             moduleInfoFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
             processedModuleInfoFile = project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java")
         }

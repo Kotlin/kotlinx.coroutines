@@ -31,14 +31,14 @@ val unOptimizedDexDir = layout.buildDirectory.dir("dex-unoptim/")
 val optimizedDexFile = optimizedDexDir.map { it.dir("classes.dex") } .get().asFile
 val unOptimizedDexFile = unOptimizedDexDir.map { it.dir("classes.dex") }.get().asFile
 
-val runR8 = tasks.register("runR8", RunR8::class) {
+val runR8 = tasks.register<RunR8>("runR8") {
     outputDex = optimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules.pro")
 
     dependsOn("jar")
 }
 
-val runR8NoOptim = tasks.register("runR8NoOptim", RunR8::class) {
+val runR8NoOptim = tasks.register<RunR8>("runR8NoOptim") {
     outputDex = unOptimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
