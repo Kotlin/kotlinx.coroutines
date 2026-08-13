@@ -547,6 +547,27 @@ class TestScopeTest {
         })
     }
 
+    /**
+     * A NonCancellable background job on [Dispatchers.Default] must be joined
+     * before the next [runTest], or it leaks as [UncaughtExceptionsBeforeTest].
+     */
+    @Test
+    fun testBackgroundNonCancellableDoesNotLeakToNextTest(): TestResult = testResultChain({ _ ->
+        runCatching {
+            runTest {
+                backgroundScope.launch(Dispatchers.Default) {
+                    withContext(NonCancellable) {
+                        delay(30)
+                        throw TestException("hmm")
+                    }
+                }
+                delay(5)
+            }
+        }
+    }, {
+        runTest { }
+    })
+
     companion object {
         internal val invalidContexts = listOf(
             Dispatchers.Default, // not a [TestDispatcher]

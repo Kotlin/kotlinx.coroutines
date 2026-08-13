@@ -368,6 +368,7 @@ public fun TestScope.runTest(
         } finally {
             backgroundScope.cancel()
             testScheduler.advanceUntilIdleOr { false }
+            backgroundScope.coroutineContext[Job]?.join()
             val uncaughtExceptions = scope.leave()
             throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
         }
@@ -400,6 +401,7 @@ public fun TestScope.runTest(
         runTestCoroutineLegacy(it, dispatchTimeoutMs.milliseconds, TestScopeImpl::tryGetCompletionCause, testBody) {
             backgroundScope.cancel()
             testScheduler.advanceUntilIdleOr { false }
+            backgroundScope.coroutineContext[Job]?.join()
             it.legacyLeave()
         }
     }
