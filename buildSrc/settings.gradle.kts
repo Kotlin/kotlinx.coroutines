@@ -9,7 +9,7 @@ pluginManagement {
             maven("https://plugins.gradle.org/m2")
         }
         if (buildSnapshotTrain?.toBoolean() == true) {
-            mavenLocal()
+            maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
         }
     }
 }

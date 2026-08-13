@@ -49,7 +49,7 @@ buildscript {
 
     if (usingSnapshotVersion) {
         repositories {
-            mavenLocal()
+            maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
             maven("https://redirector.kotlinlang.org/maven/dev")
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
             maven("https://redirector.kotlinlang.org/maven/dev")
@@ -75,7 +75,7 @@ allprojects {
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         maven("https://redirector.kotlinlang.org/maven/dev")
-        mavenLocal()
+        maven("file:///Users/Nikolay.Lunyak/Documents/Projects/kotlin-worktrees/kotlin-platform-type-commonized-to-different-types/build/repo")
         maven(rootProject.layout.projectDirectory.dir("../build/build-local-repository/"))
     }
 }
