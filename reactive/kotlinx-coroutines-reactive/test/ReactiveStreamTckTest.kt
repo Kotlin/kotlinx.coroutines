@@ -16,12 +16,12 @@ class ReactiveStreamTckTest : TestBase() {
     }
 
     @DataProvider(name = "dispatchers")
-    fun dispatchers(): Array<Array<Any>> = Dispatcher.values().map { arrayOf<Any>(it) }.toTypedArray()
+    fun dispatchers(): Array<Array<Any>> = Dispatcher.entries.map { arrayOf<Any>(it) }.toTypedArray()
 
 
     class ReactiveStreamTckTestSuite(
         private val dispatcher: Dispatcher
-    ) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
+    ) : PublisherVerification<Long>(TestEnvironment(2000, 2000)) {
 
         override fun createPublisher(elements: Long): Publisher<Long> =
             publish(dispatcher.dispatcher) {
