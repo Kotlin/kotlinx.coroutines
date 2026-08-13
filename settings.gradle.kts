@@ -1,7 +1,7 @@
 pluginManagement {
-    val javafx_plugin_version: String by settings
+    val javafxPluginVersion = providers.gradleProperty("javafx_plugin_version").get()
     plugins {
-        id("org.openjfx.javafxplugin") version javafx_plugin_version
+        id("org.openjfx.javafxplugin") version javafxPluginVersion
         id("me.champeau.jmh") version "0.7.2"
     }
 
@@ -23,9 +23,8 @@ fun module(path: String) {
     include(name)
     project(":$name").projectDir = file(path)
 }
-val prop = System.getProperty("build_snapshot_train")
-var build_snapshot_train: String by extra
-build_snapshot_train = if (prop != null && prop != "") "true" else "false"
+val prop = providers.systemProperty("build_snapshot_train").orNull
+extra["build_snapshot_train"] = if (prop != null && prop != "") "true" else "false"
 // ---------------------------
 
 include("benchmarks")

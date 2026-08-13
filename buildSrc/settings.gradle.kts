@@ -1,5 +1,5 @@
 pluginManagement {
-    val build_snapshot_train: String? by settings
+    val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull
     repositories {
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
@@ -8,7 +8,7 @@ pluginManagement {
         } else {
             maven("https://plugins.gradle.org/m2")
         }
-        if (build_snapshot_train?.toBoolean() == true) {
+        if (buildSnapshotTrain?.toBoolean() == true) {
             mavenLocal()
         }
     }

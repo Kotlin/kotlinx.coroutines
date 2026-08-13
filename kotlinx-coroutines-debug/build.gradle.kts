@@ -6,24 +6,24 @@ plugins {
     id("org.jetbrains.kotlinx.kover") // apply plugin to use autocomplete for Kover DSL
 }
 
-val junit_version by properties
-val junit5_version by properties
-val byte_buddy_version by properties
-val blockhound_version by properties
-val jna_version by properties
+val junitVersion = providers.gradleProperty("junit_version").get()
+val junit5Version = providers.gradleProperty("junit5_version").get()
+val byteBuddyVersion = providers.gradleProperty("byte_buddy_version").get()
+val blockhoundVersion = providers.gradleProperty("blockhound_version").get()
+val jnaVersion = providers.gradleProperty("jna_version").get()
 
 dependencies {
-    compileOnly("junit:junit:$junit_version")
-    compileOnly("org.junit.jupiter:junit-jupiter-api:$junit5_version")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit5_version")
+    compileOnly("junit:junit:$junitVersion")
+    compileOnly("org.junit.jupiter:junit-jupiter-api:$junit5Version")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
     testImplementation("org.junit.platform:junit-platform-testkit:1.7.0")
-    implementation("net.bytebuddy:byte-buddy:$byte_buddy_version")
-    implementation("net.bytebuddy:byte-buddy-agent:$byte_buddy_version")
-    compileOnly("io.projectreactor.tools:blockhound:$blockhound_version")
-    testImplementation("io.projectreactor.tools:blockhound:$blockhound_version")
+    implementation("net.bytebuddy:byte-buddy:$byteBuddyVersion")
+    implementation("net.bytebuddy:byte-buddy-agent:$byteBuddyVersion")
+    compileOnly("io.projectreactor.tools:blockhound:$blockhoundVersion")
+    testImplementation("io.projectreactor.tools:blockhound:$blockhoundVersion")
     testImplementation("com.google.code.gson:gson:2.8.6")
-    api("net.java.dev.jna:jna:$jna_version")
-    api("net.java.dev.jna:jna-platform:$jna_version")
+    api("net.java.dev.jna:jna:$jnaVersion")
+    api("net.java.dev.jna:jna-platform:$jnaVersion")
 }
 
 java {

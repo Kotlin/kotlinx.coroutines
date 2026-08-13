@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-val knit_version: String by project
+val knitVersion = providers.gradleProperty("knit_version").get()
 private val projectsWithoutDokka = unpublished + "kotlinx-coroutines-bom" + jdk8ObsoleteModule
 private val subprojectWithDokka = subprojects.filterNot { projectsWithoutDokka.contains(it.name) }
 
@@ -29,7 +29,7 @@ dependencies {
 private fun Project.configureDokkaPlugins() {
     dependencies {
         // Dependencies for Knit processing: Knit plugin to work with Dokka
-        dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knit_version")
+        dokkaPlugin("org.jetbrains.kotlinx:dokka-pathsaver-plugin:$knitVersion")
 
         // make samples runnable via Kotlin playground
         dokkaHtmlPlugin("org.jetbrains.dokka:kotlin-playground-samples-plugin")

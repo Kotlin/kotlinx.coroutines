@@ -31,14 +31,14 @@ val unOptimizedDexDir = layout.buildDirectory.dir("dex-unoptim/")
 val optimizedDexFile = optimizedDexDir.map { it.dir("classes.dex") } .get().asFile
 val unOptimizedDexFile = unOptimizedDexDir.map { it.dir("classes.dex") }.get().asFile
 
-val runR8 by tasks.registering(RunR8::class) {
+val runR8 = tasks.register<RunR8>("runR8") {
     outputDex = optimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules.pro")
 
     dependsOn("jar")
 }
 
-val runR8NoOptim by tasks.registering(RunR8::class) {
+val runR8NoOptim = tasks.register<RunR8>("runR8NoOptim") {
     outputDex = unOptimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
@@ -67,7 +67,7 @@ externalDocumentationLink(
 /*
  * Task used by our ui/android tests to test minification results and keep track of size of the binary.
  */
-open class RunR8 : JavaExec() {
+abstract class RunR8 : JavaExec() {
 
     @OutputDirectory
     lateinit var outputDex: File

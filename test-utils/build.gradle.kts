@@ -7,7 +7,7 @@ kotlin {
         commonMain.dependencies {
             api("org.jetbrains.kotlin:kotlin-test:${version("kotlin")}")
         }
-        val concurrentMain by creating {
+        val concurrentMain = create("concurrentMain") {
             configureDirectoryPaths()
             dependsOn(commonMain.get())
         }
