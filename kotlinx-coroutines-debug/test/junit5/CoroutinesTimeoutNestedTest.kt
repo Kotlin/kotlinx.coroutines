@@ -1,6 +1,7 @@
 package kotlinx.coroutines.debug.junit5
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.fakeDelay
 import org.junit.jupiter.api.*
 
 /**
@@ -14,12 +15,12 @@ class CoroutinesTimeoutNestedTest {
     inner class NestedInInherited {
         @Test
         fun usesOuterClassTimeout() = runBlocking {
-            delay(1000)
+            fakeDelay(1000)
         }
 
         @Test
         fun fitsInOuterClassTimeout() = runBlocking {
-            delay(10)
+            fakeDelay(10)
         }
     }
 }
