@@ -118,11 +118,14 @@ internal class VirtualTimeSource(
         val realNanos = System.nanoTime()
         if (realNanos > checkpointNanos + REAL_TIME_STEP_NANOS) {
             checkpointNanos = realNanos
-            val minParkedTill = minParkedTill()
-            time = (time + REAL_TIME_STEP_NANOS).coerceAtMost(if (minParkedTill < 0) Long.MAX_VALUE else minParkedTill)
-            logTime("R")
-            wakeupAll()
-            return
+            // Advance real time when there are actual tracked tasks and/or 'main' is not part of an event loop
+            if (trackedTasks != 0 || threads[mainThread] == null) {
+                val minParkedTill = minParkedTill()
+                time = (time + REAL_TIME_STEP_NANOS).coerceAtMost(if (minParkedTill < 0) Long.MAX_VALUE else minParkedTill)
+                logTime("R")
+                wakeupAll()
+                return
+            }
         }
         if (threads[mainThread] == null) return
         if (trackedTasks != 0) return
