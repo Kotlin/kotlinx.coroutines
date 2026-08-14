@@ -1,1 +1,1 @@
-The documentation has been moved to the [topics/debugging.md](topics/debugging.md).
+The documentation has been moved to the [topics/debugging.md](topics/coroutines-debugging.md).
