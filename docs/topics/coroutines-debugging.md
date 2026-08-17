@@ -1,6 +1,6 @@
 <contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url>
 
-[//]: # (title: Debugging coroutines)
+[//]: # (title: Debug coroutines)
 
 Debugging applications that use coroutines can be challenging because multiple coroutines can run concurrently, suspend on one thread, and resume on another.
 Their execution order and the threads they use can also change between runs, making it difficult to follow the execution of a particular coroutine.
@@ -24,7 +24,7 @@ The debug agent is available in the [`kotlinx-coroutines-debug`](https://kotlinl
 ## Enable debug mode
 
 Debug mode assigns a unique name to every launched coroutine.
-You can see the name in a Java debugger, in the coroutine's string representation, and in a thread's name while it runs the coroutine.
+You can see the coroutine names in a Java debugger, in the coroutine's string representation, and in a thread's name while it runs the coroutine.
 
 > Debug mode has negligible runtime overhead, so you can keep it enabled to simplify logging and diagnostics.
 >
@@ -34,7 +34,7 @@ To enable debug mode, pass the `-Dkotlinx.coroutines.debug` VM option in your bu
 
 In IntelliJ IDEA, follow these steps to enable debug mode:
 
-1. 1. In the **Run widget**, select the run/debug configuration you want to update, then select **More Actions** | **Edit**:
+1. In the **Run widget**, select the run/debug configuration you want to update, then select **More Actions** | **Edit**:
 
    ![Selecting Edit from the More Actions menu for a run configuration in IntelliJ IDEA](coroutines-debug-mode-more-options.png){width="600"}
 
@@ -102,11 +102,11 @@ The `Deferred.await()` call in `awaitUserProfile()` rethrows it in the calling c
 
 With stack trace recovery disabled, the stack trace doesn't show where `Deferred.await()` rethrows the exception:
 
-![Exception stack trace without information about where the exception is rethrown](../images/without-stack-trace-recovery.png){width="600"}
+![Exception stack trace without information about where the exception is rethrown](without-stack-trace-recovery.png){width="600"}
 
 With stack trace recovery enabled, the stack trace also shows where the exception is rethrown:
 
-![Recovered exception stack trace with information about where the exception is rethrown](../images/with-stack-trace-recovery.png){width="600"}
+![Recovered exception stack trace with information about where the exception is rethrown](with-stack-trace-recovery.png){width="600"}
 
 ### Stack trace recovery for custom exceptions
 <primary-label ref="experimental-opt-in"/>
@@ -176,7 +176,7 @@ fun main() {
 The [`kotlinx-coroutines-debug`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/) module provides a debug agent for JVM applications.
 The agent tracks coroutines as they are created, suspended, and resumed.
 
-The [`DebugProbes`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/) API is the main entry point to the debug agent.
+The [`DebugProbes`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/) API is the main entry point for the debug agent.
 You can use it to print active coroutines and their current state.
 The output includes stack traces that show where each coroutine was created and where it is suspended.
 
@@ -192,9 +192,9 @@ When you do so, set the [`DebugProbes.enableCreationStackTraces`](https://kotlin
 >
 {style="note"}
 
-### Add dependencies for the debug agent
+### Add the debug agent dependency
 
-To use the debug agent in your project, add the following to your build file:
+To use the debug agent in your project, add the `kotlinx-coroutines-debug` dependency:
 
 <tabs group="build-tool">
 <tab title="Gradle" group-key="gradle">
@@ -240,7 +240,7 @@ With the debug agent active, you can use the following APIs:
 * [`DebugProbes.dumpCoroutinesInfo()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-info.html) returns information about active coroutines.
 * [`DebugProbes.printJob()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html) prints the coroutine hierarchy for a `Job`.
 * [`DebugProbes.printScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html) prints the coroutine hierarchy for a `CoroutineScope`.
-  
+
 Here's an example that uses the debug agent to print active coroutines and the coroutine hierarchy for a specific `Job`:
 
 ```kotlin
@@ -427,3 +427,62 @@ org.junit.runners.model.TestTimedOutException: test timed out after 1000 millise
 	at java.base/java.lang.Thread.run(Thread.java:1575)
 ```
 {collapsible="true" collapsed-title="CoroutinesTimeout example output"}
+
+### Limitations on Android
+
+The debug agent isn't supported on Android.
+However, `kotlinx-coroutines-test` can add `kotlinx-coroutines-debug` to an Android project as a transitive dependency.
+
+The `kotlinx-coroutines-debug` module has transitive dependencies on JNA, JNA Platform, Byte Buddy, and Byte Buddy Agent.
+Some of these dependencies contain resources with the same paths.
+When Android merges dependency resources, the duplicate paths can cause a `DuplicateRelativeFileException` resulting in a build failure.
+
+To resolve the build failure, exclude either the [`kotlinx-coroutines-debug` module dependency](#exclude-the-kotlinx-coroutines-debug-module-dependency) or the [conflicting resources](#exclude-the-conflicting-resources).
+
+#### Exclude the `kotlinx-coroutines-debug` module dependency
+
+To exclude the debug module from `kotlinx-coroutines-test`, add the following to your `build.gradle.kts` file:
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    androidTestImplementation(
+        "org.jetbrains.kotlinx:kotlinx-coroutines-test:%coroutinesVersion%"
+    ) {
+        exclude(
+            group = "org.jetbrains.kotlinx",
+            module = "kotlinx-coroutines-debug",
+        )
+    }
+}
+```
+
+This resolves the conflict if no other dependency adds the debug module.
+
+#### Exclude the conflicting resources
+
+To keep the `kotlinx-coroutines-debug` dependency, add the following `packaging` configuration to your `build.gradle.kts` file:
+
+```kotlin
+// build.gradle.kts
+android {
+    packaging {
+        resources {
+            // Excludes license files from JNA and JNA Platform
+            excludes += setOf(
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1",
+            )
+
+            // Excludes the ASM license file from Byte Buddy
+            excludes += "META-INF/licenses/ASM"
+
+            // Retains one copy of each Byte Buddy Agent file
+            pickFirsts += setOf(
+                "win32-x86-64/attach_hotspot_windows.dll",
+                "win32-x86/attach_hotspot_windows.dll",
+            )
+        }
+    }
+}
+```
