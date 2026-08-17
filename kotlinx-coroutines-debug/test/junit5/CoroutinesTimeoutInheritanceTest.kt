@@ -2,6 +2,7 @@ package kotlinx.coroutines.debug.junit5
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.fakeDelay
 import org.junit.jupiter.api.*
 
 /**
@@ -20,21 +21,21 @@ class CoroutinesTimeoutInheritanceTest {
         @Test
         @Order(1)
         fun usesBaseClassTimeout() = runBlocking {
-            delay(1000)
+            fakeDelay(1000)
         }
 
         @CoroutinesTimeout(300)
         @Test
         @Order(2)
         fun methodOverridesBaseClassTimeoutWithGreaterTimeout() = runBlocking {
-            delay(200)
+            fakeDelay(200)
         }
 
         @CoroutinesTimeout(10)
         @Test
         @Order(3)
         fun methodOverridesBaseClassTimeoutWithLesserTimeout() = runBlocking {
-            delay(50)
+            fakeDelay(50)
         }
 
     }
@@ -44,12 +45,12 @@ class CoroutinesTimeoutInheritanceTest {
 
         @Test
         fun classOverridesBaseClassTimeout1() = runBlocking {
-            delay(200)
+            fakeDelay(200)
         }
 
         @Test
         fun classOverridesBaseClassTimeout2() = runBlocking {
-            delay(400)
+            fakeDelay(400)
         }
 
     }
