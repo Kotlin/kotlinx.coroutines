@@ -134,24 +134,21 @@ internal class FakeDelayEventQueue {
 
     fun processEventQueueAndAwaitCompletion(testTimeoutMs: Long) {
         while (true) {
-            val (timeMs, tasks) = synchronized(this@FakeDelayEventQueue) {
+            val tasks = synchronized(this@FakeDelayEventQueue) {
                 val currentEvents = events ?: return
-                currentEvents.eventPriorityQueue.pollFirstEntry().also {
-                    if (it == null) {
+                val (timeMs, tasks) = currentEvents.eventPriorityQueue.pollFirstEntry()
+                    ?: run {
                         (this@FakeDelayEventQueue as Object).wait()
                         continue
                     }
+                if (timeMs >= testTimeoutMs) {
+                    throw TimeoutException()
                 }
-            }
-            if (timeMs > testTimeoutMs) {
-                throw TimeoutException()
+                currentEvents.currentTime = timeMs
+                tasks
             }
             for (task in tasks) {
                 task.resumeWith(Result.success(Unit))
-            }
-            synchronized(this@FakeDelayEventQueue) {
-                val currentEvents = events ?: continue
-                currentEvents.currentTime = maxOf(currentEvents.currentTime, timeMs)
             }
         }
     }
