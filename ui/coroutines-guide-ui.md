@@ -113,11 +113,6 @@ Add dependencies on `kotlinx-coroutines-android` module to the `dependencies { .
 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0"
 ```
 
-You can clone [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) project from GitHub onto your 
-workstation. The resulting template project for Android resides in 
-[`ui/kotlinx-coroutines-android/example-app`](kotlinx-coroutines-android/example-app) directory. 
-You can load it in Android Studio to follow this guide on Android.
-
 ## Basic UI coroutines
 
 This section shows basic usage of coroutines in UI applications.
