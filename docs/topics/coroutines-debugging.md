@@ -8,16 +8,14 @@ Their execution order and the threads they use can also change between runs, mak
 On the JVM, you can use the following features to make debugging coroutines easier:
 
 * [Debug mode](#enable-debug-mode) adds a unique name to each coroutine so you can identify it in a debugger and diagnostic output.
-* [Stack trace recovery](#stack-trace-recovery) adds information about where an exception is rethrown or caught.
+* [Stack trace recovery](#stack-trace-recovery) adds information about where a coroutine receives an exception instead of an expected result.
 * The [debug agent](#the-debug-agent) tracks active coroutines, reports their state, and more.
 
 Debug mode and stack trace recovery are available in the [`kotlinx-coroutines-core`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/) module.
 The debug agent is available in the [`kotlinx-coroutines-debug`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/) module.
 
 > The debug agent isn't supported on Android.
-> 
-> Additionally, R8 version 1.6.0 or later disables debug mode in optimized release builds to reduce the size of the resulting binary.
-> For more information, see [Optimization on Android](https://github.com/Kotlin/kotlinx.coroutines/blob/master/ui/kotlinx-coroutines-android/README.md#optimization).
+>
 >
 {style="note"}
 
@@ -30,7 +28,10 @@ You can see the coroutine names in a Java debugger, in the coroutine's string re
 >
 {style="tip"}
 
-To enable debug mode, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
+When you run your code with Java assertions enabled, the `kotlinx.coroutines` library automatically enables debug mode.
+Unit tests run with assertions enabled by default, so you don't need to enable debug mode explicitly for them.
+
+To enable debug mode explicitly, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
 
 In IntelliJ IDEA, follow these steps to enable debug mode:
 
@@ -48,14 +49,15 @@ In IntelliJ IDEA, follow these steps to enable debug mode:
 
 3. Click **OK**.
 
-Running your code with Java assertions enabled also activates debug mode automatically.
-
 ## Stack trace recovery
 
-If a coroutine throws an exception and another rethrows it, the original stack trace doesn't show where the exception is rethrown.
+When a coroutine receives an exception from another coroutine through a suspending function such as `Deferred.await()`,
+the exception's stack trace doesn't contain the stack frames from the receiving coroutine.
+Without these stack frames, the stack trace doesn't show where `await()` is called or which functions lead to that call.
+
 The `kotlinx.coroutines` library adds this information using _stack trace recovery_, which creates a copy of the exception with additional stack frames.
 
-When the exception is rethrown, the copy is thrown instead of the original exception, which becomes the cause of the copy.
+When the receiving coroutine resumes, it throws the copy instead of the original exception, which becomes the cause of the copy.
 If the original exception has suppressed exceptions, they remain attached to it instead of being copied.
 This can prevent cycles in the exception chain and crashes in some frameworks.
 
@@ -87,7 +89,7 @@ object UserProfileService :
         }
 
         // The coroutine running awaitUserProfile()
-        // receives the exception when the await() function rethrows it
+        // receives the exception through the await() function
         userProfile.await()
     }
 }
@@ -98,15 +100,16 @@ suspend fun main() {
 ```
 
 In this example, the `parseUserProfile()` function throws the exception in the coroutine started by the `.async()` builder function.
-The `Deferred.await()` call in `awaitUserProfile()` rethrows it in the calling coroutine.
+The coroutine that calls `awaitUserProfile()` receives the exception through `Deferred.await()`.
 
-With stack trace recovery disabled, the stack trace doesn't show where `Deferred.await()` rethrows the exception:
+With stack trace recovery disabled, the stack trace shows where `parseUserProfile()` throws the exception in the coroutine created by the `.async()` function,
+but it doesn't include the `Deferred.await()` call in the `awaitUserProfile()` function:
 
-![Exception stack trace without information about where the exception is rethrown](without-stack-trace-recovery.png){width="600"}
+![Exception stack trace without stack frames from the receiving coroutine](without-stack-trace-recovery.png){width="600"}
 
-With stack trace recovery enabled, the stack trace also shows where the exception is rethrown:
+With stack trace recovery enabled, the stack trace also includes the `Deferred.await()` call in the `awaitUserProfile()` function:
 
-![Recovered exception stack trace with information about where the exception is rethrown](with-stack-trace-recovery.png){width="600"}
+![Recovered exception stack trace with stack frames from the receiving coroutine](with-stack-trace-recovery.png){width="600"}
 
 ### Stack trace recovery for custom exceptions
 <primary-label ref="experimental-opt-in"/>
@@ -116,7 +119,7 @@ Stack trace recovery can copy an exception automatically when its class has a pu
 If you want the `kotlinx.coroutines` library to recover the stack trace of an exception that requires additional constructor arguments,
 such as a line number or an error code, implement the `StackTraceRecoverable` interface.
 
-The `StackTraceRecoverable` interface is part of the Kotlin standard library, so you can implement it without adding a dependency on `kotlinx.coroutines`.
+The `StackTraceRecoverable` interface is part of the Kotlin standard library, so you can implement it without adding a dependency on the `kotlinx.coroutines` library.
 
 > The `StackTraceRecoverable` interface is available on all targets, but the `kotlinx.coroutines` library uses it for stack trace recovery only on the JVM.
 >
@@ -132,6 +135,7 @@ Here's an example of a custom exception that preserves a `line` property when it
 recovery:
 
 ```kotlin
+import kotlinx.coroutines.*
 import kotlin.coroutines.ExperimentalStdlibCoroutineSupportApi
 import kotlin.coroutines.debug.StackTraceRecoverable
 
@@ -152,23 +156,48 @@ private constructor(
     // Copies the line number and message details
     override fun copyForStackTraceRecovery(): FileEditException =
         FileEditException(line, detail, this)
+}
+
+private fun editFile() {
+    throw FileEditException(15, "Unexpected token")
+}
+
+suspend fun main() {
+    supervisorScope {
+        // Starts a new coroutine
+        val fileEdit = async(Dispatchers.Default) {
+            // Throws the original exception
+            editFile()
+        }
+        
+        // Stack trace recovery creates a copy of the exception,
+        // adds the calling coroutine's stack frames, and throws the copy
+        fileEdit.await()
     }
-
-fun main() {
-    val original = FileEditException(15, "Unexpected token")
-    
-    // Normally, you don't need to call this function directly unless you're testing its behavior
-    // The kotlinx.coroutines library invokes it automatically during stack trace recovery
-    val copy = original.copyForStackTraceRecovery()
-
-    println(copy.message)
-    // When editing line 15: Unexpected token
-
-    println(copy.cause == original)
-    // true
 }
 ```
-{kotlin-runnable="true" kotlin-min-compiler-version="2.4.20-Beta2"}
+
+With debug mode enabled, the output contains the recovered copy followed by the original exception as its cause.
+
+```text
+Exception in thread "main" com.example.FileEditException: When editing line 15: Unexpected token
+	at com.example.RecoveryExampleKt.editFile(RecoveryExample.kt:54)
+	at com.example.RecoveryExampleKt.access$editFile(RecoveryExample.kt:1)
+	at com.example.RecoveryExampleKt$main$2$fileEdit$1.invokeSuspend(RecoveryExample.kt:62)
+	at _COROUTINE._BOUNDARY._(CoroutineDebugging.kt:42)
+	at com.example.RecoveryExampleKt$main$2.invokeSuspend(RecoveryExample.kt:67)
+Caused by: com.example.FileEditException: When editing line 15: Unexpected token
+	at com.example.RecoveryExampleKt.editFile(RecoveryExample.kt:54)
+	at com.example.RecoveryExampleKt.access$editFile(RecoveryExample.kt:1)
+	at com.example.RecoveryExampleKt$main$2$fileEdit$1.invokeSuspend(RecoveryExample.kt:62)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:807)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+```
+{collapsible="true" collapsed-title="StackTraceRecoverable example output"}
 
 ## The debug agent
 <primary-label ref="experimental-opt-in"/>
@@ -180,10 +209,10 @@ The [`DebugProbes`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-corout
 You can use it to print active coroutines and their current state.
 The output includes stack traces that show where each coroutine was created and where it is suspended.
 
-You can also use it to print the coroutine hierarchy for a specific `Job` or `CoroutineScope`.
+You can also use it to print a coroutine dump for the hierarchy of a specific `Job` or `CoroutineScope`.
 
-Additionally, you can use the debug agent in production environments to monitor an application's state and improve its observability.
-When you do so, set the [`DebugProbes.enableCreationStackTraces`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html) property to `false` to reduce performance overhead.
+If you enable `DebugProbes` in a production environment, it can significantly reduce your application's performance when it creates a stack trace for each new coroutine.
+To avoid this overhead, set [`DebugProbes.enableCreationStackTraces`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/enable-creation-stack-traces.html) to `false`.
 
 > The `kotlinx-coroutines-debug` module provides automatic [BlockHound](https://github.com/reactor/BlockHound) integration.
 > You can use it to detect blocking operations in coroutine contexts where they aren't allowed.
@@ -238,8 +267,8 @@ With the debug agent active, you can use the following APIs:
 
 * [`DebugProbes.dumpCoroutines()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines.html) prints all active coroutines.
 * [`DebugProbes.dumpCoroutinesInfo()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/dump-coroutines-info.html) returns information about active coroutines.
-* [`DebugProbes.printJob()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html) prints the coroutine hierarchy for a `Job`.
-* [`DebugProbes.printScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html) prints the coroutine hierarchy for a `CoroutineScope`.
+* [`DebugProbes.printJob()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-job.html) prints a coroutine dump for the hierarchy of a `Job`.
+* [`DebugProbes.printScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/print-scope.html) prints a coroutine dump for the hierarchy of a `CoroutineScope`.
 
 Here's an example that uses the debug agent to print active coroutines and the coroutine hierarchy for a specific `Job`:
 
@@ -279,7 +308,7 @@ fun main() {
         // Prints all active coroutines
         DebugProbes.dumpCoroutines()
 
-        println("\nUser profile coroutine hierarchy:")
+        println("============")
 
         // Prints the loading job and its child coroutines
         DebugProbes.printJob(loadingJob)
@@ -290,9 +319,9 @@ fun main() {
 With [debug mode](#enable-debug-mode) enabled, running the example produces the following output:
 
 ```text
-Coroutines dump 2026/08/14 16:18:30
+Coroutines dump 2026/08/18 14:00:08
 
-Coroutine "coroutine#1":BlockingCoroutine{Active}@6f1fba17, state: RUNNING
+Coroutine "coroutine#1":BlockingCoroutine{Active}@146ba0ac, state: RUNNING
 	at java.base/java.lang.Thread.getStackTrace(Thread.java:2389)
 	at kotlinx.coroutines.debug.internal.DebugProbesImpl.enhanceStackTraceWithThreadDumpImpl(DebugProbesImpl.kt:339)
 	at kotlinx.coroutines.debug.internal.DebugProbesImpl.dumpCoroutinesSynchronized(DebugProbesImpl.kt:294)
@@ -301,33 +330,36 @@ Coroutine "coroutine#1":BlockingCoroutine{Active}@6f1fba17, state: RUNNING
 	at kotlinx.coroutines.debug.DebugProbes.dumpCoroutines$default(DebugProbes.kt:181)
 	at DebugAgentExampleKt$main$1.invokeSuspend(DebugAgentExample.kt:34)
 
-Coroutine "coroutine#2":StandaloneCoroutine{Active}@185d8b6, state: SUSPENDED
+Coroutine "coroutine#2":StandaloneCoroutine{Active}@4dfa3a9d, state: SUSPENDED
 	at DebugAgentExampleKt$main$1$loadingJob$1.invokeSuspend(DebugAgentExample.kt:27)
 
-Coroutine "coroutine#3":StandaloneCoroutine{Active}@67784306, state: SUSPENDED
+Coroutine "coroutine#3":StandaloneCoroutine{Active}@6eebc39e, state: SUSPENDED
 	at DebugAgentExampleKt$loadUserProfile$2$1.invokeSuspend(DebugAgentExample.kt:14)
 
-Coroutine "coroutine#4":StandaloneCoroutine{Active}@335eadca, state: SUSPENDED
-	at DebugAgentExampleKt$loadUserProfile$2$2.invokeSuspend(DebugAgentExample.kt:15)
-User profile coroutine hierarchy:
+Coroutine "coroutine#4":StandaloneCoroutine{Active}@464bee09, state: SUSPENDED
+	at DebugAgentExampleKt$loadUserProfile$2$2.invokeSuspend(DebugAgentExample.kt:15)============
 "coroutine#2":StandaloneCoroutine{Active}, continuation is SUSPENDED at line DebugAgentExampleKt$main$1$loadingJob$1.invokeSuspend(DebugAgentExample.kt:27)
 	"coroutine#3":StandaloneCoroutine{Active}, continuation is SUSPENDED at line DebugAgentExampleKt$loadUserProfile$2$1.invokeSuspend(DebugAgentExample.kt:14)
 	"coroutine#4":StandaloneCoroutine{Active}, continuation is SUSPENDED at line DebugAgentExampleKt$loadUserProfile$2$2.invokeSuspend(DebugAgentExample.kt:15)
 ```
 {collapsible="true" collapsed-title="Debug mode example output"}
 
-### Print active coroutines when a JUnit 4 test times out
+### Print active coroutines when JUnit tests time out
 
-To set a timeout for JUnit 4 tests and print all active coroutines and their stack traces if they exceed it, use the [`CoroutinesTimeout`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/) rule.
-The rule installs debug probes automatically and fails the test with a `TestTimedOutException`.
+You can set a timeout for JUnit tests with the corresponding `CoroutinesTimeout` API, depending on the JUnit version.
+The API installs debug probes automatically.
+If a test doesn't complete before the timeout, it prints all active coroutines and their stack traces and fails the test.
 
-Here's an example of a test that doesn't complete:
+#### JUnit 4
+
+To set a timeout for JUnit 4 tests and print all active coroutines and their stack traces if they exceed it, use the [`CoroutinesTimeout`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit4/-coroutines-timeout/) rule:
 
 ```kotlin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.junit4.CoroutinesTimeout
 import org.junit.Rule
 import org.junit.Test
+import kotlin.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserProfileTest {
@@ -337,7 +369,7 @@ class UserProfileTest {
     private suspend fun loadUserProfile() {
         withContext(Dispatchers.IO) {
             // Simulates an operation that doesn't complete
-            delay(Long.MAX_VALUE)
+            delay(Duration.INFINITE)
         }
     }
 
@@ -354,21 +386,21 @@ class UserProfileTest {
 ```
 
 After one second, the rule reports that the test timed out and prints all active coroutines and their stack traces.
-The test then fails with a `TestTimedOutException`:
+The test then fails with a `TestTimedOutException`.
 
 ```text
 Test loadsUserProfile timed out after 1 seconds
 
-Coroutines dump 2026/08/14 16:37:05
+Coroutines dump 2026/08/18 13:48:21
 
 Coroutine "coroutine#1":BlockingCoroutine{Active}@bf1ec20, state: SUSPENDED
-	at UserProfileTest$loadsUserProfile$1.invokeSuspend(UserProfileTest.kt:25)
+	at UserProfileTest$loadsUserProfile$1.invokeSuspend(UserProfileTest.kt:27)
 	at _COROUTINE._CREATION._(CoroutineDebugging.kt:30)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:161)
 	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:26)
 	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
 	at kotlinx.coroutines.BuildersKt.runBlockingK$default(Unknown Source)
-	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:19)
+	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:21)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
@@ -381,19 +413,19 @@ Coroutine "coroutine#1":BlockingCoroutine{Active}@bf1ec20, state: SUSPENDED
 	at java.base/java.lang.Thread.run(Thread.java:1575)
 
 Coroutine "coroutine#2":StandaloneCoroutine{Active}@70efb718, state: SUSPENDED
-	at UserProfileTest$loadUserProfile$2.invokeSuspend(UserProfileTest.kt:14)
-	at UserProfileTest$loadsUserProfile$1$loadingJob$1.invokeSuspend(UserProfileTest.kt:21)
+	at UserProfileTest$loadUserProfile$2.invokeSuspend(UserProfileTest.kt:16)
+	at UserProfileTest$loadsUserProfile$1$loadingJob$1.invokeSuspend(UserProfileTest.kt:23)
 	at _COROUTINE._CREATION._(CoroutineDebugging.kt:30)
 	at kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:161)
 	at kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:26)
 	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch$default(Builders.common.kt:200)
 	at kotlinx.coroutines.BuildersKt.launch$default(Unknown Source)
-	at UserProfileTest$loadsUserProfile$1.invokeSuspend(UserProfileTest.kt:20)
+	at UserProfileTest$loadsUserProfile$1.invokeSuspend(UserProfileTest.kt:22)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
 	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
 	at kotlinx.coroutines.BuildersKt.runBlockingK$default(Unknown Source)
-	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:19)
+	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:21)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
@@ -415,7 +447,7 @@ org.junit.runners.model.TestTimedOutException: test timed out after 1000 millise
 	at kotlinx.coroutines.BuildersKt.runBlockingK(Unknown Source)
 	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
 	at kotlinx.coroutines.BuildersKt.runBlockingK$default(Unknown Source)
-	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:19)
+	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:21)
 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
 	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
 	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:59)
@@ -426,42 +458,83 @@ org.junit.runners.model.TestTimedOutException: test timed out after 1000 millise
 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
 	at java.base/java.lang.Thread.run(Thread.java:1575)
 ```
-{collapsible="true" collapsed-title="CoroutinesTimeout example output"}
+{collapsible="true" collapsed-title="CoroutinesTimeout JUnit4 example output"}
+
+#### JUnit 5
+
+To apply a timeout to all test functions in a class, add the [`@CoroutinesTimeout`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug.junit5/-coroutines-timeout/) annotation to the class:
+
+```kotlin
+import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.junit5.CoroutinesTimeout
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration
+
+@OptIn(ExperimentalCoroutinesApi::class)
+// Sets a one-second timeout for all test functions in the class
+@CoroutinesTimeout(testTimeoutMs = 1_000)
+class UserProfileTest {
+    private suspend fun loadUserProfile() {
+        withContext(Dispatchers.IO) {
+            // Simulates an operation that doesn't complete
+            delay(Duration.INFINITE)
+        }
+    }
+
+    @Test
+    fun loadsUserProfile() = runBlocking {
+        val loadingJob = launch {
+            loadUserProfile()
+        }
+
+        // Waits for the coroutine, so the test doesn't complete
+        loadingJob.join()
+    }
+}
+```
+
+After one second, the `CoroutinesTimeout` API reports the timeout and prints all active coroutines and their stack traces.
+The test then fails with a `CoroutinesTimeoutException`.
+
+```text
+Test loadsUserProfile timed out after 1 seconds
+
+Coroutines dump 2026/08/18 13:46:15
+
+Coroutine "coroutine#1":BlockingCoroutine{Active}@5c77053b, state: SUSPENDED
+	at UserProfileTest$loadsUserProfile$1.invokeSuspend(UserProfileTest.kt:24)
+
+Coroutine "coroutine#2":StandaloneCoroutine{Active}@26b894bd, state: SUSPENDED
+	at UserProfileTest$loadUserProfile$2.invokeSuspend(UserProfileTest.kt:13)
+	at UserProfileTest$loadsUserProfile$1$loadingJob$1.invokeSuspend(UserProfileTest.kt:20)
+test timed out after 1000 ms
+kotlinx.coroutines.debug.junit5.CoroutinesTimeoutException: test timed out after 1000 ms
+	at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+	at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:269)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:57)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingImpl(Builders.kt:30)
+	at kotlinx.coroutines.BuildersKt.runBlockingImpl(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK(Builders.concurrent.kt:172)
+	at kotlinx.coroutines.BuildersKt.runBlockingK(Unknown Source)
+	at kotlinx.coroutines.BuildersKt__Builders_concurrentKt.runBlockingK$default(Builders.concurrent.kt:157)
+	at kotlinx.coroutines.BuildersKt.runBlockingK$default(Unknown Source)
+	at UserProfileTest.loadsUserProfile(UserProfileTest.kt:18)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at kotlinx.coroutines.debug.junit5.CoroutinesTimeoutExtension$interceptInvocation$$inlined$runWithTimeoutDumpingCoroutines$1.call(CoroutinesTimeoutImpl.kt:79)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+```
+{collapsible="true" collapsed-title="CoroutinesTimeout JUnit5 example output"}
 
 ### Limitations on Android
 
 The debug agent isn't supported on Android.
-However, `kotlinx-coroutines-test` can add `kotlinx-coroutines-debug` to an Android project as a transitive dependency.
 
 The `kotlinx-coroutines-debug` module has transitive dependencies on JNA, JNA Platform, Byte Buddy, and Byte Buddy Agent.
 Some of these dependencies contain resources with the same paths.
 When Android merges dependency resources, the duplicate paths can cause a `DuplicateRelativeFileException` resulting in a build failure.
 
-To resolve the build failure, exclude either the [`kotlinx-coroutines-debug` module dependency](#exclude-the-kotlinx-coroutines-debug-module-dependency) or the [conflicting resources](#exclude-the-conflicting-resources).
-
-#### Exclude the `kotlinx-coroutines-debug` module dependency
-
-To exclude the debug module from `kotlinx-coroutines-test`, add the following to your `build.gradle.kts` file:
-
-```kotlin
-// build.gradle.kts
-dependencies {
-    androidTestImplementation(
-        "org.jetbrains.kotlinx:kotlinx-coroutines-test:%coroutinesVersion%"
-    ) {
-        exclude(
-            group = "org.jetbrains.kotlinx",
-            module = "kotlinx-coroutines-debug",
-        )
-    }
-}
-```
-
-This resolves the conflict if no other dependency adds the debug module.
-
-#### Exclude the conflicting resources
-
-To keep the `kotlinx-coroutines-debug` dependency, add the following `packaging` configuration to your `build.gradle.kts` file:
+To resolve the build failure while keeping the `kotlinx-coroutines-debug` dependency, exclude the conflicting resources with the following `packaging` configuration in your `build.gradle.kts` file:
 
 ```kotlin
 // build.gradle.kts
