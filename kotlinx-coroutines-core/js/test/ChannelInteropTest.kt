@@ -206,6 +206,110 @@ class ChannelInteropTest : TestBase() {
         assertNextStepToBe(iterator, done = true)
     }
 
+    @Test
+    fun testChannelToAsyncIteratorNoCancelOnEarlyReturn() = runTest {
+        val channel = Channel<Int>(capacity = 1)
+        val iterator = channel.asyncIterator(cancelOnEarlyExit = false)
+        launch {
+            channel.send(1)
+            channel.send(2)
+            channel.close()
+        }
+        assertNextStepToBe(iterator, value = 1, done = false)
+        val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+        assertEquals(true, returnResult.done)
+        assertFalse(channel.isClosedForReceive)
+        assertEquals(2, channel.receive())
+        assertTrue(channel.isClosedForReceive)
+        assertNextStepToBe(iterator, done = true)
+    }
+
+    @Test
+    fun testAsAsyncIterableOptionsPreventCancelTrue() = runTest {
+        val channel = Channel<Int>(capacity = 1)
+        val iterator: JsAsyncIterator<Int> = channel
+            .asAsyncIterable(ChannelIteratorOptions(preventCancel = true))
+            .asDynamic()[js("Symbol.asyncIterator")]()
+        launch {
+            channel.send(1)
+            channel.send(2)
+            channel.close()
+        }
+        assertNextStepToBe(iterator, value = 1, done = false)
+        val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+        assertEquals(true, returnResult.done)
+        assertFalse(channel.isClosedForReceive)
+        assertEquals(2, channel.receive())
+        assertTrue(channel.isClosedForReceive)
+        assertNextStepToBe(iterator, done = true)
+    }
+
+    @Test
+    fun testAsAsyncIterableOptionsPreventCancelFalse() = runTest {
+        val channel = Channel<Int>()
+        val iterator: JsAsyncIterator<Int> = channel
+            .asAsyncIterable(ChannelIteratorOptions(preventCancel = false))
+            .asDynamic()[js("Symbol.asyncIterator")]()
+        launch {
+            channel.send(1)
+            assertFailsWith<CancellationException> {
+                channel.send(2)
+            }.apply {
+                assertNull(cause)
+            }
+        }
+        assertNextStepToBe(iterator, value = 1, done = false)
+        val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+        assertEquals(true, returnResult.done)
+        assertTrue(channel.isClosedForReceive)
+        assertNextStepToBe(iterator, done = true)
+    }
+
+    @Test
+    fun testValuesOptionsPreventCancelTrue() = runTest {
+        val channel = Channel<Int>(capacity = 1)
+        val iterator: JsAsyncIterator<Int> = channel
+            .asDynamic()
+            .values(ChannelIteratorOptions(preventCancel = true))
+            .unsafeCast<JsAsyncIterator<Int>>()
+        val error = js("new Error('test error')")
+        launch {
+            channel.send(1)
+            channel.send(2)
+            channel.close()
+        }
+        assertNextStepToBe(iterator, value = 1, done = false)
+        assertFailsWith<Throwable> { iterator.`throw`(error).await() }
+            .apply { assertEquals("test error", message) }
+        assertFalse(channel.isClosedForReceive)
+        assertEquals(2, channel.receive())
+        assertTrue(channel.isClosedForReceive)
+        assertNextStepToBe(iterator, done = true)
+    }
+
+    @Test
+    fun testValuesOptionsPreventCancelFalseByDefault() = runTest {
+        val channel = Channel<Int>()
+        val iterator: JsAsyncIterator<Int> = channel
+            .asDynamic()
+            .values(ChannelIteratorOptions(preventCancel = null))
+            .unsafeCast<JsAsyncIterator<Int>>()
+        val error = js("new Error('test error')")
+        launch {
+            channel.send(1)
+            assertFailsWith<CancellationException> {
+                channel.send(2)
+            }.apply {
+                assertSame(error, cause)
+            }
+        }
+        assertNextStepToBe(iterator, value = 1, done = false)
+        assertFailsWith<Throwable> { iterator.`throw`(error).await() }
+            .apply { assertEquals("test error", message) }
+        assertTrue(channel.isClosedForReceive)
+        assertNextStepToBe(iterator, done = true)
+    }
+
     private suspend fun <T> assertNextStepToBe(
         iterator: JsAsyncIterator<T>,
         value: T? = js("undefined"),
