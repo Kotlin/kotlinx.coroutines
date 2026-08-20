@@ -154,30 +154,6 @@ fun isSnapshotTrainEnabled(project: Project): Boolean {
 }
 
 /**
- * The list of projects snapshot versions of which we may want to use with `kotlinx.coroutines`.
- *
- * In `gradle.properties`, these properties are defined as `<name>_version`, e.g. `kotlin_version`.
- */
-val firstPartyDependencies = listOf(
-    "kotlin",
-    "atomicfu",
-)
-
-fun shouldUseLocalMaven(project: Project): Boolean {
-    val hasSnapshotDependency = firstPartyDependencies.any { dependencyName ->
-        val key = "${dependencyName}_version"
-        val value = project.providers.gradleProperty(key).orNull
-        if (value != null && value.endsWith("-SNAPSHOT")) {
-            LOGGER.info("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            true
-        } else {
-            false
-        }
-    }
-    return hasSnapshotDependency || isSnapshotTrainEnabled(project)
-}
-
-/**
  * Returns a non-null value if the CI needs to override the default behavior of treating warnings as errors.
  * Then, `true` means that warnings should be treated as errors, `false` means that they should not.
  */

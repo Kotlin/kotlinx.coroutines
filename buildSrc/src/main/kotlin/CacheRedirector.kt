@@ -100,32 +100,6 @@ private fun Project.checkRedirect(repositories: RepositoryHandler, containerName
     }
 }
 
-private fun Project.configureYarnRedirects() {
-    if (CacheRedirector.isEnabled) {
-        plugins.withType(YarnPlugin::class) {
-            extensions.configure(YarnRootEnvSpec::class.java) {
-                // no API to modify the value in-place keeping it lazy: https://github.com/gradle/gradle/issues/27227
-                downloadBaseUrl.orNull?.let {
-                    downloadBaseUrl = CacheRedirector.maybeRedirect(it)
-                }
-            }
-        }
-    }
-}
-
-private fun Project.configureNodeJsRedirects() {
-    if (CacheRedirector.isEnabled) {
-        plugins.withType(NodeJsPlugin::class) {
-            extensions.configure(NodeJsEnvSpec::class.java) {
-                // no API to modify the value in-place keeping it lazy: https://github.com/gradle/gradle/issues/27227
-                downloadBaseUrl.orNull?.let {
-                    downloadBaseUrl = CacheRedirector.maybeRedirect(it)
-                }
-            }
-        }
-    }
-}
-
 // Used from Groovy scripts
 // TODO get rid of Groovy, come up with a proper convention for rootProject vs arbitrary project argument
 object CacheRedirector {
@@ -140,16 +114,6 @@ object CacheRedirector {
     @JvmStatic
     fun configure(project: Project) {
         project.checkRedirect(project.repositories, project.displayName)
-        project.configureNodeJsRedirects()
-    }
-
-    /**
-     * Configures JS-specific extensions defined on the root project to use cache redirector
-     * For example, KGP provides Yarn configuration only globally for the entire build via the root project.
-     */
-    @JvmStatic
-    fun configureRootJsPackageManagers(rootProject: Project) {
-        rootProject.configureYarnRedirects()
     }
 
     @JvmStatic

@@ -3,25 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.gradle.kotlin.dsl.*
 
 buildscript {
-    repositories {
-        mavenCentral()
-        maven(url = "https://plugins.gradle.org/m2/")
-        addDevRepositoryIfEnabled(this, project)
-        mavenLocal()
-    }
-
-    dependencies {
-        // Please ensure that atomicfu-gradle-plugin is added to the classpath first, do not change the order, for details see #3984.
-        // The corresponding issue in kotlinx-atomicfu: https://github.com/Kotlin/kotlinx-atomicfu/issues/384
-        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${version("atomicfu")}")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${version("kotlin")}")
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
-        classpath("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
-        classpath("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
-        classpath("org.jetbrains.kotlin:atomicfu:${version("kotlin")}")
-        classpath("org.jetbrains.kotlinx:kover-gradle-plugin:${version("kover")}")
-    }
-
     with(CacheRedirector) { buildscript.configureBuildScript(rootProject) }
 }
 
@@ -39,12 +20,6 @@ allprojects {
         }
     }
 
-    if (shouldUseLocalMaven(rootProject)) {
-        repositories {
-            mavenLocal()
-        }
-    }
-
     // This project property is set during nightly stress test
     val stressTest = project.properties["stressTest"]
     // Copy it to all test tasks
@@ -57,24 +32,6 @@ allprojects {
 
 apply(plugin = "base")
 apply(plugin = "kover-conventions")
-
-val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-// Configure repositories
-allprojects {
-    repositories {
-        /*
-         * google should be first in the repository list because some of the play services
-         * transitive dependencies was removed from jcenter, thus breaking gradle dependency resolution
-         */
-        google()
-        if (cacheRedirectorEnabled) {
-            maven("https://cache-redirector.jetbrains.com/maven-central")
-        } else {
-            mavenCentral()
-        }
-        addDevRepositoryIfEnabled(this, project)
-    }
-}
 
 configure(subprojects.filter { !sourceless.contains(it.name) }) {
     if (isMultiplatform) {
