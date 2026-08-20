@@ -1,5 +1,5 @@
 dependencyResolutionManagement {
-    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+    repositoriesMode = RepositoriesMode.PREFER_SETTINGS
 
     fun RepositoryHandler.mavenCentralWithCacheRedirect() {
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
@@ -26,6 +26,24 @@ dependencyResolutionManagement {
                 content {
                     includeVersionByRegex(".*", "(kotlin|atomicfu)", ".*-SNAPSHOT")
                 }
+            }
+        }
+    }
+
+    fun RepositoryHandler.configureJsRepositories() {
+        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
+        if (cacheRedirectorEnabled) {
+            ivy("https://cache-redirector.jetbrains.com/nodejs.org/dist/") {
+                name = "Node Distributions at $url"
+                patternLayout { artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]") }
+                metadataSources { artifact() }
+                content { includeModule("org.nodejs", "node") }
+            }
+            ivy("https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download") {
+                name = "Yarn Distributions at $url"
+                patternLayout { artifact("v[revision]/[artifact](-v[revision]).[ext]") }
+                metadataSources { artifact() }
+                content { includeModule("com.yarnpkg", "yarn") }
             }
         }
     }
@@ -57,6 +75,8 @@ dependencyResolutionManagement {
 
         mavenLocal(build_snapshot_train?.toBoolean() == true)
         mavenCentralWithCacheRedirect()
+
+        configureJsRepositories()
     }
 
     pluginManagement {
