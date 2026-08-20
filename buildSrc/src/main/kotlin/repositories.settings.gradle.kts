@@ -32,19 +32,18 @@ dependencyResolutionManagement {
 
     fun RepositoryHandler.configureJsRepositories() {
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-        if (cacheRedirectorEnabled) {
-            ivy("https://cache-redirector.jetbrains.com/nodejs.org/dist/") {
-                name = "Node Distributions at $url"
-                patternLayout { artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]") }
-                metadataSources { artifact() }
-                content { includeModule("org.nodejs", "node") }
-            }
-            ivy("https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download") {
-                name = "Yarn Distributions at $url"
-                patternLayout { artifact("v[revision]/[artifact](-v[revision]).[ext]") }
-                metadataSources { artifact() }
-                content { includeModule("com.yarnpkg", "yarn") }
-            }
+        val cacheRedirectorSuffix = if (cacheRedirectorEnabled) "cache-redirector.jetbrains.com/" else ""
+        ivy("https://${cacheRedirectorSuffix}nodejs.org/dist/") {
+            name = "Node Distributions at $url"
+            patternLayout { artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]") }
+            metadataSources { artifact() }
+            content { includeModule("org.nodejs", "node") }
+        }
+        ivy("https://${cacheRedirectorSuffix}github.com/yarnpkg/yarn/releases/download") {
+            name = "Yarn Distributions at $url"
+            patternLayout { artifact("v[revision]/[artifact](-v[revision]).[ext]") }
+            metadataSources { artifact() }
+            content { includeModule("com.yarnpkg", "yarn") }
         }
     }
 
