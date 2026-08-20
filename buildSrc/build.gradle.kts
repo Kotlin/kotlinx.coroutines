@@ -68,7 +68,12 @@ dependencies {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk7")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-plugin:${version("benchmarks")}")
+    // kotlinx-benchmark-plugin may depend on a newer version of kotlin-stlib than the one bundled by Gradle,
+    // leading to Gradle complaining about an incompatible version of Kotlin. Exclude the kotlin-stdlib
+    // dependency to default to the one bundled by Gradle.
+    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-plugin:${version("benchmarks")}") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
     implementation("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
     implementation("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${version("atomicfu")}")
 }
