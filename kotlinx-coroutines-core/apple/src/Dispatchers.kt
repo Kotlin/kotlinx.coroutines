@@ -18,7 +18,7 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGloba
 private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         autoreleasepool {
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0u.convert())) {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.convert(), 0u)) {
                 block.run()
             }
         }
@@ -76,7 +76,7 @@ private class Timer : DisposableHandle {
 
     fun start(timeMillis: Long, timerBlock: TimerBlock) {
         val fireDate = CFAbsoluteTimeGetCurrent() + timeMillis / 1000.0
-        val timer = CFRunLoopTimerCreateWithHandler(null, fireDate, 0.0, 0u.convert(), 0.convert(), timerBlock)
+        val timer = CFRunLoopTimerCreateWithHandler(null, fireDate, 0.0, 0u, 0, timerBlock)
         CFRunLoopAddTimer(CFRunLoopGetMain(), timer, kCFRunLoopCommonModes)
         if (!ref.compareAndSet(TIMER_NEW, timer.rawValue)) {
             // dispose was already called concurrently
