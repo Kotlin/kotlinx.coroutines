@@ -23,15 +23,12 @@ The debug agent is available in the [`kotlinx-coroutines-debug`](https://kotlinl
 
 Debug mode assigns a unique name to every launched coroutine.
 You can see the coroutine names in a Java debugger, in the coroutine's string representation, and in a thread's name while it runs the coroutine.
-
-> Debug mode has negligible runtime overhead, so you can keep it enabled to simplify logging and diagnostics.
->
-{style="tip"}
+Debug mode has negligible runtime overhead, so you can keep it enabled to simplify logging and diagnostics.
 
 When you run your code with Java assertions enabled, the `kotlinx.coroutines` library automatically enables debug mode.
 Unit tests run with assertions enabled by default, so you don't need to enable debug mode explicitly for them.
 
-To enable debug mode explicitly, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
+To enable debug mode explicitly, configure your build tool or IDE run configuration to pass the `-Dkotlinx.coroutines.debug` argument to the JVM that runs your application.
 
 In IntelliJ IDEA, follow these steps to enable debug mode:
 
@@ -40,31 +37,32 @@ In IntelliJ IDEA, follow these steps to enable debug mode:
    ![Selecting Edit from the More Actions menu for a run configuration in IntelliJ IDEA](coroutines-debug-mode-more-options.png){width="600"}
 
    > If you don't have a run/debug configuration, select **Current File** in the **Run widget**, then select **More Actions** | **Run with Parameters** to open the run configuration settings.
+   > 
+   > ![Selecting Run with Parameters from the More Actions menu for a run configuration in IntelliJ IDEA](coroutines-debug-mode-run-with-parms.png){width="600"}
    >
    {style="note"}
 
-2. In the **Run/Debug Configurations** dialog, enter `-Dkotlinx.coroutines.debug` in the **VM options** field:
+2. In the **Run/Debug Configurations** dialog, enter `-Dkotlinx.coroutines.debug` in the **VM options** field, and click **OK**:
 
    ![Adding the -Dkotlinx.coroutines.debug option to a run/debug configuration in IntelliJ IDEA](run-debug-configuration.png){width="600"}
-
-3. Click **OK**.
 
 ## Stack trace recovery
 
 When a coroutine receives an exception from another coroutine through a suspending function such as `Deferred.await()`,
 the exception's stack trace doesn't contain the stack frames from the receiving coroutine.
-Without these stack frames, the stack trace doesn't show where `await()` is called or which functions lead to that call.
+Without these stack frames, the stack trace doesn't show where `Deferred.await()` is called or which functions lead to that call, which can make debugging difficult.
 
 The `kotlinx.coroutines` library adds this information using _stack trace recovery_, which creates a copy of the exception with additional stack frames.
 
-When the receiving coroutine resumes, it throws the copy instead of the original exception, which becomes the cause of the copy.
+When the receiving coroutine resumes, it throws the copy instead of the original exception.
+The original exception becomes the cause of the copy.
 If the original exception has suppressed exceptions, they remain attached to it instead of being copied.
-This can prevent cycles in the exception chain and crashes in some frameworks.
+Keeping them attached to the original exception can prevent cycles in the exception chain and crashes in some frameworks.
 
 Debug mode enables stack trace recovery by default.
 To disable stack trace recovery in debug mode, pass the `-Dkotlinx.coroutines.stacktrace.recovery=false` VM option.
 
-Here's an example that demonstrates the difference between stack traces with and without stack trace recovery:
+Here's an example to demonstrate the difference between stack traces with and without stack trace recovery:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -100,7 +98,7 @@ suspend fun main() {
 ```
 
 In this example, the `parseUserProfile()` function throws the exception in the coroutine started by the `.async()` builder function.
-The coroutine that calls `awaitUserProfile()` receives the exception through `Deferred.await()`.
+The coroutine that calls `awaitUserProfile()` receives the exception through the `Deferred.await()` function.
 
 With stack trace recovery disabled, the stack trace shows where `parseUserProfile()` throws the exception in the coroutine created by the `.async()` function,
 but it doesn't include the `Deferred.await()` call in the `awaitUserProfile()` function:
@@ -114,7 +112,7 @@ With stack trace recovery enabled, the stack trace also includes the `Deferred.a
 ### Stack trace recovery for custom exceptions
 <primary-label ref="experimental-opt-in"/>
 
-Stack trace recovery can copy an exception automatically when its class has a public constructor that accepts a message, a cause, both, or no arguments.
+Stack trace recovery can copy an exception automatically when its class has a public constructor that accepts a message, a cause, both, or no arguments at all.
 
 If you want the `kotlinx.coroutines` library to recover the stack trace of an exception that requires additional constructor arguments,
 such as a line number or an error code, implement the `StackTraceRecoverable` interface.
@@ -208,7 +206,6 @@ The agent tracks coroutines as they are created, suspended, and resumed.
 The [`DebugProbes`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/) API is the main entry point for the debug agent.
 You can use it to print active coroutines and their current state.
 The output includes stack traces that show where each coroutine was created and where it is suspended.
-
 You can also use it to print a coroutine dump for the hierarchy of a specific `Job` or `CoroutineScope`.
 
 If you enable `DebugProbes` in a production environment, it can significantly reduce your application's performance when it creates a stack trace for each new coroutine.
@@ -255,8 +252,8 @@ dependencies {
 
 To start tracking coroutines with the debug agent, you can either:
 
-* Call the [`DebugProbes.install()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/install.html) function before starting the coroutines you want to track.
 * Add `-javaagent:/path/to/kotlinx-coroutines-debug-%coroutinesVersion%.jar` to your VM options to load the debug agent when the application starts.
+* Call the [`DebugProbes.install()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-debug/kotlinx.coroutines.debug/-debug-probes/install.html) function before starting the coroutines you want to track.
 
 > Starting with JDK 21, dynamically loading the debug agent with the `DebugProbes.install()` function can produce a warning.
 > To avoid this warning, load the agent with the `-javaagent` VM option.
@@ -526,7 +523,7 @@ kotlinx.coroutines.debug.junit5.CoroutinesTimeoutException: test timed out after
 ```
 {collapsible="true" collapsed-title="CoroutinesTimeout JUnit5 example output"}
 
-### Limitations on Android
+### Resolve `kotlinx-coroutines-debug` resource conflicts on Android
 
 The debug agent isn't supported on Android.
 
@@ -559,3 +556,7 @@ android {
     }
 }
 ```
+
+## What's next
+
+* Learn how to debug coroutines in IntelliJ IDEA in [Debug coroutines using IntelliJ IDEA](debug-coroutines-with-idea.md) and [Debug Kotlin Flow using IntelliJ IDEA](debug-flow-with-idea.md).

@@ -2,7 +2,7 @@
 
 [//]: # (title: Coroutines and channels − tutorial)
 
-> We plan to revise this tutorial. For an up-to-date guide to getting started with coroutines, see [Coroutines basics](coroutines-basics.md).
+> An upcoming update will revise this tutorial. In the meantime, for an up-to-date guide to getting started with coroutines, see [Coroutines basics](coroutines-basics.md).
 > 
 {style="note"}
 
