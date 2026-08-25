@@ -4,7 +4,7 @@ import kotlinx.coroutines.internal.*
 import kotlin.jvm.*
 
 /**
- * This value is used a a surrogate `null` value when needed.
+ * This value is used as a surrogate `null` value when needed.
  * It should never leak to the outside world.
  * Its usage typically are paired with [Symbol.unbox] usages.
  */
