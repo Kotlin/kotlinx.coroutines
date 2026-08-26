@@ -8,15 +8,13 @@ class WithContextTest : TestBase() {
     @Test
     fun testThrowException() = runTest {
         expect(1)
-        try {
+        assertFailsWith<AssertionError> {
             withContext<Unit>(coroutineContext) {
                 expect(2)
                 throw AssertionError()
             }
-        } catch (_: AssertionError) {
-            expect(3)
         }
-
+        expect(3)
         yield()
         finish(4)
     }
@@ -24,15 +22,13 @@ class WithContextTest : TestBase() {
     @Test
     fun testThrowExceptionFromWrappedContext() = runTest {
         expect(1)
-        try {
+        assertFailsWith<AssertionError> {
             withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                 expect(2)
                 throw AssertionError()
             }
-        } catch (_: AssertionError) {
-            expect(3)
         }
-
+        expect(3)
         yield()
         finish(4)
     }
@@ -78,62 +74,55 @@ class WithContextTest : TestBase() {
         }
         expect(2)
         val job = Job()
-        try {
+        assertFailsWith<CancellationException> {
             withContext(coroutineContext + job) {
                 // same context + new job
                 expect(3) // still here
                 job.cancel() // cancel out job!
-                try {
+                assertFailsWith<CancellationException> {
                     yield() // shall throw CancellationException
                     expectUnreached()
-                } catch (_: CancellationException) {
-                    expect(4)
                 }
+                expect(4)
                 "OK".wrap()
             }
-
-            expectUnreached()
-        } catch (_: CancellationException) {
-            expect(5)
-            // will wait for the first coroutine
         }
+        expect(5)
+        // will wait for the first coroutine
     }
 
     @Test
-    fun testCancelWithJobWithSuspend() = runTest(
-        expected = { it is CancellationException }
-    ) {
+    fun testCancelWithJobWithSuspend() = runTest {
         expect(1)
         launch(coroutineContext) { // make sure there is not early dispatch to here
             expect(4)
         }
         expect(2)
-        val job = Job()
-        withContext(coroutineContext + job) { // same context + new job
-            expect(3) // still here
-            yield() // now yields to launch!
-            expect(5)
-            job.cancel() // cancel out job!
-            try {
-                yield() // shall throw CancellationException
-                expectUnreached()
-            } catch (_: CancellationException) {
+        assertFailsWith<CancellationException> {
+            val job = Job()
+            withContext(coroutineContext + job) { // same context + new job
+                expect(3) // still here
+                yield() // now yields to launch!
+                expect(5)
+                job.cancel() // cancel out job!
+                assertFailsWith<CancellationException> {
+                    yield() // shall throw CancellationException
+                }
                 finish(6)
+                "OK".wrap()
             }
-            "OK".wrap()
+            // still fails, because parent job was cancelled
         }
-        // still fails, because parent job was cancelled
-        expectUnreached()
     }
 
     @Test
-    fun testRunCancellableDefault() = runTest(
-        expected = { it is CancellationException }
-    ) {
-        val job = Job()
-        job.cancel() // cancel before it has a chance to run
-        withContext(job + wrapperDispatcher(coroutineContext)) {
-            expectUnreached() // will get cancelled
+    fun testRunCancellableDefault() = runTest {
+        assertFailsWith<CancellationException> {
+            val job = Job()
+            job.cancel() // cancel before it has a chance to run
+            withContext(job + wrapperDispatcher(coroutineContext)) {
+                expectUnreached() // will get cancelled
+            }
         }
     }
 
@@ -143,7 +132,7 @@ class WithContextTest : TestBase() {
         var job: Job? = null
         job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<TestException> {
                 // Same dispatcher, different context
                 withContext<Unit>(CoroutineName("testRunCancellationUndispatchedVsException")) {
                     expect(3)
@@ -152,10 +141,9 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel this job _before_ it throws
                     throw TestException()
                 }
-            } catch (_: TestException) {
-                // must have caught TextException
-                expect(6)
             }
+            // must have caught TextException
+            expect(6)
         }
         expect(4)
         yield() // to coroutineScope
@@ -168,7 +156,7 @@ class WithContextTest : TestBase() {
         var job: Job? = null
         job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<TestException> {
                 // "Different" dispatcher (schedules execution back and forth)
                 withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                     expect(4)
@@ -177,10 +165,9 @@ class WithContextTest : TestBase() {
                     job!!.cancel() // cancel this job _before_ it throws
                     throw TestException()
                 }
-            } catch (_: TestException) {
-                // must have caught TextException
-                expect(8)
             }
+            // must have caught TextException
+            expect(8)
         }
         expect(3)
         yield() // withContext is next
@@ -195,7 +182,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellationWithException() = runTest {
         expect(1)
         launch {
-            try {
+            assertFailsWith<TestException> {
                 expect(3)
                 withContext<Unit>(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
@@ -204,11 +191,8 @@ class WithContextTest : TestBase() {
                     require(!isActive)
                     throw TestException() // but throw an exception
                 }
-            } catch (e: Throwable) {
-                expect(7)
-                // make sure TestException, not CancellationException is thrown
-                assertIs<TestException>(e, "Caught $e")
             }
+            expect(7)
         }
         expect(2)
         yield() // to the launched job
@@ -223,7 +207,7 @@ class WithContextTest : TestBase() {
     fun testRunSelfCancellation() = runTest {
         expect(1)
         launch {
-            try {
+            assertFailsWith<CancellationException> {
                 expect(3)
                 withContext(wrapperDispatcher(coroutineContext)) {
                     require(isActive)
@@ -232,12 +216,8 @@ class WithContextTest : TestBase() {
                     require(!isActive)
                     "OK".wrap()
                 }
-                expectUnreached()
-            } catch (e: Throwable) {
-                expect(7)
-                // make sure CancellationException is thrown
-                assertIs<CancellationException>(e, "Caught $e")
             }
+            expect(7)
         }
 
         expect(2)
@@ -252,7 +232,7 @@ class WithContextTest : TestBase() {
     @Test
     fun testWithContextScopeFailure() = runTest {
         expect(1)
-        try {
+        assertFailsWith<TestException> {
             withContext(wrapperDispatcher(coroutineContext)) {
                 expect(2)
                 // launch a child that fails
@@ -263,12 +243,9 @@ class WithContextTest : TestBase() {
                 expect(3)
                 "OK".wrap()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            // ensure that we can catch exception outside of the scope
-            expect(5)
         }
-        finish(6)
+        // ensure that we can catch exception outside of the scope
+        finish(5)
     }
 
     @Test
@@ -320,13 +297,12 @@ class WithContextTest : TestBase() {
         expect(1)
         val job = Job()
         job.cancel()
-        try {
+        assertFailsWith<CancellationException> {
             withContext(job) {
                 expectUnreached()
             }
-        } catch (_: CancellationException) {
-            expect(2)
         }
+        expect(2)
         finish(3)
     }
 

@@ -84,9 +84,11 @@ open class ConflatedChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
+    fun testCancelWithCause() = runTest {
         val channel = createConflatedChannel<Int>()
         channel.cancel(TestCancellationException())
-        channel.receive()
+        assertFailsWith<TestCancellationException> {
+            channel.receive()
+        }
     }
 }

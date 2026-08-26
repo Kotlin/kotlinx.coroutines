@@ -165,7 +165,7 @@ class ChannelUndeliveredElementTest : TestBase() {
             expectUnreached()
         })
         conflated.close(IndexOutOfBoundsException())
-        conflated.trySend(3)
+        val _ = conflated.trySend(3)
     }
 
     @Test
@@ -175,7 +175,7 @@ class ChannelUndeliveredElementTest : TestBase() {
         })
         conflated.close(IndexOutOfBoundsException())
         repeat(10) {
-            conflated.trySend(3)
+            val _ = conflated.trySend(3)
         }
     }
 
@@ -191,7 +191,7 @@ class ChannelUndeliveredElementTest : TestBase() {
             expectUnreached()
         })
         repeat(10) {
-            channel.trySend(3)
+            val _ = channel.trySend(3)
         }
     }
 }

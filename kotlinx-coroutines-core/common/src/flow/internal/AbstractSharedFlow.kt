@@ -123,7 +123,7 @@ private class SubscriptionCountStateFlow(initialValue: Int) : StateFlow<Int>,
     override val value: Int
         get() = synchronized(this) { lastReplayedLocked }
 
-    fun increment(delta: Int) = synchronized(this) {
+    fun increment(delta: Int): Unit = synchronized(this) {
         tryEmit(lastReplayedLocked + delta)
     }
 }

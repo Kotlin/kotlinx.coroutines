@@ -35,9 +35,9 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(true, c.isActive)
         assertEquals(false, c.isCancelled)
         assertEquals(false, c.isCompleted)
-        assertThrows<IllegalStateException> { c.getCancellationException() }
-        assertThrows<IllegalStateException> { c.getCompleted() }
-        assertThrows<IllegalStateException> { c.getCompletionExceptionOrNull() }
+        assertFailsWith<IllegalStateException> { c.getCancellationException() }
+        assertFailsWith<IllegalStateException> { c.getCompleted() }
+        assertFailsWith<IllegalStateException> { c.getCompletionExceptionOrNull() }
     }
 
     private fun checkCompleteOk(c: CompletableDeferred<*>) {
@@ -52,7 +52,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(false, c.isActive)
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
-        assertThrows<CancellationException> { c.getCompleted() }
+        assertFailsWith<CancellationException> { c.getCompleted() }
         assertIs<CancellationException>(c.getCompletionExceptionOrNull())
     }
 
@@ -70,7 +70,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
         assertIs<JobCancellationException>(c.getCancellationException())
-        assertThrows<TestException> { c.getCompleted() }
+        assertFailsWith<TestException> { c.getCompleted() }
         assertIs<TestException>(c.getCompletionExceptionOrNull())
     }
 
@@ -105,7 +105,7 @@ class CompletableDeferredTest : TestBase() {
         assertEquals(false, c.isActive)
         assertEquals(true, c.isCancelled)
         assertEquals(true, c.isCompleted)
-        assertThrows<CancellationException> { c.getCompleted() }
+        assertFailsWith<CancellationException> { c.getCompleted() }
         assertIs<CancellationException>(c.getCompletionExceptionOrNull())
     }
 
@@ -202,14 +202,5 @@ class CompletableDeferredTest : TestBase() {
         expect(4)
         assertEquals("OK", parent.await())
         finish(6)
-    }
-
-    private inline fun <reified T: Throwable> assertThrows(block: () -> Unit) {
-        try {
-            block()
-            fail("Should not complete normally")
-        } catch (e: Throwable) {
-            assertIs<T>(e)
-        }
     }
 }

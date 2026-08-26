@@ -42,6 +42,7 @@ public suspend fun Flow<*>.collect(): Unit = collect(NopCollector)
  *
  * In this example, note that the `job` returned by [launchIn] is not used, and the provided scope takes care of cancellation.
  */
+@IgnorableReturnValue
 public fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = scope.launch {
     collect() // tail-call
 }

@@ -249,10 +249,11 @@ class StateFlowTest : TestBase() {
     fun testGetAndUpdateContract() = runTest {
         val state = MutableStateFlow(12)
         var value: Int
-        state.getAndUpdate {
+        val old = state.getAndUpdate {
             value = it
             it + 1
         }
+        assertEquals(12, old)
         assertEquals(12, value)
     }
 
@@ -260,10 +261,11 @@ class StateFlowTest : TestBase() {
     fun testUpdateAndGetContract() = runTest {
         val state = MutableStateFlow(12)
         var value: Int
-        state.updateAndGet {
+        val new = state.updateAndGet {
             value = it
             it + 1
         }
+        assertEquals(13, new)
         assertEquals(12, value)
     }
 

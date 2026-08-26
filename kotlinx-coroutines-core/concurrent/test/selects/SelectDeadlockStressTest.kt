@@ -40,6 +40,7 @@ class SelectDeadlockStressTest : TestBase() {
         override fun toString(): String = "send=$sendIndex, received=$receiveIndex"
     }
 
+    @IgnorableReturnValue
     private fun CoroutineScope.launchSendReceive(c1: Channel<Long>, c2: Channel<Long>, s: Stats) = launch(pool) {
         while (true) {
             if (s.sendIndex % 1000 == 0L) yield()

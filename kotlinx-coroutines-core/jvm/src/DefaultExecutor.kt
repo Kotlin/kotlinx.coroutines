@@ -123,10 +123,13 @@ internal actual object DefaultExecutor : EventLoopImplBase(), Runnable {
             acknowledgeShutdownIfNeeded()
             unregisterTimeLoopThread()
             // recheck if queues are empty after _thread reference was set to null (!!!)
-            if (!isEmpty) thread // recreate thread if it is needed
+            if (!isEmpty) {
+                val _ = thread // recreate thread if it is needed
+            }
         }
     }
 
+    @IgnorableReturnValue
     @Synchronized
     private fun createThreadSync(): Thread {
         return _thread ?: Thread(this, THREAD_NAME).apply {

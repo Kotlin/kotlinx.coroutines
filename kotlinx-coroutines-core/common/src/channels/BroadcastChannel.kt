@@ -61,7 +61,7 @@ public class ConflatedBroadcastChannel<E> private constructor(
      * @suppress
      */
     public constructor(value: E) : this() {
-        trySend(value)
+        val _ = trySend(value)
     }
 
     /**
@@ -127,7 +127,8 @@ internal class BroadcastChannelImpl<E>(
         // Is this broadcast conflated? If so, send
         // the last sent element to the subscriber.
         if (lastConflatedElement !== NO_ELEMENT) {
-            s.trySend(value)
+            val result = s.trySend(value)
+            assert { result.isSuccess }
         }
         // Add the subscriber to the list and return it.
         subscribers += s
@@ -197,7 +198,10 @@ internal class BroadcastChannelImpl<E>(
         // as both the broadcast closing and subscription
         // cancellation are guarded by lock, which is held
         // by the current operation.
-        subscribers.forEach { it.trySend(element) }
+        subscribers.forEach {
+            val result = it.trySend(element)
+            assert { result.isSuccess }
+        }
         // Finish with success.
         return ChannelResult.success(Unit)
     }
@@ -292,7 +296,7 @@ internal class BroadcastChannelImpl<E>(
     override fun cancelImpl(cause: Throwable?): Boolean = lock.withLock { // protected by lock
         // Cancel all subscriptions. As part of cancellation procedure,
         // subscriptions automatically remove themselves from this broadcast.
-        subscribers.forEach { it.cancelImpl(cause) }
+        subscribers.forEach { val _ = it.cancelImpl(cause) }
         // For the conflated implementation, clear the last sent element.
         lastConflatedElement = NO_ELEMENT
         // Finally, delegate to the parent implementation.

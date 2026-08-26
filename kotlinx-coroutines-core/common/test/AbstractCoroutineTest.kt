@@ -30,12 +30,12 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onCancelling = true) {
+        val _ = coroutine.invokeOnCompletion(onCancelling = true) {
             assertNull(it)
             expect(7)
         }
 
-        coroutine.invokeOnCompletion {
+        val _ = coroutine.invokeOnCompletion {
             assertNull(it)
             expect(8)
         }
@@ -70,12 +70,12 @@ class AbstractCoroutineTest : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onCancelling = true) {
+        val _ = coroutine.invokeOnCompletion(onCancelling = true) {
             assertIs<TestException1>(it)
             expect(6)
         }
 
-        coroutine.invokeOnCompletion {
+        val _ = coroutine.invokeOnCompletion {
             assertIs<TestException1>(it)
             expect(9)
         }

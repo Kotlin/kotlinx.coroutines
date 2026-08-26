@@ -65,7 +65,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun independentStateAsync() = runBlocking {
         val broadcastChannel = BroadcastChannel<Int>(1)
-        val subscriptionChannel = Channel<Int>(jobsCount)
+        val subscriptionChannel = Channel<Unit>(jobsCount)
         val jobs= (0 until jobsCount).map { launchJob(it, broadcastChannel, subscriptionChannel) }.toList()
 
         repeat(jobsCount) {
@@ -80,7 +80,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     @Benchmark
     fun dependentStateAsync() = runBlocking {
         val broadcastChannel = BroadcastChannel<Int>(1)
-        val subscriptionChannel = Channel<Int>(jobsCount)
+        val subscriptionChannel = Channel<Unit>(jobsCount)
         val jobs= (0 until jobsCount).map { launchJob(0, broadcastChannel, subscriptionChannel) }.toList()
 
         repeat(jobsCount) {
@@ -95,11 +95,11 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
     private fun launchJob(
         stateNum: Int,
         channel: BroadcastChannel<Int>,
-        subscriptionChannel: Channel<Int>
+        subscriptionChannel: Channel<Unit>
     ): Deferred<Long> =
         async {
             val subscription = channel.openSubscription()
-            subscriptionChannel.send(1)
+            subscriptionChannel.send(Unit)
             subscription.receive()
 
             var sum = 0L

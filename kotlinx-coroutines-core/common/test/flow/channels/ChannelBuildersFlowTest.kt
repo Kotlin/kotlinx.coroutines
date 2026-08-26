@@ -128,7 +128,7 @@ class ChannelBuildersFlowTest : TestBase() {
     fun testProduceInAtomicity() = runTest {
         val flow = flowOf(1).onCompletion { expect(2) }
         val scope = CoroutineScope(wrapperDispatcher())
-        flow.produceIn(scope)
+        val _ = flow.produceIn(scope)
         expect(1)
         scope.cancel()
         scope.coroutineContext[Job]?.join()

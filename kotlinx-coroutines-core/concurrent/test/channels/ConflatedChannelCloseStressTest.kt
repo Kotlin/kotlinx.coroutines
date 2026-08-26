@@ -35,7 +35,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
                     while (isActive) {
                         curChannel.load().trySend(x).onSuccess {
                             x += nSenders
-                            sent.incrementAndFetch()
+                            sent.increment()
                         }
                     }
                 } finally {
@@ -48,7 +48,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
             try {
                 while (isActive) {
                     flipChannel()
-                    closed.incrementAndFetch()
+                    closed.increment()
                     yield()
                 }
             } finally {
@@ -60,7 +60,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 curChannel.load().receiveCatching().getOrElse {
                     it?.let { throw it }
                 }
-                received.incrementAndFetch()
+                received.increment()
             }
         }
         // print stats while running

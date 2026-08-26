@@ -108,13 +108,11 @@ class SingleTest : TestBase() {
             })
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
+            assertFailsWith<CancellationException> {
                 expect(2)
                 single.await()
-            } catch (e: CancellationException) {
-                expect(5)
-                throw e
             }
+            expect(5)
         }
         expect(3)
         job.cancelAndJoin()

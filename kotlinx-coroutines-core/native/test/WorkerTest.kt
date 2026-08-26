@@ -17,7 +17,7 @@ class WorkerTest : TestBase() {
                 delay(1)
             }
         }.result
-        worker.requestTermination()
+        worker.requestTermination().result
     }
 
     @Test
@@ -30,7 +30,7 @@ class WorkerTest : TestBase() {
                 }.join()
             }
         }.result
-        worker.requestTermination()
+        worker.requestTermination().result
     }
 
     /**
@@ -53,10 +53,11 @@ class WorkerTest : TestBase() {
         }
         runBlocking {
             workerInRunBlocking.receive()
-            worker.requestTermination()
+            val terminationRequest = worker.requestTermination()
             workerTerminated.send(Unit)
             checkResumption.send(Unit)
             finished.receive()
+            terminationRequest.result
         }
     }
 }

@@ -27,17 +27,18 @@ class MutexCancellationStressTest : TestBase() {
                     mutex.holdsLock(mutexOwners[(jobId + 1) % mutexJobNumber])
                     // Stress out lock-like primitives
                     if (mutex.tryLock(mutexOwners[jobId])) {
-                        counterLocal[jobId].incrementAndFetch()
+                        counterLocal[jobId].increment()
                         counter++
                         mutex.unlock(mutexOwners[jobId])
                     }
                     mutex.withLock(mutexOwners[jobId]) {
-                        counterLocal[jobId].incrementAndFetch()
+                        counterLocal[jobId].increment()
                         counter++
+                        Unit
                     }
                     @Suppress("DEPRECATION") select<Unit> {
                         mutex.onLock(mutexOwners[jobId]) {
-                            counterLocal[jobId].incrementAndFetch()
+                            counterLocal[jobId].increment()
                             counter++
                             mutex.unlock(mutexOwners[jobId])
                         }

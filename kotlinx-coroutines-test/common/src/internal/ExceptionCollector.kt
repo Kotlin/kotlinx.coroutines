@@ -31,7 +31,9 @@ internal object ExceptionCollector : AbstractCoroutineContextElement(CoroutineEx
         val previousValue = callbacks.put(owner, callback)
         check(previousValue === null)
         // try to process the exceptions using the newly-registered callback
-        unprocessedExceptions.forEach { reportException(it) }
+        unprocessedExceptions.forEach {
+            check(reportException(it))
+        }
         unprocessedExceptions.clear()
     }
 

@@ -34,7 +34,7 @@ class DelayTest : TestBase() {
         finish(4)
     }
 
-    private suspend fun runAndCancel(time: Long) = coroutineScope {
+    private suspend fun runAndCancel(time: Long): Nothing = coroutineScope {
         expect(1)
         val deferred = async {
             expect(2)

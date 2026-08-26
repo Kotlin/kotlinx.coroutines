@@ -302,7 +302,7 @@ internal open class CancellableContinuationImpl<in T>(
              * in 'detachChildIfNotReusable'.
              */
             if (parentHandle == null) {
-                installParentHandle()
+                val _ = installParentHandle()
             }
             /*
              * Release the continuation after installing the handle (if needed).

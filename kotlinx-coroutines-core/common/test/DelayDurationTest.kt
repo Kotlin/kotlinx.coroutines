@@ -48,7 +48,7 @@ class DelayDurationTest : TestBase() {
         finish(5)
     }
 
-    private suspend fun runAndCancel(time: Duration) = coroutineScope {
+    private suspend fun runAndCancel(time: Duration): Nothing = coroutineScope {
         expect(1)
         val deferred = async {
             expect(2)

@@ -29,6 +29,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * However, if this deferred has children, then it transitions into _completing_ state and becomes _complete_
      * once all its children are [complete][isCompleted]. See [Job] for details.
      */
+    @IgnorableReturnValue
     public fun complete(value: T): Boolean
 
     /**
@@ -41,6 +42,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
      * However, that if this deferred has children, then it transitions into _cancelling_ state and becomes _cancelled_
      * once all its children are [complete][isCompleted]. See [Job] for details.
      */
+    @IgnorableReturnValue
     public fun completeExceptionally(exception: Throwable): Boolean
 }
 
@@ -53,6 +55,7 @@ public interface CompletableDeferred<T> : Deferred<T> {
  * This function transitions this deferred in the same ways described by [CompletableDeferred.complete] and
  * [CompletableDeferred.completeExceptionally].
  */
+@IgnorableReturnValue
 public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
     result.fold({ complete(it) }, { completeExceptionally(it) })
 

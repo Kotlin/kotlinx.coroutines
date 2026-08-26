@@ -25,7 +25,7 @@ class JobActivationStressTest : TestBase() {
                 // we await on causeHolder below to work around the fact that completion listeners
                 // are invoked after the job is in the final state, so when "d.join()" completes there is
                 // no guarantee that this listener was already invoked
-                d.invokeOnCompletion {
+                val _ = d.invokeOnCompletion {
                     causeHolder.complete(it)
                 }
                 // concurrent cancel

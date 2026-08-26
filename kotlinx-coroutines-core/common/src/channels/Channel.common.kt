@@ -266,6 +266,7 @@ public interface SendChannel<in E> {
      * }
      * ```
      */
+    @IgnorableReturnValue
     public fun close(cause: Throwable? = null): Boolean
 
     /**
@@ -1004,6 +1005,7 @@ public inline fun <T> ChannelResult<T>.getOrElse(onFailure: (exception: Throwabl
  *
  * A shorthand for `this.also { if (isSuccess) action(getOrThrow()) }`.
  */
+@IgnorableReturnValue
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> ChannelResult<T>.onSuccess(action: (value: T) -> Unit): ChannelResult<T> {
     contract {
@@ -1022,6 +1024,7 @@ public inline fun <T> ChannelResult<T>.onSuccess(action: (value: T) -> Unit): Ch
  *
  * A shorthand for `this.also { if (isFailure) action(exceptionOrNull()) }`.
  */
+@IgnorableReturnValue
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?) -> Unit): ChannelResult<T> {
     contract {
@@ -1043,6 +1046,7 @@ public inline fun <T> ChannelResult<T>.onFailure(action: (exception: Throwable?)
  *
  * A shorthand for `this.also { if (isClosed) action(exceptionOrNull()) }`.
  */
+@IgnorableReturnValue
 @OptIn(ExperimentalContracts::class)
 public inline fun <T> ChannelResult<T>.onClosed(action: (exception: Throwable?) -> Unit): ChannelResult<T> {
     contract {

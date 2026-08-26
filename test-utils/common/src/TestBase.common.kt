@@ -76,7 +76,7 @@ interface OrderedExecution {
             }
         }
 
-        override fun expectUnreached() {
+        override fun expectUnreached(): Nothing {
             error("Should not be reached, ${
                 actionIndex.value.let {
                     when {
@@ -125,7 +125,7 @@ interface ErrorCatching {
                 if (closed) {
                     lastResortReportException(error)
                 } else {
-                    errors.add(error)
+                    val _ = errors.add(error)
                 }
             }
         }
@@ -194,7 +194,7 @@ open class OrderedExecutionTestBase : OrderedExecution
 
     override fun finish(index: Int) = orderedExecutionDelegate.finish(index)
 
-    override fun expectUnreached() = orderedExecutionDelegate.expectUnreached()
+    override fun expectUnreached(): Nothing = orderedExecutionDelegate.expectUnreached()
 
     override fun checkFinishCall(allowNotUsingExpect: Boolean) =
         orderedExecutionDelegate.checkFinishCall(allowNotUsingExpect)
@@ -246,6 +246,7 @@ public suspend inline fun hang(onCancellation: () -> Unit): Nothing {
     }
 }
 
+@IgnorableReturnValue
 suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) = assertFailsWith<T> { flow.collect() }
 
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }

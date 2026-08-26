@@ -61,8 +61,8 @@ abstract class FlatMapBaseTest : TestBase() {
                 }
             }
 
-        flow.flowOn(NamedDispatchers("1")).sum()
-        flow.flowOn(NamedDispatchers("2")).sum()
+        flow.flowOn(NamedDispatchers("1")).collect()
+        flow.flowOn(NamedDispatchers("2")).collect()
         assertEquals(listOf("1", "1", "2", "2"), captured)
     }
 

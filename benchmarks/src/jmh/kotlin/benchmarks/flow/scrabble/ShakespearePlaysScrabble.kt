@@ -21,6 +21,10 @@ abstract class ShakespearePlaysScrabble {
             return this
         }
 
+        fun inc() {
+            value++
+        }
+
         fun add(other: MutableLong): MutableLong {
             value += other.value
             return this

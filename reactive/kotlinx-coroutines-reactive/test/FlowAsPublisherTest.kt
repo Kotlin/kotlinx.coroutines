@@ -154,12 +154,10 @@ class FlowAsPublisherTest : TestBase() {
             expect(2)
             withTimeout(1) { delay(Long.MAX_VALUE) }
         }.asPublisher()
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(3)
         }
-        finish(4)
+        finish(3)
     }
 }

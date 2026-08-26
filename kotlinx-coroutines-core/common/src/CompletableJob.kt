@@ -23,6 +23,7 @@ public interface CompletableJob : Job {
      * However, that if this job has children, then it transitions into _completing_ state and becomes _complete_
      * once all its children are [complete][isCompleted]. See [Job] for details.
      */
+    @IgnorableReturnValue
     public fun complete(): Boolean
 
     /**
@@ -40,5 +41,6 @@ public interface CompletableJob : Job {
      * All the job’s children will receive a [CancellationException] with
      * the [exception] as a cause for the sake of diagnosis.
      */
+    @IgnorableReturnValue
     public fun completeExceptionally(exception: Throwable): Boolean
 }

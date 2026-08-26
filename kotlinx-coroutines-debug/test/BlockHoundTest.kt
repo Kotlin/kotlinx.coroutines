@@ -102,15 +102,15 @@ class BlockHoundTest : TestBase() {
     fun testReusingThreadsFailure() = runTest {
         val n = 100
         repeat(n) {
-            async(Dispatchers.IO) {
+            launch(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }
-        async(Dispatchers.Default) {
+        launch(Dispatchers.Default) {
             Thread.sleep(1)
         }
         repeat(n) {
-            async(Dispatchers.IO) {
+            launch(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }

@@ -76,7 +76,7 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
             sendDispatchEvent(context)
             DisposableHandle {
                 synchronized(lock) {
-                    events.remove(event)
+                    val _ = events.remove(event)
                 }
             }
         }
@@ -183,9 +183,10 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
      * [context] is the context in which the task will be dispatched.
      */
     internal fun sendDispatchEvent(context: CoroutineContext) {
-        dispatchEvents.trySend(Unit)
-        if (context[BackgroundWork] !== BackgroundWork)
-            dispatchEventsForeground.trySend(Unit)
+        val _ = dispatchEvents.trySend(Unit)
+        if (context[BackgroundWork] !== BackgroundWork) {
+            val _ = dispatchEventsForeground.trySend(Unit)
+        }
     }
 
     /**

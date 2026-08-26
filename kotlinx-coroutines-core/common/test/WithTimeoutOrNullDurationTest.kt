@@ -88,9 +88,11 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testThrowException() = runTest(expected = {it is AssertionError}) {
-        withTimeoutOrNull<Unit>(Duration.INFINITE) {
-            throw AssertionError()
+    fun testThrowException() = runTest {
+        assertFailsWith<AssertionError> {
+            withTimeoutOrNull<Unit>(Duration.INFINITE) {
+                throw AssertionError()
+            }
         }
     }
 
@@ -111,16 +113,16 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
-        withTimeoutOrNull(Duration.INFINITE) {
-            // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(10.milliseconds) {
-                delay(Duration.INFINITE)
-                1
+    fun testNestedTimeout() = runTest {
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeoutOrNull(Duration.INFINITE) {
+                // Exception from this withTimeout is not suppressed by withTimeoutOrNull
+                withTimeout(10.milliseconds) {
+                    delay(Duration.INFINITE)
+                    1
+                }
             }
         }
-
-        expectUnreached()
     }
 
     @Test
@@ -189,24 +191,17 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
-        try {
-            withTimeoutOrNull(100.milliseconds) {
+        assertFailsWith<TestException> {
+            withTimeoutOrNull<String>(100.milliseconds) {
                 expect(2)
-                try {
+                assertFailsWith<CancellationException> {
                     delay(1000.milliseconds)
-                } catch (_: CancellationException) {
-                    expect(3)
-                    throw TestException()
                 }
-                expectUnreached()
-                "OK"
+                expect(3)
+                throw TestException()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            // catches TestException
-            finish(4)
-
         }
+        finish(4)
     }
 
     @Test
@@ -226,15 +221,13 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         expect(1)
-        try {
+        assertFailsWith<TestException> {
             expect(2)
             withTimeoutOrNull<Unit>(1000.milliseconds) {
                 expect(3)
                 throw TestException()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
         }
+        finish(4)
     }
 }

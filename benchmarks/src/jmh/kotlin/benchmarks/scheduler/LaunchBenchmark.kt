@@ -39,7 +39,7 @@ open class LaunchBenchmark : ParametrizedDispatcherBase() {
                     launch {
                         // do nothing
                     }
-                }.map { it.join() }
+                }.forEach { it.join() }
 
                 stopBarrier.await()
             }

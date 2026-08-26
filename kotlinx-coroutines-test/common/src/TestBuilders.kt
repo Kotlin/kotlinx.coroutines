@@ -336,7 +336,7 @@ public fun TestScope.runTest(
         }
         try {
             withTimeout(timeout) {
-                coroutineContext.job.invokeOnCompletion(onCancelling = true) { exception ->
+                val _ = coroutineContext.job.invokeOnCompletion(onCancelling = true) { exception ->
                     if (exception is TimeoutCancellationException) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()

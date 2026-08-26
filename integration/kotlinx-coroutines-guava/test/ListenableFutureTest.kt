@@ -42,7 +42,7 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testAwaitWithCancellation() = runTest(expected = {it is TestCancellationException}) {
+    fun testAwaitWithCancellation() = runTest {
         val future = SettableFuture.create<Int>()
         val deferred = async {
             withContext(Dispatchers.Default) {
@@ -51,8 +51,9 @@ class ListenableFutureTest : TestBase() {
         }
 
         deferred.cancel(TestCancellationException())
-        deferred.await() // throws TCE
-        expectUnreached()
+        assertFailsWith<TestCancellationException> {
+            deferred.await()
+        }
     }
 
     @Test
@@ -183,12 +184,10 @@ class ListenableFutureTest : TestBase() {
         val toAwait = SettableFuture.create<String>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 toAwait.await() // suspends
-            } catch (e: CancellationException) {
-                expect(5) // should throw cancellation exception
-                throw e
             }
+            expect(5)
         }
         expect(3)
         job.cancel() // cancel the job
@@ -446,11 +445,8 @@ class ListenableFutureTest : TestBase() {
         val completionException = deferred.getCompletionExceptionOrNull()!!
         assertIs<TestException>(completionException)
 
-        try {
+        assertFailsWith<TestException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertIs<TestException>(e)
         }
     }
 
@@ -729,26 +725,30 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testCancelledParent() = runTest({ it is CancellationException }) {
-        cancel()
-        future { expectUnreached() }
-        future(start = CoroutineStart.ATOMIC) { }
-        future(start = CoroutineStart.UNDISPATCHED) { }
+    fun testCancelledParent() = runTest {
+        expect(1)
+        launch {
+            this@launch.cancel()
+            future { expectUnreached() }
+            future(start = CoroutineStart.ATOMIC) { expect(3) }
+            future(start = CoroutineStart.UNDISPATCHED) { expect(2) }
+        }.join()
+        finish(4)
     }
 
     @OptIn(ExperimentalAtomicApi::class)
     @Test
     fun testStackOverflow() = runTest {
-        val future = SettableFuture.create<Int>()
+        val future = SettableFuture.create<Unit>()
         val completed = AtomicInt(0)
         val count = 10000
         val children = List(count) {
             launch(Dispatchers.Default) {
                 future.asDeferred().await()
-                completed.incrementAndFetch()
+                completed.increment()
             }
         }
-        future.set(1)
+        future.set(Unit)
         withTimeout(60_000) {
             children.joinAll()
             assertEquals(count, completed.load())
@@ -757,21 +757,21 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testFuturePropagatesExceptionToParentAfterCancellation() = runTest {
-        val throwLatch = CompletableDeferred<Boolean>()
-        val cancelLatch = CompletableDeferred<Boolean>()
+        val throwLatch = Job()
+        val cancelLatch = Job()
         val parent = Job()
         val scope = CoroutineScope(parent)
         val exception = TestException("propagated to parent")
         val future = scope.future {
-            cancelLatch.complete(true)
+            cancelLatch.complete()
             withContext(NonCancellable) {
-                throwLatch.await()
+                throwLatch.join()
                 throw exception
             }
         }
-        cancelLatch.await()
+        cancelLatch.join()
         future.cancel(true)
-        throwLatch.complete(true)
+        throwLatch.complete()
         parent.join()
         assertTrue(parent.isCancelled)
         assertEquals(exception, parent.getCancellationException().cause)

@@ -25,11 +25,7 @@ internal actual class ScheduledMessageQueue actual constructor(private val dispa
     }
 
     actual override fun reschedule() {
-        setTimeout(processQueue, 0)
-    }
-
-    internal actual fun setTimeout(timeout: Int) {
-        setTimeout(processQueue, timeout)
+        val _ = setTimeout(processQueue, 0)
     }
 }
 

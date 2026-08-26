@@ -80,7 +80,7 @@ class SelectTimeoutDurationTest : TestBase() {
                     2
                 }
             }
-            ++counters[result]
+            counters[result]++
         }
         assertEquals(0, counters[2])
         assertTrue { counters[0] >  iterations / 4 }

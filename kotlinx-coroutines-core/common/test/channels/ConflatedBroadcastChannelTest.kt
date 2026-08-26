@@ -34,7 +34,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
     fun testBasicScenario() = runTest {
         expect(1)
         val broadcast = ConflatedBroadcastChannel<String>()
-        assertIs<IllegalStateException>(exceptionFrom { broadcast.value })
+        assertFailsWith<IllegalStateException> { broadcast.value }
         assertNull(broadcast.valueOrNull)
 
         launch(start = CoroutineStart.UNDISPATCHED) {
@@ -86,11 +86,11 @@ class ConflatedBroadcastChannelTest : TestBase() {
         yield() // to second receiver
         expect(18)
         broadcast.close()
-        assertIs<IllegalStateException>(exceptionFrom { broadcast.value })
+        assertFailsWith<IllegalStateException> { broadcast.value }
         assertNull(broadcast.valueOrNull)
         expect(19)
         yield() // to second receiver
-        assertIs<ClosedSendChannelException>(exceptionFrom { broadcast.send("four") })
+        assertFailsWith<ClosedSendChannelException> { broadcast.send("four") }
         finish(22)
     }
 
@@ -105,7 +105,7 @@ class ConflatedBroadcastChannelTest : TestBase() {
             val sub = broadcast.openSubscription()
             assertEquals(1, sub.receive())
             expect(3)
-            assertIs<ClosedReceiveChannelException>(exceptionFrom { sub.receive() }) // suspends
+            assertFailsWith<ClosedReceiveChannelException> { sub.receive() } // suspends
             expect(6)
         }
         expect(4)
@@ -113,14 +113,5 @@ class ConflatedBroadcastChannelTest : TestBase() {
         expect(5)
         yield() // to child
         finish(7)
-    }
-
-    private inline fun exceptionFrom(block: () -> Unit): Throwable? {
-        return try {
-            block()
-            null
-        } catch (e: Throwable) {
-            e
-        }
     }
 }

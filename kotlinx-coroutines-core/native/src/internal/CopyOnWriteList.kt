@@ -69,6 +69,7 @@ internal class CopyOnWriteList<E> : AbstractMutableList<E>() {
         override fun remove() = throw UnsupportedOperationException("Operation is not supported")
     }
 
+    @IgnorableReturnValue
     private fun rangeCheck(index: Int) = index.apply {
         if (index < 0 || index >= size) throw IndexOutOfBoundsException("index: $index, size: $size")
     }

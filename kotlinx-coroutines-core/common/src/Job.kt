@@ -195,6 +195,7 @@ public interface Job : CoroutineContext.Element {
      * The result is `true` if this invocation actually started coroutine or `false`
      * if it was already started or completed.
      */
+    @IgnorableReturnValue
     public fun start(): Boolean
 
 

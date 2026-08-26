@@ -28,7 +28,6 @@ class ScopedBuildersTest : DebugTestBase() {
     private suspend fun doInScope() = coroutineScope {
         expect(1)
         doWithContext()
-        expectUnreached()
     }
 
     private suspend fun doWithContext() {

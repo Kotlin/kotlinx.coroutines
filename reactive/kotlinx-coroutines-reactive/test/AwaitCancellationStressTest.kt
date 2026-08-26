@@ -16,7 +16,7 @@ class AwaitCancellationStressTest : TestBase() {
     fun testAwaitCancellationOrder() = runTest {
         repeat(iterations) {
             val job = launch(Dispatchers.Default) {
-                testPublisher().awaitFirst()
+                val _ = testPublisher().awaitFirst()
             }
             job.cancelAndJoin()
         }

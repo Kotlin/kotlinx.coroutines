@@ -147,7 +147,7 @@ private class StandardTestDispatcherImpl(
 ) : TestDispatcher() {
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        scheduler.registerEvent(this, 0, block, context)
+        val _ = scheduler.registerEvent(this, 0, block, context)
     }
 
     override fun toString(): String = "${name ?: "StandardTestDispatcher"}[scheduler=$scheduler]"

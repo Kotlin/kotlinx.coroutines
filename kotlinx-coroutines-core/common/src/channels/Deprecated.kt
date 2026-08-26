@@ -303,6 +303,7 @@ public fun <E> ReceiveChannel<E>.takeWhile(
     }
 
 @PublishedApi
+@IgnorableReturnValue
 internal suspend fun <E, C : SendChannel<E>> ReceiveChannel<E>.toChannel(destination: C): C {
     consumeEach {
         destination.send(it)

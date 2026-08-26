@@ -99,11 +99,8 @@ class TaskTest : TestBase() {
         val deferred = Tasks.forCanceled<Int>().asDeferred()
 
         assertTrue(deferred.isCancelled)
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
     }
 
@@ -116,13 +113,10 @@ class TaskTest : TestBase() {
         assertIs<TestException>(completionException)
         assertEquals("something went wrong", completionException.message)
 
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
-            assertIs<TestException>(e)
-            assertEquals("something went wrong", e.message)
         }
+        assertEquals("something went wrong", e.message)
     }
 
     @Test
@@ -136,14 +130,11 @@ class TaskTest : TestBase() {
         assertFalse(deferred.isCompleted)
         lock.unlock()
 
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
-            assertIs<TestException>(e)
-            assertEquals("something went wrong", e.message)
-            assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
         }
+        assertEquals("something went wrong", e.message)
+        assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
     }
 
     @Test
@@ -167,11 +158,8 @@ class TaskTest : TestBase() {
         val deferred = Tasks.forCanceled<Int>().asDeferred(cancellationTokenSource)
 
         assertTrue(deferred.isCancelled)
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
@@ -183,11 +171,8 @@ class TaskTest : TestBase() {
         val deferred = task.asDeferred(cancellationTokenSource)
 
         deferred.cancel()
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
@@ -200,23 +185,9 @@ class TaskTest : TestBase() {
 
         cancellationTokenSource.cancel()
 
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
-        assertTrue(cancellationTokenSource.token.isCancellationRequested)
-    }
-
-    @Test
-    fun testSeparatelyCancelledCancellableTaskAsDeferred() = runTest {
-        val cancellationTokenSource = CancellationTokenSource()
-        val task = TaskCompletionSource<Int>().task
-        task.asDeferred(cancellationTokenSource)
-
-        cancellationTokenSource.cancel()
-
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
@@ -231,13 +202,10 @@ class TaskTest : TestBase() {
         assertIs<TestException>(completionException)
         assertEquals("something went wrong", completionException.message)
 
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
-            assertIs<TestException>(e)
-            assertEquals("something went wrong", e.message)
         }
+        assertEquals("something went wrong", e.message)
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
@@ -253,14 +221,11 @@ class TaskTest : TestBase() {
         assertFalse(deferred.isCompleted)
         lock.unlock()
 
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: Exception) {
-            assertIs<TestException>(e)
-            assertEquals("something went wrong", e.message)
-            assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
         }
+        assertEquals("something went wrong", e.message)
+        assertSame(e.cause, deferred.getCompletionExceptionOrNull()) // debug mode stack augmentation
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
     }
 
@@ -289,18 +254,18 @@ class TaskTest : TestBase() {
     }
 
     @Test
-    fun testFailedAwaitTask() = runTest(expected = { it is TestException }) {
+    fun testFailedAwaitTask() = runTest {
         val cancellationTokenSource = CancellationTokenSource()
         val taskCompletionSource = TaskCompletionSource<Int>(cancellationTokenSource.token)
 
-        val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            assertFailsWith<TestException> {
+                taskCompletionSource.task.await(cancellationTokenSource)
+            }
         }
 
-        assertFalse(deferred.isCompleted)
+        assertFalse(job.isCompleted)
         taskCompletionSource.setException(TestException("something went wrong"))
-
-        deferred.await()
     }
 
     @Test
@@ -316,11 +281,8 @@ class TaskTest : TestBase() {
         // Cancel the deferred
         deferred.cancel()
 
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
 
         assertTrue(cancellationTokenSource.token.isCancellationRequested)
@@ -339,11 +301,8 @@ class TaskTest : TestBase() {
         // Cancel the cancellation token source
         cancellationTokenSource.cancel()
 
-        try {
+        assertFailsWith<CancellationException> {
             deferred.await()
-            fail("deferred.await() should be cancelled")
-        } catch (e: Exception) {
-            assertIs<CancellationException>(e)
         }
 
         assertTrue(cancellationTokenSource.token.isCancellationRequested)

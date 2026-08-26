@@ -23,23 +23,19 @@ class ChannelsTest: TestBase() {
         // they were suspended in the channel.
         val channel = Channel<Int>()
         launch {
-            try {
+            assertFailsWith<ClosedReceiveChannelException> {
                 expect(2)
                 channel.receive()
-                expectUnreached()
-            } catch (e: ClosedReceiveChannelException) {
-                expect(5)
             }
+            expect(5)
         }
 
         launch {
-            try {
+            assertFailsWith<ClosedReceiveChannelException> {
                 expect(3)
                 channel.receive()
-                expectUnreached()
-            } catch (e: ClosedReceiveChannelException) {
-                expect(6)
             }
+            expect(6)
         }
 
         expect(1)
@@ -57,23 +53,19 @@ class ChannelsTest: TestBase() {
         // they were suspended in the channel.
         val channel = Channel<Int>()
         launch {
-            try {
+            assertFailsWith<CancellationException> {
                 expect(2)
                 channel.send(42)
-                expectUnreached()
-            } catch (e: CancellationException) {
-                expect(5)
             }
+            expect(5)
         }
 
         launch {
-            try {
+            assertFailsWith<CancellationException> {
                 expect(3)
                 channel.send(42)
-                expectUnreached()
-            } catch (e: CancellationException) {
-                expect(6)
             }
+            expect(6)
         }
 
         expect(1)

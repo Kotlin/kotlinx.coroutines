@@ -290,8 +290,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                     else -> {
                         // update to full-blown queue to add one more
                         val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                        newQueue.addLast(queue as Runnable)
-                        newQueue.addLast(task)
+                        val _ = newQueue.addLast(queue as Runnable)
+                        val _ = newQueue.addLast(task)
                         if (_queue.compareAndSet(queue, newQueue)) return true
                     }
                 }
@@ -350,7 +350,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                     else -> {
                         // update to full-blown queue to close
                         val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                        newQueue.addLast(queue as Runnable)
+                        val _ = newQueue.addLast(queue as Runnable)
                         if (_queue.compareAndSet(queue, newQueue)) return
                     }
                 }

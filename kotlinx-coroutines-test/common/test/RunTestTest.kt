@@ -65,8 +65,7 @@ class RunTestTest {
     }) {
         runTest(timeout = 100.milliseconds) {
             withContext(Dispatchers.Default) {
-                delay(10000)
-                3
+                delay(10000.milliseconds)
             }
             fail("shouldn't be reached")
         }
@@ -86,8 +85,7 @@ class RunTestTest {
         runTest(timeout = 100.milliseconds) {
             while (true) {
                 withContext(Dispatchers.Default) {
-                    delay(10)
-                    3
+                    delay(10.milliseconds)
                 }
             }
         }
@@ -173,8 +171,7 @@ class RunTestTest {
         runTest(timeout = 100.milliseconds) {
             coroutineContext[CoroutineExceptionHandler]!!.handleException(coroutineContext, TestException("A"))
             withContext(Dispatchers.Default) {
-                delay(10000)
-                3
+                delay(10000.milliseconds)
             }
             fail("shouldn't be reached")
         }
@@ -285,7 +282,7 @@ class RunTestTest {
             assertTrue(handlerCalled)
         }) {
             runTest {
-                coroutineContext.job.invokeOnCompletion {
+                val _ = coroutineContext.job.invokeOnCompletion {
                     handlerCalled = true
                 }
             }
@@ -297,7 +294,7 @@ class RunTestTest {
     fun testDoesNotCompleteGivenJob(): TestResult {
         var handlerCalled = false
         val job = Job()
-        job.invokeOnCompletion {
+        val _ = job.invokeOnCompletion {
             handlerCalled = true
         }
         return testResultMap({
@@ -394,16 +391,14 @@ class RunTestTest {
         it.getOrThrow()
         // step 3: trying to run a test should immediately fail, even before entering the test body
         println("step 3")
-        try {
+        val e = assertFailsWith<UncaughtExceptionsBeforeTest> {
             runTest {
                 fail("unreached")
             }
-            fail("unreached")
-        } catch (e: UncaughtExceptionsBeforeTest) {
-            val cause = e.suppressedExceptions.single()
-            assertIs<TestException>(cause)
-            assertEquals("A", cause.message)
         }
+        val cause = e.suppressedExceptions.single()
+        assertIs<TestException>(cause)
+        assertEquals("A", cause.message)
         // step 4: trying to run a test again should not fail with an exception
         println("step 4")
         runTest {
@@ -421,16 +416,14 @@ class RunTestTest {
         it.getOrThrow()
         // step 6: trying to run a test should immediately fail, again
         println("step 6")
-        try {
+        val e = assertFailsWith<Exception> {
             runTest {
                 fail("unreached")
             }
-            fail("unreached")
-        } catch (e: Exception) {
-            val cause = e.suppressedExceptions.single()
-            assertIs<TestException>(cause)
-            assertEquals("B", cause.message)
         }
+        val cause = e.suppressedExceptions.single()
+        assertIs<TestException>(cause)
+        assertEquals("B", cause.message)
         // step 7: trying to run a test again should not fail with an exception, again
         println("step 7")
         runTest {
@@ -466,7 +459,6 @@ class RunTestTest {
             runTest(dispatchTimeoutMs = 100) {
                 withContext(Dispatchers.Default) {
                     delay(10.seconds)
-                    3
                 }
                 fail("shouldn't be reached")
             }

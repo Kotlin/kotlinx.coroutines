@@ -113,7 +113,7 @@ private class MultiWorkerDispatcher(
         val previousTasksMinusWorkers = tasksMinusWorkers.getAndAdd(1)
         if (previousTasksMinusWorkers >= 0) {
             // no workers are available, we must allocate a new one
-            workerPool.allocate()
+            val _ = workerPool.allocate()
         }
         tasksQueue.trySend(block)
             .onClosed {
@@ -132,7 +132,7 @@ private class MultiWorkerDispatcher(
 
     override fun close() {
         // the order is important: we don't want to end up with a non-empty channel because there are no workers
-        tasksQueue.close()
+        val _ = tasksQueue.close()
         val workers = workerPool.close() // no new workers will be created
         /*
          * Here we cannot avoid waiting on `.result`, otherwise it will lead

@@ -105,7 +105,7 @@ class ProduceTest : TestBase() {
         }
 
         expect(1)
-        channel.receive()
+        assertEquals(1, channel.receive())
         yield()
         expect(4)
         channel.cancel()
@@ -134,7 +134,7 @@ class ProduceTest : TestBase() {
     @Test
     fun testInvokeOnCloseWithAwaitClose() = runTest {
         expect(1)
-        produce<Int> {
+        val _ = produce<Int> {
             invokeOnClose { }
             assertFailsWith<IllegalStateException> {
                 awaitClose()
@@ -166,7 +166,7 @@ class ProduceTest : TestBase() {
         // TODO: simplify after #2758
         val parent = Job(currentCoroutineContext()[Job])
         val childScope = CoroutineScope(currentCoroutineContext() + parent)
-        childScope.produce<Int> {
+        val _ = childScope.produce<Int> {
             expect(2)
             launch {
                 expect(3)
@@ -186,7 +186,7 @@ class ProduceTest : TestBase() {
         val childScope = CoroutineScope(
             currentCoroutineContext() + Job(currentCoroutineContext()[Job])
         )
-        childScope.produce<Int> {
+        val _ = childScope.produce<Int> {
             expect(2)
             awaitClose { expect(4) }
         }
@@ -238,7 +238,7 @@ class ProduceTest : TestBase() {
                 try {
                     yield()
                 } finally {
-                    repeat(10) { trySend(it) }
+                    repeat(10) { val _ = trySend(it) }
                 }
             }
             repeat(10) { assertEquals(it, c.receive()) }
@@ -285,21 +285,22 @@ class ProduceTest : TestBase() {
         }
     }
 
-    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = CoroutineScope(coroutineContext).apply {
+    private suspend fun cancelOnCompletion(coroutineContext: CoroutineContext) = coroutineScope {
         val source = Channel<Int>()
         expect(1)
-        val produced = produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
+        val produced = GlobalScope.produce<Int>(coroutineContext, onCompletion = { source.cancelConsumed(it) }) {
             expect(2)
-            source.receive()
+            assertFailsWith<CancellationException> {
+                source.receive()
+            }
+            assertFalse(isActive)
         }
-
         yield()
         expect(3)
         produced.cancel()
-        try {
+        assertFailsWith<CancellationException> {
             source.receive()
-        } catch (e: CancellationException) {
-            finish(4)
         }
+        finish(4)
     }
 }

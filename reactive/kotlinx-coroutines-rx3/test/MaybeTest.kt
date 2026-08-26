@@ -130,13 +130,11 @@ class MaybeTest : TestBase() {
             })
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
+            expect(2)
+            assertFailsWith<CancellationException> {
                 maybe.awaitSingleOrNull()
-            } catch (e: CancellationException) {
-                expect(5)
-                throw e
             }
+            expect(5)
         }
         expect(3)
         job.cancelAndJoin()
@@ -313,12 +311,11 @@ class MaybeTest : TestBase() {
                 throw TestException2() // but parent throws another exception while cleaning up
             }
         }
-        try {
+        val e = assertFailsWith<TestException> {
             maybe.awaitSingleOrNull()
             expectUnreached()
-        } catch (e: TestException) {
-            assertIs<TestException2>(e.suppressed[0])
         }
+        assertIs<TestException2>(e.suppressed[0])
     }
 
     @Test

@@ -3,14 +3,13 @@ package kotlinx.coroutines.time
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
-import org.junit.Test
 import java.time.*
 import java.time.temporal.*
 import kotlin.test.*
 
 class DurationOverflowTest : TestBase() {
 
-    private val durations = ChronoUnit.values().map { it.duration }
+    private val durations = ChronoUnit.entries.map { it.duration }
 
     @Test
     fun testDelay() = runTest {
@@ -49,7 +48,7 @@ class DurationOverflowTest : TestBase() {
     @Test
     fun testWithTimeoutOrNull() = runTest {
         for (duration in durations) {
-            withTimeoutOrNull(duration) {}
+            assertNotNull(withTimeoutOrNull(duration) {})
         }
     }
 

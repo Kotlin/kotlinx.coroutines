@@ -37,7 +37,7 @@ class MultithreadedDispatchersTest {
         val lock = SynchronizedObject()
         suspend fun spin(set: MutableSet<Worker>) {
             repeat(100) {
-                synchronized(lock) { set.add(Worker.current) }
+                synchronized(lock) { val _ = set.add(Worker.current) }
                 delay(1)
             }
         }

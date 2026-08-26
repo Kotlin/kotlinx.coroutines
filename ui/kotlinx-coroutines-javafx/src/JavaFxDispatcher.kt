@@ -70,7 +70,7 @@ private object ImmediateJavaFxDispatcher : JavaFxDispatcher() {
 internal object JavaFx : JavaFxDispatcher() {
     init {
         // :kludge: to make sure Toolkit is initialized if we use JavaFx dispatcher outside of JavaFx app
-        initPlatform()
+        val _ = initPlatform()
     }
 
     override val immediate: MainCoroutineDispatcher
@@ -124,7 +124,7 @@ private object PlatformInitializer {
             runCatching {
                 Class.forName("javafx.application.Platform")
                         .getMethod("startup", java.lang.Runnable::class.java)
-            }.map { method ->
+            }.onSuccess { method ->
                 method.invoke(null, runnable)
                 return@run true
             }

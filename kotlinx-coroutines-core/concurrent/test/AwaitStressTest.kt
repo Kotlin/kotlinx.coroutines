@@ -25,12 +25,9 @@ class AwaitStressTest : TestBase() {
                     barrier.await()
                     1L
                 }
-                try {
-                    barrier.await()
+                barrier.await()
+                assertFailsWith<TestException> {
                     awaitAll(d1, d2, d3)
-                    expectUnreached()
-                } catch (_: TestException) {
-                    // Expected behavior
                 }
             }
         }
@@ -50,7 +47,8 @@ class AwaitStressTest : TestBase() {
                     2L
                 }
                 barrier.await()
-                awaitAll(d1, d2)
+                val results = awaitAll(d1, d2)
+                assertEquals(listOf(1L, 2L), results)
                 require(d1.isCompleted && d2.isCompleted)
                 barrier.checkTriggeredAndAllWokenUp()
             }
@@ -76,11 +74,10 @@ class AwaitStressTest : TestBase() {
                 }
 
                 barrier.await()
-                try {
+                assertFailsWith<CancellationException> {
                     awaitAll(d1, d2)
-                } catch (_: CancellationException) {
-                    cancelledOnce = true
                 }
+                cancelledOnce = true
             }
 
             require(cancelledOnce) { "Cancellation exception wasn't properly caught" }

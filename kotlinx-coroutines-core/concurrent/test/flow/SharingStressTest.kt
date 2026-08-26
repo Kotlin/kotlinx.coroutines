@@ -108,7 +108,7 @@ class SharingStressTest : TestBase() {
                         subscribers += launchSubscriber(sharedFlow, usingStateFlow, subCount, missingCollects, missingCollectsObject)
                     }
                     // wait until they all subscribed
-                    subCount.first { it == nSubscribers }
+                    subCount.collectWhile { it != nSubscribers }
                     // let them work a bit more & make sure emitter did not hang
                     val fromEmitIndex = emitIndex.load()
                     val waitEmitIndex = fromEmitIndex + 100 // wait until 100 emitted
@@ -127,6 +127,7 @@ class SharingStressTest : TestBase() {
                     log("Intermission")
                     delay(random.nextLong(10L..100L)) // wait a bit before starting them again
                 }
+                expectUnreached()
             }
             if (!subscribers.isEmpty()) {
                 log("Stopping subscribers")
@@ -176,7 +177,7 @@ class SharingStressTest : TestBase() {
                                 if (j == expected + 1) {
                                     // if missing just one -- could be race with cancelled emit
                                     synchronized(missingCollectsObject) {
-                                        missingCollects.add(expected)
+                                        val _ = missingCollects.add(expected)
                                     }
                                 } else {
                                     // broken otherwise

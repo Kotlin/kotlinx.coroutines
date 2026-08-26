@@ -560,7 +560,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
-        state.addOneIfEmpty(NodeList())
+        val _ = state.addOneIfEmpty(NodeList())
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
         val list = state.nextNode // either our NodeList or somebody else won the race, updated state
         // just attempt converting it to list if state is still the same, then we'll continue lock-free loop
@@ -686,6 +686,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Makes this [Job] cancelled with a specified [cause].
      * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
      */
+    @IgnorableReturnValue
     public fun cancelCoroutine(cause: Throwable?): Boolean = cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked

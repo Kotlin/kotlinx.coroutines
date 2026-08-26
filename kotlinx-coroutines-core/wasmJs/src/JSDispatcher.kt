@@ -28,10 +28,6 @@ internal actual class ScheduledMessageQueue actual constructor(private val dispa
     actual override fun reschedule() {
         setTimeout(processQueue, 0)
     }
-
-    internal actual fun setTimeout(timeout: Int) {
-        setTimeout(processQueue, timeout)
-    }
 }
 
 internal class NodeDispatcher(private val process: JsProcess) : SetTimeoutBasedDispatcher() {

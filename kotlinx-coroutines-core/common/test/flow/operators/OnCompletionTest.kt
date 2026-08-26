@@ -242,7 +242,6 @@ class OnCompletionTest : TestBase() {
                     throw e
                 }
             }.single()
-            expectUnreached()
         }
         finish(2)
     }
@@ -340,7 +339,7 @@ class OnCompletionTest : TestBase() {
             }
 
         // `take` doesn't eat the exception thrown by `first`:
-        flowOf(1, 2, 3)
+        val _ = flowOf(1, 2, 3)
             .take(2)
             .onCompletion {
                 expect(5)
@@ -349,7 +348,7 @@ class OnCompletionTest : TestBase() {
             .first()
 
         // `zip` doesn't eat the exception thrown by `first`:
-        flowOf(1, 2, 3)
+        val _ = flowOf(1, 2, 3)
             .zip(flowOf(4, 5)) { a, b -> a + b }
             .onCompletion {
                 expect(6)

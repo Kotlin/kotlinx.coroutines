@@ -44,8 +44,9 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
     fun testReceiveCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
         val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            channel.receive()
-            expectUnreached() // will be cancelled before it dispatches
+            assertFailsWith<CancellationException> {
+                channel.receive()
+            }
         }
         channel.send(item)
         job.cancel()
@@ -70,8 +71,9 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
     fun testReceiveCatchingCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
         val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            channel.receiveCatching()
-            expectUnreached() // will be cancelled before it dispatches
+            assertFailsWith<CancellationException> {
+                channel.receiveCatching()
+            }
         }
         channel.send(item)
         job.cancel()
@@ -96,8 +98,9 @@ class ChannelUndeliveredElementFailureTest : TestBase() {
     fun testHasNextCancelledFail() = runTest(unhandled = shouldBeUnhandled) {
         val channel = Channel(onUndeliveredElement = onCancelFail)
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            channel.iterator().hasNext()
-            expectUnreached() // will be cancelled before it dispatches
+            assertFailsWith<CancellationException> {
+                channel.iterator().hasNext()
+            }
         }
         channel.send(item)
         job.cancel()

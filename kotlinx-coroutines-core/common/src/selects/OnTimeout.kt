@@ -50,7 +50,7 @@ private class OnTimeout(
         }
         // Invoke `trySelect` after the timeout is reached.
         val action = Runnable {
-            select.trySelect(this@OnTimeout, Unit)
+            val _ = select.trySelect(this@OnTimeout, Unit)
         }
         select as SelectImplementation<*>
         val context = select.context

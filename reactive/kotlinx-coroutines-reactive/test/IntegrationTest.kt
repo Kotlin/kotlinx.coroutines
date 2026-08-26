@@ -76,9 +76,11 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
-                awaitCancellation()
-            }.awaitFirst()
+            assertFailsWith<CancellationException> {
+                publish<String> {
+                    awaitCancellation()
+                }.awaitFirst()
+            }
         }
         job.cancel()
     }
@@ -102,8 +104,8 @@ class IntegrationTest(
      */
     @Test
     fun testNotCompletingFailedAwait() = runTest {
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<IllegalArgumentException> {
             Publisher<Int> { sub ->
                 sub.onSubscribe(object: Subscription {
                     override fun request(n: Long) {
@@ -119,10 +121,8 @@ class IntegrationTest(
                     }
                 })
             }.awaitSingle()
-        } catch (e: java.lang.IllegalArgumentException) {
-            expect(5)
         }
-        finish(6)
+        finish(5)
     }
 
     /**
@@ -191,13 +191,11 @@ class IntegrationTest(
 
         // Rule 1.9 broken (the first signal to the subscriber was not 'onSubscribe')
         assertCallsExceptionHandlerWith<IllegalStateException> {
-            try {
+            assertFailsWith<NoSuchElementException> {
                 Publisher<Int> { subscriber ->
                     subscriber.onNext(3)
                     subscriber.onComplete()
                 }.awaitFirst()
-            } catch (e: NoSuchElementException) {
-                // intentionally blank
             }
         }.let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
     }
@@ -208,13 +206,11 @@ class IntegrationTest(
             expect(2)
             withTimeout(1) { delay(100) }
         }
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(3)
         }
-        finish(4)
+        finish(3)
     }
 
 }

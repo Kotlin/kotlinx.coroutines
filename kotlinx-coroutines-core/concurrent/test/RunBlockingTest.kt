@@ -204,6 +204,6 @@ class RunBlockingTest : TestBase() {
         runBlocking {
             rb = 42
         }
-        rb.hashCode() // unused
+        val _ = rb.hashCode() // unused
     }
 }

@@ -103,9 +103,9 @@ class TestScopeTest {
     fun testActiveJobsThrowing() {
         val scope = TestScope()
         var result = false
-        val deferred = CompletableDeferred<String>()
+        val latch = Job()
         scope.launch {
-            deferred.await()
+            latch.join()
             result = true
         }
         assertFalse(result)
@@ -119,9 +119,9 @@ class TestScopeTest {
     fun testCancelledDelaysThrowing() {
         val scope = TestScope()
         var result = false
-        val deferred = CompletableDeferred<String>()
+        val latch = Job()
         val job = scope.launch {
-            deferred.await()
+            latch.join()
             result = true
         }
         job.cancel()
@@ -445,10 +445,10 @@ class TestScopeTest {
         }
     }) {
         runTest {
-            backgroundScope.async {
+            val _ = backgroundScope.async {
                 throw TestException("x")
             }
-            backgroundScope.produce<Unit> {
+            val _ = backgroundScope.produce<Unit> {
                 throw TestException("y")
             }
             delay(1)

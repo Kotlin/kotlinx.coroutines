@@ -95,9 +95,11 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            flowPublish<String> {
-                awaitCancellation()
-            }.awaitFirst()
+            assertFailsWith<CancellationException> {
+                flowPublish<String> {
+                    awaitCancellation()
+                }.awaitFirst()
+            }
         }
         job.cancel()
     }

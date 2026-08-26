@@ -39,7 +39,7 @@ class UnconfinedCancellationTest : TestBase() {
             val job = launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
                 expectUnreached()
             }
-            job.invokeOnCompletion { expect(2) }
+            val _ = job.invokeOnCompletion { expect(2) }
             assertFalse(job.isCompleted)
             cancel()
         }.join()

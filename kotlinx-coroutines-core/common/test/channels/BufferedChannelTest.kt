@@ -115,10 +115,10 @@ class BufferedChannelTest : TestBase() {
         expect(1)
         launch {
             expect(4)
-            try { q.receive() }
-            catch (e: ClosedReceiveChannelException) {
-                expect(5)
+            assertFailsWith<ClosedReceiveChannelException> {
+                q.receive()
             }
+            expect(5)
         }
         expect(2)
 
@@ -189,10 +189,12 @@ class BufferedChannelTest : TestBase() {
     }
 
     @Test
-    fun testCancelWithCause() = runTest({ it is TestCancellationException }) {
+    fun testCancelWithCause() = runTest {
         val channel = Channel<Int>(5)
         channel.cancel(TestCancellationException())
-        channel.receive()
+        assertFailsWith<TestCancellationException> {
+            channel.receive()
+        }
     }
 
     @Test

@@ -209,6 +209,7 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
      * This method is **thread-safe** and can be safely invoked from concurrent coroutines without
      * external synchronization.
      */
+    @IgnorableReturnValue
     public fun tryEmit(value: T): Boolean
 
     /**

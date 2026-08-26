@@ -12,7 +12,7 @@ class CountDownLatch(count: Int) {
     private val waiters = MPSCQueueLatch<ParkingHandle>()
 
     fun await() {
-        tryAwait(Duration.INFINITE)
+        val _ = tryAwait(Duration.INFINITE)
     }
 
     fun tryAwait(duration: Duration): Boolean {

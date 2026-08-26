@@ -1938,7 +1938,7 @@ internal open class BufferedChannel<E>(
      * Completes the started [close] or [cancel] procedure.
      */
     private fun completeCloseOrCancel() {
-        isClosedForSend // must finish the started close/cancel if one is detected.
+        val _ = isClosedForSend // must finish the started close/cancel if one is detected.
     }
 
     protected open val isConflatedDropOldest get() = false

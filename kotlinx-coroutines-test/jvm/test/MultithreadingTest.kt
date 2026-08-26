@@ -39,7 +39,7 @@ class MultithreadingTest {
     @Test
     fun testResumingFromAnotherThread() = runTest {
         suspendCancellableCoroutine<Unit> { cont ->
-            thread {
+            val _ = thread {
                 Thread.sleep(10)
                 cont.resume(Unit)
             }

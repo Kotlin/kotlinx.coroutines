@@ -56,7 +56,7 @@ class LaunchLazyTest : TestBase() {
         }
         yield() // no started yet!
         expect(2)
-        job.invokeOnCompletion {
+        val _ = job.invokeOnCompletion {
             expect(6)
         }
         expect(3)

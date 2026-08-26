@@ -21,109 +21,113 @@ class CancellableResumeTest : TestBase() {
     }
 
     @Test
-    fun testResumeImmediateAfterCancel() = runTest(
-        expected = { it is TestException }
-    ) {
+    fun testResumeImmediateAfterCancel() = runTest {
         expect(1)
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation { expect(3) }
-            cont.cancel(TestException("FAIL"))
-            expect(4)
-            val value = "OK"
-            cont.resume(value) { cause, valueToClose, context ->
-                expect(5)
-                assertSame(value, valueToClose)
-                assertSame(context, cont.context)
-                assertIs<TestException>(cause)
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine { cont ->
+                expect(2)
+                cont.invokeOnCancellation { expect(3) }
+                cont.cancel(TestException("FAIL"))
+                expect(4)
+                val value = "OK"
+                cont.resume(value) { cause, valueToClose, context ->
+                    expect(5)
+                    assertSame(value, valueToClose)
+                    assertSame(context, cont.context)
+                    assertIs<TestException>(cause)
+                }
+                finish(6)
             }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
     fun testResumeImmediateAfterCancelWithHandlerFailure() = runTest(
-        expected = { it is TestException },
         unhandled = listOf(
             { it is CompletionHandlerException && it.cause is TestException2 },
             { it is CompletionHandlerException && it.cause is TestException3 }
         )
     ) {
         expect(1)
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation {
-                expect(3)
-                throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine { cont ->
+                expect(2)
+                cont.invokeOnCancellation {
+                    expect(3)
+                    throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+                }
+                cont.cancel(TestException("FAIL"))
+                expect(4)
+                val value = "OK"
+                cont.resume(value) { cause, valueToClose, context ->
+                    expect(5)
+                    assertSame(value, valueToClose)
+                    assertSame(context, cont.context)
+                    assertIs<TestException>(cause)
+                    throw TestException3("FAIL") // onCancellation block fails with exception
+                }
+                finish(6)
             }
-            cont.cancel(TestException("FAIL"))
-            expect(4)
-            val value = "OK"
-            cont.resume(value) { cause, valueToClose, context ->
-                expect(5)
-                assertSame(value, valueToClose)
-                assertSame(context, cont.context)
-                assertIs<TestException>(cause)
-                throw TestException3("FAIL") // onCancellation block fails with exception
-            }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
-    fun testResumeImmediateAfterIndirectCancel() = runTest(
-        expected = { it is CancellationException }
-    ) {
+    fun testResumeImmediateAfterIndirectCancel() = runTest {
         expect(1)
-        val ctx = coroutineContext
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation { expect(3) }
-            ctx.cancel()
-            expect(4)
-            val value = "OK"
-            cont.resume(value) { cause, valueToClose, context ->
-                expect(5)
-                assertSame(value, valueToClose)
-                assertSame(context, cont.context)
-                assertIs<CancellationException>(cause)
+        val job = launch {
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine { cont ->
+                    expect(2)
+                    cont.invokeOnCancellation { expect(3) }
+                    this@launch.cancel()
+                    expect(4)
+                    val value = "OK"
+                    cont.resume(value) { cause, valueToClose, context ->
+                        expect(5)
+                        assertSame(value, valueToClose)
+                        assertSame(context, cont.context)
+                        assertIs<CancellationException>(cause)
+                    }
+                    finish(6)
+                }
             }
-            finish(6)
         }
-        expectUnreached()
+        job.join()
+        assertTrue(job.isCancelled)
     }
 
     @Test
     fun testResumeImmediateAfterIndirectCancelWithHandlerFailure() = runTest(
-        expected = { it is CancellationException },
         unhandled = listOf(
             { it is CompletionHandlerException && it.cause is TestException2 },
             { it is CompletionHandlerException && it.cause is TestException3 }
         )
     ) {
         expect(1)
-        val ctx = coroutineContext
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation {
-                expect(3)
-                throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+        val job = launch {
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine { cont ->
+                    expect(2)
+                    cont.invokeOnCancellation {
+                        expect(3)
+                        throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+                    }
+                    this@launch.cancel()
+                    expect(4)
+                    val value = "OK"
+                    cont.resume(value) { cause, valueToClose, context ->
+                        expect(5)
+                        assertSame(value, valueToClose)
+                        assertSame(context, cont.context)
+                        assertIs<CancellationException>(cause)
+                        throw TestException3("FAIL") // onCancellation block fails with exception
+                    }
+                    finish(6)
+                }
             }
-            ctx.cancel()
-            expect(4)
-            val value = "OK"
-            cont.resume(value) { cause, valueToClose, context ->
-                expect(5)
-                assertSame(value, valueToClose)
-                assertSame(context, cont.context)
-                assertIs<CancellationException>(cause)
-                throw TestException3("FAIL") // onCancellation block fails with exception
-            }
-            finish(6)
         }
-        expectUnreached()
+        job.join()
+        assertTrue(job.isCancelled)
     }
 
     @Test
@@ -151,16 +155,14 @@ class CancellableResumeTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation { expect(5) }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                finish(9)
             }
+            finish(9)
         }
         expect(4)
         job.cancel(TestCancellationException())
@@ -186,7 +188,7 @@ class CancellableResumeTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation {
@@ -195,10 +197,8 @@ class CancellableResumeTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                finish(9)
             }
+            finish(9)
         }
         expect(4)
         job.cancel(TestCancellationException())
@@ -220,7 +220,7 @@ class CancellableResumeTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
@@ -231,10 +231,8 @@ class CancellableResumeTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                expect(9)
             }
+            expect(9)
         }
         expect(4)
         val value = "OK"
@@ -263,7 +261,7 @@ class CancellableResumeTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
@@ -275,10 +273,8 @@ class CancellableResumeTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                expect(9)
             }
+            expect(9)
         }
         expect(4)
         val value = "OK"

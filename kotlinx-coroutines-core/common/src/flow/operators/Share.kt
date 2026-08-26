@@ -211,7 +211,7 @@ private fun <T> CoroutineScope.launchSharing(
             }
             started === SharingStarted.Lazily -> {
                 // start collecting on the first subscriber - wait for it first
-                shared.subscriptionCount.first { it > 0 }
+                shared.subscriptionCount.collectWhile { it <= 0 }
                 upstream.collect(shared)
             }
             else -> {
