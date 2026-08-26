@@ -28,7 +28,7 @@ Debug mode has negligible runtime overhead, so you can keep it enabled to simpli
 When you run your code with Java assertions enabled, the `kotlinx.coroutines` library automatically enables debug mode.
 Unit tests run with assertions enabled by default, so you don't need to enable debug mode explicitly for them.
 
-To enable debug mode explicitly, configure your build tool or IDE run configuration to pass the `-Dkotlinx.coroutines.debug` argument to the JVM that runs your application.
+To enable debug mode explicitly, configure your build tool, such as [Gradle](https://docs.gradle.org/current/userguide/application_plugin.html#sec:application_usage) or [Maven](https://maven.apache.org/configure), or IDE run configuration to pass the `-Dkotlinx.coroutines.debug` argument to the JVM that runs your application.
 
 In IntelliJ IDEA, follow these steps to enable debug mode:
 
@@ -489,6 +489,7 @@ class UserProfileTest {
     }
 }
 ```
+{validate="false"}
 
 After one second, the `CoroutinesTimeout` API reports the timeout and prints all active coroutines and their stack traces.
 The test then fails with a `CoroutinesTimeoutException`.
@@ -559,4 +560,4 @@ android {
 
 ## What's next
 
-* Learn how to debug coroutines in IntelliJ IDEA in [Debug coroutines using IntelliJ IDEA](debug-coroutines-with-idea.md) and [Debug Kotlin Flow using IntelliJ IDEA](debug-flow-with-idea.md).
+Learn how to debug coroutines in IntelliJ IDEA in [Debug coroutines using IntelliJ IDEA](debug-coroutines-with-idea.md) and [Debug Kotlin Flow using IntelliJ IDEA](debug-flow-with-idea.md).
