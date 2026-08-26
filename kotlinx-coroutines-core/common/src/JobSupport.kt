@@ -1549,7 +1549,7 @@ private class ResumeAwaitOnCompletion<T>(
         val state = job.state
         assert { state !is Incomplete }
         if (state is CompletedExceptionally) {
-            // Resume with with the corresponding exception to preserve it
+            // Resume with the corresponding exception to preserve it
             continuation.resumeWithException(state.cause)
         } else {
             // Resuming with value in a cancellable way (AwaitContinuation is configured for this mode).
