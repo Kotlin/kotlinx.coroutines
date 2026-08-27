@@ -94,9 +94,11 @@ class JobTest : TestBase() {
         val job = Job()
         val n = 100 * stressTestMultiplier
         val fireCount = IntArray(n)
-        for (i in 0 until n) job.invokeOnCompletion {
-            fireCount[i]++
-            throw TestException()
+        for (i in 0 until n) {
+            job.invokeOnCompletion {
+                fireCount[i]++
+                throw TestException()
+            }
         }
         assertTrue(job.isActive)
         for (i in 0 until n) assertEquals(0, fireCount[i])
@@ -163,7 +165,7 @@ class JobTest : TestBase() {
             delay(Long.MAX_VALUE)
         }
 
-        job.invokeOnCompletion(onCancelling = true) {
+        val _ = job.invokeOnCompletion(onCancelling = true) {
             assertNotNull(it)
             expect(3)
         }
@@ -179,7 +181,7 @@ class JobTest : TestBase() {
         val job = launch {
             expect(2)
         }
-        job.invokeOnCompletion(onCancelling = true) {
+        val _ = job.invokeOnCompletion(onCancelling = true) {
             assertNull(it)
             expect(3)
         }
@@ -224,7 +226,7 @@ class JobTest : TestBase() {
     fun testIncompleteJobState() = runTest {
         val parent = coroutineContext.job
         val job = launch {
-            coroutineContext[Job]!!.invokeOnCompletion {  }
+            val _ = coroutineContext.job.invokeOnCompletion {  }
         }
         assertSame(parent, job.parent)
         job.join()
