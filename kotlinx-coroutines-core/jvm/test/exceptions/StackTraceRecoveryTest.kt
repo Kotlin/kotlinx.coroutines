@@ -71,12 +71,10 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     private suspend fun oneMoreNestedMethod(deferred: Deferred<*>, vararg traces: String) {
-        try {
+        val e = assertFailsWith<ExecutionException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: ExecutionException) {
-            verifyStackTrace(e, *traces)
         }
+        verifyStackTrace(e, *traces)
     }
 
     @Test
@@ -109,12 +107,10 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     private suspend fun innerMethod(deferred: Deferred<*>, vararg traces: String) {
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: RecoverableTestException) {
-            verifyStackTrace(e, *traces)
         }
+        verifyStackTrace(e, *traces)
     }
 
     @Test

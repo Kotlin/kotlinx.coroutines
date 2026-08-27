@@ -79,12 +79,10 @@ class DebugProbesTest : DebugTestBase() {
     }
 
     private suspend fun oneMoreNestedMethod(deferred: Deferred<*>, traces: List<String>) {
-        try {
+        val e = assertFailsWith<ExecutionException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: ExecutionException) {
-            verifyStackTrace(e, traces)
         }
+        verifyStackTrace(e, traces)
     }
 
     @Test

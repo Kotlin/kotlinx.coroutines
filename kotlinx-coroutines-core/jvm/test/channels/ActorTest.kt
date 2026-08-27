@@ -88,11 +88,10 @@ class ActorTest(private val capacity: Int) : TestBase() {
             val element = channel.receive()
             expect(2)
             require(element == 42)
-            try {
+            assertFailsWith<IOException> {
                 channel.receive()
-            } catch (e: IOException) {
-                expect(3)
             }
+            expect(3)
         }
 
         expect(1)
@@ -120,12 +119,10 @@ class ActorTest(private val capacity: Int) : TestBase() {
         yield()
         job.cancel()
 
-        try {
+        val e = assertFailsWith<CancellationException> {
             job.await()
-            expectUnreached()
-        } catch (e: CancellationException) {
-            assertTrue(e.message?.contains("DeferredCoroutine was cancelled") ?: false)
         }
+        assertTrue(e.message?.contains("DeferredCoroutine was cancelled") ?: false)
 
         finish(3)
     }

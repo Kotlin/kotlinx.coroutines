@@ -177,11 +177,10 @@ class CompletableDeferredTest : TestBase() {
         expect(3)
         parent.cancel()
         expect(4)
-        try {
+        assertFailsWith<CancellationException> {
             parent.await()
-        } catch (_: CancellationException) {
-            finish(6)
         }
+        finish(6)
     }
 
     @Test

@@ -100,19 +100,19 @@ class CoroutineSchedulerTest : TestBase() {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeCorePoolSize() {
-        SchedulerCoroutineDispatcher(-1, 4)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(-1, 4) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeMaxPoolSize() {
-        SchedulerCoroutineDispatcher(1, -4)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(1, -4) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testCorePoolSizeGreaterThanMaxPoolSize() {
-        SchedulerCoroutineDispatcher(4, 1)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(4, 1) }
     }
 
     @Test

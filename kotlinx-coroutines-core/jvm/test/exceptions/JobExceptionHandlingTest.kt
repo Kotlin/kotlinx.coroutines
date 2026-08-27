@@ -303,34 +303,30 @@ class JobExceptionHandlingTest : TestBase() {
 
     @Test
     fun testExceptionIsNotReported() = runTest {
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<TestException> {
             coroutineScope {
                 val job = Job(coroutineContext[Job])
                 launch(job) {
                     throw TestException()
                 }
             }
-            expectUnreached()
-        } catch (e: TestException) {
-            finish(2)
         }
+        finish(2)
     }
 
     @Test
     fun testExceptionIsNotReportedTripleChain() = runTest {
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<TestException> {
             coroutineScope {
                 val job = Job(Job(Job(coroutineContext[Job])))
                 launch(job) {
                     throw TestException()
                 }
             }
-            expectUnreached()
-        } catch (e: TestException) {
-            finish(2)
         }
+        finish(2)
     }
 
     @Test

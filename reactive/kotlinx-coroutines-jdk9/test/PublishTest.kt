@@ -130,12 +130,11 @@ class PublishTest : TestBase() {
             assert(isClosedForSend)
             expect(4)
         }
-        try {
-            expect(2)
+        expect(2)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(5)
         }
+        expect(5)
         finish(6)
     }
 

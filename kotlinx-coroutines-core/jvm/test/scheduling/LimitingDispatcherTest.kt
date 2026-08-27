@@ -3,17 +3,18 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
+import kotlin.test.assertFailsWith
 
 class LimitingDispatcherTest : SchedulerTestBase() {
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeView() {
-        view(-1)
+        assertFailsWith<IllegalArgumentException> { view(-1) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testZeroView() {
-        view(0)
+        assertFailsWith<IllegalArgumentException> { view(0) }
     }
 
     @Test(timeout = 10_000)

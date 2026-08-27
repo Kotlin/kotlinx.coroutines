@@ -167,12 +167,10 @@ class FutureTest : TestBase() {
         val toAwait = CompletableFuture<String>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 toAwait.await() // suspends
-            } catch (e: CancellationException) {
-                expect(5) // should throw cancellation exception
-                throw e
             }
+            expect(5)
         }
         expect(3)
         job.cancel() // cancel the job
@@ -241,13 +239,10 @@ class FutureTest : TestBase() {
         assertIs<TestException>(completionException)
         assertEquals("something went wrong", completionException.message)
 
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: Throwable) {
-            assertIs<TestException>(e)
-            assertEquals("something went wrong", e.message)
         }
+        assertEquals("something went wrong", e.message)
     }
 
     @Test
@@ -260,13 +255,11 @@ class FutureTest : TestBase() {
 
         assertFalse(deferred.isCompleted)
         lock.unlock()
-        try {
+        val e = assertFailsWith<TestException> {
             deferred.await()
-            fail("deferred.await() should throw an exception")
-        } catch (e: TestException) {
-            assertTrue(deferred.isCancelled)
-            assertEquals("something went wrong", e.message)
         }
+        assertTrue(deferred.isCancelled)
+        assertEquals("something went wrong", e.message)
     }
 
     private val threadLocal = ThreadLocal<String>()

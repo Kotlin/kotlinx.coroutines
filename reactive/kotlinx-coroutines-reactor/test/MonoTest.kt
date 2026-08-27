@@ -123,13 +123,11 @@ class MonoTest : TestBase() {
         expect(1)
         val mono = mono { delay(Long.MAX_VALUE) }.doOnSubscribe { expect(3) }.doOnCancel { expect(5) }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
+            expect(2)
+            assertFailsWith<CancellationException> {
                 mono.awaitSingleOrNull()
-            } catch (e: CancellationException) {
-                expect(6)
-                throw e
             }
+            expect(6)
         }
         expect(4)
         job.cancelAndJoin()

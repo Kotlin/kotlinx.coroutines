@@ -313,7 +313,6 @@ class MaybeTest : TestBase() {
         }
         val e = assertFailsWith<TestException> {
             maybe.awaitSingleOrNull()
-            expectUnreached()
         }
         assertIs<TestException2>(e.suppressed[0])
     }

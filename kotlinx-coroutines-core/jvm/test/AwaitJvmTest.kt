@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import org.junit.*
+import kotlin.test.assertFailsWith
 
 class AwaitJvmTest : TestBase() {
     @Test
@@ -12,12 +13,10 @@ class AwaitJvmTest : TestBase() {
         d1.completeExceptionally(TestException()) // first is crashed
         val iterations = 3_000_000 * stressTestMultiplier
         for (iter in 1..iterations) {
-            try {
+            assertFailsWith<TestException> {
                 awaitAll(d1, d2)
-                expectUnreached()
-            } catch (e: TestException) {
-                expect(iter)
             }
+            expect(iter)
         }
         finish(iterations + 1)
     }
