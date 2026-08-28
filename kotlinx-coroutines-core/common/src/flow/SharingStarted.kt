@@ -61,7 +61,7 @@ public enum class SharingCommand {
  *   the upstream flow is stopped and the [SharedFlow.replayCache] is reset to its initial state.
  *   The [shareIn] operator calls [MutableSharedFlow.resetReplayCache];
  *   the [stateIn] operator resets the value to its original `initialValue`.
- *   
+ *
  * Initially, the upstream flow is stopped and is in the initial state, so the emission of additional
  * [STOP][SharingCommand.STOP] and [STOP_AND_RESET_REPLAY_CACHE][SharingCommand.STOP_AND_RESET_REPLAY_CACHE] commands will
  * have no effect.
@@ -93,7 +93,7 @@ public fun interface SharingStarted {
          *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
          *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
          *   It defaults to `Long.MAX_VALUE` (keep replay cache forever, never reset buffer).
-         *   Use zero value to expire the cache immediately.
+         *   Use zero value to expire the cache immediately once the sharing coroutine has been stopped.
          *
          * This function throws [IllegalArgumentException] when either [stopTimeoutMillis] or [replayExpirationMillis]
          * are negative.
@@ -126,7 +126,7 @@ public fun interface SharingStarted {
  *   the sharing coroutine and the resetting of the replay cache (which makes the cache empty for the [shareIn] operator
  *   and resets the cached value to the original `initialValue` for the [stateIn] operator).
  *   It defaults to [Duration.INFINITE] (keep replay cache forever, never reset buffer).
- *   Use [Duration.ZERO] value to expire the cache immediately.
+ *   Use [Duration.ZERO] value to expire the cache immediately once the sharing coroutine has been stopped.
  *
  * This function throws [IllegalArgumentException] when either [stopTimeout] or [replayExpiration]
  * are negative.
