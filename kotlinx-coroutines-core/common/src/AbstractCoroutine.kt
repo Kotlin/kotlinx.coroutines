@@ -126,7 +126,7 @@ public abstract class AbstractCoroutine<in T>(
      * This function shall be invoked at most once on this coroutine.
      * 
      * - [DEFAULT] uses [startCoroutineCancellable].
-     * - [ATOMIC] uses [startCoroutine].
+     * - [ATOMIC] uses [startCoroutineAtomic].
      * - [UNDISPATCHED] uses [startCoroutineUndispatched].
      * - [LAZY] does nothing.
      */

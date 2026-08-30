@@ -11,6 +11,7 @@ import org.junit.*
 import org.junit.Test
 import org.junit.rules.*
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.startCoroutine
 import kotlin.test.*
@@ -21,14 +22,20 @@ class FailFastOnStartTest : TestBase() {
     @JvmField
     val timeout: Timeout = Timeout.seconds(5)
 
+    private object ThrowingDispatcher : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            throw TestException()
+        }
+    }
+
     @Test
     fun testLaunch() = runTest(expected = ::mainException) {
         launch(Dispatchers.Main) {}
     }
 
     @Test
-    fun testLaunchAtomic() = runTest(expected = ::mainException) {
-        launch(Dispatchers.Main, start = CoroutineStart.ATOMIC) {}
+    fun testLaunchAtomic() = runTest(expected = { it is TestException }) {
+        launch(ThrowingDispatcher, start = CoroutineStart.ATOMIC) {}
     }
 
     @Test
