@@ -27,6 +27,11 @@ class FailFastOnStartTest : TestBase() {
     }
 
     @Test
+    fun testLaunchAtomic() = runTest(expected = ::mainException) {
+        launch(Dispatchers.Main, start = CoroutineStart.ATOMIC) {}
+    }
+
+    @Test
     fun testLaunchLazy() = runTest(expected = ::mainException) {
         val job = launch(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
         job.join()
