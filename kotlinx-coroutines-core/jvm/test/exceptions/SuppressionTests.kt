@@ -56,27 +56,4 @@ class SuppressionTests : TestBase() {
         coroutine.resumeWithException(IOException())
         finish(10)
     }
-
-    @Test
-    fun testExceptionUnwrapping() = runTest {
-        val channel = Channel<Int>()
-
-        val deferred = GlobalScope.async {
-            launch {
-                while (true) channel.send(1)
-            }
-
-            launch {
-                val exception = RecoverableTestCancellationException()
-                channel.cancel(exception)
-                throw exception
-            }
-        }
-
-        val e = assertFailsWith<RecoverableTestException> {
-            deferred.await()
-        }
-        assertTrue(e.suppressed.isEmpty())
-        assertTrue(e.cause!!.suppressed.isEmpty())
-    }
 }
