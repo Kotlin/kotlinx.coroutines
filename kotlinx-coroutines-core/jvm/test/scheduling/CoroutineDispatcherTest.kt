@@ -9,11 +9,6 @@ import kotlin.test.*
 
 class CoroutineDispatcherTest : SchedulerTestBase() {
 
-    @After
-    fun tearDown() {
-        schedulerTimeSource = NanoTimeSource
-    }
-
     @Test
     fun testSingleThread() = runBlocking {
         corePoolSize = 1

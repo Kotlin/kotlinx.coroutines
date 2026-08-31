@@ -2,7 +2,11 @@
 
 package kotlinx.coroutines.channels
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.getAndUpdate
+import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.update
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ChannelResult.Companion.closed
 import kotlinx.coroutines.channels.ChannelResult.Companion.failure
@@ -10,6 +14,8 @@ import kotlinx.coroutines.channels.ChannelResult.Companion.success
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.selects.TrySelectDetailedResult.*
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.atomicArrayOfNulls
 import kotlin.coroutines.*
 import kotlin.js.*
 import kotlin.jvm.*
@@ -347,7 +353,7 @@ internal open class BufferedChannel<E>(
         }
     }
 
-    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of these issues: KT-81416, KT-86264. 
+    // Note: this function is temporarily moved from ConflatedBufferedChannel to BufferedChannel class, because of these issues: KT-81416, KT-86264.
     // For now, an inline function, which invokes atomic operations, may only be called within a parent class.
     protected fun trySendDropOldest(element: E): ChannelResult<Unit> =
         sendImpl( // <-- this is an inline function
@@ -2798,6 +2804,7 @@ internal open class BufferedChannel<E>(
  * to update [BufferedChannel.sendSegment], [BufferedChannel.receiveSegment],
  * and [BufferedChannel.bufferEndSegment] correctly.
  */
+@OptIn(ExperimentalAtomicApi::class)
 internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: BufferedChannel<E>?, pointers: Int) : Segment<ChannelSegment<E>>(id, prev, pointers) {
     private val _channel: BufferedChannel<E>? = channel
     val channel get() = _channel!! // always non-null except for `NULL_SEGMENT`
@@ -2814,7 +2821,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     }
 
     @Suppress("UNCHECKED_CAST")
-    internal fun getElement(index: Int) = data[index * 2].value as E
+    internal fun getElement(index: Int) = data.loadAt(index * 2) as E
 
     internal fun retrieveElement(index: Int): E = getElement(index).also { cleanElement(index) }
 
@@ -2823,22 +2830,22 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
     }
 
     private fun setElementLazy(index: Int, value: Any?) {
-        data[index * 2].lazySet(value)
+        data.storeLazyAt(index * 2, value)
     }
 
     // ######################################
     // # Manipulation with the State Fields #
     // ######################################
 
-    internal fun getState(index: Int): Any? = data[index * 2 + 1].value
+    internal fun getState(index: Int): Any? = data.loadAt(index * 2 + 1)
 
     internal fun setState(index: Int, value: Any?) {
-        data[index * 2 + 1].value = value
+        data.storeAt(index * 2 + 1, value)
     }
 
-    internal fun casState(index: Int, from: Any?, to: Any?) = data[index * 2 + 1].compareAndSet(from, to)
+    internal fun casState(index: Int, from: Any?, to: Any?) = data.compareAndSetAt(index * 2 + 1, from, to)
 
-    internal fun getAndSetState(index: Int, update: Any?) = data[index * 2 + 1].getAndSet(update)
+    internal fun getAndSetState(index: Int, update: Any?) = data.exchangeAt(index * 2 + 1, update)
 
 
     // ########################

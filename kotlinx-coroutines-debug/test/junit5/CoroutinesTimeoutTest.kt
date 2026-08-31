@@ -1,5 +1,6 @@
 package kotlinx.coroutines.debug.junit5
 
+import kotlinx.coroutines.debug.withFakeDelayForTesting
 import org.assertj.core.api.*
 import org.junit.Ignore
 import org.junit.Assert.*
@@ -23,7 +24,7 @@ class CoroutinesTimeoutTest {
     }
 
     @Test
-    fun testCoroutinesTimeoutSimple() {
+    fun testCoroutinesTimeoutSimple() = withFakeDelayForTesting {
         val capturedOut = ByteArrayOutputStream()
         eventsForSelector(selectClass(CoroutinesTimeoutSimpleTest::class.java), capturedOut)
             .testFinishedSuccessfully("ignoresClassTimeout")
@@ -35,7 +36,7 @@ class CoroutinesTimeoutTest {
     }
 
     @Test
-    fun testCoroutinesTimeoutMethod() {
+    fun testCoroutinesTimeoutMethod() = withFakeDelayForTesting {
         val capturedOut = ByteArrayOutputStream()
         eventsForSelector(selectClass(CoroutinesTimeoutMethodTest::class.java), capturedOut)
             .testFinishedSuccessfully("fitsInMethodTimeout")
@@ -45,7 +46,7 @@ class CoroutinesTimeoutTest {
     }
 
     @Test
-    fun testCoroutinesTimeoutNested() {
+    fun testCoroutinesTimeoutNested() = withFakeDelayForTesting {
         val capturedOut = ByteArrayOutputStream()
         eventsForSelector(selectClass(CoroutinesTimeoutNestedTest::class.java), capturedOut)
             .testFinishedSuccessfully("fitsInOuterClassTimeout")
@@ -54,7 +55,7 @@ class CoroutinesTimeoutTest {
     }
 
     @Test
-    fun testCoroutinesTimeoutInheritanceWithNoTimeoutInDerived() {
+    fun testCoroutinesTimeoutInheritanceWithNoTimeoutInDerived() = withFakeDelayForTesting {
         val capturedOut = ByteArrayOutputStream()
         eventsForSelector(selectClass(CoroutinesTimeoutInheritanceTest.InheritedWithNoTimeout::class.java), capturedOut)
             .testFinishedSuccessfully("methodOverridesBaseClassTimeoutWithGreaterTimeout")
@@ -64,7 +65,7 @@ class CoroutinesTimeoutTest {
     }
 
     @Test
-    fun testCoroutinesTimeoutInheritanceWithGreaterTimeoutInDerived() {
+    fun testCoroutinesTimeoutInheritanceWithGreaterTimeoutInDerived() = withFakeDelayForTesting {
         val capturedOut = ByteArrayOutputStream()
         eventsForSelector(
             selectClass(CoroutinesTimeoutInheritanceTest.InheritedWithGreaterTimeout::class.java),

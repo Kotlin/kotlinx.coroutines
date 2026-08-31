@@ -1,7 +1,12 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
+import kotlinx.atomicfu.update
+import kotlinx.atomicfu.updateAndGet
 import kotlinx.coroutines.*
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.atomicArrayOfNulls
 import kotlin.jvm.*
 
 private typealias Core<E> = LockFreeTaskQueueCore<E>
@@ -69,6 +74,7 @@ internal open class LockFreeTaskQueue<E : Any>(
  * Lock-free Multiply-Producer xxx-Consumer Queue core.
  * @see LockFreeTaskQueue
  */
+@OptIn(ExperimentalAtomicApi::class)
 internal class LockFreeTaskQueueCore<E : Any>(
     private val capacity: Int,
     private val singleConsumer: Boolean // true when there is only a single consumer (slightly faster)
@@ -107,7 +113,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 if ((tail + 2) and mask == head and mask) return ADD_FROZEN // overfull, so do freeze & copy
                 // If queue is Multi-Consumer then the consumer could still have not cleared element
                 // despite the above check for one free slot.
-                if (!singleConsumer && array[tail and mask].value != null) {
+                if (!singleConsumer && array.loadAt(tail and mask) != null) {
                     // There are two options in this situation
                     // 1. Spin-wait until consumer clears the slot
                     // 2. Freeze & resize to avoid spinning
@@ -122,7 +128,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 val newTail = (tail + 1) and MAX_CAPACITY_MASK
                 if (_state.compareAndSet(state, state.updateTail(newTail))) {
                     // successfully added
-                    array[tail and mask].value = element
+                    array.storeAt(tail and mask, element)
                     // could have been frozen & copied before this item was set -- correct it by filling placeholder
                     var cur = this
                     while(true) {
@@ -136,7 +142,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
     }
 
     private fun fillPlaceholder(index: Int, element: E): Core<E>? {
-        val old = array[index and mask].value
+        val old = array.loadAt(index and mask)
         /*
          * addLast actions:
          * 1) Commit tail slot
@@ -148,7 +154,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
          * perform *unique* check that current placeholder is our to avoid overwriting another producer placeholder
          */
         if (old is Placeholder && old.index == index) {
-            array[index and mask].value = element
+            array.storeAt(index and mask, element)
             // we've corrected missing element, should check if that propagated to further copies, just in case
             return this
         }
@@ -162,7 +168,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
             if (state and FROZEN_MASK != 0L) return REMOVE_FROZEN // frozen -- cannot modify
             state.withState { head, tail ->
                 if ((tail and mask) == (head and mask)) return null // empty
-                val element = array[head and mask].value
+                val element = array.loadAt(head and mask)
                 if (element == null) {
                     // If queue is Single-Consumer, then element == null only when add has not finished yet
                     if (singleConsumer) return null // consider it not added yet
@@ -176,7 +182,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {
                     // Array could have been copied by another thread and it is perfectly fine, since only elements
                     // between head and tail were copied and there are no extra steps we should take here
-                    array[head and mask].value = null // now can safely put null (state was updated)
+                    array.storeAt(head and mask, null) // now can safely put null (state was updated)
                     return element // successfully removed in fast-path
                 }
                 // Multi-Consumer queue must retry this loop on CAS failure (another consumer might have removed element)
@@ -200,7 +206,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
                     return next() // continue to correct head in next
                 }
                 if (_state.compareAndSet(state, state.updateHead(newHead))) {
-                    array[head and mask].value = null // now can safely put null (state was updated)
+                    array.storeAt(head and mask, null) // now can safely put null (state was updated)
                     return null
                 }
             }
@@ -228,8 +234,8 @@ internal class LockFreeTaskQueueCore<E : Any>(
             var index = head
             while (index and mask != tail and mask) {
                 // replace nulls with placeholders on copy
-                val value = array[index and mask].value ?: Placeholder(index)
-                next.array[index and next.mask].value = value
+                val value = array.loadAt(index and mask) ?: Placeholder(index)
+                next.array.storeAt(index and next.mask, value)
                 index++
             }
             next._state.value = state wo FROZEN_MASK
@@ -244,7 +250,7 @@ internal class LockFreeTaskQueueCore<E : Any>(
             var index = head
             while (index and mask != tail and mask) {
                 // replace nulls with placeholders on copy
-                val element = array[index and mask].value
+                val element = array.loadAt(index and mask)
                 @Suppress("UNCHECKED_CAST")
                 if (element != null && element !is Placeholder) res.add(transform(element as E))
                 index++

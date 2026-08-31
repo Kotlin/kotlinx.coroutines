@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CountDownLatch
 import org.junit.*
 import org.junit.Test
 import java.util.concurrent.*

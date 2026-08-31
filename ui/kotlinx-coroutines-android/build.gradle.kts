@@ -31,14 +31,14 @@ val unOptimizedDexDir = layout.buildDirectory.dir("dex-unoptim/")
 val optimizedDexFile = optimizedDexDir.map { it.dir("classes.dex") } .get().asFile
 val unOptimizedDexFile = unOptimizedDexDir.map { it.dir("classes.dex") }.get().asFile
 
-val runR8 by tasks.registering(RunR8::class) {
+val runR8 = tasks.register<RunR8>("runR8") {
     outputDex = optimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules.pro")
 
     dependsOn("jar")
 }
 
-val runR8NoOptim by tasks.registering(RunR8::class) {
+val runR8NoOptim = tasks.register<RunR8>("runR8NoOptim") {
     outputDex = unOptimizedDexDir.get().asFile
     inputConfig = file("testdata/r8-test-rules-no-optim.pro")
 
@@ -55,9 +55,11 @@ tasks.test {
     systemProperty("dexPath", optimizedDexFile.absolutePath)
     systemProperty("noOptimDexPath", unOptimizedDexFile.absolutePath)
 
-    // Output custom metric with the size of the optimized dex
+    // Output custom metric with the size of the optimized dex.
+    // Kludge: local var keeps the build script instance out of the action's serialized state.
+    val optimizedDex = optimizedDexFile
     doLast {
-        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDexFile.length()}']")
+        println("##teamcity[buildStatisticValue key='optimizedDexSize' value='${optimizedDex.length()}']")
     }
 }
 
@@ -67,7 +69,7 @@ externalDocumentationLink(
 /*
  * Task used by our ui/android tests to test minification results and keep track of size of the binary.
  */
-open class RunR8 : JavaExec() {
+abstract class RunR8 : JavaExec() {
 
     @OutputDirectory
     lateinit var outputDex: File
@@ -80,6 +82,9 @@ open class RunR8 : JavaExec() {
 
     @InputFiles
     val jarFile: File = project.tasks.named<Zip>("jar").get().archiveFile.get().asFile
+
+    @InputFiles
+    val runtimeClasspath: FileCollection = project.configurations["runtimeClasspath"]
 
     init {
         classpath = project.configurations["r8"]
@@ -95,12 +100,12 @@ open class RunR8 : JavaExec() {
             "--output", outputDex.absolutePath,
             "--pg-conf", inputConfig.absolutePath
         )
-        arguments.addAll(project.configurations["runtimeClasspath"].files.map { it.absolutePath })
+        arguments.addAll(runtimeClasspath.files.map { it.absolutePath })
         arguments.add(jarFile.absolutePath)
 
         args = arguments
 
-        project.delete(outputDex)
+        outputDex.deleteRecursively()
         outputDex.mkdirs()
 
         super.exec()

@@ -13,6 +13,7 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.js-plain-objects")
     id("org.jetbrains.kotlinx.benchmark")
     id("org.jetbrains.dokka")
     id("org.jetbrains.kotlinx.kover")
@@ -90,18 +91,12 @@ kotlin {
 private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
     // Forgive me, Father, for I have sinned.
     // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
-    val benchmarkMain by ss.creating {
+    val benchmarkMain = ss.create("benchmarkMain") {
         dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
         }
         // For each source set we have to manually set path to the sources, otherwise lookup will fail
         kotlin.srcDir("benchmarks/main/kotlin")
-    }
-
-    @Suppress("UnusedVariable")
-    val jvmBenchmark by ss.creating {
-        // For each source set we have to manually set path to the sources, otherwise lookup will fail
-        kotlin.srcDir("benchmarks/jvm/kotlin")
     }
 
     targets.matching {
@@ -121,6 +116,11 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         }
     }
 
+    ss.named("jvmBenchmark") {
+        // For each source set we have to manually set path to the sources, otherwise lookup will fail
+        kotlin.srcDir("benchmarks/jvm/kotlin")
+    }
+
     targets.matching { it.name != "metadata" }.all {
         benchmark.targets.register("${name}Benchmark")
     }
@@ -128,13 +128,13 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
 
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata by tasks.getting(KotlinCompilationTask::class) {
+val compileKotlinMetadata = tasks.getByName<KotlinCompilationTask<*>>("compileKotlinMetadata") {
     compilerOptions {
         freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
     }
 }
 
-val jvmTest by tasks.getting(Test::class) {
+val jvmTest = tasks.getByName<Test>("jvmTest") {
     minHeapSize = "1g"
     maxHeapSize = "1g"
     enableAssertions = true
@@ -150,7 +150,7 @@ val jvmTest by tasks.getting(Test::class) {
 }
 
 // Setup manifest for kotlinx-coroutines-core-jvm.jar
-val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
+val jvmJar = tasks.getByName<Jar>("jvmJar") { setupManifest(this) }
 
 /*
  * Setup manifest for kotlinx-coroutines-core.jar
@@ -159,7 +159,7 @@ val jvmJar by tasks.getting(Jar::class) { setupManifest(this) }
  * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
  * any JVM project that depends on -core artifact also depends on -core-jvm one.
  */
-val allMetadataJar by tasks.getting(Jar::class) { setupManifest(this) }
+val allMetadataJar = tasks.getByName<Jar>("allMetadataJar") { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
@@ -172,10 +172,10 @@ fun setupManifest(jar: Jar) {
     }
 }
 
-val compileTestKotlinJvm by tasks.getting(KotlinJvmCompile::class)
-val jvmTestClasses by tasks.getting
+val compileTestKotlinJvm = tasks.getByName<KotlinJvmCompile>("compileTestKotlinJvm")
+val jvmTestClasses = tasks.getByName("jvmTestClasses")
 
-val jvmStressTest by tasks.registering(Test::class) {
+val jvmStressTest = tasks.register<Test>("jvmStressTest") {
     dependsOn(compileTestKotlinJvm)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
@@ -192,7 +192,7 @@ val jvmStressTest by tasks.registering(Test::class) {
     systemProperty("kotlinx.coroutines.bufferedChannel.expandBufferCompletionWaitIterations", 1)
 }
 
-val jvmLincheckTest by tasks.registering(Test::class) {
+val jvmLincheckTest = tasks.register<Test>("jvmLincheckTest") {
     dependsOn(compileTestKotlinJvm)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
@@ -205,7 +205,7 @@ val jvmLincheckTest by tasks.registering(Test::class) {
 // Additional Lincheck tests with `segmentSize = 2`.
 // Some bugs cannot be revealed when storing one request per segment,
 // and some are hard to detect when storing multiple requests.
-val jvmLincheckTestAdditional by tasks.registering(Test::class) {
+val jvmLincheckTestAdditional = tasks.register<Test>("jvmLincheckTestAdditional") {
     dependsOn(compileTestKotlinJvm)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
@@ -233,11 +233,11 @@ fun Test.configureJvmForLincheck(segmentSize: Int = 1) {
 }
 
 // Always check additional test sets
-val moreTest by tasks.registering {
+val moreTest = tasks.register("moreTest") {
     dependsOn(listOf(jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional))
 }
 
-val check by tasks.getting {
+val check = tasks.getByName("check") {
     dependsOn(moreTest)
 }
 

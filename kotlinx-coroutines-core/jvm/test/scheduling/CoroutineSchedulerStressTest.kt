@@ -1,6 +1,7 @@
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
+import kotlinx.coroutines.testing.CountDownLatch
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*

@@ -1,8 +1,8 @@
 pluginManagement {
-    val javafx_plugin_version: String by settings
+    val javafxPluginVersion = providers.gradleProperty("javafx_plugin_version").get()
     plugins {
-        id("org.openjfx.javafxplugin") version javafx_plugin_version
-        id("me.champeau.jmh") version "0.7.2"
+        id("org.openjfx.javafxplugin") version javafxPluginVersion
+        id("me.champeau.jmh") version "0.7.3"
     }
 
     repositories {

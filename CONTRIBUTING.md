@@ -81,7 +81,7 @@ This library is built with Gradle.
 
 ### Environment requirements
 
-JDK >= 11 referred to by the `JAVA_HOME` environment variable.
+JDK >= 17 referred to by the `JAVA_HOME` environment variable.
 
 ### Running the Knit tool
 

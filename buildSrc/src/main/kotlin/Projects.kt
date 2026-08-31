@@ -4,7 +4,7 @@ import org.gradle.api.*
 import org.gradle.api.tasks.*
 
 fun Project.version(target: String): String {
-    return property("${target}_version") as String
+    return providers.gradleProperty("${target}_version").get()
 }
 
 val Project.jdkToolchainVersion: Int get() =

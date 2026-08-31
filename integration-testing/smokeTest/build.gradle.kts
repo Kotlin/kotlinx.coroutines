@@ -26,7 +26,7 @@ kotlin {
     linuxX64()
     mingwX64()
 
-    val coroutinesVersion = property("coroutines_version")
+    val coroutinesVersion = project.providers.gradleProperty("coroutines_version").get()
 
     sourceSets {
         commonMain {

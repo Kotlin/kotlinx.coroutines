@@ -5,7 +5,7 @@ import io.reactivex.exceptions.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.Test
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 class ObservableExceptionHandlingTest : TestBase() {
