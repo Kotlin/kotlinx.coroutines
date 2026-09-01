@@ -299,7 +299,7 @@ class MonoTest : TestBase() {
     @Test
     fun testLeakedException() = runBlocking {
         // Test exception is not reported to global handler
-        val flow = mono<Unit> { throw TestException() }.toFlux().asFlow()
+        val flow = Flux.from(mono<Unit> { throw TestException() }).asFlow()
         repeat(10000) {
             combine(flow, flow) { _, _ -> }
                 .catch {}

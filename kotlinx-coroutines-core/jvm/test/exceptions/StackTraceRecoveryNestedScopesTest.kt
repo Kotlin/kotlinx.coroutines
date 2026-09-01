@@ -67,7 +67,8 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
 
     @Test
     fun testAwaitNestedScopes() = runTest {
-        val deferred = async(NonCancellable) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val deferred = detachedScope.async {
             callCoroutineScope(false)
         }
 

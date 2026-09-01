@@ -3,7 +3,6 @@ package benchmarks.flow.scrabble
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.openjdk.jmh.annotations.*
-import java.lang.Long.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +24,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
 
         val bonusForDoubleLetter: (String) -> Int = { word: String ->
             toBeMaxed(word)
-                .map { letterScores[it - 'a'.toInt()] }
+                .map { letterScores[it - 'a'.code] }
                 .maxOrNull()!!
         }
 
@@ -59,9 +58,9 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
         }
     }
 
-    private fun Map.Entry<Int, MutableLong>.letterScore(): Int = letterScores[key - 'a'.toInt()] * Integer.min(
+    private fun Map.Entry<Int, MutableLong>.letterScore(): Int = letterScores[key - 'a'.code] * Integer.min(
         value.get().toInt(),
-        scrabbleAvailableLetters[key - 'a'.toInt()])
+        scrabbleAvailableLetters[key - 'a'.code])
 
     private fun toBeMaxed(word: String) = word.asSequence(startIndex = 3) + word.asSequence(endIndex = 3)
 
@@ -74,7 +73,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
     }
 
     private fun blanks(entry: Map.Entry<Int, MutableLong>): Long =
-        max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()])
+        maxOf(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code])
 
     private fun buildHistogram(word: String): HashMap<Int, MutableLong> {
         return word.asSequence().fold(HashMap()) { accumulator, value ->
@@ -93,7 +92,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
             private val _endIndex = endIndex.coerceAtMost(length)
             private var currentIndex = startIndex
             override fun hasNext(): Boolean = currentIndex < _endIndex
-            override fun next(): Int = get(currentIndex++).toInt()
+            override fun next(): Int = get(currentIndex++).code
         }
     }
 }
