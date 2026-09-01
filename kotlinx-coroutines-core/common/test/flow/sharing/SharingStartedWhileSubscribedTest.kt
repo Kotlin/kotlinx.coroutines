@@ -58,7 +58,7 @@ class SharingStartedWhileSubscribedTest : TestBase() {
     }
 
     @Test
-    fun testImmediateUnsubscribe() = runTest {
+    fun testImmediateUnsubscribe() = withVirtualTime {
         val flow = flow {
             expect(2)
             emit(1)

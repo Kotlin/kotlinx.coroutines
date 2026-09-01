@@ -37,6 +37,7 @@ tasks.withType<Test>().configureEach {
     if (JavaVersion.toVersion(jdkToolchainVersion).isCompatibleWith(JavaVersion.VERSION_13)) {
         jvmArgs("-XX:+AllowRedefinitionToAddDeleteMethods")
     }
+    exclude("**/CoroutinesTimeout*")
 }
 
 tasks.named<Jar>("jar") {

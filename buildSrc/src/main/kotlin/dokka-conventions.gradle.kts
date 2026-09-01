@@ -14,11 +14,13 @@ configure(subprojectWithDokka) {
     configureDokkaPlugins()
     configureDokkaTemplatesDir()
     condigureDokkaSetup()
+    configureDokkaGeneratorMemory()
 }
 
 // For top-level multimodule collection
 configureDokkaPlugins()
 configureDokkaTemplatesDir()
+configureDokkaGeneratorMemory()
 
 dependencies {
     subprojectWithDokka.forEach {
@@ -49,6 +51,14 @@ private fun Project.condigureDokkaSetup() {
                 localDirectory = rootDir
                 remoteUrl("https://github.com/kotlin/kotlinx.coroutines/tree/master")
             }
+        }
+    }
+}
+
+private fun Project.configureDokkaGeneratorMemory() {
+    dokka {
+        dokkaGeneratorIsolation = ProcessIsolation {
+            maxHeapSize = "1g"
         }
     }
 }

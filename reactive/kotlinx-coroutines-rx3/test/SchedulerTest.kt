@@ -537,13 +537,12 @@ class SchedulerTest : TestBase() {
     fun testMemoryLeakInWorkerScope() = runTest {
         // Choose a dispatcher without an internal state
         val scheduler = Dispatchers.Unconfined.asScheduler()
-        suspend fun runSomeTasks() {
+        fun runSomeTasks() {
+            val latch = CountDownLatch(10)
             repeat(10) {
-                scheduler.scheduleDirect({}, 10, TimeUnit.MILLISECONDS)
+                scheduler.scheduleDirect({ latch.countDown() }, 10, TimeUnit.MILLISECONDS)
             }
-            // Wait for the task completion. Note: this is not a race, because `DefaultExecutor` is used here, is fair,
-            // and the tasks above are guaranteed to have been scheduled by this point.
-            delay(20)
+            latch.await()
         }
         // Warm-up: converge to a consistent state of the scheduler. `10` is arbitrary.
         runSomeTasks()

@@ -116,7 +116,7 @@ class RunTestTest {
                 launch(CoroutineName(name1)) {
                     CompletableDeferred<Unit>().await()
                 }
-                launch(CoroutineName(name2)) {
+                launch(CoroutineName(name2), start = CoroutineStart.UNDISPATCHED) {
                 }
             }
         }

@@ -129,6 +129,9 @@ object FieldWalker {
             element is ExecutorService && type.name == $$"java.util.concurrent.Executors$DelegatedExecutorService" -> {
                 /* can't access anything in the executor */
             }
+            element is java.lang.Class<*> -> {
+                // Reached callable reference owner, skip
+            }
             // All the other classes are reflectively scanned
             else -> fields(type, statics).forEach { field ->
                 push(field.get(element), visited, stack) { Ref.FieldRef(element, field.name) }

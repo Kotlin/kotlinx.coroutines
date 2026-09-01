@@ -199,7 +199,7 @@ class TimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSharedFlowCancelledNoTimeout() = runTest {
+    fun testSharedFlowCancelledNoTimeout() = withVirtualTime {
         val mutableSharedFlow = MutableSharedFlow<Int>()
         val list = arrayListOf<Int>()
 
