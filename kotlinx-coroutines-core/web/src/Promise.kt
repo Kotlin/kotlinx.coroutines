@@ -63,7 +63,7 @@ public fun <T: JsAny?> Deferred<T>.asPromise(): Promise<T> {
 @OptIn(ExperimentalWasmJsInterop::class)
 public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
     @Suppress("UNCHECKED_CAST", "UNCHECKED_CAST_TO_EXTERNAL_INTERFACE")
-    val deferred = promiseGetDeferred(this) as? JsReference<Deferred<T>>
+    val deferred = promiseGetDeferred(this)?.unsafeCast<JsReference<Deferred<T>>>()
     return deferred?.get() ?: GlobalScope.async(start = CoroutineStart.UNDISPATCHED) { await() }
 }
 
