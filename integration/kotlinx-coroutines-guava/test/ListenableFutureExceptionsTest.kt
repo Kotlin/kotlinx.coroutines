@@ -12,22 +12,22 @@ import kotlin.test.*
 class ListenableFutureExceptionsTest : TestBase() {
 
     @Test
-    fun testAwait() {
+    fun testConsume() {
         testException(IOException(), { it is IOException })
     }
 
     @Test
-    fun testAwaitChained() {
+    fun testConsumeChained() {
         testException(IOException(), { it is IOException }, { i -> i!! + 1 })
     }
 
     @Test
-    fun testAwaitCompletionException() {
+    fun testConsumeCompletionException() {
         testException(CompletionException("test", IOException()), { it is CompletionException })
     }
 
     @Test
-    fun testAwaitChainedCompletionException() {
+    fun testConsumeChainedCompletionException() {
         testException(
             CompletionException("test", IOException()),
             { it is CompletionException },
@@ -35,12 +35,12 @@ class ListenableFutureExceptionsTest : TestBase() {
     }
 
     @Test
-    fun testAwaitTestException() {
+    fun testConsumeTestException() {
         testException(TestException(), { it is TestException })
     }
 
     @Test
-    fun testAwaitChainedTestException() {
+    fun testConsumeChainedTestException() {
         testException(TestException(), { it is TestException }, { i -> i!! + 1 })
     }
 
@@ -60,7 +60,7 @@ class ListenableFutureExceptionsTest : TestBase() {
             }
             future.setException(exception)
             val e = assertFailsWith<Throwable> {
-                chained.await()
+                chained.consume()
             }
             assertTrue(expected(e))
         }
@@ -78,7 +78,7 @@ class ListenableFutureExceptionsTest : TestBase() {
             }
 
             val e = assertFailsWith<Throwable> {
-                chained.await()
+                chained.consume()
             }
             assertTrue(expected(e))
         }
