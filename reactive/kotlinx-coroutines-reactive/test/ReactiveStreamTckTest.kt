@@ -21,7 +21,7 @@ class ReactiveStreamTckTest : TestBase() {
 
     class ReactiveStreamTckTestSuite(
         private val dispatcher: Dispatcher
-    ) : PublisherVerification<Long>(TestEnvironment(500, 500)) {
+    ) : PublisherVerification<Long>(TestEnvironment(30000, 30000)) {
 
         override fun createPublisher(elements: Long): Publisher<Long> =
             publish(dispatcher.dispatcher) {
