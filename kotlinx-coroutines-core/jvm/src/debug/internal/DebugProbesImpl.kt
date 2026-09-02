@@ -12,6 +12,7 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
+import kotlin.coroutines.jvm.internal.*
 import _COROUTINE.ArtificialStackFrames
 
 @PublishedApi
@@ -466,7 +467,18 @@ internal object DebugProbesImpl {
 
     private tailrec fun CoroutineStackFrame.realCaller(): CoroutineStackFrame? {
         val caller = callerFrame ?: return null
-        return if (caller.getStackTraceElement() != null) caller else caller.realCaller()
+        /*
+         * Kludge: suppress visibility for effectively public and stable stdlib API.
+         * getStackTraceElement() reflectively reads `label` from the compiler-generated continuation
+         * which tends to be unreasonably slow (KT-57634) because of reflection overhead. We don't need the line number
+         * here or even a stacktrace element, we need only the marker it exists.
+         * By its contract, BaseContinuationImpl always has one, so it's much (~x2) cheaper to check for the type
+         * rather than materializing StackTraceElement.
+         *
+         * Can be removed when KT-43395 is implemented and widely adopted.
+         */
+        @Suppress("INVISIBLE_REFERENCE")
+        return if (caller is BaseContinuationImpl || caller.getStackTraceElement() != null) caller else caller.realCaller()
     }
 
     private fun updateState(owner: CoroutineOwner<*>, frame: Continuation<*>, state: String) {
