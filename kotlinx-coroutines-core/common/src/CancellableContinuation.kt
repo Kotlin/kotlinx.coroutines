@@ -24,7 +24,7 @@ import kotlin.coroutines.intrinsics.*
  * from a callback or an external source of values that optionally supports cancellation:
  *
  * ```
- * suspend fun <T> CompletableFuture<T>.await(): T = suspendCancellableCoroutine { c ->
+ * suspend fun <T> CompletableFuture<T>.consume(): T = suspendCancellableCoroutine { c ->
  *     val future = this
  *     future.whenComplete { result, throwable ->
  *         if (throwable != null) {
@@ -35,7 +35,7 @@ import kotlin.coroutines.intrinsics.*
  *             c.resume(result)
  *         }
  *     }
- *     // Cancel the computation if the continuation itself was cancelled because a caller of 'await' is cancelled
+ *     // Cancel the computation if the continuation itself was cancelled because a caller of 'consume' is cancelled
  *     c.invokeOnCancellation { future.cancel(true) }
  * }
  * ```
