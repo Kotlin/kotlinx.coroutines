@@ -115,7 +115,7 @@ With stack trace recovery enabled, the stack trace also includes the `Deferred.a
 Stack trace recovery can copy an exception automatically when its class has a public constructor that accepts a message, a cause, both, or no arguments at all.
 
 If you want the `kotlinx.coroutines` library to recover the stack trace of an exception that requires additional constructor arguments,
-such as a line number or an error code, implement the `StackTraceRecoverable` interface.
+such as a line number or an error code, implement the [`StackTraceRecoverable`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.coroutines.debug/-stack-trace-recoverable/) interface.
 
 The `StackTraceRecoverable` interface is part of the Kotlin standard library, so you can implement it without adding a dependency on the `kotlinx.coroutines` library.
 
@@ -123,7 +123,7 @@ The `StackTraceRecoverable` interface is part of the Kotlin standard library, so
 >
 {style="note"}
 
-To implement the interface, override the `copyForStackTraceRecovery()` function.
+To implement the interface, override the [`copyForStackTraceRecovery()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.coroutines.debug/-stack-trace-recoverable/copy-for-stack-trace-recovery.html) function.
 In the override, return a new exception instance for stack trace recovery, or `null` if you don't want the `kotlinx.coroutines` library to copy the exception.
 
 These APIs are [Experimental](components-stability.md#stability-levels-explained) and require opt-in with the
