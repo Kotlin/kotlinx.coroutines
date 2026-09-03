@@ -235,7 +235,7 @@ You may notice that the output order and thread names may change each time you r
 > You can display coroutine names next to thread names in the output of your code for additional information.
 > To do so, pass the `-Dkotlinx.coroutines.debug` VM option in your build tool or IDE run configuration.
 >
-> See [Debugging coroutines](https://github.com/Kotlin/kotlinx.coroutines/blob/master/docs/topics/debugging.md) for more information.
+> See [Debug coroutines](coroutines-debugging.md) for more information.
 >
 {style="tip"}
 

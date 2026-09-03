@@ -2,6 +2,10 @@
 
 [//]: # (title: Coroutines and channels − tutorial)
 
+> An upcoming update will revise this tutorial. In the meantime, for an up-to-date guide to getting started with coroutines, see [Coroutines basics](coroutines-basics.md).
+> 
+{style="note"}
+
 In this tutorial, you'll learn how to use coroutines in IntelliJ IDEA to perform network requests without blocking the
 underlying thread or callbacks.
 

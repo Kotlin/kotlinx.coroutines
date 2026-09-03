@@ -16,7 +16,10 @@
 		<toc-element topic="exception-handling.md"/>
 		<toc-element topic="shared-mutable-state-and-concurrency.md"/>
 		<toc-element topic="select-expression.md"/>
-		<toc-element topic="debug-coroutines-with-idea.md"/>
-		<toc-element topic="debug-flow-with-idea.md"/>
-	</snippet>
+        <toc-element toc-title="Coroutine debugging">
+            <toc-element topic="coroutines-debugging.md"/>
+			<toc-element topic="debug-coroutines-with-idea.md"/>
+			<toc-element topic="debug-flow-with-idea.md"/>
+        </toc-element>
+    </snippet>
 </instance-profile>

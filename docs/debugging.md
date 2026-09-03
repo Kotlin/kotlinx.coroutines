@@ -1,1 +1,1 @@
-The documentation has been moved to the [topics/debugging.md](topics/debugging.md).
+The documentation has been moved to the [https://kotlinlang.org/docs/coroutines-debugging.html](https://kotlinlang.org/docs/coroutines-debugging.html) page.
