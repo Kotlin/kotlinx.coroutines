@@ -608,8 +608,17 @@ internal class CoroutineScheduler(
         @Volatile // volatile for push/pop operation into parkedWorkersStack
         var indexInArray = 0
             set(index) {
-                name = "$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}"
                 field = index
+                // Renaming a live thread from another thread can require the runtime to
+                // suspend it first (see #2234), which can time out and crash the process
+                // if that thread doesn't reach a safepoint quickly enough. Only rename
+                // synchronously here if it's safe to do so: either this thread hasn't
+                // started yet (no live peer to suspend), or we ARE this thread. Otherwise,
+                // defer to runWorker()'s self-heal check, which is always a same-thread
+                // (and therefore always safe) rename.
+                if (!isAlive || Thread.currentThread() === this) {
+                    name = "$schedulerName-worker-${if (index == 0) "TERMINATED" else index.toString()}"
+                }
             }
 
         constructor(index: Int) : this() {
@@ -706,9 +715,18 @@ internal class CoroutineScheduler(
         @JvmField
         var mayHaveLocalTasks = false
 
+        // Tracks the index this worker's name was last set to by itself, so a rename
+        // deferred by indexInArray's setter (because it was requested by another
+        // thread) gets applied here instead, on this worker's own thread.
+        private var appliedNameIndex = indexInArray
+
         private fun runWorker() {
             var rescanned = false
             while (!isTerminated && state != WorkerState.TERMINATED) {
+                if (appliedNameIndex != indexInArray) {
+                    appliedNameIndex = indexInArray
+                    name = "$schedulerName-worker-${if (appliedNameIndex == 0) "TERMINATED" else appliedNameIndex.toString()}"
+                }
                 val task = findTask(mayHaveLocalTasks)
                 // Task found. Execute and repeat
                 if (task != null) {
