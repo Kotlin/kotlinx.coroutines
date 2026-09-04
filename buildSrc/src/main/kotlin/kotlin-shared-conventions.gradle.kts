@@ -103,13 +103,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
             androidNativeX86()
             androidNativeX64()
         }
-        // Deprecated for removal: see KT-78660
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        run {
-            macosX64()
-            tvosX64()
-            watchosX64()
-        }
         js {
             outputModuleName = project.name
             nodejs()
