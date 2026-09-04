@@ -16,7 +16,12 @@ public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = DefaultScheduler
 
     @JvmStatic
-    public actual val Main: MainCoroutineDispatcher get() = MainDispatcherLoader.dispatcher
+    public actual val Main: MainCoroutineDispatcher get() = with(MainDispatcherLoader.dispatcherLoadResult) {
+        dispatcherOrNull ?: throw IllegalStateException(
+            failureMessageOrNull ?: "Failed to load Dispatchers.Main",
+            failureCauseOrNull
+        )
+    }
 
     @JvmStatic
     public actual val Unconfined: CoroutineDispatcher = kotlinx.coroutines.Unconfined
