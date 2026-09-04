@@ -23,7 +23,7 @@ import kotlin.coroutines.jvm.internal.CoroutineStackFrame
  */
 @ExperimentalCoroutinesApi
 public actual fun CoroutineScope.newCoroutineContext(context: CoroutineContext): CoroutineContext {
-    val combined = foldCopies(coroutineContext, context, true)
+    val combined = foldCopies(coroutineContext, context)
     val debug = if (DEBUG) combined + CoroutineId(COROUTINE_ID.incrementAndGet()) else combined
     return if (combined !== Dispatchers.Default && combined[ContinuationInterceptor] == null)
         debug + Dispatchers.Default else debug
@@ -40,60 +40,67 @@ public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineCo
      * contains copyable elements.
      */
     if (!addedContext.hasCopyableElements()) return this + addedContext
-    return foldCopies(this, addedContext, false)
+    // Similar to foldCopies, but because no new coroutine is launched, CTCEs existing only in the original context do
+    // not need to be copied. The added context is folded into the original like the default implementation of
+    // CoroutineContext.plus.
+    return addedContext.fold(this) { result, element ->
+        if (element !is CopyableThreadContextElement<*>) return@fold result + element // not CTCE, append normally
+        val oldElement = result[element.key] ?: return@fold result + element.copyForChild() // new CTCE, append copy
+        // otherwise, overwrite oldElement with merged CTCE
+        result + (oldElement as CopyableThreadContextElement<*>).mergeForChild(element)
+    }
 }
 
-private fun CoroutineContext.hasCopyableElements(): Boolean =
-    fold(false) { result, it -> result || it is CopyableThreadContextElement<*> }
+private fun CoroutineContext.hasCopyableElements(): Boolean = when (this) {
+    // Fast-path: avoid calling fold for single element contexts, which is the most common case for the added context.
+    is CopyableThreadContextElement<*> -> true
+    is CoroutineContext.Element -> false
+    else -> fold(false) { result, it -> result || it is CopyableThreadContextElement<*> }
+}
 
 /**
- * Folds two contexts properly applying [CopyableThreadContextElement] rules when necessary.
-
+ * Folds two contexts properly applying [CopyableThreadContextElement] rules when creating a new coroutine.
+ *
  * The rules are as follows:
  * - If both contexts have the same (by key) CTCE, they are [merged][CopyableThreadContextElement.mergeForChild].
- * - If [isNewCoroutine] is `true`, the CTCEs that one context has and the other does not are
- *   [copied][CopyableThreadContextElement.copyForChild].
- * - If [isNewCoroutine] is `false`, then the CTCEs that the right context has and the left does not are copied,
- *   but those that only the left context has are not copied but added to the resulting context as is.
+ * - The CTCEs that one context has and the other does not are [copied][CopyableThreadContextElement.copyForChild].
  * - Every non-CTCE is added to the resulting context as is.
  */
-private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext, isNewCoroutine: Boolean): CoroutineContext {
-    // Do we have something to copy left-hand side?
-    val hasElementsLeft = originalContext.hasCopyableElements()
-    val hasElementsRight = appendContext.hasCopyableElements()
-
-    // Nothing to fold, so just return the sum of contexts
-    if (!hasElementsLeft && !hasElementsRight) {
-        return originalContext + appendContext
+private fun foldCopies(originalContext: CoroutineContext, appendContext: CoroutineContext): CoroutineContext {
+    // Fast-path: we can use a simpler fold pass over originalContext to copy CTCEs if appendContext does not contain
+    // CTCEs. appendContext being empty is the most common case for new coroutines, so we check that explicitly first.
+    if (appendContext === EmptyCoroutineContext || !appendContext.hasCopyableElements()) {
+        // Fold originalContext into itself, overwriting CTCEs with copies while leaving other elements alone.
+        return originalContext.fold(originalContext) { result, element ->
+            if (element !is CopyableThreadContextElement<*>) return@fold result // not CTCE, leave it alone
+            result + element.copyForChild() // CTCE, overwrite with copy
+            // no merging necessary because no CTCEs in appendContext
+        } + appendContext // so just append all of it normally
     }
 
+    // Slow-path: appendContext contains one or more CTCEs. We'll need two fold passes over both originalContext and
+    // appendContext to merge CTCEs found in both contexts, copy CTCEs found in one context but not the other, and
+    // append any remaining elements in appendContext to originalContext.
     var leftoverContext = appendContext
-    val folded = originalContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
-        if (element !is CopyableThreadContextElement<*>) return@fold result + element
-        // Will this element be overwritten?
+    // Fold originalContext into itself, overwriting CTCEs with copies or merges while leaving other elements alone.
+    val folded = originalContext.fold(originalContext) { result, element ->
+        if (element !is CopyableThreadContextElement<*>) return@fold result // not CTCE, leave it alone
         val newElement = leftoverContext[element.key]
-        // No, just copy it
         if (newElement == null) {
-            // For 'withContext'-like builders we do not copy as the element is not shared
-            return@fold result + if (isNewCoroutine) element.copyForChild() else element
-        }
-        // Yes, then first remove the element from append context
-        leftoverContext = leftoverContext.minusKey(element.key)
-        // Return the sum
-        @Suppress("UNCHECKED_CAST")
-        return@fold result + (element as CopyableThreadContextElement<Any?>).mergeForChild(newElement)
-    }
-
-    if (hasElementsRight) {
-        leftoverContext = leftoverContext.fold<CoroutineContext>(EmptyCoroutineContext) { result, element ->
-            // We're appending new context element -- we have to copy it, otherwise it may be shared with others
-            if (element is CopyableThreadContextElement<*>) {
-                return@fold result + element.copyForChild()
-            }
-            return@fold result + element
+            // no matching CTCE in appendContext
+            result + element.copyForChild() // overwrite with copy
+        } else {
+            // found matching CTCE in appendContext
+            leftoverContext = leftoverContext.minusKey(element.key) // remove matching element from appendContext
+            result + element.mergeForChild(newElement) // then overwrite element with merged CTCE
         }
     }
-    return folded + leftoverContext
+    // Fold remaining elements in leftoverContext into the folded originalContext. Any remaining CTCEs are new and must
+    // be copied; non-CTCE elements are appended normally.
+    return leftoverContext.fold(folded) { result, element ->
+        if (element !is CopyableThreadContextElement<*>) return@fold result + element // not CTCE, append normally
+        result + element.copyForChild() // new CTCE, append copy
+    }
 }
 
 /**
