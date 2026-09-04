@@ -1,5 +1,7 @@
 package kotlinx.coroutines.channels
 
+import kotlinx.coroutines.internal.JsOptionalExport
+
 /**
  * A strategy for buffer overflow handling in [channels][Channel] and [flows][kotlinx.coroutines.flow.Flow] that
  * controls what is going to be sacrificed on buffer overflow:
@@ -11,6 +13,7 @@ package kotlinx.coroutines.channels
  * - [DROP_LATEST] &mdash; the buffer remains unchanged on overflow, and the value that we were going to add
  *   gets discarded, all without suspending.
  */
+@JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public enum class BufferOverflow {
     /**
      * Suspend until free space appears in the buffer.
