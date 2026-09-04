@@ -44,6 +44,10 @@ apply(plugin = "pub-conventions")
  ========================================================================== */
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xallow-pre-17-runtime-jdk")
+    }
+
     sourceSets {
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
         groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
