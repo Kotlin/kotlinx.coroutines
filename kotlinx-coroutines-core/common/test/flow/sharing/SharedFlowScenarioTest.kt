@@ -248,8 +248,8 @@ class SharedFlowScenarioTest : TestBase() {
         try {
             coroutineScope {
                 dsl = ScenarioDsl<T>(sharedFlow, coroutineContext)
-                dsl!!.scenario()
-                dsl!!.stop()
+                dsl.scenario()
+                dsl.stop()
             }
         } catch (e: Throwable) {
             dsl?.printLog()

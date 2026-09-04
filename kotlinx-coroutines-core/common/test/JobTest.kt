@@ -140,13 +140,14 @@ class JobTest : TestBase() {
     @Test
     fun testCancelAndJoinParentWaitChildren() = runTest {
         expect(1)
-        val parent = Job()
-        launch(parent, start = CoroutineStart.UNDISPATCHED) {
-            expect(2)
-            try {
-                yield() // will get cancelled
-            } finally {
-                expect(5)
+        val parent = launch(start = CoroutineStart.UNDISPATCHED) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                expect(2)
+                try {
+                    yield() // will get cancelled
+                } finally {
+                    expect(5)
+                }
             }
         }
         expect(3)
@@ -160,7 +161,7 @@ class JobTest : TestBase() {
     fun testOnCancellingHandler() = runTest {
         val job = launch {
             expect(2)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
 
         job.invokeOnCompletion(onCancelling = true) {
@@ -244,7 +245,7 @@ class JobTest : TestBase() {
     private class Wrapper : Incomplete {
         override val isActive: Boolean
             get() =  error("")
-        override val list: NodeList?
+        override val list: NodeList
             get() = error("")
     }
 }

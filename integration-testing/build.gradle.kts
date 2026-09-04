@@ -87,7 +87,7 @@ java {
 
 val kotlinVersion = providers.gradleProperty("kotlin_version").get()
 
-val asmVersion = property("asm_version")
+val asmVersion = providers.gradleProperty("asm_version").get()
 
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
@@ -95,7 +95,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
 
-val coroutinesVersion = property("coroutines_version").toString()
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
 
 sourceSets {
     // An assortment of tests for behavior of the core coroutines module on JVM
@@ -210,7 +210,7 @@ tasks {
         jvmArgs("-javaagent:$coroutinesDebugJar")
         testClassesDirs = sourceSet.output.classesDirs
         classpath = sourceSet.runtimeClasspath
-        systemProperties["overwrite.probes"] = project.properties["overwrite.probes"]
+        systemProperties["overwrite.probes"] = project.providers.gradleProperty("overwrite.probes").orNull
     }
 
     create<Test>("debugDynamicAgentTest") {

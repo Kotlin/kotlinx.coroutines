@@ -27,7 +27,8 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithoutCause() = runTest {
-        val c = produce(NonCancellable) {
+        val separateScope = CoroutineScope(currentCoroutineContext() + Job())
+        val c = separateScope.produce {
             expect(2)
             send(1)
             expect(3)
@@ -54,7 +55,8 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancelWithCause() = runTest {
-        val c = produce(NonCancellable) {
+        val separateScope = CoroutineScope(currentCoroutineContext() + Job())
+        val c = separateScope.produce {
             expect(2)
             send(1)
             expect(3)
@@ -72,12 +74,10 @@ class ProduceTest : TestBase() {
         check(c.receive() == 1)
         expect(4)
         c.cancel(TestCancellationException())
-        try {
+        assertFailsWith<TestCancellationException> {
             c.receive()
-            expectUnreached()
-        } catch (e: TestCancellationException) {
-            expect(5)
         }
+        expect(5)
         yield() // to produce
         finish(7)
     }
@@ -145,8 +145,10 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testAwaitConsumerCancellation() = runTest {
-        val parent = Job()
-        val channel = produce<Int>(parent) {
+        // TODO: simplify after #2758
+        val parent = Job(currentCoroutineContext()[Job])
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        val channel = childScope.produce<Int> {
             expect(2)
             awaitClose { expect(4) }
         }
@@ -161,8 +163,10 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testAwaitProducerCancellation() = runTest {
-        val parent = Job()
-        produce<Int>(parent) {
+        // TODO: simplify after #2758
+        val parent = Job(currentCoroutineContext()[Job])
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        childScope.produce<Int> {
             expect(2)
             launch {
                 expect(3)
@@ -178,15 +182,18 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testAwaitParentCancellation() = runTest {
-        val parent = Job()
-        produce<Int>(parent) {
+        // TODO: simplify after #2758
+        val childScope = CoroutineScope(
+            currentCoroutineContext() + Job(currentCoroutineContext()[Job])
+        )
+        childScope.produce<Int> {
             expect(2)
             awaitClose { expect(4) }
         }
         expect(1)
         yield()
         expect(3)
-        parent.cancelAndJoin()
+        childScope.coroutineContext.job.cancelAndJoin()
         finish(5)
     }
 
@@ -213,9 +220,11 @@ class ProduceTest : TestBase() {
         unhandled = listOf({ it is TestException })
     ) {
         val c = produce<Int> {
-            launch(SupervisorJob()) {
-                throw TestException()
-            }.join()
+            supervisorScope {
+                launch {
+                    throw TestException()
+                }.join()
+            }
             send(3)
         }
         assertEquals(3, c.receive())
@@ -223,21 +232,24 @@ class ProduceTest : TestBase() {
 
     @Test
     fun testCancellingProduceCoroutineButNotChannel() = runTest {
-        val c = produce<Int>(Job(), capacity = Channel.UNLIMITED) {
-            launch { throw TestException() }
-            try {
-                yield()
-            } finally {
-                repeat(10) { trySend(it) }
+        supervisorScope {
+            val c = produce<Int>(capacity = Channel.UNLIMITED) {
+                launch { throw TestException() }
+                try {
+                    yield()
+                } finally {
+                    repeat(10) { trySend(it) }
+                }
             }
+            repeat(10) { assertEquals(it, c.receive()) }
         }
-        repeat(10) { assertEquals(it, c.receive()) }
     }
 
     @Test
     fun testReceivingValuesAfterFailingTheCoroutine() = runTest {
         val produceJob = Job()
-        val c = produce<Int>(produceJob, capacity = Channel.UNLIMITED) {
+        val separateScope = CoroutineScope(currentCoroutineContext() + produceJob)
+        val c = separateScope.produce<Int>(capacity = Channel.UNLIMITED) {
             repeat(5) { send(it) }
             throw TestException()
         }

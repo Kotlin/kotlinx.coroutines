@@ -2,11 +2,12 @@
 
 import groovy.util.Node
 import groovy.util.NodeList
+import groovy.xml.XmlParser
 import org.gradle.api.Project
-import org.gradle.api.XmlProvider
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.*
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
+import org.gradle.api.publish.maven.tasks.GenerateMavenPom
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.kotlin.dsl.*
@@ -54,7 +55,7 @@ fun signPublicationIfKeyPresent(project: Project, publication: MavenPublication)
 }
 
 private fun Project.getSensitiveProperty(name: String): String? {
-    return project.findProperty(name) as? String ?: System.getenv(name)
+    return project.providers.gradleProperty(name).orNull ?: project.providers.environmentVariable(name).orNull
 }
 
 /**
@@ -118,40 +119,66 @@ fun Project.establishSignDependencies() {
 public fun Project.reconfigureMultiplatformPublication(jvmPublication: MavenPublication) {
     val mavenPublications =
         extensions.getByType(PublishingExtension::class.java).publications.withType<MavenPublication>()
+
+    // 1: find KMP publication
     val kmpPublication = mavenPublications.getByName("kotlinMultiplatform")
 
-    var jvmPublicationXml: XmlProvider? = null
-    jvmPublication.pom.withXml { jvmPublicationXml = this }
+    tasks.named<GenerateMavenPom>(pomTaskName(kmpPublication)) {
+        // 2: find pure JVM publication and capture path to where pom.xml will be stored.
+        // This is the only part of the serialized task state we have here, we don't have a publication, an XML,
+        // and we for sure cannot rebuild it on a cache-hit path
+        val jvmPomTask = tasks.named<GenerateMavenPom>(pomTaskName(jvmPublication))
+        // Execution dependency
+        val jvmPomFile = jvmPomTask.map { it.destination }
+        inputs.file(jvmPomFile)
+        val kmpArtifactId = kmpPublication.artifactId
+        val jvmGroupId = jvmPublication.groupId
+        val jvmArtifactId = jvmPublication.artifactId
+        val jvmVersion = jvmPublication.version
 
-    kmpPublication.pom.withXml {
-        val root = asNode()
-        // Remove the original content and add the content from the platform POM:
-        root.children().toList().forEach { root.remove(it as Node) }
-        jvmPublicationXml!!.asNode().children().forEach { root.append(it as Node) }
+        // 3: take KMP publication and do the trick:
+        // 3.1: remove all the content from KMP pom.xml
+        // 3.2 take JVM pom.xml and copy it into KMP pom.xml
+        // 3.3 patch "KMP" pom.xml to have root artifactId (without -jvm) back
+        // 3.4 patch "KMP" pom.xml so it's pure packaging (only POM, no artifacts)
+        // 3.5 patch "KMP" pom.xml to depend only on the JVM publication
+        pom.withXml {
+            // This closure is a serialized task state. The only thing it can capture from another
+            // configured publication (note: it's not executed!) is path where we can expect an XML on the execution phase
+            // plus some string literals with gid/aid/version
+            val jvmPom = XmlParser(false, false).parse(jvmPomFile.get())
 
-        // Adjust the self artifact ID, as it should match the root module's coordinates:
-        ((root["artifactId"] as NodeList).first() as Node).setValue(kmpPublication.artifactId)
+            val root = asNode()
+            // Remove the original content and add the content from the platform POM:
+            root.children().toList().forEach { root.remove(it as Node) }
+            jvmPom.children().toList().forEach { root.append(it as Node) }
 
-        // Set packaging to POM to indicate that there's no artifact:
-        root.appendNode("packaging", "pom")
+            // Adjust the self artifact ID, as it should match the root module's coordinates:
+            root.child("artifactId").setValue(kmpArtifactId)
 
-        // Remove the original platform dependencies and add a single dependency on the platform module:
-        val dependencies = (root["dependencies"] as NodeList).first() as Node
-        dependencies.children().toList().forEach { dependencies.remove(it as Node) }
-        dependencies.appendNode("dependency").apply {
-            appendNode("groupId", jvmPublication.groupId)
-            appendNode("artifactId", jvmPublication.artifactId)
-            appendNode("version", jvmPublication.version)
-            appendNode("scope", "compile")
+            // Set packaging to POM to indicate that there's no artifact:
+            root.appendNode("packaging", "pom")
+
+            // Remove the original platform dependencies and add a single dependency on the platform module:
+            val dependencies = root.child("dependencies")
+            dependencies.children().toList().forEach { dependencies.remove(it as Node) }
+            dependencies.appendNode("dependency").apply {
+                appendNode("groupId", jvmGroupId)
+                appendNode("artifactId", jvmArtifactId)
+                appendNode("version", jvmVersion)
+                appendNode("scope", "compile")
+            }
         }
     }
-
-    // TODO verify if this is still relevant
-    tasks.matching { it.name == "generatePomFileForKotlinMultiplatformPublication" }.configureEach {
-        @Suppress("DEPRECATION")
-        dependsOn(tasks["generatePomFileFor${jvmPublication.name.capitalize()}Publication"])
-    }
 }
+
+// maven-publish's naming convention for pom-generating tasks
+private fun pomTaskName(publication: MavenPublication) =
+    "generatePomFileFor${publication.name.replaceFirstChar(Char::uppercaseChar)}Publication"
+
+private fun Node.child(childName: String): Node =
+    (this[childName] as NodeList).filterIsInstance<Node>().firstOrNull()
+        ?: error("<$childName> element not found in the generated pom")
 
 // Top-level deploy task that publishes all artifacts
 public fun Project.registerTopLevelDeployTask() {

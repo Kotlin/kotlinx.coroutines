@@ -32,7 +32,7 @@ dependencies {
 
 publishing {
     publications {
-        val mavenBom by creating(MavenPublication::class) {
+        create<MavenPublication>("mavenBom") {
             from(components["javaPlatform"])
         }
         // Disable metadata publication

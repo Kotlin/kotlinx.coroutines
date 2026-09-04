@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-val coroutinesVersion = property("coroutines_version").toString()
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
 
 configurations {
     create("r8")
@@ -17,25 +17,21 @@ dependencies {
 
 val r8OutputDir = layout.buildDirectory.dir("r8out")
 
-val runR8 by tasks.registering(RunR8::class) {
+val runR8 = tasks.register<RunR8>("runR8") {
     outputDir = r8OutputDir.get().asFile
     inputConfig = file("r8-rules.pro")
 
     dependsOn("jar")
 }
 
-tasks.register("testGcAnchor") {
+tasks.register<JavaExec>("testGcAnchor") {
     dependsOn(runR8)
 
-    doLast {
-        project.javaexec {
-            mainClass.set("GcAnchorKt")
-            classpath = files(r8OutputDir)
-        }
-    }
+    mainClass.set("GcAnchorKt")
+    classpath = files(r8OutputDir)
 }
 
-open class RunR8 : JavaExec() {
+abstract class RunR8 : JavaExec() {
 
     @OutputDirectory
     lateinit var outputDir: File

@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class AsyncTest : TestBase() {
 
@@ -14,10 +15,10 @@ class AsyncTest : TestBase() {
         }
         expect(2)
         assertTrue(d.isActive)
-        assertEquals(d.await(), 42)
+        assertEquals(42, d.await())
         assertTrue(!d.isActive)
         expect(4)
-        assertEquals(d.await(), 42) // second await -- same result
+        assertEquals(42, d.await()) // second await -- same result
         finish(5)
     }
 
@@ -30,7 +31,7 @@ class AsyncTest : TestBase() {
         }
         expect(3)
         assertTrue(!d.isActive)
-        assertEquals(d.await(), 42)
+        assertEquals(42, d.await())
         finish(4)
     }
 
@@ -47,16 +48,18 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testCancellationWithCause() = runTest {
-        expect(1)
-        val d = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            expect(3)
-            yield()
-        }
-        expect(2)
-        d.cancel(TestCancellationException("TEST"))
-        try {
-            d.await()
-        } catch (e: TestCancellationException) {
+        val d: Deferred<Unit>
+        supervisorScope {
+            expect(1)
+            d = async(start = CoroutineStart.ATOMIC) {
+                expect(3)
+                yield()
+            }
+            expect(2)
+            d.cancel(TestCancellationException("TEST"))
+            val e = assertFailsWith<TestCancellationException> {
+                d.await()
+            }
             finish(4)
             assertEquals("TEST", e.message)
         }
@@ -64,95 +67,108 @@ class AsyncTest : TestBase() {
 
     @Test
     fun testLostException() = runTest {
-        expect(1)
-        val deferred = async(Job()) {
-            expect(2)
-            throw Exception()
-        }
+        supervisorScope {
+            expect(1)
+            val deferred = async {
+                expect(2)
+                throw Exception()
+            }
 
-        // Exception is not consumed -> nothing is reported
-        deferred.join()
-        finish(3)
+            // Exception is not consumed -> nothing is reported
+            deferred.join()
+            finish(3)
+        }
     }
 
     @Test
     fun testParallelDecompositionCaughtException() = runTest {
-        val deferred = async(NonCancellable) {
-            val decomposed = async(NonCancellable) {
-                throw TestException()
+        supervisorScope {
+            val deferred = async {
+                supervisorScope {
+                    val decomposed = async {
+                        throw TestException()
+                    }
+                    try {
+                        decomposed.await()
+                    } catch (_: TestException) {
+                        42
+                    }
+                }
             }
-            try {
-                decomposed.await()
-            } catch (_: TestException) {
-                42
-            }
+            assertEquals(42, deferred.await())
         }
-        assertEquals(42, deferred.await())
     }
 
     @Test
     fun testParallelDecompositionCaughtExceptionWithInheritedParent() = runTest {
-        expect(1)
-        val deferred = async(NonCancellable) {
-            expect(2)
-            val decomposed = async { // inherits parent job!
-                expect(3)
-                throw TestException()
+        supervisorScope {
+            expect(1)
+            val deferred = async {
+                expect(2)
+                val decomposed = async { // inherits parent job!
+                    expect(3)
+                    throw TestException()
+                }
+                try {
+                    decomposed.await()
+                } catch (_: TestException) {
+                    expect(4) // Should catch this exception, but parent is already cancelled
+                    42
+                }
             }
-            try {
-                decomposed.await()
-            } catch (_: TestException) {
-                expect(4) // Should catch this exception, but parent is already cancelled
-                42
+            assertFailsWith<TestException> {
+                deferred.await()
             }
-        }
-        try {
-            // This will fail
-            assertEquals(42, deferred.await())
-        } catch (_: TestException) {
             finish(5)
         }
     }
 
     @Test
-    fun testParallelDecompositionUncaughtExceptionWithInheritedParent() = runTest(expected = { it is TestException }) {
-        val deferred = async<Int>(NonCancellable) {
-            val decomposed = async {
-                throw TestException()
+    fun testParallelDecompositionUncaughtExceptionWithInheritedParent() = runTest {
+        supervisorScope {
+            val deferred = async {
+                val decomposed = async {
+                    throw TestException()
+                }
+
+                decomposed.await()
             }
 
-            decomposed.await()
+            assertFailsWith<TestException> {
+                deferred.await()
+            }
         }
-
-        deferred.await()
-        expectUnreached()
     }
 
     @Test
-    fun testParallelDecompositionUncaughtException() = runTest(expected = { it is TestException }) {
-        val deferred = async<Int>(NonCancellable) {
-            val decomposed = async {
-                throw TestException()
+    fun testParallelDecompositionUncaughtException() = runTest {
+        supervisorScope {
+            val deferred = async {
+                val decomposed = async {
+                    throw TestException()
+                }
+
+                decomposed.await()
             }
 
-            decomposed.await()
+            assertFailsWith<TestException> {
+                deferred.await()
+            }
         }
-
-        deferred.await()
-        expectUnreached()
     }
 
     @Test
     fun testCancellationTransparency() = runTest {
-        val deferred = async(NonCancellable, start = CoroutineStart.ATOMIC) {
-            expect(2)
-            throw TestException()
-        }
-        expect(1)
-        deferred.cancel()
-        try {
-            deferred.await()
-        } catch (_: TestException) {
+        supervisorScope {
+            val deferred = async(start = CoroutineStart.ATOMIC) {
+                expect(2)
+                throw TestException()
+            }
+            expect(1)
+            deferred.cancel()
+            assertFailsWith<TestException> {
+                deferred.await()
+            }
             finish(3)
         }
     }
@@ -182,13 +198,13 @@ class AsyncTest : TestBase() {
         expect(2)
         launch {
             expect(6)
-            assertEquals(d.await(), 42)
+            assertEquals(42, d.await())
             expect(11)
         }
         expect(3)
         launch {
             expect(7)
-            assertEquals(d.await(), 42)
+            assertEquals(42, d.await())
             expect(12)
         }
         expect(4)
@@ -214,9 +230,10 @@ class AsyncTest : TestBase() {
     @Test
     fun testOverriddenParent() = runTest {
         val parent = Job()
+        @Suppress("DEPRECATION")
         val deferred = async(parent, CoroutineStart.ATOMIC) {
             expect(2)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
 
         parent.cancel()

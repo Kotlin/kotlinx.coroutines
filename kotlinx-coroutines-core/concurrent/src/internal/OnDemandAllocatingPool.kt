@@ -1,6 +1,10 @@
 package kotlinx.coroutines.internal
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.loop
+import kotlin.concurrent.atomics.AtomicArray
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.atomicArrayOfNulls
 
 /**
  * A thread-safe resource pool.
@@ -11,6 +15,7 @@ import kotlinx.atomicfu.*
  * This is only used in the Native implementation,
  * but is part of the `concurrent` source set in order to test it on the JVM.
  */
+@OptIn(ExperimentalAtomicApi::class)
 internal class OnDemandAllocatingPool<T>(
     private val maxCapacity: Int,
     private val create: (Int) -> T
@@ -20,7 +25,8 @@ internal class OnDemandAllocatingPool<T>(
      * Once the flag is set, the value is guaranteed not to change anymore.
      */
     private val controlState = atomic(0)
-    private val elements = atomicArrayOfNulls<T>(maxCapacity)
+    @Suppress("UNCHECKED_CAST")
+    private val elements = atomicArrayOfNulls<Any>(maxCapacity) as AtomicArray<T?>
 
     /**
      * Returns the number of elements that need to be cleaned up due to the pool being closed.
@@ -50,7 +56,7 @@ internal class OnDemandAllocatingPool<T>(
             if (ctl.isClosed()) return false
             if (ctl >= maxCapacity) return true
             if (controlState.compareAndSet(ctl, ctl + 1)) {
-                elements[ctl].value = create(ctl)
+                elements.storeAt(ctl, create(ctl))
                 return true
             }
         }
@@ -73,7 +79,7 @@ internal class OnDemandAllocatingPool<T>(
         return (0 until elementsExisting).map { i ->
             // we wait for the element to be created, because we know that eventually it is going to be there
             loop {
-                val element = elements[i].getAndSet(null)
+                val element = elements.exchangeAt(i, null)
                 if (element != null) {
                     return@map element
                 }
@@ -84,7 +90,7 @@ internal class OnDemandAllocatingPool<T>(
     // for tests
     internal fun stateRepresentation(): String {
         val ctl = controlState.value
-        val elementsStr = (0 until (ctl and IS_CLOSED_MASK.inv())).map { elements[it].value }.toString()
+        val elementsStr = (0 until (ctl and IS_CLOSED_MASK.inv())).map { elements.loadAt(it) }.toString()
         val closedStr = if (ctl.isClosed()) "[closed]" else ""
         return elementsStr + closedStr
     }

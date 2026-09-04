@@ -33,7 +33,7 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         }
 
         val blank = { entry: Map.Entry<Int, MutableLong> ->
-            max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.toInt()])
+            max(0L, entry.value.get() - scrabbleAvailableLetters[entry.key - 'a'.code])
         }
 
         val nBlanks = { word: String ->
@@ -51,9 +51,9 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         }
 
         val letterScore = { entry: Map.Entry<Int, MutableLong> ->
-                letterScores[entry.key - 'a'.toInt()] * Integer.min(
+                letterScores[entry.key - 'a'.code] * Integer.min(
                     entry.value.get().toInt(),
-                    scrabbleAvailableLetters[entry.key - 'a'.toInt()]
+                    scrabbleAvailableLetters[entry.key - 'a'.code]
                 )
         }
 
@@ -73,7 +73,7 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
         val bonusForDoubleLetter = { word: String ->
             flow {
                 emit(toBeMaxed(word)
-                    .map { letterScores[it.toInt() - 'a'.toInt()] }
+                    .map { letterScores[it.code - 'a'.code] }
                     .max())
             }
         }
@@ -113,7 +113,7 @@ open class FlowPlaysScrabbleOpt : ShakespearePlaysScrabble() {
 
 public fun String.asFlow() = flow {
     forEach {
-        emit(it.toInt())
+        emit(it.code)
     }
 }
 
