@@ -2,6 +2,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
@@ -11,6 +12,7 @@ private fun KotlinCommonCompilerOptions.configureGlobalKotlinArgumentsAndOptIns(
     freeCompilerArgs.addAll("-progressive")
     optIn.addAll(
         "kotlin.experimental.ExperimentalTypeInference",
+        "kotlin.js.ExperimentalJsExport",
         // our own opt-ins that we don't want to bother with in our own code:
         "kotlinx.coroutines.DelicateCoroutinesApi",
         "kotlinx.coroutines.ExperimentalCoroutinesApi",
@@ -209,6 +211,9 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
                 "-Xno-receiver-assertions",
             )
         }
+        if (this@configureEach is Kotlin2JsCompile) {
+            freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
+        }
         if (this@configureEach is KotlinNativeCompile) {
             optIn.addAll(
                 "kotlinx.cinterop.ExperimentalForeignApi",
@@ -216,6 +221,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
                 "kotlin.experimental.ExperimentalNativeApi",
                 "kotlin.native.concurrent.ObsoleteWorkersApi",
             )
+            freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
         }
         addExtraCompilerFlags(project)
     }

@@ -6,8 +6,10 @@ import java.text.*
 import java.util.*
 import java.util.Collections.*
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch as JvmCountDownLatch
 import java.util.concurrent.atomic.*
 import java.util.concurrent.locks.*
+import kotlinx.coroutines.testing.CountDownLatch as MultiplatformCountDownLatch
 import kotlin.test.*
 
 object FieldWalker {
@@ -25,7 +27,7 @@ object FieldWalker {
             Any::class, String::class, Thread::class, Throwable::class, StackTraceElement::class,
             WeakReference::class, ReferenceQueue::class, AbstractMap::class, Enum::class,
             ReentrantLock::class, ReentrantReadWriteLock::class, SimpleDateFormat::class, ThreadPoolExecutor::class,
-            CountDownLatch::class,
+            JvmCountDownLatch::class, MultiplatformCountDownLatch::class,
         )
             .map { it.java }
             .associateWith { emptyList() }
@@ -160,8 +162,8 @@ object FieldWalker {
             check(fields.isEmpty() || !type.name.startsWith("java.")) {
                 """
                     Trying to walk through JDK's '$type' will get into illegal reflective access on JDK 9+.
-                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve 
-                    the captured state of this class without going through reflection (see how collections are handled).  
+                    Either modify your test to avoid usage of this class or update FieldWalker code to retrieve
+                    the captured state of this class without going through reflection (see how collections are handled).
                 """.trimIndent()
             }
             fields.forEach { it.isAccessible = true } // make them all accessible

@@ -1,9 +1,12 @@
 package kotlinx.coroutines.sync
 
-import kotlinx.atomicfu.*
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.atomicArrayOfNulls
 import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.js.*
@@ -358,23 +361,24 @@ private class SemaphoreImpl(
 
 private fun createSegment(id: Long, prev: SemaphoreSegment?) = SemaphoreSegment(id, prev, 0)
 
+@OptIn(ExperimentalAtomicApi::class)
 private class SemaphoreSegment(id: Long, prev: SemaphoreSegment?, pointers: Int) : Segment<SemaphoreSegment>(id, prev, pointers) {
     val acquirers = atomicArrayOfNulls<Any?>(SEGMENT_SIZE)
     override val numberOfSlots: Int get() = SEGMENT_SIZE
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun get(index: Int): Any? = acquirers[index].value
+    inline fun get(index: Int): Any? = acquirers.loadAt(index)
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun set(index: Int, value: Any?) {
-        acquirers[index].value = value
+        acquirers.storeAt(index, value)
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers[index].compareAndSet(expected, value)
+    inline fun cas(index: Int, expected: Any?, value: Any?): Boolean = acquirers.compareAndSetAt(index, expected, value)
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun getAndSet(index: Int, value: Any?) = acquirers[index].getAndSet(value)
+    inline fun getAndSet(index: Int, value: Any?) = acquirers.exchangeAt(index, value)
 
     // Cleans the acquirer slot located by the specified index
     // and removes this segment physically if all slots are cleaned.
