@@ -39,6 +39,12 @@ internal object NodeDispatcher : SetTimeoutBasedDispatcher() {
     }
 }
 
+internal object ReactNativeDispatcher : SetTimeoutBasedDispatcher() {
+    override fun scheduleQueueProcessing() {
+        setImmediate(messageQueue.processQueue)
+    }
+}
+
 internal actual class WindowMessageQueue actual constructor(private val window: W3CWindow) : MessageQueue() {
     private val messageName = "dispatchCoroutine"
 
@@ -65,6 +71,8 @@ internal actual class WindowMessageQueue actual constructor(private val window: 
 private external fun setTimeout(handler: dynamic, timeout: Int = definedExternally): Int
 
 private external fun clearTimeout(handle: Int = definedExternally)
+
+private external fun setImmediate(f: () -> Unit)
 
 private fun setTimeout(window: Window, handler: () -> Unit, timeout: Int): Int =
     window.setTimeout(handler, timeout)

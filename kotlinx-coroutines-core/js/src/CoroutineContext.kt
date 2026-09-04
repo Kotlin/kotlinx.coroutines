@@ -14,9 +14,12 @@ internal actual fun createDefaultDispatcher(): CoroutineDispatcher = when {
     // Check if we are in the browser and must use window.postMessage to avoid setTimeout throttling
     jsTypeOf(window) != UNDEFINED && window.asDynamic() != null && jsTypeOf(window.asDynamic().addEventListener) != UNDEFINED ->
         window.asCoroutineDispatcher()
+    // On react-native use setImmediate
+    jsTypeOf(navigator) != UNDEFINED && navigator != null && navigator.product == "ReactNative" ->
+        ReactNativeDispatcher
     // If process is undefined (e.g. in NativeScript, #1404), use SetTimeout-based dispatcher
     jsTypeOf(process) == UNDEFINED || jsTypeOf(process.nextTick) == UNDEFINED -> SetTimeoutDispatcher
-    // Fallback to NodeDispatcher when browser environment is not detected
+    // Fallback to NodeDispatcher when browser or react native environment is not detected
     else -> NodeDispatcher
 }
 
