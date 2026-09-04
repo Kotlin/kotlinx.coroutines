@@ -19,9 +19,6 @@ kotlin {
     }
 
     macosArm64()
-    // Deprecated for removal: see KT-78660
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    macosX64()
     linuxArm64()
     linuxX64()
     mingwX64()
