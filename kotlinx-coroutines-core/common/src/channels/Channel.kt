@@ -1,4 +1,3 @@
-@file:JvmName("ChannelKt")
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -9,11 +8,9 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.selects.*
-import kotlinx.coroutines.internal.JsOptionalExport
 import kotlin.contracts.*
 import kotlin.internal.*
 import kotlin.jvm.*
-import kotlin.js.*
 
 /**
  * Sender's interface to a [Channel].
@@ -23,7 +20,6 @@ import kotlin.js.*
  * It is not expected that this interface will be implemented directly.
  * Instead, the existing [Channel] implementations can be used or delegated to.
  */
-@JsOptionalExport(true)
 public interface SendChannel<in E> {
     /**
      * Returns `true` if this channel was closed by an invocation of [close] or its receiving side was [cancelled][ReceiveChannel.cancel].
@@ -196,7 +192,6 @@ public interface SendChannel<in E> {
      * Like [send], [onSend] obeys the rules of prompt cancellation:
      * [select] may finish with a [CancellationException] even if the element was successfully sent.
      */
-    @JsExport.Ignore // Is not so easy to use on the JavaScript side, because it's implemented with the contextual operator invoke
     public val onSend: SelectClause2<E, SendChannel<E>>
 
     /**
@@ -228,7 +223,6 @@ public interface SendChannel<in E> {
      * }
      * ```
      */
-    @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
     public fun trySend(element: E): ChannelResult<Unit>
 
     /**
@@ -347,7 +341,7 @@ public interface SendChannel<in E> {
         message = "Deprecated in the favour of 'trySend' method",
         replaceWith = ReplaceWith("trySend(element).isSuccess")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public open fun offer(element: E): Boolean {
+    public fun offer(element: E): Boolean {
         val result = trySend(element)
         if (result.isSuccess) return true
         throw recoverStackTrace(result.exceptionOrNull() ?: return false)
@@ -359,7 +353,7 @@ public interface SendChannel<in E> {
  *
  * Combined, [SendChannel] and [ReceiveChannel] define the complete [Channel] interface.
  */
-public expect interface ReceiveChannel<out E> {
+public interface ReceiveChannel<out E> {
     /**
      * Returns `true` if the sending side of this channel was [closed][SendChannel.close]
      * and all previously sent items were already received (which also happens for [cancelled][cancel] channels).
@@ -704,7 +698,7 @@ public expect interface ReceiveChannel<out E> {
      * @suppress This method implements old version of JVM ABI. Use [cancel].
      */
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
-    public open fun cancel(): Unit
+    public fun cancel(): Unit = cancel(null)
 
     /**
      * @suppress This method has bad semantics when cause is not a [CancellationException]. Use [cancel].
@@ -741,7 +735,11 @@ public expect interface ReceiveChannel<out E> {
             "for the precise replacement please refer to the 'poll' documentation",
         replaceWith = ReplaceWith("tryReceive().getOrNull()")
     ) // Warning since 1.5.0, error since 1.6.0, not hidden until 1.8+ because API is quite widespread
-    public open fun poll(): E?
+    public fun poll(): E? {
+        val result = tryReceive()
+        if (result.isSuccess) return result.getOrThrow()
+        throw recoverStackTrace(result.exceptionOrNull() ?: return null)
+    }
 
     /**
      * This function was deprecated since 1.3.0 and is no longer recommended to use
@@ -769,7 +767,7 @@ public expect interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("receiveCatching().getOrNull()")
     ) // Warning since 1.3.0, error in 1.5.0, cannot be hidden due to deprecated extensions
-    public open suspend fun receiveOrNull(): E?
+    public suspend fun receiveOrNull(): E? = receiveCatching().getOrNull()
 
     /**
      * This function was deprecated since 1.3.0 and is no longer recommended to use
@@ -784,7 +782,7 @@ public expect interface ReceiveChannel<out E> {
         level = DeprecationLevel.ERROR,
         replaceWith = ReplaceWith("onReceiveCatching")
     ) // Warning since 1.3.0, error in 1.5.0, will be hidden or removed in 1.7.0
-    public open val onReceiveOrNull: SelectClause1<E?>
+    public val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
 }
 
 /**
