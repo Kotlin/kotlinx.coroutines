@@ -6,7 +6,7 @@ dependencies {
 
 externalDocumentationLink("http://reactivex.io/RxJava/2.x/javadoc/")
 
-val testNG by tasks.registering(Test::class) {
+val testNG = tasks.register<Test>("testNG") {
     useTestNG()
     reports.html.outputLocation = file("${layout.buildDirectory.get()}/reports/testng")
     include("**/*ReactiveStreamTckTest.*")
@@ -20,7 +20,7 @@ val testNG by tasks.registering(Test::class) {
     }
 }
 
-val test by tasks.getting(Test::class) {
+val test = tasks.getByName<Test>("test") {
     dependsOn(testNG)
     reports.html.outputLocation = file("${layout.buildDirectory.get()}/reports/junit")
 }

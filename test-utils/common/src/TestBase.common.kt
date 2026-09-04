@@ -238,9 +238,9 @@ public expect open class TestBase(): OrderedExecutionTestBase, ErrorCatching {
     override fun reportError(error: Throwable)
 }
 
-public suspend inline fun hang(onCancellation: () -> Unit) {
+public suspend inline fun hang(onCancellation: () -> Unit): Nothing {
     try {
-        suspendCancellableCoroutine<Unit> { }
+        suspendCancellableCoroutine<Nothing> { }
     } finally {
         onCancellation()
     }

@@ -206,6 +206,7 @@ class CoroutinesDumpTest : DebugTestBase() {
         yield() // TCE: make sure `sleepingNestedMethod` is contained in the continuation of `delay`
     }
 
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private fun awaitCoroutine() = synchronized(monitor) {
         while (coroutineThread == null) (monitor as Object).wait()
         while (coroutineThread!!.state != Thread.State.TIMED_WAITING) {
@@ -217,6 +218,7 @@ class CoroutinesDumpTest : DebugTestBase() {
         }
     }
 
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     private fun notifyCoroutineStarted() {
         synchronized(monitor) {
             coroutineThread = Thread.currentThread()

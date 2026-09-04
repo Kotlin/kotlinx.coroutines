@@ -1,67 +1,68 @@
 package kotlinx.coroutines.exceptions
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.Test
+import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
 class ProduceExceptionsTest : TestBase() {
 
     @Test
     fun testFailingProduce() = runTest(unhandled = listOf({ e -> e is TestException })) {
+        // TODO: document this behavior!
         expect(1)
-        val producer = produce<Int>(Job()) {
-            expect(2)
-            try {
-                yield()
-            } finally {
-                expect(3)
-                throw TestException()
-
+        supervisorScope {
+            val producer = produce<Int> {
+                expect(2)
+                try {
+                    yield()
+                } finally {
+                    expect(3)
+                    throw TestException()
+                }
             }
-        }
 
-        yield()
-        producer.cancel()
-        yield()
-        finish(4)
+            yield()
+            producer.cancel()
+            yield()
+            finish(4)
+        }
     }
 
     @Test
     fun testSuppressedExceptionUncaught() =
         runTest(unhandled = listOf({ e -> e is TestException && e.suppressed[0] is TestException2 })) {
-            val produce = produce<Int>(Job()) {
-                launch(start = CoroutineStart.ATOMIC) {
-                    throw TestException()
+            supervisorScope {
+                val produce = produce<Int> {
+                    launch(start = CoroutineStart.ATOMIC) {
+                        throw TestException()
+                    }
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        throw TestException2()
+                    }
                 }
-                try {
-                    delay(Long.MAX_VALUE)
-                } finally {
-                    throw TestException2()
-                }
-            }
 
-            yield()
-            produce.cancel()
+                yield()
+                produce.cancel()
+            }
         }
 
     @Test
     fun testSuppressedException() = runTest {
-        val produce = produce<Int>(NonCancellable) {
-            launch(start = CoroutineStart.ATOMIC) {
-                throw TestException() // child coroutine fails
+        supervisorScope {
+            val produce = produce<Int> {
+                launch(start = CoroutineStart.ATOMIC) {
+                    throw TestException() // child coroutine fails
+                }
+                try {
+                    awaitCancellation()
+                } finally {
+                    throw TestException2() // but parent throws another exception while cleaning up
+                }
             }
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                throw TestException2() // but parent throws another exception while cleaning up
-            }
-        }
-        try {
-            produce.receive()
-            expectUnreached()
-        } catch (e: TestException) {
+            val e = assertFailsWith<TestException> { produce.receive() }
             assertIs<TestException2>(e.suppressed[0])
         }
     }
@@ -82,34 +83,30 @@ class ProduceExceptionsTest : TestBase() {
 
         expect(1)
         yield()
-        try {
-            channel.receive()
-        } catch (e: CancellationException) {
-            assertTrue(e.suppressed.isEmpty())
-            finish(4)
-        }
+        val e = assertFailsWith<CancellationException> { channel.receive() }
+        assertTrue(e.suppressed.isEmpty())
+        finish(4)
     }
 
     @Test
     fun testCancelProduceChannelWithException() = runTest {
-        var channel: ReceiveChannel<Int>? = null
-        channel = produce(NonCancellable) {
-            expect(2)
-            channel!!.cancel(TestCancellationException())
-            try {
-                send(1)
-                // Not a ClosedForSendException
-            } catch (e: TestCancellationException) {
-                expect(3)
-                throw e
+        supervisorScope {
+            var channel: ReceiveChannel<Int>? = null
+            channel = produce {
+                expect(2)
+                channel!!.cancel(TestCancellationException())
+                try {
+                    send(1)
+                    // Not a ClosedForSendException
+                } catch (e: TestCancellationException) {
+                    expect(3)
+                    throw e
+                }
             }
-        }
 
-        expect(1)
-        yield()
-        try {
-            channel.receive()
-        } catch (e: TestCancellationException) {
+            expect(1)
+            yield()
+            val e = assertFailsWith<TestCancellationException> { channel.receive() }
             assertTrue(e.suppressed.isEmpty())
             finish(4)
         }
@@ -117,10 +114,10 @@ class ProduceExceptionsTest : TestBase() {
 
     @Test
     fun testCancelChannelWithJob() = runTest {
-        val job = Job()
-        val channel = produce(job) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        val channel = detachedScope.produce {
             expect(2)
-            job.cancel()
+            detachedScope.cancel()
             try {
                 send(1)
             } catch (e: CancellationException) {
@@ -131,18 +128,16 @@ class ProduceExceptionsTest : TestBase() {
 
         expect(1)
         yield()
-        try {
-            channel.receive()
-        } catch (e: CancellationException) {
-            assertTrue(e.suppressed.isEmpty())
-            finish(4)
-        }
+        val e = assertFailsWith<CancellationException> { channel.receive() }
+        assertTrue(e.suppressed.isEmpty())
+        finish(4)
     }
 
     @Test
     fun testCancelChannelWithJobWithException() = runTest {
         val job = Job()
-        val channel = produce(job) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + job)
+        val channel = detachedScope.produce {
             expect(2)
             job.completeExceptionally(TestException2())
             try {
@@ -155,12 +150,9 @@ class ProduceExceptionsTest : TestBase() {
 
         expect(1)
         yield()
-        try {
-            channel.receive()
-        } catch (e: CancellationException) {
-            // RECOVER_STACK_TRACES
-            assertIs<TestException2>(e.cause?.cause)
-            finish(4)
-        }
+        val e = assertFailsWith<CancellationException> { channel.receive() }
+        // RECOVER_STACK_TRACES
+        assertIs<TestException2>(e.cause?.cause)
+        finish(4)
     }
 }

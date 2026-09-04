@@ -5,7 +5,7 @@ plugins {
 }
 
 val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-val buildSnapshotTrain = properties["build_snapshot_train"]?.toString()?.toBoolean() == true
+val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
 val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
 val kotlinVersion = project.providers.gradleProperty("kotlin_version").orNull
 
@@ -39,7 +39,7 @@ val gradleProperties = Properties().apply {
 fun version(target: String): String {
     val version = "${target}_version"
     // Read from CLI first, used in aggregate builds
-    return properties[version]?.let { "$it" } ?: gradleProperties.getProperty(version)
+    return providers.gradleProperty(version).orNull?.let { "$it" } ?: gradleProperties.getProperty(version)
 }
 
 kotlin {

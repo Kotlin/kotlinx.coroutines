@@ -20,7 +20,7 @@ class SanitizedProbesTest : DebugTestBase() {
 
     @Test
     fun testRecoveredStackTrace() = runTest {
-        val deferred = createDeferred()
+        val deferred = GlobalScope.createDeferred()
         val traces = listOf(
             "java.util.concurrent.ExecutionException\n" +
                     "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$createDeferredNested\$1.invokeSuspend(SanitizedProbesTest.kt:97)\n" +
@@ -125,7 +125,7 @@ class SanitizedProbesTest : DebugTestBase() {
 
     private fun CoroutineScope.createDeferred(): Deferred<*> = createDeferredNested()
 
-    private fun CoroutineScope.createDeferredNested(): Deferred<*> = async(NonCancellable) {
+    private fun CoroutineScope.createDeferredNested(): Deferred<*> = async {
         throw ExecutionException(null)
     }
 
@@ -135,11 +135,9 @@ class SanitizedProbesTest : DebugTestBase() {
     }
 
     private suspend fun oneMoreNestedMethod(deferred: Deferred<*>, traces: List<String>) {
-        try {
+        val e = assertFailsWith<ExecutionException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: ExecutionException) {
-            verifyStackTrace(e, traces)
         }
+        verifyStackTrace(e, traces)
     }
 }

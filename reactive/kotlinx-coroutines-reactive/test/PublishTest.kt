@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.testing.exceptions.*
 import org.junit.Test
 import org.reactivestreams.*
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 class PublishTest : TestBase() {
@@ -229,7 +229,7 @@ class PublishTest : TestBase() {
             val result: ChannelResult<Unit> = producerScope!!.trySend(1)
             val e = result.exceptionOrNull()!!
             assertIs<CancellationException>(e, "The actual error: $e")
-            assertTrue(producerScope!!.isClosedForSend)
+            assertTrue(producerScope.isClosedForSend)
             assertTrue(result.isFailure)
         }
         finish(7)

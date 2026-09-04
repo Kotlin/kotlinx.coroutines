@@ -6,7 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import org.junit.Test
 import org.reactivestreams.*
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
 class FlowAsPublisherTest : TestBase() {

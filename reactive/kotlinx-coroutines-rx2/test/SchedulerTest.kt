@@ -11,9 +11,11 @@ import org.junit.*
 import org.junit.Test
 import java.lang.Runnable
 import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class SchedulerTest : TestBase() {
     @Before
@@ -541,7 +543,9 @@ class SchedulerTest : TestBase() {
             }
             // Wait for the task completion. Note: this is not a race, because `DefaultExecutor` is used here, is fair,
             // and the tasks above are guaranteed to have been scheduled by this point.
-            delay(20)
+            withContext(Dispatchers.Unconfined) {
+                delay(20.milliseconds)
+            }
         }
         // Warm-up: converge to a consistent state of the scheduler. `10` is arbitrary.
         runSomeTasks()

@@ -1,30 +1,10 @@
 package kotlinx.coroutines
 
-import kotlinx.atomicfu.*
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.testing.Barrier
 import kotlin.native.concurrent.*
 import kotlin.test.*
 import kotlin.time.Duration.Companion.seconds
-
-private class BlockingBarrier(val n: Int) {
-    val counter = atomic(0)
-    val wakeUp = Channel<Unit>(n - 1)
-    fun await() {
-        val count = counter.addAndGet(1)
-        if (count == n) {
-            repeat(n - 1) {
-                runBlocking {
-                    wakeUp.send(Unit)
-                }
-            }
-        } else if (count < n) {
-            runBlocking {
-                wakeUp.receive()
-            }
-        }
-    }
-}
 
 class MultithreadedDispatchersTest {
     /**
@@ -33,7 +13,7 @@ class MultithreadedDispatchersTest {
      */
     @Test
     fun testNotAllocatingExtraDispatchers() {
-        val barrier = BlockingBarrier(2)
+        val barrier = Barrier(2)
         val lock = SynchronizedObject()
         suspend fun spin(set: MutableSet<Worker>) {
             repeat(100) {

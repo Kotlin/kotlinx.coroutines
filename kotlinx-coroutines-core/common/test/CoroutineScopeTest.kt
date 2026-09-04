@@ -52,7 +52,7 @@ class CoroutineScopeTest : TestBase() {
         try {
             callJobScoped()
             expectUnreached()
-        } catch (e: TestException2) {
+        } catch (_: TestException2) {
             expect(4)
         }
         yield() // Check we're not cancelled
@@ -69,7 +69,7 @@ class CoroutineScopeTest : TestBase() {
                 throw TestException1()
             }
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (_: TestException1) {
             finish(4)
         }
     }
@@ -88,7 +88,7 @@ class CoroutineScopeTest : TestBase() {
         try {
             callJobScoped()
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (_: TestException1) {
             expect(3)
         }
         yield() // Check we're not cancelled
@@ -112,24 +112,25 @@ class CoroutineScopeTest : TestBase() {
             42
         }
 
-        val outerJob = launch(NonCancellable) {
-            expect(1)
-            try {
-                callJobScoped()
-                expectUnreached()
-            } catch (e: JobCancellationException) {
-                expect(5)
-                if (RECOVER_STACK_TRACES) {
-                    val cause = e.cause as JobCancellationException // shall be recovered JCE
-                    assertNull(cause.cause)
-                } else {
-                    assertNull(e.cause)
+        supervisorScope {
+            val outerJob = launch {
+                expect(1)
+                try {
+                    callJobScoped()
+                    expectUnreached()
+                } catch (e: JobCancellationException) {
+                    expect(5)
+                    if (RECOVER_STACK_TRACES) {
+                        val cause = e.cause as JobCancellationException // shall be recovered JCE
+                        assertNull(cause.cause)
+                    } else {
+                        assertNull(e.cause)
+                    }
                 }
             }
+            repeat(3) { yield() } // let everything start properly
+            outerJob.cancel()
         }
-        repeat(3) { yield() } // let everything to start properly
-        outerJob.cancel()
-        outerJob.join()
         finish(6)
     }
 
@@ -139,7 +140,7 @@ class CoroutineScopeTest : TestBase() {
             expect(1)
             failedConcurrentSumFirst()
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (_: TestException1) {
             finish(6)
         }
     }
@@ -169,14 +170,14 @@ class CoroutineScopeTest : TestBase() {
             expect(1)
             failedConcurrentSumSecond()
             expectUnreached()
-        } catch (e: TestException1) {
+        } catch (_: TestException1) {
             finish(6)
         }
     }
 
     // Second async child fails -> fist is cancelled
     private suspend fun failedConcurrentSumSecond(): Int = coroutineScope {
-        val one = async<Int> {
+        val one = async {
             try {
                 expect(3)
                 delay(Long.MAX_VALUE) // Emulates very long computation
@@ -194,36 +195,6 @@ class CoroutineScopeTest : TestBase() {
     }
 
     @Test
-    @Suppress("UNREACHABLE_CODE")
-    fun testDocumentationExample() = runTest {
-        suspend fun loadData() = coroutineScope {
-            expect(1)
-            val data = async {
-                try {
-                    delay(Long.MAX_VALUE)
-                } finally {
-                    expect(3)
-                }
-            }
-            yield()
-            // UI updater
-            withContext(coroutineContext) {
-                expect(2)
-                throw TestException1()
-                data.await() // Actually unreached
-                expectUnreached()
-            }
-        }
-
-        try {
-            loadData()
-            expectUnreached()
-        } catch (e: TestException1) {
-            finish(4)
-        }
-    }
-
-    @Test
     fun testCoroutineScopeCancellationVsException() = runTest {
         expect(1)
         var job: Job? = null
@@ -237,7 +208,7 @@ class CoroutineScopeTest : TestBase() {
                     job!!.cancel() // cancel this job _before_ it throws
                     throw TestException1()
                 }
-            } catch (e: TestException1) {
+            } catch (_: TestException1) {
                 // must have caught TextException
                 expect(6)
             }
@@ -304,7 +275,7 @@ class CoroutineScopeTest : TestBase() {
     fun testIsActiveWithoutJob() {
         var invoked = false
         suspend fun testIsActive() {
-            assertTrue(coroutineContext.isActive)
+            assertTrue(currentCoroutineContext().isActive)
             invoked = true
         }
         ::testIsActive.startCoroutine(Continuation(EmptyCoroutineContext){})

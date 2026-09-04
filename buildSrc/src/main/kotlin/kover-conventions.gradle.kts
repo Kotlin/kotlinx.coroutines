@@ -32,7 +32,7 @@ subprojects {
         * ./gradlew :p:check -Pkover.enabled=true -- verifies coverage
         * ./gradlew :p:koverHtmlReport -Pkover.enabled=true -- generates HTML report
         */
-        if (properties["kover.enabled"]?.toString()?.toBoolean() != true) {
+        if (project.providers.gradleProperty("kover.enabled").orNull?.toBoolean() != true) {
             disable()
         }
     }

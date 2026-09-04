@@ -1,6 +1,7 @@
 package kotlinx.coroutines.debug.junit5
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.debug.fakeDelay
 import org.junit.jupiter.api.*
 
 /**
@@ -24,7 +25,7 @@ class CoroutinesTimeoutMethodTest {
     @Order(2)
     fun usesMethodTimeoutWithNoClassTimeout() {
         runBlocking {
-            delay(1000)
+            fakeDelay(1000)
         }
     }
 
@@ -33,7 +34,7 @@ class CoroutinesTimeoutMethodTest {
     @Order(3)
     fun fitsInMethodTimeout() {
         runBlocking {
-            delay(10)
+            fakeDelay(10)
         }
     }
 

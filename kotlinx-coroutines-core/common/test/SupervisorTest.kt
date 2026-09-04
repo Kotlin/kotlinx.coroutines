@@ -179,7 +179,7 @@ class SupervisorTest : TestBase() {
         while (childJob == null) yield()
         expect(1)
         job.cancel()
-        assertTrue(childJob!!.isCancelled)
+        assertTrue(childJob.isCancelled)
         job.join()
         finish(3)
     }
@@ -187,7 +187,8 @@ class SupervisorTest : TestBase() {
     @Test
     fun testAsyncCancellation() = runTest {
         val parent = SupervisorJob()
-        val deferred = async(parent) {
+        val childScope = CoroutineScope(currentCoroutineContext() + parent)
+        val deferred = childScope.async {
             expect(2)
             delay(Long.MAX_VALUE)
         }
