@@ -71,3 +71,27 @@ public expect object Dispatchers {
      */
     public val Unconfined: CoroutineDispatcher
 }
+
+/**
+ * If a task can no longer run because its dispatcher is closed, it is rescheduled to another dispatcher.
+ *
+ * This is required to avoid a situation where some finalizers do not run:
+ * ```
+ * val dispatcher = newSingleThreadContext("test")
+ * launch(dispatcher) {
+ *   val resource = Resource()
+ *   try {
+ *     // do something `suspending` with resource
+ *   } finally {
+ *     resource.close()
+ *   }
+ * }
+ * dispatcher.close()
+ * ```
+ *
+ * `close` needs to run somewhere, but it can't run on the closed dispatcher.
+ *
+ * On the JVM and Native, we reschedule to the thread pool backing `Dispatchers.IO`,
+ * because an arbitrary task may well have blocking behavior.
+ */
+internal expect fun rescheduleTaskFromClosedDispatcher(task: Runnable)

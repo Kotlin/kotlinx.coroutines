@@ -19,7 +19,7 @@ internal class VirtualTimeDispatcher(enclosingScope: CoroutineScope) : Coroutine
          */
         enclosingScope.launch {
             while (true) {
-                val delayNanos = ThreadLocalEventLoop.currentOrNull()?.processNextEvent()
+                val delayNanos = ThreadLocalEventLoop.currentOrNull()?.tryUseAsEventLoop()?.processNextEvent()
                     ?: error("Event loop is missing, virtual time source works only as part of event loop")
                 if (delayNanos <= 0) continue
                 if (delayNanos > 0 && delayNanos != Long.MAX_VALUE) {

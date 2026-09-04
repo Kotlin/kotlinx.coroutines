@@ -93,7 +93,7 @@ class RunBlockingTest : TestBase() {
                 coroutineContext.cancel()
                 expect(2)
                 try {
-                    delay(1)
+                    delay(1.milliseconds)
                     expectUnreached()
                 } finally {
                     expect(3)
@@ -113,7 +113,7 @@ class RunBlockingTest : TestBase() {
             val job = GlobalScope.launch(dispatcher) {
                 try {
                     expect(2)
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 } finally {
                     finish(4)
                 }
@@ -135,7 +135,7 @@ class RunBlockingTest : TestBase() {
             val job = GlobalScope.launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
                 try {
                     expect(2)
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 } finally {
                     finish(4)
                 }
@@ -148,11 +148,11 @@ class RunBlockingTest : TestBase() {
 
     @Test
     fun testNestedRunBlocking() = runBlocking {
-        delay(100)
+        delay(100.milliseconds)
         val value = runBlocking {
             delay(100)
             runBlocking {
-                delay(100)
+                delay(100.milliseconds)
                 1
             }
         }
@@ -197,6 +197,22 @@ class RunBlockingTest : TestBase() {
         }
     }
 
+    /** Tests that tasks scheduled on a closed `runBlocking` event loop get processed in an I/O thread. */
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun testLeakedEventLoopGetsProcessedInIO() {
+        val dispatcher = runBlocking {
+            coroutineContext[CoroutineDispatcher.Key]
+        }!!
+        runBlocking {
+            GlobalScope.launch(dispatcher) {
+                assertTrue(runningOnIoThread())
+                delay(1.milliseconds)
+                assertTrue(runningOnIoThread())
+            }.join()
+        }
+    }
+
     /** Will not compile if [runBlocking] doesn't have the "runs exactly once" contract. */
     @Test
     fun testContract() {
@@ -207,3 +223,5 @@ class RunBlockingTest : TestBase() {
         rb.hashCode() // unused
     }
 }
+
+internal expect fun runningOnIoThread(): Boolean
