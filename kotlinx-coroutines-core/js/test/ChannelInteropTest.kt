@@ -1,6 +1,9 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.JsAsyncIterator
+import kotlinx.coroutines.internal.JsIteratorResult
+import kotlinx.coroutines.internal.assertNextStepToBe
 import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
@@ -194,15 +197,5 @@ class ChannelInteropTest : TestBase() {
         assertFalse(channel.isClosedForReceive)
         assertNextStepToBe(iterator, done = true)
         assertEquals(2, channel.receive())
-    }
-
-    private suspend fun <T> assertNextStepToBe(
-        iterator: JsAsyncIterator<T>,
-        value: T? = js("undefined"),
-        done: Boolean = false
-    ) {
-        val result = iterator.next().await()
-        assertEquals(done, result.done)
-        assertEquals(value, result.value)
     }
 }
