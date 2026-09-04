@@ -128,7 +128,7 @@ class ObservableAsFlowTest : TestBase() {
         assertNotNull(observer)
         job.cancel()
         val disposable = Disposable.empty()
-        observer.onSubscribe(disposable)
+        observer!!.onSubscribe(disposable)
         assertTrue(disposable.isDisposed)
         finish(3)
     }
