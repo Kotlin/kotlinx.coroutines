@@ -508,7 +508,7 @@ internal open class SharedFlowImpl<T>(
             }
             // add suspended emitter to the buffer
             Emitter(this, head + totalSize, value, cont).also {
-                collectSuspendStacktrace(this, head + totalSize)
+                collectStacktrace(this, head + totalSize)
                 enqueueLocked(it)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
