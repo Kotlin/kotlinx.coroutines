@@ -328,6 +328,10 @@ private class StateFlowImpl<T>(
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
+    init {
+        collectStacktrace(this, NULL.unbox<T>(initialState))
+    }
+
     public override var value: T
         get() = NULL.unbox(_state.value)
         set(value) {
