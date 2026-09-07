@@ -18,6 +18,6 @@ internal fun <T> collectStacktrace(stateFlow: StateFlow<T>, state: T): Any? = nu
 internal fun <T> matchStacktrace(stateFlow: StateFlow<T>, state: T): T = state
 internal fun <T> dropStacktrace(stateFlow: StateFlow<T>, state: T): Any? = null
 
-internal fun collectStacktrace(channel: Channel<*>, segment: ChannelSegment<*>, index: Int): Any? = null
-//internal fun dropStacktrace(channel: Channel<*>, segment: ChannelSegment<*>, index: Int): Any? = null
-internal fun matchStacktrace(channel: Channel<*>, segment: ChannelSegment<*>, index: Int): Any? = null
+internal fun collectStacktrace(segment: ChannelSegment<*>, index: Int): Any? = null
+//internal fun dropStacktrace(segment: ChannelSegment<*>, index: Int): Any? = null
+internal fun matchStacktrace(segment: ChannelSegment<*>, index: Int): Any? = null
