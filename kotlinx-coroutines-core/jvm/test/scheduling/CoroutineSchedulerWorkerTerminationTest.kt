@@ -16,7 +16,7 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
     @Test(timeout = 20_000L)
     fun testWorkerTerminationDuringOversubscription() {
         repeat(25 * stressTestMultiplierSqrt) { iteration ->
-            testWorkerTerminationDuringOversubscription(iteration)
+            doTest()
         }
     }
 
@@ -28,7 +28,7 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
      * - No one to process it
      * - Termination of such worker
      */
-    private fun testWorkerTerminationDuringOversubscription(iteration: Int) {
+    private fun doTest() {
         val corePoolSize = 2
         val tasksCount = corePoolSize + 1
         val dispatcher = SchedulerCoroutineDispatcher(
