@@ -717,7 +717,7 @@ internal class CoroutineScheduler(
                     executeTask(task)
                     continue
                 } else {
-                    mayHaveLocalTasks = false
+                    mayHaveLocalTasks = localQueue.size > 0
                 }
                 /*
                  * No tasks were found:
