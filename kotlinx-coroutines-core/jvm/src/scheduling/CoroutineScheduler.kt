@@ -365,7 +365,7 @@ internal class CoroutineScheduler(
         globalCpuQueue.close()
         // Finish processing tasks from globalQueue and/or from this worker's local queue
         while (true) {
-            val task = currentWorker?.findTask(true)
+            val task = currentWorker?.findTask()
                 ?: globalCpuQueue.removeFirstOrNull()
                 ?: globalBlockingQueue.removeFirstOrNull()
                 ?: break
@@ -514,7 +514,6 @@ internal class CoroutineScheduler(
         if (!task.isBlocking && state === WorkerState.BLOCKING) {
             return task
         }
-        mayHaveLocalTasks = true
         return localQueue.add(task, fair = fair)
     }
 
@@ -703,21 +702,16 @@ internal class CoroutineScheduler(
 
         override fun run() = runWorker()
 
-        @JvmField
-        var mayHaveLocalTasks = false
-
         private fun runWorker() {
             var rescanned = false
             while (!isTerminated && state != WorkerState.TERMINATED) {
-                val task = findTask(mayHaveLocalTasks)
+                val task = findTask()
                 // Task found. Execute and repeat
                 if (task != null) {
                     rescanned = false
                     minDelayUntilStealableTaskNs = 0L
                     executeTask(task)
                     continue
-                } else {
-                    mayHaveLocalTasks = localQueue.size > 0
                 }
                 /*
                  * No tasks were found:
@@ -895,8 +889,8 @@ internal class CoroutineScheduler(
             state = WorkerState.TERMINATED
         }
 
-        fun findTask(mayHaveLocalTasks: Boolean): Task? {
-            if (tryAcquireCpuPermit()) return findAnyTask(mayHaveLocalTasks)
+        fun findTask(): Task? {
+            if (tryAcquireCpuPermit()) return findAnyTask()
             /*
              * If we can't acquire a CPU permit, attempt to find blocking task:
              * - Check if our queue has one (maybe mixed in with CPU tasks)
@@ -911,19 +905,15 @@ internal class CoroutineScheduler(
                 ?: trySteal(STEAL_BLOCKING_ONLY)
         }
 
-        private fun findAnyTask(scanLocalQueue: Boolean): Task? {
+        private fun findAnyTask(): Task? {
             /*
              * Anti-starvation mechanism: probabilistically poll either local
              * or global queue to ensure progress for both external and internal tasks.
              */
-            if (scanLocalQueue) {
-                val globalFirst = nextInt(2 * corePoolSize) == 0
-                if (globalFirst) pollGlobalQueues()?.let { return it }
-                localQueue.poll()?.let { return it }
-                if (!globalFirst) pollGlobalQueues()?.let { return it }
-            } else {
-                pollGlobalQueues()?.let { return it }
-            }
+            val globalFirst = nextInt(2 * corePoolSize) == 0
+            if (globalFirst) pollGlobalQueues()?.let { return it }
+            localQueue.poll()?.let { return it }
+            if (!globalFirst) pollGlobalQueues()?.let { return it }
             return trySteal(STEAL_ANY)
         }
 
