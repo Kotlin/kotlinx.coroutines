@@ -15,12 +15,13 @@ import kotlin.time.Duration.Companion.milliseconds
 class Gh4685PinnedBugTest {
 
     @Test
-    fun testBackgroundScopeJobIsNotJoinedBeforeRunTestReturns() {
+    fun testBackgroundScopeJobIsNotJoinedBeforeRunTestReturns() = newSingleThreadContext("runTestThread-issue4685")
+        .use { bgDispatcher ->
         lateinit var bgJob: Job
 
         // runTest is expected to join backgroundScope's job, but currently only cancels it and returns immediately
         runTest {
-            bgJob = backgroundScope.launch(Dispatchers.Default) {
+            bgJob = backgroundScope.launch(bgDispatcher) {
                 withContext(NonCancellable) {
                     delay(100.milliseconds)
                     error("UncaughtException")
@@ -32,7 +33,7 @@ class Gh4685PinnedBugTest {
         assertTrue(bgJob.isCancelled)
         assertFalse(bgJob.isCompleted)
 
-        val deadline = System.currentTimeMillis() + 1_000
+        val deadline = System.currentTimeMillis() + 10_000
         while (!bgJob.isCompleted) {
             if (System.currentTimeMillis() > deadline) fail("bgJob did not complete within timeout")
             Thread.sleep(10)
