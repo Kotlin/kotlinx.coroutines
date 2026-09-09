@@ -439,7 +439,6 @@ internal open class SharedFlowImpl<T>(
         if (bufferSize > bufferCapacity) dropOldestLocked()
         // keep replaySize not larger that needed
         if (replaySize > replay) { // increment replayIndex by one
-            dropStacktrace(this, replayIndex)
             updateBufferLocked(replayIndex + 1, minCollectorIndex, bufferEndIndex, queueEndIndex)
         }
         return true
@@ -610,7 +609,10 @@ internal open class SharedFlowImpl<T>(
         val newHead = minOf(newMinCollectorIndex, newReplayIndex)
         assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head is about to move)
-        for (index in head until newHead) buffer!!.setBufferAt(index, null)
+        for (index in head until newHead) {
+            dropStacktrace(this, index)
+            buffer!!.setBufferAt(index, null)
+        }
         // update all state variables to newly computed values
         replayIndex = newReplayIndex
         minCollectorIndex = newMinCollectorIndex
