@@ -10,60 +10,17 @@ import kotlin.internal.*
 import kotlin.js.Promise
 
 @JsImplicitExport(couldBeConvertedToExplicitExport = true)
-public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
+public actual interface ReceiveChannel<out E> {
     @DelicateCoroutinesApi
     public actual val isClosedForReceive: Boolean
     @ExperimentalCoroutinesApi
     public actual val isEmpty: Boolean
 
-    public actual suspend fun receive(): E
     public actual fun cancel(cause: CancellationException?)
 
     /**
-     * Returns an [`AsyncIterable`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) view of this channel.
-     *
-     * Each iteration request ([`[Symbol.asyncIterator]()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)) creates a new [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) backed by this
-     * channel. The resulting iterable can be consumed with JavaScript `for await ... of` and with APIs
-     * that expect the async-iterable protocol.
-     *
-     * When iteration exits early (for example via loop `break`/`return`/`throw`, or by calling iterator methods `return`/`throw` directly),
-     * the channel is canceled by default.
-     *
-     * @param cancelOnEarlyExit if `true` (default), early iterator completion cancels the channel;
-     * if `false`, early iterator completion does not cancel the channel.
-     */
-    @JsExport.Ignore
-    @ExperimentalCoroutinesApi
-    public fun asAsyncIterable(cancelOnEarlyExit: Boolean = true): JsAsyncIterable<E> {
-        // We don't use Kotlin object to not have logic around lazy initialization
-        val jsObject = js("{}")
-        val asyncIteratorFunction: () -> JsAsyncIterator<E> = { asyncIterator(cancelOnEarlyExit) }
-        jsObject[js("Symbol.asyncIterator")] = asyncIteratorFunction
-        return jsObject
-    }
-
-    /**
-     * Returns an [`AsyncIterable`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) view of this channel.
-     *
-     * Each iteration request ([`[Symbol.asyncIterator]()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)) creates a new [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) backed by this
-     * channel. The resulting iterable can be consumed with JavaScript `for await ... of` and with APIs
-     * that expect [the async-iterable protocol]((https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols).
-     *
-     * When iteration exits early (for example via loop `break`/`return`/`throw`, or by calling iterator methods `return`/`throw` directly),
-     * the channel is canceled by default.
-     *
-     * @param options iteration behavior options:
-     * - `preventCancel = true`: early iterator completion does not cancel the channel;
-     * - `preventCancel = false` or omitted: early iterator completion cancels the channel.
-     */
-    @ExperimentalCoroutinesApi
-    // We can't use DeprecationLevel.HIDDEN, because the generated declaration will also be deprecated in .d.ts
-    @LowPriorityInOverloadResolution
-    public fun asAsyncIterable(options: ChannelIteratorOptions): JsAsyncIterable<E> =
-        asAsyncIterable(cancelOnEarlyExit = options.preventCancel != true)
-
-    /**
-     * Returns an [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) for this channel.
+     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
      *
      * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
      * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
@@ -92,11 +49,13 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
      */
     @ExperimentalCoroutinesApi
-    override fun asyncIterator(): JsAsyncIterator<E> =
+    @JsSymbol("asyncIterator")
+    public fun asyncIterator(): JsAsyncIterableIterator<E> =
         asyncIterator(cancelOnEarlyExit = true)
 
     /**
-     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) for this channel.
+     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
      *
      * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
      * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
@@ -124,16 +83,17 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
      * @param options iteration behavior options:
      * - `preventCancel = true`: early iterator completion does not cancel the channel;
      * - `preventCancel = false` or omitted: early iterator completion cancels the channel.
+     *
+     * @suppress
      */
-    @ExperimentalCoroutinesApi
-    // We can't use DeprecationLevel.HIDDEN, because the generated declaration will also be deprecated in .d.ts
-    @LowPriorityInOverloadResolution
     @JsName("values") // We use "values" here to mimic the ReadableStream API: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
-    public fun asyncIterator(options: ChannelIteratorOptions): JsAsyncIterator<E> =
-        asyncIterator(options.preventCancel != true)
+    @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
+    public fun asyncIterator(options: ChannelIteratorOptions? = null): JsAsyncIterableIterator<E> =
+        asyncIterator(options?.preventCancel != true)
 
     /**
-     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator) for this channel.
+     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
      *
      * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
      * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
@@ -164,9 +124,9 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
     @JsExport.Ignore
     @ExperimentalCoroutinesApi
     @OptIn(ExperimentalWasmJsInterop::class)
-    public fun asyncIterator(cancelOnEarlyExit: Boolean = true): JsAsyncIterator<E> {
+    public fun asyncIterator(cancelOnEarlyExit: Boolean = true): JsAsyncIterableIterator<E> {
         var wasEarlyFinished = false
-        return JsAsyncIterator(
+        val iterator = JsAsyncIterator(
             next = {
                 GlobalScope.promise {
                     if (wasEarlyFinished) return@promise JsIteratorResult(done = true)
@@ -200,6 +160,8 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
                 Promise.reject(err)
             }
         )
+        iterator.asDynamic()[js("Symbol.asyncIterator")] = { iterator }
+        return iterator.unsafeCast<JsAsyncIterableIterator<E>>()
     }
 
     @JsExport.Ignore // Is replaced by AsyncIterable implementation
@@ -207,6 +169,9 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
 
     @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
     public actual fun tryReceive(): ChannelResult<E>
+
+    @JsExport.Ignore // Exporting a suspend function by JsImplicitExport is a bit broken till 2.5.0
+    public actual suspend fun receive(): E
 
     @JsExport.Ignore // Can't be exported until the compiler supports exporting of value classes
     public actual suspend fun receiveCatching(): ChannelResult<E>
@@ -260,11 +225,9 @@ public actual interface ReceiveChannel<out E> : JsAsyncIterable<E> {
     public actual val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
 }
 
-@JsName("AsyncIterable")
-internal external interface JsAsyncIterable<out T> {
-    @JsSymbol("asyncIterator")
-    public fun asyncIterator(): JsAsyncIterator<T>
-}
+@JsPlainObject
+@JsName("AsyncIterableIterator")
+internal external interface JsAsyncIterableIterator<out T> : JsAsyncIterator<T>
 
 @JsPlainObject
 @JsName("AsyncIterator")
@@ -279,9 +242,9 @@ internal external interface JsAsyncIterator<out T> {
 /**
  * Options for customizing channel async-iteration behavior.
  */
-@JsImplicitExport(couldBeConvertedToExplicitExport = true)
+@JsExport
 @JsPlainObject
-internal external interface ChannelIteratorOptions {
+public external interface ChannelIteratorOptions {
     /**
      * Controls whether the channel is canceled when iteration completes early.
      *
@@ -291,7 +254,7 @@ internal external interface ChannelIteratorOptions {
      * - `true`: do not cancel the channel on early iterator completion.
      * - `false` or omitted: cancel the channel on early iterator completion.
      */
-    val preventCancel: Boolean?
+    public val preventCancel: Boolean?
 }
 
 @JsPlainObject

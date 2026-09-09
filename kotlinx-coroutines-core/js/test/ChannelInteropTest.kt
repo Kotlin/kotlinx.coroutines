@@ -228,8 +228,8 @@ class ChannelInteropTest : TestBase() {
     fun testAsAsyncIterableOptionsPreventCancelTrue() = runTest {
         val channel = Channel<Int>(capacity = 1)
         val iterator: JsAsyncIterator<Int> = channel
-            .asAsyncIterable(ChannelIteratorOptions(preventCancel = true))
-            .asDynamic()[js("Symbol.asyncIterator")]()
+            .asDynamic()
+            .values(ChannelIteratorOptions(preventCancel = true))[js("Symbol.asyncIterator")]()
         launch {
             channel.send(1)
             channel.send(2)
@@ -248,8 +248,8 @@ class ChannelInteropTest : TestBase() {
     fun testAsAsyncIterableOptionsPreventCancelFalse() = runTest {
         val channel = Channel<Int>()
         val iterator: JsAsyncIterator<Int> = channel
-            .asAsyncIterable(ChannelIteratorOptions(preventCancel = false))
-            .asDynamic()[js("Symbol.asyncIterator")]()
+            .asDynamic()
+            .values(ChannelIteratorOptions(preventCancel = false))[js("Symbol.asyncIterator")]()
         launch {
             channel.send(1)
             assertFailsWith<CancellationException> {
