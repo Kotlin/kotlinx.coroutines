@@ -88,6 +88,7 @@ public actual interface ReceiveChannel<out E> {
      */
     @JsName("values") // We use "values" here to mimic the ReadableStream API: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
     @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
+    @Suppress("DEPRECATION_ERROR")
     public fun asyncIterator(options: ChannelIteratorOptions? = null): JsAsyncIterableIterator<E> =
         asyncIterator(options?.preventCancel != true)
 
@@ -243,7 +244,7 @@ internal external interface JsAsyncIterator<out T> {
  * Options for customizing channel async-iteration behavior.
  */
 @JsExport
-@JsPlainObject
+@Deprecated(message = "", level = DeprecationLevel.HIDDEN)
 public external interface ChannelIteratorOptions {
     /**
      * Controls whether the channel is canceled when iteration completes early.

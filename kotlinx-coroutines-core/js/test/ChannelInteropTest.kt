@@ -227,9 +227,7 @@ class ChannelInteropTest : TestBase() {
     @Test
     fun testAsAsyncIterableOptionsPreventCancelTrue() = runTest {
         val channel = Channel<Int>(capacity = 1)
-        val iterator: JsAsyncIterator<Int> = channel
-            .asDynamic()
-            .values(ChannelIteratorOptions(preventCancel = true))[js("Symbol.asyncIterator")]()
+        val iterator: JsAsyncIterator<Int> = js("channel.values({ preventCancel: true })[Symbol.asyncIterator]()")
         launch {
             channel.send(1)
             channel.send(2)
@@ -247,9 +245,8 @@ class ChannelInteropTest : TestBase() {
     @Test
     fun testAsAsyncIterableOptionsPreventCancelFalse() = runTest {
         val channel = Channel<Int>()
-        val iterator: JsAsyncIterator<Int> = channel
-            .asDynamic()
-            .values(ChannelIteratorOptions(preventCancel = false))[js("Symbol.asyncIterator")]()
+        val iterator: JsAsyncIterator<Int> =
+            js("channel.values({ preventCancel: false })[Symbol.asyncIterator]()")
         launch {
             channel.send(1)
             assertFailsWith<CancellationException> {
@@ -268,10 +265,7 @@ class ChannelInteropTest : TestBase() {
     @Test
     fun testValuesOptionsPreventCancelTrue() = runTest {
         val channel = Channel<Int>(capacity = 1)
-        val iterator: JsAsyncIterator<Int> = channel
-            .asDynamic()
-            .values(ChannelIteratorOptions(preventCancel = true))
-            .unsafeCast<JsAsyncIterator<Int>>()
+        val iterator: JsAsyncIterator<Int> = js("channel.values({ preventCancel: true })[Symbol.asyncIterator]()")
         val error = js("new Error('test error')")
         launch {
             channel.send(1)
@@ -290,10 +284,7 @@ class ChannelInteropTest : TestBase() {
     @Test
     fun testValuesOptionsPreventCancelFalseByDefault() = runTest {
         val channel = Channel<Int>()
-        val iterator: JsAsyncIterator<Int> = channel
-            .asDynamic()
-            .values(ChannelIteratorOptions(preventCancel = null))
-            .unsafeCast<JsAsyncIterator<Int>>()
+        val iterator: JsAsyncIterator<Int> = js("channel.values()[Symbol.asyncIterator]()")
         val error = js("new Error('test error')")
         launch {
             channel.send(1)
