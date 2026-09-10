@@ -4,10 +4,21 @@ package kotlinx.coroutines.testing
 
 import kotlinx.atomicfu.*
 import kotlinx.atomicfu.locks.*
-import kotlinx.atomicfu.locks.ParkingHandle
 import kotlin.time.*
 
+
+/**
+ * Minimalistic multiplatform (JVM + Native) alternative for java.util.concurrent.CountDownLatch.
+ *
+ * It is not reusable: once the latch has been lifted, it will always stay lifted.
+ *
+ * No thread interrupts support: an awaiting thread or a coroutine will degrade to a busy-spin if interrupted.
+ */
 class CountDownLatch(count: Int) {
+    init {
+        require(count >= 0) { "A negative count doesn't have a meaning. Initialize with 0 to keep the latch lifted from the start." }
+    }
+
     private val c = atomic(count)
     private val waiters = MPSCQueueLatch<ParkingHandle>()
 
@@ -22,8 +33,7 @@ class CountDownLatch(count: Int) {
         if (waiters.enqueue(thread)) {
             while (c.value > 0) {
                 val remaining = start + duration - TimeSource.Monotonic.markNow()
-                if (remaining.isNegative())
-                    return false
+                if (remaining.isNegative()) return false
                 ParkingSupport.park(remaining)
             }
         }
