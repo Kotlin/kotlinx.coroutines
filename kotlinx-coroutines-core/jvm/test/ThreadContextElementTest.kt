@@ -285,6 +285,58 @@ class ThreadContextElementTest : TestBase() {
             myThreadLocal.set(null)
         }
     }
+
+    @Test
+    fun testUndispatchedFlowScopeLifetimeOnSuspension() = runTest {
+        val trackingStack = ArrayDeque<Int>()
+
+        class ScopedTrackingElement(val id: Int) : ThreadContextElement<Int> {
+            override val key: CoroutineContext.Key<*> get() = Key
+
+            companion object Key : CoroutineContext.Key<ScopedTrackingElement>
+
+            override fun updateThreadContext(context: CoroutineContext): Int {
+                trackingStack.addLast(id)
+                return id
+            }
+
+            override fun restoreThreadContext(context: CoroutineContext, oldState: Int) {
+                val popped = if (trackingStack.isNotEmpty()) trackingStack.removeLast() else null
+                assertEquals(id, popped, "Scope $id was restored out of order; top of stack was $popped")
+            }
+        }
+
+        try {
+            withContext(ScopedTrackingElement(1)) {
+                flow {
+                    emit(1)
+                    yield()
+                    emit(2)
+                }
+                    .flowOn(ScopedTrackingElement(2))
+                    .collect {
+                        yield()
+                    }
+            }
+            assertTrue(trackingStack.isEmpty(), "Expected all scopes to be closed, but stack was: $trackingStack")
+
+            withContext(ScopedTrackingElement(1)) {
+                flow {
+                    emit(1)
+                    yield()
+                    emit(2)
+                }
+                    .flowOn(ScopedTrackingElement(3))
+                    .flowOn(ScopedTrackingElement(2))
+                    .collect {
+                        yield()
+                    }
+            }
+            assertTrue(trackingStack.isEmpty(), "Expected all scopes to be closed, but stack was: $trackingStack")
+        } finally {
+            trackingStack.clear()
+        }
+    }
 }
 
 class MyData
