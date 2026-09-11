@@ -2,7 +2,6 @@ package kotlinx.coroutines.future
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.Test
 import java.io.*
 import java.util.concurrent.*
 import kotlin.test.*
@@ -10,17 +9,17 @@ import kotlin.test.*
 class FutureExceptionsTest : TestBase() {
 
     @Test
-    fun testAwait() {
+    fun testConsume() {
         testException(IOException(), { it is IOException })
     }
 
     @Test
-    fun testAwaitChained() {
+    fun testConsumeChained() {
         testException(IOException(), { it is IOException }, { f -> f.thenApply { it + 1 } })
     }
 
     @Test
-    fun testAwaitDeepChain() {
+    fun testConsumeDeepChain() {
         testException(IOException(), { it is IOException },
             { f -> f
                 .thenApply { it + 1 }
@@ -28,22 +27,22 @@ class FutureExceptionsTest : TestBase() {
     }
 
     @Test
-    fun testAwaitCompletionException() {
+    fun testConsumeCompletionException() {
         testException(CompletionException("test", IOException()), { it is IOException })
     }
 
     @Test
-    fun testAwaitChainedCompletionException() {
+    fun testConsumeChainedCompletionException() {
         testException(CompletionException("test", IOException()), { it is IOException }, { f -> f.thenApply { it + 1 } })
     }
 
     @Test
-    fun testAwaitTestException() {
+    fun testConsumeTestException() {
         testException(TestException(), { it is TestException })
     }
 
     @Test
-    fun testAwaitChainedTestException() {
+    fun testConsumeChainedTestException() {
         testException(TestException(), { it is TestException }, { f -> f.thenApply { it + 1 } })
     }
 
@@ -59,7 +58,7 @@ class FutureExceptionsTest : TestBase() {
             val chained = transformer(future)
             future.completeExceptionally(exception)
             try {
-                chained.await()
+                chained.consume()
             } catch (e: Throwable) {
                 assertTrue(expected(e))
             }
@@ -75,7 +74,7 @@ class FutureExceptionsTest : TestBase() {
             }
 
             try {
-                chained.await()
+                chained.consume()
             } catch (e: Throwable) {
                 assertTrue(expected(e))
             }

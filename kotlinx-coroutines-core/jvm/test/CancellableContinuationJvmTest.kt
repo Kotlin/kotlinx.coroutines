@@ -31,7 +31,7 @@ class CancellableContinuationJvmTest : TestBase() {
     fun testBlockingIntegration() = runTest {
         val source = BlockingSource()
         val job = launch(Dispatchers.Default) {
-            source.await()
+            source.consume()
         }
         source.cancelAndJoin(job)
     }
@@ -41,7 +41,7 @@ class CancellableContinuationJvmTest : TestBase() {
         val source = BlockingSource()
         val job = launch(Dispatchers.Default) {
             cancel()
-            source.await()
+            source.consume()
         }
         source.cancelAndJoin(job)
     }
@@ -53,7 +53,7 @@ class CancellableContinuationJvmTest : TestBase() {
         job.cancelAndJoin()
     }
 
-    private suspend fun BlockingSource.await() = suspendCancellableCoroutine<Unit> {
+    private suspend fun BlockingSource.consume() = suspendCancellableCoroutine<Unit> {
         it.invokeOnCancellation { this.cancel() }
         subscribe()
     }

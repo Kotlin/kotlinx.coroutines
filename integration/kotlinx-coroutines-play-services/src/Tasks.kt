@@ -98,14 +98,15 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
  * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException].
  *
- * For bi-directional cancellation, an overload that accepts [CancellationTokenSource] can be used.
+ * [consume] can be used for single-shot tasks whose results are not needed if the coroutine awaiting them is cancelled.
  */
 public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
 
 /**
- * Awaits the completion of the task that is linked to the given [CancellationTokenSource] to control cancellation.
+ * Awaits the completion of the [Task] without blocking the thread, using the given [CancellationTokenSource] to cancel
+ * the task if the result is not needed.
  *
- * This suspending function is cancellable and cancellation is bi-directional:
+ * This suspending function is cancellable, and cancellation is bi-directional:
  * - If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * cancels the [cancellationTokenSource] and throws a [CancellationException].
  * - If the task is cancelled, then this function will throw a [CancellationException].
@@ -113,9 +114,30 @@ public suspend fun <T> Task<T>.await(): T = awaitImpl(null)
  * Providing a [CancellationTokenSource] that is unrelated to the receiving [Task] is not supported and
  * leads to an unspecified behaviour.
  */
-@ExperimentalCoroutinesApi // Since 1.5.1, tentatively until 1.6.0
-public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T =
+public suspend fun <T> Task<T>.consume(cancellationTokenSource: CancellationTokenSource): T =
     awaitImpl(cancellationTokenSource)
+
+/**
+ * Deprecated synonym for [consume].
+ *
+ * This function is deprecated because it's inconsistent with how in `kotlinx.coroutines`,
+ * on its own cancellation, `await()` typically does not cancel the computation that's being awaited,
+ * whereas this function does.
+ *
+ * [consume] is the new name for this operation.
+ * If the computation has several consumers, [asDeferred] is recommended:
+ * the resulting [Deferred] can be awaited by multiple coroutines whose cancellation will not affect the computation.
+ */
+@Deprecated("The name is misleading: instead of just awaiting this value, " +
+    "the function also cancels the computation if the caller is cancelled. " +
+    "Either use this.consume(cancellationTokenSource) to preserve this single-shot semantics " +
+    "or call this.asDeferred().await() to avoid cancellation",
+    ReplaceWith("this.consume(cancellationTokenSource)"),
+    DeprecationLevel.WARNING
+)
+// WARNING in 1.12, ERROR in 1.14, removed in 1.16 (was experimental)
+public suspend fun <T> Task<T>.await(cancellationTokenSource: CancellationTokenSource): T =
+    consume(cancellationTokenSource)
 
 private suspend fun <T> Task<T>.awaitImpl(cancellationTokenSource: CancellationTokenSource?): T {
     // fast path

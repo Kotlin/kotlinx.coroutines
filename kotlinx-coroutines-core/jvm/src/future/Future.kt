@@ -183,7 +183,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
 }
 
 /**
- * Awaits for completion of [CompletionStage] without blocking a thread.
+ * Await the result of this [CompletionStage] without blocking the thread or cancel it if the result is not needed.
  *
  * This suspending function is cancellable.
  * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
@@ -193,7 +193,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
  * corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
  * is cancelled. If cancelling the given stage is undesired, `stage.asDeferred().await()` should be used instead.
  */
-public suspend fun <T> CompletionStage<T>.await(): T {
+public suspend fun <T> CompletionStage<T>.consume(): T {
     val future = toCompletableFuture() // retrieve the future
     // fast path when CompletableFuture is already done (does not suspend)
     if (future.isDone) {
@@ -238,10 +238,31 @@ private class CancelFutureOnCompletion(
 
     override fun invoke(cause: Throwable?) {
         // Don't interrupt when cancelling future on completion, because no one is going to reset this
-        // interruption flag and it will cause spurious failures elsewhere.
+        // interruption flag, and it will cause spurious failures elsewhere.
         // We do not cancel the future if it's already completed in some way,
         // because `cancel` on a completed future won't change the state but is not guaranteed to behave well
         // on reentrancy. See https://github.com/Kotlin/kotlinx.coroutines/issues/4156
         if (cause != null && !future.isDone) future.cancel(false)
     }
 }
+
+/**
+ * Deprecated synonym for [consume].
+ *
+ * This function is deprecated because it's inconsistent with how in `kotlinx.coroutines`,
+ * on its own cancellation, `await()` typically does not cancel the computation that's being awaited,
+ * whereas this function does.
+ *
+ * [consume] is the new name for this operation.
+ * If the computation has several consumers, [asDeferred] is recommended:
+ * the resulting [Deferred] can be awaited by multiple coroutines whose cancellation will not affect the computation.
+ */
+@Deprecated("The name is misleading: instead of just awaiting this value, " +
+    "the function also cancels the computation if the caller is cancelled. " +
+    "Either use this.consume() to preserve this single-shot semantics " +
+    "or call this.asDeferred().await() to avoid cancellation",
+    ReplaceWith("this.consume()"),
+    DeprecationLevel.WARNING
+)
+// WARNING in 1.12, ERROR in 1.14, HIDDEN in 1.16
+public suspend fun <T> CompletionStage<T>.await(): T = consume()
