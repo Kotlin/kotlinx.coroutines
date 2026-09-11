@@ -9,16 +9,21 @@ private val defaultMainDelayOptIn = systemProp("kotlinx.coroutines.main.delay", 
 @PublishedApi
 internal actual val DefaultDelay: Delay = initializeDefaultDelay()
 
+/*
+ * When we already are working with UI and Main threads, it makes
+ * no sense to create a separate thread with timer that cannot be controlled
+ * by the UI runtime.
+ */
 private fun initializeDefaultDelay(): Delay {
     // Opt-out flag
     if (!defaultMainDelayOptIn) return DefaultExecutor
-    val main = Dispatchers.Main
     /*
-     * When we already are working with UI and Main threads, it makes
-     * no sense to create a separate thread with timer that cannot be controller
-     * by the UI runtime.
+     * Do not throw here: this code accesses the `Main` dispatcher only implicitly,
+     * probably inside a `delay` call.
+     * Any program that uses this code path is bound to access `Dispatchers.Main` at some point explicitly anyway
+     * and will observe the failure there.
      */
-    return if (main.isMissing() || main !is Delay) DefaultExecutor else main
+    return MainDispatcherLoader.dispatcherLoadResult.dispatcherOrNull as? Delay ?: DefaultExecutor
 }
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")

@@ -11,7 +11,7 @@ import kotlin.native.internal.NativePtr
 
 internal fun isMainThread(): Boolean = CFRunLoopGetCurrent() == CFRunLoopGetMain()
 
-internal actual fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher = DarwinMainDispatcher(false)
+internal actual fun createMainDispatcherOrNull(): MainCoroutineDispatcher? = DarwinMainDispatcher(false)
 
 internal actual fun createDefaultDispatcher(): CoroutineDispatcher = DarwinGlobalQueueDispatcher
 
@@ -28,7 +28,7 @@ private object DarwinGlobalQueueDispatcher : CoroutineDispatcher() {
 private class DarwinMainDispatcher(
     private val invokeImmediately: Boolean
 ) : MainCoroutineDispatcher(), Delay {
-    
+
     override val immediate: MainCoroutineDispatcher =
         if (invokeImmediately) this else DarwinMainDispatcher(true)
 
@@ -41,7 +41,7 @@ private class DarwinMainDispatcher(
             }
         }
     }
-    
+
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val timer = Timer()
         val timerBlock: TimerBlock = {
