@@ -128,7 +128,8 @@ class ObservableAsFlowTest : TestBase() {
         assertNotNull(observer)
         job.cancel()
         val disposable = Disposables.empty()
-        observer.onSubscribe(disposable)
+        @Suppress("UNNECESSARY_NOT_NULL_ASSERTION") // It is necessary and Kotlin 2.4+ requires it here
+        observer!!.onSubscribe(disposable)
         assertTrue(disposable.isDisposed)
         finish(3)
     }
