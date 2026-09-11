@@ -19,17 +19,13 @@ class Gh4383PinnedBugTest : TestBase() {
     fun testUndispatchedCollectLatestMissesValueEmittedBeforeItsInternalProducerRuns() = runTest {
         val flow = MutableSharedFlow<Int>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         var valueReceived = false
-
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             flow.collectLatest {
                 valueReceived = true
             }
         }
-
         check(flow.tryEmit(1))
-
         yield()
-
         // Emitted value is never collected
         assertTrue(flow.subscriptionCount.value > 0)
         assertFalse(valueReceived)
@@ -37,6 +33,7 @@ class Gh4383PinnedBugTest : TestBase() {
     }
 
     // Simpler and broader(?) test from https://github.com/Kotlin/kotlinx.coroutines/pull/4488
+    // reordered to pin the current behaviour
     @Test
     fun testUndispatchedCollectLatestDoesNotSynchronouslySubscribeToUpstream() = runTest {
         expect(1)
@@ -45,7 +42,6 @@ class Gh4383PinnedBugTest : TestBase() {
             yield()
             expect(5)
         }
-
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             myFlow.collectLatest {
@@ -53,7 +49,6 @@ class Gh4383PinnedBugTest : TestBase() {
             }
             finish(6)
         }
-
         expect(3) // 4
     }
 }

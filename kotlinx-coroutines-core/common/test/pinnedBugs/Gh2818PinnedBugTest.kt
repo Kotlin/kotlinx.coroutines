@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * PINNED BUG. Related issue: https://github.com/Kotlin/kotlinx.coroutines/issues/2818
@@ -21,11 +22,10 @@ class Gh2818PinnedBugTest : TestBase() {
         val channel = stream.onEach { }.buffer(Channel.RENDEZVOUS).produceIn(this)
         yield()
         expect(2)
-
-        // Expected to suspend on first emit
-        stream.emit(Unit)
+        withTimeout(1000.milliseconds) {
+            stream.emit(Unit) // Expected to suspend on first emit
+        }
         expect(3)
-
         val job = launch {
             expect(5)
             stream.emit(Unit) // Only the second emit suspends until the value is collected
@@ -34,7 +34,6 @@ class Gh2818PinnedBugTest : TestBase() {
         expect(4)
         yield()
         expect(6)
-
         assertTrue(job.isActive)
         job.cancel()
         channel.cancel()
