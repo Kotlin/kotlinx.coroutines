@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.testing.TestBase
 import kotlinx.coroutines.testing.stressTestMultiplier
 import kotlinx.coroutines.testing.stressTestMultiplierSqrt
-import org.junit.Test
+import kotlin.test.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -36,7 +36,6 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
             maxPoolSize = tasksCount,
             idleWorkerKeepAliveNs = TimeUnit.MILLISECONDS.toNanos(50)
         )
-
         val workers = ConcurrentHashMap.newKeySet<Thread>()
         val allWorkersCreated = CountDownLatch(tasksCount)
         val blockingTasksBlocker = CountDownLatch(1)
@@ -45,7 +44,6 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
         val cpuThreadsBlocked = CountDownLatch(1)
         val cpuThreadsFinished = CountDownLatch(tasksCount)
         val cpuScope = CoroutineScope(SupervisorJob() + dispatcher)
-
         fun recordWorker() {
             if (workers.add(Thread.currentThread())) allWorkersCreated.countDown()
         }
@@ -59,10 +57,8 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
                         recordWorker()
                         blockingTasksBlocker.await()
                     }, BlockingContext, false)
-
                     yield()
                 }
-
                 /*
                  * Here we have the following state (test-wise, not line-wise), dear reader:
                  * - 3 out of 3 threads are blocked fully in the IO (BlockingContext) task
@@ -79,15 +75,12 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
                 cpuThreadsFinished.countDown()
             }
         }
-
         allWorkersCreated.await() // Wait all
         blockingTasksBlocker.countDown() // Ublock all blocking
         cpuThreadsReachedThis.await() // Wait all
-
         // Quickly terminates, thanks keep alive timeout
         val retiringWorker = workers.single { it !in cpuThreads }
         retiringWorker.join()
-
         cpuThreadsBlocked.countDown() // Unblock
         cpuThreadsFinished.await() // Wait
         dispatcher.close()
