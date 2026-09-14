@@ -177,139 +177,90 @@ class ChannelInteropTest : TestBase() {
     private suspend fun testAsyncIteratorCancellingOnEarlyReturn(
         obtainIterator: (Channel<Int>) -> JsAsyncIterator<Int>
     ) {
-        coroutineScope { // `return`(42)
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                assertFailsWith<CancellationException> {
-                    channel.send(2)
-                }.apply {
-                    assertNull(cause)
+        for (earlyExitType in EarlyExitType.entries) {
+            coroutineScope { // `return`(42)
+                val channel = Channel<Int>()
+                val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
+                val producer = async {
+                    channel.send(1)
+                    assertFailsWith<CancellationException> {
+                        channel.send(2)
+                    }
                 }
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            val returnResult = iterator.asDynamic().`return`(42).unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-            assertEquals(true, returnResult.done)
-            assertEquals(42, returnResult.value)
-            assertTrue(channel.isClosedForReceive)
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `return`()
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                assertFailsWith<CancellationException> {
-                    channel.send(2)
-                }.apply {
-                    assertNull(cause)
+                assertNextStepToBe(iterator, value = 1, done = false)
+                when (earlyExitType) {
+                    EarlyExitType.RETURN_42 -> {
+                        val returnResult = iterator.asDynamic().`return`(42)
+                            .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        producer.await().apply { assertNull(cause) }
+                        assertEquals(true, returnResult.done)
+                        assertEquals(42, returnResult.value)
+                    }
+                    EarlyExitType.RETURN -> {
+                        val returnResult = iterator.asDynamic().`return`()
+                            .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        producer.await().apply { assertNull(cause) }
+                        assertEquals(true, returnResult.done)
+                    }
+                    EarlyExitType.THROW_ERROR -> {
+                        val error = js("new Error('test error')")
+                        assertFailsWith<Throwable> { iterator.`throw`(error).await() }
+                            .apply { assertEquals("test error", message) }
+                        producer.await().apply { assertSame(error, cause) }
+                    }
+                    EarlyExitType.THROW -> {
+                        assertFailsWith<Throwable> {
+                            iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        }.apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
+                        producer.await().apply { assertNull(cause) }
+                    }
                 }
+                assertTrue(channel.isClosedForReceive)
+                assertNextStepToBe(iterator, done = true)
             }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-            assertEquals(true, returnResult.done)
-            assertTrue(channel.isClosedForReceive)
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `throw`(error)
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            val error = js("new Error('test error')")
-            launch {
-                channel.send(1)
-                assertFailsWith<CancellationException> {
-                    channel.send(2)
-                }.apply {
-                    assertSame(error, cause)
-                }
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            assertFailsWith<Throwable> { iterator.`throw`(error).await() }
-                .apply { assertEquals("test error", message) }
-            assertTrue(channel.isClosedForReceive)
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `throw`()
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                assertFailsWith<CancellationException> {
-                    channel.send(2)
-                }.apply {
-                    assertNull(cause)
-                }
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            assertFailsWith<Throwable> { iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await() }
-                .apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
-            assertTrue(channel.isClosedForReceive)
-            assertNextStepToBe(iterator, done = true)
         }
     }
 
     private suspend fun testAsyncIteratorNotCancellingOnEarlyReturn(
         obtainIterator: (Channel<Int>) -> JsAsyncIterator<Int>
     ) {
-        coroutineScope { // `return`(42)
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                channel.send(2)
+        for (earlyExitType in EarlyExitType.entries) {
+            coroutineScope {
+                val channel = Channel<Int>()
+                val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
+                launch {
+                    channel.send(1)
+                    channel.send(2)
+                }
+                assertNextStepToBe(iterator, value = 1, done = false)
+                when (earlyExitType) {
+                    EarlyExitType.RETURN_42 -> {
+                        val returnResult = iterator.asDynamic().`return`(42)
+                            .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        assertEquals(true, returnResult.done)
+                        assertEquals(42, returnResult.value)
+                    }
+                    EarlyExitType.RETURN -> {
+                        val returnResult = iterator.asDynamic().`return`()
+                            .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        assertEquals(true, returnResult.done)
+                    }
+                    EarlyExitType.THROW_ERROR -> {
+                        val error = js("new Error('test error')")
+                        assertFailsWith<Throwable> { iterator.`throw`(error).await() }
+                            .also { assertSame(error, it) }
+                    }
+                    EarlyExitType.THROW -> {
+                        val error = js("new Error('test error')")
+                        assertFailsWith<Throwable> {
+                            iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
+                        }.apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
+                    }
+                }
+                assertFalse(channel.isClosedForReceive)
+                assertEquals(2, channel.receive())
+                assertNextStepToBe(iterator, done = true)
             }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            val returnResult = iterator.asDynamic().`return`(42).unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-            assertEquals(true, returnResult.done)
-            assertEquals(42, returnResult.value)
-            assertFalse(channel.isClosedForReceive)
-            assertEquals(2, channel.receive())
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `return`()
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                channel.send(2)
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-            assertEquals(true, returnResult.done)
-            assertFalse(channel.isClosedForReceive)
-            assertEquals(2, channel.receive())
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `throw`(error)
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            val error = js("new Error('test error')")
-            launch {
-                channel.send(1)
-                channel.send(2)
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            assertFailsWith<Throwable> { iterator.`throw`(error).await() }
-                .apply { assertEquals("test error", message) }
-            assertFalse(channel.isClosedForReceive)
-            assertEquals(2, channel.receive())
-            assertNextStepToBe(iterator, done = true)
-        }
-        coroutineScope { // `throw`()
-            val channel = Channel<Int>()
-            val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
-            launch {
-                channel.send(1)
-                channel.send(2)
-            }
-            assertNextStepToBe(iterator, value = 1, done = false)
-            // Call throw() with no argument to cancel the iterator
-            assertFailsWith<Throwable> { iterator.asDynamic().`throw`().unsafeCast<Promise<JsIteratorResult<Int>>>().await() }
-                .apply { assertEquals("Promise rejected with a non-Throwable exception", message) }
-            assertFalse(channel.isClosedForReceive)
-            assertEquals(2, channel.receive())
-            assertNextStepToBe(iterator, done = true)
         }
     }
 
@@ -321,5 +272,12 @@ class ChannelInteropTest : TestBase() {
         val result = iterator.next().await()
         assertEquals(done, result.done)
         assertEquals(value, result.value)
+    }
+
+    private enum class EarlyExitType {
+        RETURN_42,
+        RETURN,
+        THROW_ERROR,
+        THROW,
     }
 }
