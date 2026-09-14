@@ -61,7 +61,7 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
                 /*
                  * Before this line executes in any of the coroutines, the state we want is:
                  * - 3 out of 3 threads are blocked fully in the IO (BlockingContext) task
-                 *- Each of these three threads has a CPU task in its local queue
+                 * - Each of these three threads has a CPU task in its local queue
                  *   (may not be true, the CPU task may be in the global queue, making the test non-deterministic)
                  * - These CPU tasks are, well, this very line of code
                  * - We release these blocking tasks, making this two out of three (!) executing
