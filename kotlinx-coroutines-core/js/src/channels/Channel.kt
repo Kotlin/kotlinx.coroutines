@@ -19,75 +19,34 @@ public actual interface ReceiveChannel<out E> {
     public actual fun cancel(cause: CancellationException?)
 
     /**
-     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
+     * The version of `asyncIterator()` callable from JS.
      *
-     * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
-     * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
+     * Exported instead of the usual `asyncIterator()` to avoid exposing the [Boolean] parameter,
+     * which is non-idiomatic on JS.
      *
-     * Each call to the iterator's `next` method receives at most one element from this channel:
-     *
-     * - if an element is available, the returned `Promise` is fulfilled with an iterator result
-     *   whose `value` is the received element and whose `done` is `false`;
-     * - if the channel is closed normally, or is cancelled with a [CancellationException], the
-     *   returned `Promise` is fulfilled with an iterator result whose `done` is `true`;
-     * - if the channel is closed with another cause, the returned `Promise` is rejected with that
-     *   cause.
-     *
-     * Calling the iterator's `return` method finishes this iterator instance and returns a fulfilled
-     * `Promise` with `done` set to `true`. By default, it [cancels][ReceiveChannel.cancel] the channel without a `cause`.
-     *
-     * Calling the iterator's `throw` method finishes this iterator instance and returns a rejected
-     * `Promise` with the supplied error. By default, it [cancels][ReceiveChannel.cancel] the channel
-     * with the `cause` of the [CancellationException] being set to the exception provided to `throw`.
-     *
-     * To change the default cancallation behavior, use [values] method with `{ preventCancel: false }` (in JavaScript/TypeScript)
-     * or `asyncIterator(cancelOnEarlyExit = false)` (in Kotlin) instead.
-     *
-     * The coroutines backing calls to `next` are started in [GlobalScope].
-     * In particular, they are not children of any caller-provided coroutine
-     * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
+     * @suppress
      */
     @ExperimentalCoroutinesApi
     @JsSymbol("asyncIterator")
+    // the deprecation message must be empty, or the API will be exported as deprecated to JS
+    @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
     public fun asyncIterator(): JsAsyncIterableIterator<E> =
         asyncIterator(cancelOnEarlyExit = true)
 
     /**
-     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
+     * The version of `asyncIterator()` callable from JS.
      *
-     * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
-     * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
-     *
-     * Each call to the iterator's `next` method receives at most one element from this channel:
-     *
-     * - if an element is available, the returned `Promise` is fulfilled with an iterator result
-     *   whose `value` is the received element and whose `done` is `false`;
-     * - if the channel is closed normally, or is cancelled with a [CancellationException], the
-     *   returned `Promise` is fulfilled with an iterator result whose `done` is `true`;
-     * - if the channel is closed with another cause, the returned `Promise` is rejected with that
-     *   cause.
-     *
-     * Calling the iterator's `return` method finishes this iterator instance and returns a fulfilled
-     * `Promise` with `done` set to `true`. By default, it [cancels][ReceiveChannel.cancel] the channel without a `cause`.
-     *
-     * Calling the iterator's `throw` method finishes this iterator instance and returns a rejected
-     * `Promise` with the supplied error. By default, it [cancels][ReceiveChannel.cancel] the channel
-     * with the `cause` of the [CancellationException] being set to the exception provided to `throw`.
-     *
-     * The coroutines backing calls to `next` are started in [GlobalScope].
-     * In particular, they are not children of any caller-provided coroutine
-     * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
+     * Introduced for consistency with the `.values` function of
+     * [`ReadableStream`](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream).
      *
      * @param options iteration behavior options:
-     * - `preventCancel = true`: early iterator completion does not cancel the channel;
+     * - `preventCancel = true`: early iterator completion (for example, via `break`) does not cancel the channel;
      * - `preventCancel = false` or omitted: early iterator completion cancels the channel.
      *
      * @suppress
      */
     @JsName("values") // We use "values" here to mimic the ReadableStream API: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
-     // the deprecation message must be empty, or the API will be exported as deprecated to JS
+    // the deprecation message must be empty, or the API will be exported as deprecated to JS
     @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
     @Suppress("DEPRECATION_ERROR")
     public fun asyncIterator(options: ChannelIteratorOptions? = null): JsAsyncIterableIterator<E> =
@@ -95,19 +54,24 @@ public actual interface ReceiveChannel<out E> {
 
     /**
      * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
-     * (which is also `AsyncIterable`, see [AsyncIterableIterator](https://github.com/microsoft/TypeScript/blob/6ef3b2ce767ed0d93557c745b896e2b10178c4f5/tsc/internal/bundled/libs/lib.es2018.asynciterable.d.ts#L42)) for this channel.
+     * for this channel.
      *
-     * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols), so that the
-     * channel exported to JavaScript can be [consumed][Channel.consume] with `for await ... of`.
+     * This method is used to implement the JavaScript async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols),
+     * to support iterating over the channel's elements with `for await ... of`.
+     *
+     * By default, the channel is [consumed][ReceiveChannel.consume] by this function.
+     * Cancelling the iterator also causes the [cancellation][ReceiveChannel.cancel] of the channel.
+     * [cancelOnEarlyExit] can be set to `false` to disable this behavior.
+     *
+     * ## Implementation details
      *
      * Each call to the iterator's `next` method receives at most one element from this channel:
      *
      * - if an element is available, the returned `Promise` is fulfilled with an iterator result
      *   whose `value` is the received element and whose `done` is `false`;
-     * - if the channel is closed normally, or is cancelled with a [CancellationException], the
-     *   returned `Promise` is fulfilled with an iterator result whose `done` is `true`;
-     * - if the channel is closed with another cause, the returned `Promise` is rejected with that
-     *   cause.
+     * - if the channel is closed normally without a cause, the returned `Promise` is fulfilled
+     *   with an iterator result whose `done` is `true`;
+     * - if the channel is closed with a cause, the returned `Promise` is rejected with that cause.
      *
      * Calling the iterator's `return` method finishes this iterator instance and returns a fulfilled
      * `Promise` with `done` set to `true`. By default, it [cancels][ReceiveChannel.cancel] the channel without a `cause`.
@@ -119,9 +83,6 @@ public actual interface ReceiveChannel<out E> {
      * The coroutines backing calls to `next` are started in [GlobalScope].
      * In particular, they are not children of any caller-provided coroutine
      * scope and therefore are not bound to the lifetime of any structured-concurrency scope.
-     *
-     * @param cancelOnEarlyExit if `true` (default), calling iterator `return`/`throw` cancels the channel;
-     * if `false`, early iterator completion does not cancel the channel.
      */
     @JsExport.Ignore
     @ExperimentalCoroutinesApi
