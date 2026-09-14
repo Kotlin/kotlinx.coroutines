@@ -76,7 +76,7 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
             }
         }
         allWorkersCreated.await() // Wait all
-        blockingTasksBlocker.countDown() // Ublock all blocking
+        blockingTasksBlocker.countDown() // Unblock all blocking
         cpuThreadsReachedThis.await() // Wait all
         // Quickly terminates, thanks keep alive timeout
         val retiringWorker = workers.single { it !in cpuThreads }
