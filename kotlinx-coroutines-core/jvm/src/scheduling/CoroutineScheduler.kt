@@ -416,7 +416,7 @@ internal class CoroutineScheduler(
         }
     }
 
-    fun createTask(block: Runnable, taskContext: TaskContext): Task {
+    private fun createTask(block: Runnable, taskContext: TaskContext): Task {
         val nanoTime = schedulerTimeSource.nanoTime()
         if (block is Task) {
             block.submissionTime = nanoTime
@@ -893,6 +893,16 @@ internal class CoroutineScheduler(
                 workers.setSynchronized(lastIndex, null)
             }
             state = WorkerState.TERMINATED
+            /*
+             * At this point, worker cannot be observed by other threads (though its queue can be in the process of stealing from).
+             * It can be the case that the local queue is not empty if during the keep-alive period all workers were
+             * busy with their own work and didn't have a chance to steal any task, there are no CPU permits and local queue
+             * contains only CPU work
+             */
+            while (true) {
+                val task = localQueue.poll() ?: break
+                dispatch(task)
+            }
         }
 
         fun findTask(mayHaveLocalTasks: Boolean): Task? {
