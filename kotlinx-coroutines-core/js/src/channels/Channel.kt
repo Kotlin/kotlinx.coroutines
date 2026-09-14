@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalJsExport::class, ExperimentalStdlibApi::class)
-@file:Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE", "EXPOSED_PARAMETER_TYPE")
+@file:Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE")
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
@@ -87,6 +87,7 @@ public actual interface ReceiveChannel<out E> {
      * @suppress
      */
     @JsName("values") // We use "values" here to mimic the ReadableStream API: https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream
+     // the deprecation message must be empty, or the API will be exported as deprecated to JS
     @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
     @Suppress("DEPRECATION_ERROR")
     public fun asyncIterator(options: ChannelIteratorOptions? = null): JsAsyncIterableIterator<E> =
@@ -244,6 +245,7 @@ internal external interface JsAsyncIterator<out T> {
  * Options for customizing channel async-iteration behavior.
  */
 @JsExport
+ // the deprecation message must be empty, or the API will be exported as deprecated to JS
 @Deprecated(message = "", level = DeprecationLevel.HIDDEN)
 public external interface ChannelIteratorOptions {
     /**
