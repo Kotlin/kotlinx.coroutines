@@ -12,10 +12,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class CoroutineSchedulerWorkerTerminationTest : TestBase() {
 
-    // Note: right now test is timing sensitive because it awaits for the worker termination
-    @Test(timeout = 20_000L)
+    @Test
     fun testWorkerTerminationDuringOversubscription() {
-        repeat(25 * stressTestMultiplierSqrt) { iteration ->
+        repeat(25 * stressTestMultiplierSqrt) {
             doTest()
         }
     }
@@ -60,9 +59,10 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
                     yield()
                 }
                 /*
-                 * Here we have the following state (test-wise, not line-wise), dear reader:
+                 * Before this line executes in any of the coroutines, the state we want is:
                  * - 3 out of 3 threads are blocked fully in the IO (BlockingContext) task
-                 * - Each of these three threads has a CPU task in its local queue
+                 *- Each of these three threads has a CPU task in its local queue
+                 *   (may not be true, the CPU task may be in the global queue, making the test non-deterministic)
                  * - These CPU tasks are, well, this very line of code
                  * - We release these blocking tasks, making this two out of three (!) executing
                  * - They record their thread and notify test coordinator
@@ -82,7 +82,7 @@ class CoroutineSchedulerWorkerTerminationTest : TestBase() {
         val retiringWorker = workers.single { it !in cpuThreads }
         retiringWorker.join()
         cpuThreadsBlocked.countDown() // Unblock
-        cpuThreadsFinished.await() // Wait
+        cpuThreadsFinished.await(20, TimeUnit.SECONDS) // Wait, fail if we hit our regression
         dispatcher.close()
     }
 }
