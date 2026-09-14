@@ -47,7 +47,7 @@ public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineCo
         if (element !is CopyableThreadContextElement<*>) return@fold result + element // not CTCE, append normally
         val oldElement = result[element.key] ?: return@fold result + element.copyForChild() // new CTCE, append copy
         // otherwise, overwrite oldElement with merged CTCE
-        result + (oldElement as CopyableThreadContextElement<*>).mergeForChild(element)
+        result.replace(element.key, (oldElement as CopyableThreadContextElement<*>).mergeForChild(element))
     }
 }
 
@@ -73,7 +73,7 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
         // Fold originalContext into itself, overwriting CTCEs with copies while leaving other elements alone.
         return originalContext.fold(originalContext) { result, element ->
             if (element !is CopyableThreadContextElement<*>) return@fold result // not CTCE, leave it alone
-            result + element.copyForChild() // CTCE, overwrite with copy
+            result.replace(element.key, element.copyForChild()) // CTCE, overwrite with copy
             // no merging necessary because no CTCEs in appendContext
         } + appendContext // so just append all of it normally
     }
@@ -88,11 +88,11 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
         val newElement = leftoverContext[element.key]
         if (newElement == null) {
             // no matching CTCE in appendContext
-            result + element.copyForChild() // overwrite with copy
+            result.replace(element.key, element.copyForChild()) // overwrite with copy
         } else {
             // found matching CTCE in appendContext
             leftoverContext = leftoverContext.minusKey(element.key) // remove matching element from appendContext
-            result + element.mergeForChild(newElement) // then overwrite element with merged CTCE
+            result.replace(element.key, element.mergeForChild(newElement)) // then overwrite element with merged CTCE
         }
     }
     // Fold remaining elements in leftoverContext into the folded originalContext. Any remaining CTCEs are new and must
@@ -102,6 +102,9 @@ private fun foldCopies(originalContext: CoroutineContext, appendContext: Corouti
         result + element.copyForChild() // new CTCE, append copy
     }
 }
+
+private fun CoroutineContext.replace(key: CoroutineContext.Key<*>, replacement: CoroutineContext): CoroutineContext =
+    if (replacement[key] != null) this + replacement else minusKey(key) + replacement
 
 /**
  * Executes a block using a given coroutine context.
