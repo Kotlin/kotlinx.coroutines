@@ -278,7 +278,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>(cancellationTokenSource.token)
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -294,7 +294,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>(cancellationTokenSource.token)
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -309,7 +309,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>(cancellationTokenSource.token)
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -332,7 +332,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>(cancellationTokenSource.token)
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -356,7 +356,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>()
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.LAZY) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -377,7 +377,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>()
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.UNDISPATCHED) {
-            taskCompletionSource.task.await(cancellationTokenSource)
+            taskCompletionSource.task.consume(cancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
@@ -399,7 +399,7 @@ class TaskTest : TestBase() {
         val taskCompletionSource = TaskCompletionSource<Int>(firstCancellationTokenSource.token)
 
         val deferred: Deferred<Int> = async(start = CoroutineStart.LAZY) {
-            taskCompletionSource.task.await(secondCancellationTokenSource)
+            taskCompletionSource.task.consume(secondCancellationTokenSource)
         }
 
         assertFalse(deferred.isCompleted)
