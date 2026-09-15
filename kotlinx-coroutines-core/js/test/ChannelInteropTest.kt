@@ -44,23 +44,9 @@ class ChannelInteropTest : TestBase() {
 
     @Test
     fun testChannelToAsyncIteratorEarlyReturn() = runTest {
-        val channel = Channel<Int>()
-        val iterator: JsAsyncIterator<Int> = channel.asDynamic()[js("Symbol.asyncIterator")]()
-        launch {
-            channel.send(1)
-            assertFailsWith<CancellationException>{
-                channel.send(2)
-            }.apply {
-                assertNull(cause)
-            }
+        testAsyncIteratorCancellingOnEarlyReturn { channel ->
+            channel.asDynamic()[js("Symbol.asyncIterator")]()
         }
-        assertNextStepToBe(iterator, value = 1, done = false)
-        // Call return() to stop iteration early
-        val returnResult = iterator.asDynamic().`return`().unsafeCast<Promise<JsIteratorResult<Int>>>().await()
-        assertEquals(true, returnResult.done)
-        // Channel should be cancelled
-        assertTrue(channel.isClosedForReceive)
-        assertNextStepToBe(iterator, done = true)
     }
 
     @Test
@@ -144,6 +130,9 @@ class ChannelInteropTest : TestBase() {
         testAsyncIteratorCancellingOnEarlyReturn { channel ->
             channel.asyncIterator(cancelOnEarlyExit = true)
         }
+        testAsyncIteratorCancellingOnEarlyReturn { channel ->
+            channel.asyncIterator()
+        }
     }
 
     @Test
@@ -178,7 +167,7 @@ class ChannelInteropTest : TestBase() {
         obtainIterator: (Channel<Int>) -> JsAsyncIterator<Int>
     ) {
         for (earlyExitType in EarlyExitType.entries) {
-            coroutineScope { // `return`(42)
+            coroutineScope {
                 val channel = Channel<Int>()
                 val iterator: JsAsyncIterator<Int> = obtainIterator(channel)
                 val producer = async {
