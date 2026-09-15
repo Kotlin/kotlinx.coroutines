@@ -7,6 +7,7 @@ import org.junit.Test
 import java.util.concurrent.locks.*
 import kotlin.concurrent.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Tests event loops integration.
@@ -50,25 +51,6 @@ class EventLoopsTest : TestBase() {
     }
 
     @Test
-    fun testEventLoopInDefaultExecutor() = runTest {
-        expect(1)
-        withContext(Dispatchers.Unconfined) {
-            delay(1)
-            assertTrue(Thread.currentThread().name.startsWith(DefaultExecutor.THREAD_NAME))
-            expect(2)
-            // now runBlocking inside default executor thread --> should use outer event loop
-            DefaultExecutor.enqueue {
-                expect(4) // will execute when runBlocking runs loop
-            }
-            expect(3)
-            runBlocking {
-                expect(5)
-            }
-        }
-        finish(6)
-    }
-
-    @Test
     fun testSecondThreadRunBlocking() = runTest {
         val testThread = Thread.currentThread()
         val testContext = coroutineContext
@@ -96,7 +78,7 @@ class EventLoopsTest : TestBase() {
     @Test
     fun testPendingDelayedBeingDueEarlier() = runTest {
         launch(start = CoroutineStart.UNDISPATCHED) {
-            delay(1)
+            delay(1.milliseconds)
             expect(1)
         }
         Thread.sleep(100)
@@ -116,7 +98,8 @@ class EventLoopsTest : TestBase() {
         fun blockingAwait() {
             check(waitingThread.getAndSet(Thread.currentThread()) == null)
             while (!fired.getAndSet(false)) {
-                val time = ThreadLocalEventLoop.currentOrNull()?.processNextEvent() ?: Long.MAX_VALUE
+                val time = ThreadLocalEventLoop.currentOrNull()?.tryUseAsEventLoop()?.processNextEvent()
+                    ?: Long.MAX_VALUE
                 LockSupport.parkNanos(time)
             }
             waitingThread.value = null
