@@ -20,24 +20,10 @@ class Gh4698PinnedBugTest : TestBase() {
 
     @Test
     fun testAtomicStartOnBrokenDispatcherHangsInsteadOfFailingFast() = runTest {
-        spinAwaitingCompletion {
+        assertCoroutineHangs {
             coroutineScope {
                 val job = launch(brokenDispatcher, start = CoroutineStart.ATOMIC) {}
                 job.join()
-            }
-        }
-    }
-
-    // Asserts that the coroutine cannot progress
-    private suspend fun <T> spinAwaitingCompletion(attempts: Int = 100, hangingTest: suspend () -> T) {
-        val dispatcher = currentCoroutineContext()[ContinuationInterceptor]!!
-        val deferred = GlobalScope.async(dispatcher) {
-            hangingTest()
-        }
-        repeat(attempts) {
-            yield()
-            if (deferred.isCompleted) {
-                fail("Expected a hanging test, got ${deferred.await()}")
             }
         }
     }

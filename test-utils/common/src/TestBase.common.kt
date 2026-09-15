@@ -246,6 +246,23 @@ public suspend inline fun hang(onCancellation: () -> Unit): Nothing {
     }
 }
 
+/**
+ * Asserts that [hangingTest] does not complete within [attempts] `yield()`s, by running it
+ * concurrently on the current dispatcher and polling its completion status.
+ */
+public suspend fun <T> assertCoroutineHangs(attempts: Int = 100, hangingTest: suspend () -> T) {
+    val dispatcher = currentCoroutineContext()[ContinuationInterceptor]!!
+    val deferred = GlobalScope.async(dispatcher) {
+        hangingTest()
+    }
+    repeat(attempts) {
+        yield()
+        if (deferred.isCompleted) {
+            fail("Expected a hanging test, got ${deferred.await()}")
+        }
+    }
+}
+
 suspend inline fun <reified T : Throwable> assertFailsWith(flow: Flow<*>) = assertFailsWith<T> { flow.collect() }
 
 public suspend fun Flow<Int>.sum() = fold(0) { acc, value -> acc + value }

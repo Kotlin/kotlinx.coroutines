@@ -16,32 +16,18 @@ class Gh4382PinnedBugTest : TestBase() {
 
     @Test
     fun testCancelHangsWhenChildIsLaunchedOnDispatcherThatNeverRunsIt() = runTest {
-        spinAwaitingCompletion {
-            val perpetuallyBusyDispatcher = object : CoroutineDispatcher() {
-                override fun dispatch(context: CoroutineContext, block: Runnable) {
-                    // Never actually runs
-                }
+        val perpetuallyBusyDispatcher = object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) {
+                // Never actually runs
             }
+        }
+        assertCoroutineHangs {
             coroutineScope {
                 // Hangs and cannot be cancelled
                 launch(perpetuallyBusyDispatcher) {
                     error("Unreachable code")
                 }
                 cancel()
-            }
-        }
-    }
-
-    // Asserts that the coroutine cannot progress
-    private suspend fun <T> spinAwaitingCompletion(attempts: Int = 100, hangingTest: suspend () -> T) {
-        val dispatcher = currentCoroutineContext()[ContinuationInterceptor]!!
-        val deferred = GlobalScope.async(dispatcher) {
-            hangingTest()
-        }
-        repeat(attempts) {
-            yield()
-            if (deferred.isCompleted) {
-                fail("Expected a hanging test, got ${deferred.await()}")
             }
         }
     }

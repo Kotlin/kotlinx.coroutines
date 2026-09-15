@@ -15,25 +15,11 @@ class Gh1578PinnedBugTest : TestBase() {
 
     @Test
     fun testRunBlockingHangsWithManualSupervisorJobChild() = runTest {
-        spinAwaitingCompletion {
+        assertCoroutineHangs {
             coroutineScope {
                 val supervisorJob = SupervisorJob(coroutineContext[Job])
                 assertTrue(supervisorJob.isActive)
                 // supervisorJob is never completed/cancelled and coroutineScope cannot complete
-            }
-        }
-    }
-
-    // Asserts that the coroutine cannot progress
-    private suspend fun <T> spinAwaitingCompletion(attempts: Int = 100, hangingTest: suspend () -> T) {
-        val dispatcher = currentCoroutineContext()[ContinuationInterceptor]!!
-        val deferred = GlobalScope.async(dispatcher) {
-            hangingTest()
-        }
-        repeat(attempts) {
-            yield()
-            if (deferred.isCompleted) {
-                fail("Expected a hanging test, got ${deferred.await()}")
             }
         }
     }
