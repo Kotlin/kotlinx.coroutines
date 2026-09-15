@@ -1,11 +1,13 @@
 @file:OptIn(ExperimentalJsExport::class, ExperimentalStdlibApi::class)
-@file:Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "INVISIBLE_REFERENCE", "EXPOSED_SUPER_INTERFACE")
+@file:Suppress("EXPOSED_FUNCTION_RETURN_TYPE", "INVISIBLE_REFERENCE")
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.internal.JsAsyncIterableIterator
+import kotlinx.coroutines.internal.JsAsyncIterator
+import kotlinx.coroutines.internal.JsIteratorResult
 import kotlinx.coroutines.internal.recoverStackTrace
 import kotlinx.coroutines.selects.*
-import kotlinx.js.JsPlainObject
 import kotlin.internal.*
 import kotlin.js.Promise
 
@@ -188,20 +190,6 @@ public actual interface ReceiveChannel<out E> {
     public actual val onReceiveOrNull: SelectClause1<E?> get() = (this as BufferedChannel<E>).onReceiveOrNull
 }
 
-@JsPlainObject
-@JsName("AsyncIterableIterator")
-internal external interface JsAsyncIterableIterator<out T> : JsAsyncIterator<T>
-
-@JsPlainObject
-@JsName("AsyncIterator")
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols
-internal external interface JsAsyncIterator<out T> {
-    public val next: () -> Promise<JsIteratorResult<T>>
-    // `return` and `throw` must be able to accept either zero arguments or a single one
-    public val `return`: (value: @UnsafeVariance T?) -> Promise<JsIteratorResult<T>>
-    public val `throw`: (value: Any?) -> Promise<JsIteratorResult<T>>
-}
-
 /**
  * Options for customizing channel async-iteration behavior.
  */
@@ -221,9 +209,3 @@ public external interface ChannelIteratorOptions {
     public val preventCancel: Boolean?
 }
 
-@JsPlainObject
-@JsName("IteratorResult")
-internal external interface JsIteratorResult<out T> {
-    public val value: T?
-    public val done: Boolean
-}
