@@ -1087,7 +1087,6 @@ public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R 
  * }
  * ```
  */
-@Suppress("FunctionName")
 public fun CoroutineScope(context: CoroutineContext): CoroutineScope =
     ContextScope(if (context[Job] != null) context else context + Job())
 

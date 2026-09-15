@@ -80,7 +80,7 @@ import kotlin.coroutines.*
  *
  * Use [SharedFlow] when you need a [StateFlow] with tweaks in its behavior such as extra buffering, replaying more
  * values, or omitting the initial value.
- * 
+ *
  * ### StateFlow vs ConflatedBroadcastChannel
  *
  * Conceptually, state flow is similar to [ConflatedBroadcastChannel]
@@ -117,7 +117,7 @@ import kotlin.coroutines.*
  * Application of [flowOn][Flow.flowOn], [conflate][Flow.conflate],
  * [buffer] with [CONFLATED][Channel.CONFLATED] or [RENDEZVOUS][Channel.RENDEZVOUS] capacity,
  * [distinctUntilChanged][Flow.distinctUntilChanged], or [cancellable] operators to a state flow has no effect.
- * 
+ *
  * ### Implementation notes
  *
  * State flow implementation is optimized for memory consumption and allocation-freedom. It uses a lock to ensure
@@ -184,7 +184,6 @@ public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
 /**
  * Creates a [MutableStateFlow] with the given initial [value].
  */
-@Suppress("FunctionName")
 public fun <T> MutableStateFlow(value: T): MutableStateFlow<T> = StateFlowImpl(value ?: NULL)
 
 // ------------------------------------ Update methods ------------------------------------

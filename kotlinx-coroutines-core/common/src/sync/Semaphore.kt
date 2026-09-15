@@ -67,7 +67,6 @@ public interface Semaphore {
  * @param acquiredPermits the number of already acquired permits,
  *        should be between `0` and `permits` (inclusively).
  */
-@Suppress("FunctionName")
 public fun Semaphore(permits: Int, acquiredPermits: Int = 0): Semaphore = SemaphoreImpl(permits, acquiredPermits)
 
 /**

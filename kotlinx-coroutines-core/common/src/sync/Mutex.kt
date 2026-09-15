@@ -101,7 +101,6 @@ public interface Mutex {
  *
  * @param locked initial state of the mutex.
  */
-@Suppress("FunctionName")
 public fun Mutex(locked: Boolean = false): Mutex =
     MutexImpl(locked)
 

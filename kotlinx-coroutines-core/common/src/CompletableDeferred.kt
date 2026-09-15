@@ -60,13 +60,11 @@ public fun <T> CompletableDeferred<T>.completeWith(result: Result<T>): Boolean =
  * Creates a [CompletableDeferred] in an _active_ state.
  * It is optionally a child of a [parent] job.
  */
-@Suppress("FunctionName")
 public fun <T> CompletableDeferred(parent: Job? = null): CompletableDeferred<T> = CompletableDeferredImpl(parent)
 
 /**
  * Creates an already _completed_ [CompletableDeferred] with a given [value].
  */
-@Suppress("FunctionName")
 public fun <T> CompletableDeferred(value: T): CompletableDeferred<T> = CompletableDeferredImpl<T>(null).apply { complete(value) }
 
 /**
