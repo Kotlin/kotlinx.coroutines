@@ -112,7 +112,7 @@ class RunTestTest {
                 assertFalse((e.message ?: "").contains(name2))
             }
         }) {
-            runTest(timeout = 10.milliseconds) {
+            runTest(UnconfinedTestDispatcher(), timeout = 10.milliseconds) {
                 launch(CoroutineName(name1)) {
                     CompletableDeferred<Unit>().await()
                 }
