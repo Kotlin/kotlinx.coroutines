@@ -217,8 +217,8 @@ internal suspend fun <T, V> withContextUndispatched(
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
-): T = withCoroutineContext(newContext, countOrElement) {
-    suspendCoroutineUninterceptedOrReturn { uCont ->
+): T = suspendCoroutineUninterceptedOrReturn { uCont ->
+    withCoroutineContext(newContext, countOrElement) {
         block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
     }
 }
@@ -232,7 +232,9 @@ private class StackFrameContinuation<T>(
         get() = uCont as? CoroutineStackFrame
 
     override fun resumeWith(result: Result<T>) {
-        uCont.resumeWith(result)
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
     }
 
     override fun getStackTraceElement(): StackTraceElement? = null
