@@ -92,19 +92,16 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testInnerTimeout() = runTest(
-        expected = { it is CancellationException }
-    ) {
-        withTimeoutOrNull(1000) {
-            withTimeout(10) {
-                while (true) {
-                    yield()
+    fun testInnerTimeout() = withVirtualTime {
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeoutOrNull(1000) {
+                withTimeout(10) {
+                    awaitCancellation()
                 }
             }
-            @Suppress("UNREACHABLE_CODE")
-            expectUnreached() // will timeout
+            expectUnreached()
         }
-        expectUnreached() // will timeout
+        finish(1)
     }
 
     @Test
@@ -121,22 +118,20 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testOuterTimeout() = runTest {
-        if (isJavaAndWindows) return@runTest
+    fun testOuterTimeout() = withVirtualTime {
         var counter = 0
         val result = withTimeoutOrNull(320) {
             while (true) {
                 val inner = withTimeoutOrNull(150) {
-                    while (true) {
-                        yield()
-                    }
+                    awaitCancellation()
                 }
                 assertNull(inner)
                 counter++
             }
         }
         assertNull(result)
-        check(counter in 1..2) {"Executed: $counter times"}
+        assertEquals(2, counter)
+        finish(1)
     }
 
     @Test
