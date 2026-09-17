@@ -1,0 +1,5 @@
+#!/bin/sh
+# Measure a cold IntelliJ Gradle import of this project. See tools/import-bench/README.md
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec python3 "$root/tools/import-bench/bench.py" "$@"
