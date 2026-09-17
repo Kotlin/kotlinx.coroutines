@@ -1,4 +1,5 @@
 import org.gradle.api.publish.maven.internal.publication.DefaultMavenPublication
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import java.util.Locale
 
 plugins {
@@ -42,6 +43,6 @@ publishing {
 
 fun DefaultMavenPublication.unsetModuleDescriptorGenerator() {
     @Suppress("NULL_FOR_NONNULL_TYPE")
-    val generator: TaskProvider<Task> = null
+    val generator: TaskProvider<GenerateModuleMetadata> = null
     setModuleDescriptorGenerator(generator)
 }
