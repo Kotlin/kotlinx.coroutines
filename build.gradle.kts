@@ -9,6 +9,7 @@ buildscript {
     }
 
     repositories {
+        maven(rootProject.file("env/kotlin"))
         mavenCentral()
         maven(url = "https://plugins.gradle.org/m2/")
         addDevRepositoryIfEnabled(this, project)
@@ -63,6 +64,7 @@ apply(plugin = "kover-conventions")
 // Configure repositories
 allprojects {
     repositories {
+        maven(rootProject.file("env/kotlin"))
         google()
         mavenCentral()
         addDevRepositoryIfEnabled(this, project)

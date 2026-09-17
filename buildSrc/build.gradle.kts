@@ -8,6 +8,8 @@ val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull
 val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
 
 repositories {
+    maven(file("../env/kotlin"))
+
     maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
     maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     if (!kotlinDevUrl.isNullOrEmpty()) {
@@ -31,7 +33,7 @@ fun version(target: String): String {
     }
     val version = "${target}_version"
     // Read from CLI first, used in aggregate builds
-    return providers.gradleProperty(version).orNull?.let{"$it"} ?: gradleProperties.getProperty(version)
+    return providers.gradleProperty(version).orNull?.let { "$it" } ?: gradleProperties.getProperty(version)
 }
 
 kotlin {

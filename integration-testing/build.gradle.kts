@@ -47,6 +47,7 @@ buildscript {
 
     if (usingSnapshotVersion) {
         repositories {
+            maven(rootProject.file("../env/kotlin"))
             mavenLocal()
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
             maven("https://redirector.kotlinlang.org/maven/dev")
@@ -64,6 +65,7 @@ plugins {
 
 allprojects {
     repositories {
+        maven(rootProject.file("../env/kotlin"))
         val kotlinRepoUrl = providers.gradleProperty("kotlin_repo_url").orNull
         if (!kotlinRepoUrl.isNullOrBlank()) {
             maven(kotlinRepoUrl)

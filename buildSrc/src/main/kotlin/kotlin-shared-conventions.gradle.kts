@@ -2,7 +2,6 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -31,10 +30,8 @@ extensions.configure<JavaPluginExtension> {
 plugins.withId("org.jetbrains.kotlin.jvm") {
     extensions.configure<KotlinJvmProjectExtension> {
         if (abiCheckEnabled) {
-            extensions.configure<AbiValidationExtension> {
-                @OptIn(ExperimentalAbiValidation::class)
-                enabled = true
-            }
+            @OptIn(ExperimentalAbiValidation::class)
+            abiValidation { }
         }
         compilerOptions {
             jvmTarget = JvmTarget.JVM_1_8
@@ -64,10 +61,6 @@ tasks.withType<Test> {
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
     }
     project.providers.gradleProperty("stressTest").orNull?.let { systemProperty("stressTest", it) }
-}
-
-tasks.named("check") {
-    dependsOn(tasks.named("checkLegacyAbi"))
 }
 
 tasks.withType<KotlinCompilationTask<*>>().configureEach {
