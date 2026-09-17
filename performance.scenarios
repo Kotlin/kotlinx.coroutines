@@ -1,0 +1,82 @@
+default-scenarios = [
+    "idea-sync-warm-warm-warm",
+    "idea-sync-warm-warm-cold",
+    "idea-sync-warm-cold-warm",
+    "idea-sync-warm-cold-cold",
+    "idea-sync-warm-warm-warm-root-build-script-change",
+    "idea-sync-warm-warm-warm-buildSrc-build-script-change",
+    "idea-sync-warm-warm-warm-core-build-script-change",
+    "idea-sync-warm-warm-warm-core-dependency-addition",
+    "idea-sync-cold-cold-cold"
+]
+
+# Names encode Gradle User Home, Gradle Daemon, and IntelliJ caches, in that order.
+# Project caches are cleared alongside cold IntelliJ caches.
+idea-sync-cold-cold-cold {
+    title = "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches"
+    daemon = cold
+    clear-gradle-user-home-before = BUILD
+    clear-project-cache-before = BUILD
+    clear-ide-cache-before = BUILD
+    idea-sync {
+        ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+    }
+}
+
+idea-sync-warm-cold-cold {
+    title = "Sync: Warm Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches"
+    daemon = cold
+    clear-project-cache-before = BUILD
+    clear-ide-cache-before = BUILD
+    idea-sync {
+        ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+    }
+}
+
+idea-sync-warm-cold-warm {
+    title = "Sync: Warm Gradle User Home, Cold Gradle Daemon, Warm IntelliJ caches"
+    daemon = cold
+    idea-sync {
+        ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+    }
+}
+
+idea-sync-warm-warm-cold {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Cold IntelliJ caches"
+    daemon = warm
+    clear-project-cache-before = BUILD
+    clear-ide-cache-before = BUILD
+    idea-sync {
+        ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+    }
+}
+
+idea-sync-warm-warm-warm {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches"
+    daemon = warm
+    idea-sync {
+        ide-jvm-args = ["-Xms256m", "-Xmx4096m"]
+    }
+}
+
+idea-sync-warm-warm-warm-root-build-script-change = ${idea-sync-warm-warm-warm} {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Root build script change"
+    apply-build-script-change-to = "build.gradle.kts"
+}
+
+idea-sync-warm-warm-warm-buildSrc-build-script-change = ${idea-sync-warm-warm-warm} {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, buildSrc build script change"
+    apply-build-script-change-to = "buildSrc/build.gradle.kts"
+}
+
+idea-sync-warm-warm-warm-core-build-script-change = ${idea-sync-warm-warm-warm} {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Core build script change"
+    apply-build-script-change-to = "kotlinx-coroutines-core/build.gradle.kts"
+}
+
+# Run through benchmark-idea-sync.sh: the helper replaces this marker with an
+# unmeasured dependency-free sync before adding Gson for each measured sync.
+idea-sync-warm-warm-warm-core-dependency-addition = ${idea-sync-warm-warm-warm} {
+    title = "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Add Gson to core"
+    cleanup-tasks = ["__benchmark_core_dependency_baseline__"]
+}
