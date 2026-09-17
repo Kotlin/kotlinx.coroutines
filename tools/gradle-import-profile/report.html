@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coroutines import anatomy · @@RUN@@</title>
+<style>
+:root{color-scheme:light dark;--bg:#f7f7f5;--surface:#fcfcfb;--muted:#f0f0ed;--ink:#18191c;--sub:#60636b;--rule:#deded9;--ide:#2a78d6;--gradle:#14976c;--hot:#dc6230;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#141414;--surface:#1b1b1a;--muted:#242423;--ink:#f3f3ef;--sub:#b2b2aa;--rule:#383835;--ide:#5a9fec;--gradle:#32b789;--hot:#ed895d}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,sans-serif}.wrap{max-width:1180px;margin:auto;padding:44px 24px 70px}h1,h2{font-family:var(--mono);letter-spacing:-.035em;line-height:1.2}h1{font-size:clamp(27px,4vw,40px);margin:15px 0}h2{font-size:20px;margin:0 0 10px}p{color:var(--sub);margin:10px 0}section{margin-top:42px}a{color:var(--ide)}.eyebrow{font:11px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--sub)}.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}.chip{font:11px var(--mono);padding:6px 8px;border:1px solid var(--rule);border-radius:5px;background:var(--surface)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:9px;overflow:hidden;margin:28px 0}.stat{background:var(--surface);padding:18px}.stat small{font:10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--sub)}.value{font:700 30px var(--mono);margin:10px 0 4px}.value span{font-size:15px}.stat p{font-size:12px;margin:0}.ide{color:var(--ide)}.gradle{color:var(--gradle)}.hot{color:var(--hot)}.callout{border:1px solid var(--rule);border-left:3px solid var(--hot);border-radius:0 8px 8px 0;background:var(--surface);padding:14px 18px;color:var(--sub);font-size:14px}.callout b{color:var(--ink)}.tw,.chart-shell{border:1px solid var(--rule);background:var(--surface);border-radius:9px;overflow:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px 13px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums}th{font:10px var(--mono);text-transform:uppercase;letter-spacing:.05em;background:var(--muted);white-space:nowrap}th:first-child,td:first-child{text-align:left}td:not(:first-child){white-space:nowrap}tbody tr:last-child td{border:0}.legend{display:flex;gap:20px;padding:13px 17px;background:var(--muted);border-bottom:1px solid var(--rule);font-size:12px}.legend b{display:inline-block;width:14px;height:9px;border-radius:2px;margin-right:6px}.chart{min-width:880px;padding:12px 24px 20px 0}.row{display:grid;grid-template-columns:250px 1fr;align-items:center}.label{font-size:12px;text-align:right;padding:0 15px;overflow-wrap:anywhere}.track{position:relative;border-left:1px solid var(--rule);min-height:25px;background:repeating-linear-gradient(to right,transparent 0,transparent calc(10% - 1px),var(--rule) 10%)}.bar{position:absolute;height:13px;min-width:1px;border:0;padding:0;border-radius:3px;opacity:.85;cursor:pointer}.bar:hover,.bar:focus{opacity:1;outline:2px solid var(--ink);z-index:5}.ticks{position:relative;height:28px;font:11px var(--mono);color:var(--sub)}.tick{position:absolute;transform:translateX(-50%)}.foot{font-size:12px;color:var(--sub)}#tip{position:fixed;z-index:30;pointer-events:none;background:var(--ink);color:var(--bg);padding:10px 12px;font:12px/1.6 var(--mono);white-space:pre-wrap;border-radius:6px;max-width:420px;box-shadow:0 5px 25px #0003}details{margin-top:18px}summary{cursor:pointer;font-weight:600;margin:10px 0}pre{white-space:pre-wrap;color:var(--hot)}footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font-size:12px;color:var(--sub)}@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.wrap{padding:28px 16px}table{min-width:650px}}
+</style></head><body><main class="wrap">
+<header><div class="eyebrow">kotlinx.coroutines · @@COMMIT@@ · @@RUN@@</div>
+<h1>Anatomy of a @@TITLE@@</h1>
+<p>@@INTRO@@ @@PROFILE_NOTE@@</p>
+<div class="chips"><span class="chip">@@STATUS@@</span><span class="chip">IDEA @@IDEA@@</span><span class="chip">Gradle @@GRADLE_VERSION@@</span><span class="chip">Kotlin @@KOTLIN@@</span><span class="chip">Global caches: @@CACHE_MODE@@</span><span class="chip">@@INSTRUMENTATION@@</span><span class="chip">Dependencies: @@DEPENDENCIES@@</span><span class="chip">Indexing: @@INDEXING@@</span></div></header>
+<div class="stats">
+<div class="stat"><small>Import wall time</small><div class="value ide">@@WALL@@<span> s</span></div><p>Refresh request → final callback</p></div>
+<div class="stat"><small>IDEA sync span</small><div class="value ide">@@SYNC@@<span> s</span></div><p>ExternalSystemSyncProjectTask</p></div>
+<div class="stat"><small>Gradle build</small><div class="value gradle">@@GRADLE@@<span> s</span></div><p>Run build operation coverage</p></div>
+<div class="stat"><small>Kotlin DSL</small><div class="value hot">@@KTS@@<span> s</span></div><p>Compilation / accessor wall coverage</p></div>
+</div>
+<div class="callout"><b>Indexing isolation:</b> @@ISOLATION@@. In paused mode, scanning and content indexing resume after recording stops. Index queries remain available. No samples are removed from the flamegraphs.</div>
+<pre>@@ERROR@@</pre>
+<section><h2>Import timeline</h2><p>Real IDEA spans and Gradle operations on one clock. Hover or focus a bar for its name and exact duration. Nested and concurrent work overlap.</p>
+<div class="chart-shell"><div class="legend"><span><b style="background:var(--ide)"></b>IDEA</span><span><b style="background:var(--gradle)"></b>Gradle</span><span><b style="background:var(--hot)"></b>Kotlin DSL / init scripts</span></div><div class="chart" id="chart"></div></div>
+<p class="foot">All positions are seconds after the refresh request. Point events appear as markers, with zero duration. Dense Gradle lanes merge overlapping bars visually; tooltips list the underlying operations. No synthetic durations.</p></section>
+<section><h2>IDEA stages</h2><p>Wall coverage within the import interval. These spans nest: do not add the rows.</p><div class="tw"><table><thead><tr><th>Stage</th><th>Spans</th><th>Wall seconds</th></tr></thead><tbody>@@PHASES@@</tbody></table></div></section>
+<section><h2>Where Gradle spends time</h2><p>Coverage is the union of each category’s intervals. Self time subtracts the union of direct child intervals from each operation, then sums the remainder.</p>
+<div class="tw"><table><thead><tr><th>Category</th><th>Operations</th><th>Wall coverage (s)</th><th>Summed self time (s)</th></tr></thead><tbody>@@CATEGORIES@@</tbody></table></div>
+<p class="foot">Categories are based on operation names; otherwise unclassified task internals inherit their task category. Coverage overlaps across categories. Summed self time includes waits and parallel operations; it is neither CPU time nor an additive wall-time partition.</p>
+<details><summary>Largest operations by self time</summary><div class="tw"><table><thead><tr><th>Operation</th><th>Start (s)</th><th>Inclusive (s)</th><th>Self (s)</th></tr></thead><tbody>@@TOP@@</tbody></table></div></details></section>
+<section><h2>Build task outcomes</h2><p>Project outputs start empty. FROM-CACHE means Gradle restored outputs; EXECUTED means the task ran.</p><div class="tw"><table><thead><tr><th>Task</th><th>Outcome</th><th>Wall (s)</th></tr></thead><tbody>@@TASKS@@</tbody></table></div></section>
+@@CALIBRATION@@
+<section><h2>CPU &amp; allocation flamegraphs</h2><div class="tw"><table><thead><tr><th>Process</th><th>PID</th><th>Recording wall (s)</th><th>Sampled CPU (s)</th><th>Allocated (GiB)</th><th>Profiles</th></tr></thead><tbody>@@PROCESSES@@</tbody></table></div>
+<p class="foot">CPU seconds = sample count × sampling interval, summed over threads. Allocation is an estimate from sampled bytes. Recording windows overlap and include idle time. The Kotlin compiler daemon compiles build logic; its lifetime is not compilation time.</p></section>
+<section><h2>Measurement conditions</h2><div class="callout">@@CACHE_NOTE@@</div>
+<p>Cache snapshot: <code>@@SNAPSHOT@@</code>. Dependency mode @@DEPENDENCIES@@: cached imports run offline with seeded downloads; download mode clears the dependency artifact cache.</p>
+<p>IDEA, its project model, OS filesystem caches, installed SDKs, and provisioned tools remain warm. Gradle and compiler JVMs start fresh. Setup, profiler attachment, recorder shutdown and catch-up indexing are outside the measured interval.</p>
+<p>Deleting only project caches, or changing scripts to invalidate Kotlin DSL caches, can retain global transforms, generated jars and build outputs. Compare timings only after matching these reset conditions and checking the raw task outcomes.</p>
+<p>Other JVMs observed: <code>@@CONTENTION@@</code>. Their presence is recorded; this is not a contention correction. Instrumentation: @@INSTRUMENTATION@@. No overhead estimate is subtracted.</p>
+<p>IDEA’s external-system tracer is temporarily routed to a local span recorder and restored after import. Raw traces and the exact run configuration are linked below.</p></section>
+<footer>@@LINKS@@</footer></main><div id="tip" hidden></div>
+<script>
+const DATA=@@DATA@@;
+const chart=document.getElementById('chart'),tip=document.getElementById('tip');
+const total=DATA.wall_seconds||1;
+const axis=document.createElement('div');axis.className='row';axis.innerHTML='<div class="label">Seconds after refresh</div><div class="ticks"></div>';chart.append(axis);
+for(let i=0;i<=10;i++){const tick=document.createElement('span');tick.className='tick';tick.style.left=(i*10)+'%';tick.textContent=(total*i/10).toFixed(1);axis.lastChild.append(tick);}
+function describe(b){return b.name+'\n'+b.start.toFixed(3)+' → '+b.end.toFixed(3)+' s · '+(b.end-b.start).toFixed(3)+' s'+(b.self_seconds===undefined?'':'\nSelf: '+b.self_seconds.toFixed(3)+' s');}
+for(const lane of DATA.lanes||[]){
+ const row=document.createElement('div');row.className='row';const label=document.createElement('div');label.className='label';label.textContent=lane.label;row.append(label);
+ const track=document.createElement('div');track.className='track';row.append(track);chart.append(row);
+ const groups=[];
+ for(const b of [...lane.bars].sort((a,b)=>a.start-b.start||b.end-a.end)){
+  const prev=groups.at(-1);
+  if(lane.color!=='ide'&&prev&&b.start<prev.end){prev.end=Math.max(prev.end,b.end);prev.items.push(b);}
+  else groups.push({start:b.start,end:b.end,items:[b]});
+ }
+ const subrows=[];
+ for(const g of groups){let level=subrows.findIndex(end=>end<=g.start);if(level<0)level=subrows.length;subrows[level]=g.end;
+  const bar=document.createElement('button');bar.className='bar';bar.style.background='var(--'+lane.color+')';bar.style.left=(100*g.start/total)+'%';bar.style.width=(100*(g.end-g.start)/total)+'%';bar.style.top=(6+level*18)+'px';
+  const text=g.items.length===1?describe(g.items[0]):g.items.length+' overlapping operations · '+(g.end-g.start).toFixed(3)+' s coverage\n'+[...g.items].sort((a,b)=>(b.end-b.start)-(a.end-a.start)).slice(0,5).map(describe).join('\n\n');
+  bar.setAttribute('aria-label',text);bar.onpointermove=e=>{tip.hidden=false;tip.textContent=text;tip.style.left=Math.min(e.clientX+14,innerWidth-440)+'px';tip.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-tip.offsetHeight-10))+'px';};bar.onpointerleave=()=>tip.hidden=true;
+  bar.onfocus=()=>{const r=bar.getBoundingClientRect();bar.onpointermove({clientX:r.left,clientY:r.bottom});};bar.onblur=()=>tip.hidden=true;track.append(bar);
+ }
+ track.style.height=Math.max(27,subrows.length*18+10)+'px';
+}
+</script></body></html>
