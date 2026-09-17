@@ -1,27 +1,48 @@
 @file:Suppress("DEPRECATION_ERROR")
+@file:OptIn(ExperimentalContracts::class)
 
 package kotlinx.coroutines
 
 import kotlinx.coroutines.selects.*
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.coroutines.*
 
 /**
- * A non-cancelable job that is always [active][Job.isActive]. It is designed for [withContext] function
- * to prevent cancellation of code blocks that need to be executed without cancellation.
+ * An outdated API whose purpose was to allow executing blocks of code while ignoring cancellation.
+ * [nonCancellable] (with the lower-case first letter) is to be used instead.
  *
- * Use it like this:
+ * [NonCancellable] is a non-cancelable job that is always [active][Job.isActive].
+ * It was designed for [withContext] function
+ * to prevent cancellation of code blocks that need to be executed without cancellation:
+ *
  * ```
  * withContext(NonCancellable) {
  *     // this code will not be cancelled
  * }
  * ```
  *
- * **WARNING**: This object is not designed to be used with [launch], [async], and other coroutine builders.
+ * Such code should now be replaced with
+ *
+ * ```
+ * nonCancellable {
+ *     // this code will not be cancelled
+ * }
+ * ```
+ *
+ * The list of pitfalls just below demonstrates the dangers of [NonCancellable] that led to its deprecation.
+ *
+ * ## Pitfalls
+ *
+ * ### Using with [launch], [async], or other coroutine builders.
+ *
+ * This object is not designed to be used with [launch], [async], and other coroutine builders.
  * if you write `launch(NonCancellable) { ... }` then not only the newly launched job will not be cancelled
  * when the parent is cancelled, the whole parent-child relation between parent and child is severed.
  * The parent will not wait for the child's completion, nor will be cancelled when the child crashed.
  *
- * ## Pitfalls
+ * See the documentation of [launch] and [async] overloads accepting [NonCancellable] for more details.
  *
  * ### Overriding the exception with a [CancellationException] in a finalizer
  *
@@ -165,6 +186,8 @@ import kotlin.coroutines.*
  * ```
  *
  */
+@Deprecated("For asynchronous cleanup, use `nonCancellable` instead.", level = DeprecationLevel.WARNING)
+// WARNING in 1.12, ERROR in 1.13, HIDDEN in 1.14
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
 
@@ -278,5 +301,87 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
     /** @suppress */
     override fun toString(): String {
         return "NonCancellable"
+    }
+}
+
+/**
+ * Run [block] even if the caller coroutine is cancelled.
+ *
+ * This function is similar to [coroutineScope] in all aspects except that it is completely unaffected
+ * by the caller's cancellation.
+ *
+ * This is useful in particular for performing cleanup operations
+ * if the cleanup procedure is itself a `suspend` function.
+ *
+ * Example:
+ *
+ * ```
+ * class Connection {
+ *     suspend fun terminate()
+ * }
+ *
+ * val connection = Connection()
+ * try {
+ *     // some cancellable operations...
+ * } finally {
+ *     nonCancellable {
+ *         // this block will run even if the parent coroutine is cancelled
+ *         connection.terminate()
+ *     }
+ * }
+ * ```
+ *
+ * There is **no prompt cancellation guarantee** for this function.
+ * [nonCancellable] will not react to the caller being cancelled even when it exits.
+ *
+ * ## Pitfalls
+ *
+ * ### Not reacting to cancellations right outside the [nonCancellable]
+ *
+ * ```
+ * // DO NOT DO THIS
+ * withContext(Dispatchers.Main) {
+ *     nonCancellable {
+ *         withContext(Dispatchers.Default) {
+ *             // do something
+ *         }
+ *     } // will not react to the caller's cancellation!
+ *     // BUG HERE
+ *     updateUi() // may be invoked when the caller is already cancelled and the UI is disposed
+ * }
+ * ```
+ *
+ * Here, the following may happen:
+ * 1. The `do something` block gets entered, and the main thread gets released and is free to perform other tasks.
+ * 2. Some other task updates the UI and cancels this coroutine, which is no longer needed.
+ * 3. `do something` finishes, and the computation is dispatched back to the main thread.
+ * 4. `updateUi()` is called, even though the coroutine was already cancelled and the UI is no longer in a valid state
+ *    for this update operation, potentially leading to a crash.
+ *
+ * [ensureActive] can be used to manually ensure that cancelled code no longer runs:
+ *
+ * ```
+ * withContext(Dispatchers.Main) {
+ *     nonCancellable {
+ *         withContext(Dispatchers.Default) {
+ *             // do something
+ *         }
+ *     }
+ *     ensureActive() // check if we are still allowed to run the code
+ *     updateUi()
+ * }
+ * ```
+ */
+public suspend fun <T> nonCancellable(
+    block: suspend CoroutineScope.() -> T
+): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    @Suppress("DEPRECATION")
+    return withContext(NonCancellable) {
+        coroutineScope {
+            block()
+        }
     }
 }

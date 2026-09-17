@@ -553,7 +553,7 @@ internal fun ReceiveChannel<*>.consumes(): CompletionHandler = { cause: Throwabl
  *
  * ```
  * scope.produce(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // this line will be reached even if the parent is cancelled
  *     }
  * }

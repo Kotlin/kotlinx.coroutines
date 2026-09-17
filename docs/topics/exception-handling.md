@@ -201,7 +201,7 @@ fun main() = runBlocking {
             try {
                 delay(Long.MAX_VALUE)
             } finally {
-                withContext(NonCancellable) {
+                nonCancellable {
                     println("Children are cancelled, but exception is not handled until all children terminate")
                     delay(100)
                     println("The first child finished its non cancellable block")
