@@ -1,0 +1,1 @@
+Build the distribution from gradle.git (./gradlew :distributions-full:binDistributionZip) and copy the gradle-*.zip here
