@@ -16,23 +16,34 @@ internal class ByteBuddyDynamicAttach : Function1<Boolean, Unit> {
 
     private fun attach() {
         ByteBuddyAgent.install(ByteBuddyAgent.AttachmentProvider.ForEmulatedAttachment.INSTANCE)
-        val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.internal.DebugProbesKt")
-
-        ByteBuddy()
-            .redefine(cl2)
-            .name(cl.name)
-            .make()
-            .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+        dynamicTypeWithProbes.load(targetClassLoader, ClassReloadingStrategy.fromInstalledAgent())
     }
 
     private fun detach() {
-        val cl = Class.forName("kotlin.coroutines.jvm.internal.DebugProbesKt")
-        val cl2 = Class.forName("kotlinx.coroutines.debug.NoOpProbesKt")
-        ByteBuddy()
-            .redefine(cl2)
-            .name(cl.name)
-            .make()
-            .load(cl.classLoader, ClassReloadingStrategy.fromInstalledAgent())
+        dynamicTypeWithoutProbes.load(targetClassLoader, ClassReloadingStrategy.fromInstalledAgent())
+    }
+
+    private companion object {
+        private const val classNameToOverride = "kotlin.coroutines.jvm.internal.DebugProbesKt"
+
+        private val targetClassLoader by lazy {
+            Class.forName(classNameToOverride).classLoader
+        }
+
+        private val dynamicTypeWithProbes by lazy {
+            val classWithProbes = Class.forName("kotlinx.coroutines.debug.internal.DebugProbesKt")
+            ByteBuddy()
+                .redefine(classWithProbes)
+                .name(classNameToOverride)
+                .make()
+        }
+
+        private val dynamicTypeWithoutProbes by lazy {
+            val classWithoutProbes = Class.forName("kotlinx.coroutines.debug.NoOpProbesKt")
+            ByteBuddy()
+                .redefine(classWithoutProbes)
+                .name(classNameToOverride)
+                .make()
+        }
     }
 }
