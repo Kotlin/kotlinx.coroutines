@@ -1,6 +1,7 @@
 pluginManagement {
     val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull
     repositories {
+        maven(file("../env/kotlin"))
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
             println("Redirecting repositories for buildSrc buildscript")

@@ -20,3 +20,5 @@ benchmark-out**
 gradle-user-home
 idea-sandbox
 .output.txt
+env/kotlin/**
+env/gradle/**
