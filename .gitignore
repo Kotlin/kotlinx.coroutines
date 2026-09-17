@@ -15,3 +15,8 @@ local.properties
 benchmarks.jar
 /kotlin-js-store
 /.kotlin
+profile-out**
+benchmark-out**
+gradle-user-home
+idea-sandbox
+.output.txt
