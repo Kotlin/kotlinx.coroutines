@@ -877,10 +877,10 @@ def chart_rows(analysis, limit=60):
         width = max(0.25, min(100.0 - left, 100.0 * (item["end"] - item["start"]) / total))
         seconds = (item["end"] - item["start"]) / 1000.0
         text = ("%.2f s" % seconds) if seconds >= 0.1 else "%d ms" % round(seconds * 1000)
-        # Wide bars carry the label inside; narrow ones put it just after the bar,
-        # so nothing is written off the right-hand edge of the chart.
-        style = ("right:4px;color:#fff" if width >= 22
-                 else ("left:calc(100%% + 5px)" if left + width < 88 else "right:calc(100%% + 5px)"))
+        # Labels sit beside the bar, flipping to its left once the bar reaches the
+        # right-hand edge, so nothing is clipped and nothing needs a readable
+        # foreground colour on seven different backgrounds.
+        style = "left:calc(100% + 5px)" if left + width < 88 else "right:calc(100% + 5px)"
         parts.append(
             '<div class="row"><div class="name" title="%s">%s</div><div class="track">'
             '<div class="bar" style="left:%.3f%%;width:%.3f%%;background:%s">'
