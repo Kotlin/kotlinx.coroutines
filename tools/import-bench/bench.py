@@ -27,6 +27,7 @@ import os
 import platform
 import re
 import shutil
+import signal
 import statistics
 import subprocess
 import sys
@@ -539,9 +540,70 @@ def cool_caches(gradle_home):
     rmtree(gradle_home / "caches/build-cache-1")
 
 
+def stop_daemons(gradle_home):
+    """Stop any Gradle daemon still serving this isolated Gradle home.
+
+    Every measured run is meant to start a fresh daemon, so that JVM start-up and cold
+    JIT are inside the number. That only happens if no compatible daemon is already
+    running: the Tooling API reuses one when it finds it, and a reused daemon serves
+    every compiled build script straight out of `KotlinScriptClassloadingCache`, an
+    in-memory cross-build cache that deleting on-disk caches does not touch. A sync that
+    reuses a daemon costs about 2 s rather than 12; the two are not the same measurement.
+
+    Daemons are found by the pid in their log file name rather than by scanning `ps` for
+    the home directory, because macOS truncates the command line long before the Gradle
+    home appears in it. The pid is then confirmed to be a Gradle daemon before signalling,
+    so a recycled pid from a stale log file cannot make us kill something unrelated.
+    """
+    for log in (gradle_home / "daemon").glob("*/daemon-*.out.log"):
+        match = re.match(r"daemon-(\d+)\.out\.log$", log.name)
+        if not match:
+            continue
+        pid = int(match.group(1))
+        try:
+            command = subprocess.run(["ps", "-p", str(pid), "-o", "command="],
+                                     capture_output=True, text=True, timeout=10).stdout
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if "GradleDaemon" not in command:
+            continue
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            continue
+        for _ in range(40):
+            time.sleep(0.05)
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                break
+
+
+def daemon_was_fresh(trace):
+    """True when the build ran in a daemon that had not run a build before.
+
+    Build-operation ids are handed out by a counter that lives as long as the daemon
+    JVM, so the root `Run build` operation is id 1 in a fresh daemon and something much
+    larger in a reused one. Cheaper and more direct than parsing the daemon registry.
+    """
+    try:
+        with open(trace, errors="replace") as source:
+            for line in source:
+                if '"displayName":"Run build"' not in line:
+                    continue
+                try:
+                    return json.loads(line).get("id") == 1
+                except ValueError:
+                    return None
+    except OSError:
+        pass
+    return None
+
+
 def run_import(args, paths, label):
     reset_project(paths["project"], keep_build_logic=args.state == "scripts")
     forget_project(paths["sandbox"])
+    stop_daemons(paths["gradle_home"])
     if args.state != "warm":
         cool_caches(paths["gradle_home"])
     write_idea_config(paths["project"], paths["distribution"], paths["gradle_home"], args.java_home)
@@ -757,6 +819,7 @@ def analyse(result):
     sync = import_interval(spans)
     if sync is None:
         return None
+    fresh = daemon_was_fresh(result["operations"])
     window = (sync["start"] - 1000, sync["end"] + 1000)
     operations = self_times(load_operations(result["operations"], window))
     build = next((o for o in operations if o["name"] == "Run build"), None)
@@ -776,6 +839,7 @@ def analyse(result):
         gradle_seconds=((build["end"] - build["start"]) / 1000.0) if build else None,
         call_seconds=((call["end"] - call["start"]) / 1000.0) if call else None,
         daemon_start_seconds=((build["start"] - call["start"]) / 1000.0) if (build and call) else None,
+        daemon_fresh=fresh,
         ide_seconds=(sync["end"] - sync["start"]) / 1000.0 - (
             (call["end"] - call["start"]) / 1000.0 if call else 0.0),
         process_seconds=result["process_seconds"],
@@ -1110,10 +1174,12 @@ def main(argv=None):
             detail = ("\n         " + "\n         ".join(reasons)) if reasons else ""
             die("run %d produced no import spans -- the import probably failed.%s\n"
                 "       full log: %s" % (index, detail, paths["runs"] / ("run-%d.log" % index)))
-        log("  import %.2f s | gradle %s | build CPU %.0f s"
+        log("  import %.2f s | gradle %s | build CPU %.0f s%s"
             % (analysis["sync_seconds"],
                "%.2f s" % analysis["gradle_seconds"] if analysis["gradle_seconds"] else "n/a",
-               analysis["cpu_seconds"]))
+               analysis["cpu_seconds"],
+               "" if analysis["daemon_fresh"] is not False else
+               "  <-- REUSED a running daemon; not a cold import"))
         analyses.append(analysis)
 
     analyses.sort(key=lambda a: a["sync_seconds"])

@@ -36,9 +36,14 @@ Each measured run is a **cold Gradle import on a warm machine**:
 
 * the project's build output, IDE state and compiled Kotlin DSL scripts are deleted first,
   so the build scripts really are recompiled (see `--state` below for exactly how much);
-* the Gradle daemon is fresh — the IDE starts one and stops it when the project closes,
-  so daemon startup and cold JIT are inside the number, which is what a first import
-  after opening the IDE actually costs;
+* the Gradle daemon is fresh — any daemon still serving the isolated Gradle home is
+  stopped first, so daemon startup and cold JIT are inside the number, which is what a
+  first import after opening the IDE actually costs. This is enforced rather than
+  assumed: the Tooling API silently reuses a compatible running daemon, and a reused
+  daemon serves every compiled build script out of an in-memory cross-build cache that
+  deleting on-disk caches does not touch — a reusing sync costs about 2 s against 12,
+  which is a different measurement entirely. Every run also checks afterwards whether
+  it really got a fresh daemon and prints a warning if it did not;
 * the Gradle home is isolated under `build/import-bench/gradle-home`, primed once from
   your `~/.gradle` by hardlinking, so dependencies are never re-downloaded and almost no
   extra disk is used — `du` will report tens of gigabytes that are not really there;
