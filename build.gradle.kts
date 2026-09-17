@@ -20,7 +20,6 @@ buildscript {
         // The corresponding issue in kotlinx-atomicfu: https://github.com/Kotlin/kotlinx-atomicfu/issues/384
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${version("atomicfu")}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${version("kotlin")}")
-        classpath("org.jetbrains.kotlin:js-plain-objects:${version("kotlin")}")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:${version("dokka")}")
         classpath("org.jetbrains.kotlinx:kotlinx-knit:${version("knit")}")
         classpath("ru.vyarus:gradle-animalsniffer-plugin:${version("animalsniffer")}") // Android API check
@@ -71,11 +70,7 @@ allprojects {
 }
 
 configure(subprojects.filter { !sourceless.contains(it.name) }) {
-    if (isMultiplatform) {
-        apply(plugin = "kotlin-multiplatform")
-    } else {
-        apply(plugin = "kotlin")
-    }
+    apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "kotlin-shared-conventions")
 }
 
@@ -91,25 +86,13 @@ configure(subprojects) {
 }
 
 configure(subprojects.filter { !sourceless.contains(it.name) && it.name != testUtilsModule }) {
-    if (isMultiplatform) {
-        configure<KotlinMultiplatformExtension> {
-            sourceSets.commonTest.dependencies { implementation(project(":$testUtilsModule")) }
-        }
-    } else {
-        dependencies { add("testImplementation", project(":$testUtilsModule")) }
-    }
+    dependencies { add("testImplementation", project(":$testUtilsModule")) }
 }
 
 // Add dependency to the core module in all the other subprojects.
 configure(subprojects.filter { !sourceless.contains(it.name) && it.name != coreModule }) {
     evaluationDependsOn(":$coreModule")
-    if (isMultiplatform) {
-        configure<KotlinMultiplatformExtension> {
-            sourceSets.commonMain.dependencies { api(project(":$coreModule")) }
-        }
-    } else {
-        dependencies { add("api", project(":$coreModule")) }
-    }
+    dependencies { add("api", project(":$coreModule")) }
 }
 
 apply(plugin = "bom-conventions")

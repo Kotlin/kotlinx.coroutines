@@ -71,13 +71,18 @@ so do familiarize yourself with the following guidelines.
 
 ## Building
 
-This library is built with Gradle. 
+This checkout is built with Gradle and the Kotlin/JVM plugin. All modules target JVM;
+JS, Wasm, Native, and metadata targets are disabled. Core, test, and test-utils retain
+their `common`, `concurrent`, and `jvm` source directories, compiled together for JVM.
+JVM compiler flags support the existing `expect`/`actual` declarations without the
+Kotlin Multiplatform Gradle plugin. Publications use the module names directly
+(for example, `kotlinx-coroutines-core`, without a `-jvm` suffix).
 
 * Run `./gradlew build` to build, also running all of the tests.
 * Run `./gradlew <module>:check` to test the module you are working with to speed
   things up during development.
-* Run `./gradlew <module>:jvmTest` to perform only the fast JVM tests of a multiplatform module.
-* Run `./gradlew <module>:jvmTest -Pstress=true` to run both fast and slow JVM tests.
+* Run `./gradlew <module>:test` to perform only the fast JVM tests of a module.
+* Run `./gradlew <module>:test -Pstress=true` to run both fast and slow JVM tests.
 
 ### Environment requirements
 

@@ -1,7 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
-import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
 import org.jetbrains.kotlin.gradle.dsl.jvm.JvmTargetValidationMode
 import java.io.*
 
@@ -225,7 +224,7 @@ tasks {
     create<Test>("coreAgentTest") {
         val sourceSet = sourceSets[name]
         val coroutinesDebugJar = sourceSet.runtimeClasspath.filter {
-            it.name == "kotlinx-coroutines-core-jvm-$coroutinesVersion.jar"
+            it.name == "kotlinx-coroutines-core-$coroutinesVersion.jar"
         }.singleFile
         jvmArgs("-javaagent:$coroutinesDebugJar")
         testClassesDirs = sourceSet.output.classesDirs
@@ -253,11 +252,6 @@ tasks {
             "safeDebugAgentTest:attachAgentWithoutKotlinStdlib",
             "r8Test:testGcAnchor"
         )
-    }
-
-    // Drop this when node js version become stable
-    withType(KotlinNpmInstallTask::class.java).configureEach {
-        args.add("--ignore-engines")
     }
 
     withType(KotlinJvmCompile::class.java).configureEach {

@@ -62,11 +62,7 @@ object Java9Modularity {
     fun configure(project: Project) = with(project) {
         val javaToolchains = extensions.findByType(JavaToolchainService::class.java)
             ?: error("Gradle JavaToolchainService is not available")
-        val target = when (val kotlin = extensions.getByName("kotlin")) {
-            is KotlinJvmProjectExtension -> kotlin.target
-            is KotlinMultiplatformExtension -> kotlin.targets.getByName("jvm")
-            else -> throw IllegalStateException("Unknown Kotlin project extension in $project")
-        }
+        val target = extensions.getByType<KotlinJvmProjectExtension>().target
         val compilation = target.compilations.getByName("main")
 
         // Force the use of JARs for compile dependencies, so any JPMS descriptors are picked up.
@@ -79,7 +75,7 @@ object Java9Modularity {
         }
 
         val processModuleInfoFile = tasks.register<ProcessModuleInfoFile>("processModuleInfoFile") {
-            moduleInfoFile = file("${target.name.ifEmpty { "." }}/src/module-info.java")
+            moduleInfoFile = file(if (hasSharedSources) "jvm/src/module-info.java" else "src/module-info.java")
             processedModuleInfoFile = project.layout.buildDirectory.file("generated-sources/module-info-processor/module-info.java")
         }
 
@@ -121,14 +117,14 @@ object Java9Modularity {
             // not needed when compiling with recent JDKs, e.g. 17
             options.compilerArgs.add("-Xlint:-requires-transitive-automatic")
 
-            // Patch the compileKotlinJvm output classes into the compilation so exporting packages works correctly.
+            // Patch the compileKotlin output classes into the compilation so exporting packages works correctly.
             val destinationDirProperty = compileKotlinTask.destinationDirectory.asFile
             options.compilerArgumentProviders.add {
                 val kotlinCompileDestinationDir = destinationDirProperty.get()
                 listOf("--patch-module", "$moduleName=$kotlinCompileDestinationDir")
             }
 
-            // Use the classpath of the compileKotlinJvm task.
+            // Use the classpath of the compileKotlin task.
             // Also ensure that the module path is used instead of classpath.
             classpath = compileKotlinTask.libraries
             modularity.inferModulePath = true

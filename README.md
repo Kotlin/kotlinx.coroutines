@@ -8,7 +8,7 @@
 [![KDoc link](https://img.shields.io/badge/API_reference-KDoc-blue)](https://kotlinlang.org/api/kotlinx.coroutines/)
 [![Slack channel](https://img.shields.io/badge/chat-slack-green.svg?logo=slack)](https://kotlinlang.slack.com/messages/coroutines/)
 
-Library support for Kotlin coroutines with [multiplatform](#multiplatform) support.
+Library support for Kotlin coroutines on JVM.
 This is a companion version for the Kotlin `2.2.20` release.
 
 ```kotlin
@@ -27,7 +27,7 @@ suspend fun main() = coroutineScope {
 
 * [core](kotlinx-coroutines-core/README.md) &mdash; common coroutines across all platforms:
   * [launch] and [async] coroutine builders returning [Job] and [Deferred] light-weight futures with cancellation support;
-  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx (which require the corresponding artifacts in runtime) and Darwin (included out of the box), and [Default][Dispatchers.Default] dispatcher for background coroutines;
+  * [Dispatchers] object with [Main][Dispatchers.Main] dispatcher for Android/Swing/JavaFx (which require the corresponding artifacts in runtime), and [Default][Dispatchers.Default] dispatcher for background coroutines;
   * [delay] and [yield] top-level suspending functions;
   * [Flow] &mdash; cold asynchronous stream with [flow][_flow] builder and comprehensive operator set ([filter], [map], etc);
   * [Channel], [Mutex], and [Semaphore] communication and synchronization primitives;
@@ -39,10 +39,6 @@ suspend fun main() = coroutineScope {
   * [Dispatchers.IO] dispatcher for blocking coroutines;
   * [Executor.asCoroutineDispatcher][asCoroutineDispatcher] extension, custom thread pools, and more;
   * Integrations with `CompletableFuture` and JVM-specific extensions.
-* [core/web](kotlinx-coroutines-core/web/) &mdash; additional core features available on Kotlin/JS and Kotlin/Wasm/JS:
-  * Integration with `Promise` via `Promise.await` and [promise] builder.
-* [core/js](kotlinx-coroutines-core/js/) &mdash; additional core features available on Kotlin/JS:
-  * Integration with `Window` via [Window.asCoroutineDispatcher], etc.
 * [test](kotlinx-coroutines-test/README.md) &mdash; test utilities for coroutines:
   * [Dispatchers.setMain] to override [Dispatchers.Main] in tests;
   * [runTest] and [TestScope] to test suspending functions and coroutines.
@@ -160,35 +156,12 @@ packagingOptions {
 }
 ```
 
-### Multiplatform
+### JVM build
 
-Core modules of `kotlinx.coroutines` are also available for 
-[Kotlin/JS](https://kotlinlang.org/docs/reference/js-overview.html) and [Kotlin/Native](https://kotlinlang.org/docs/reference/native-overview.html).
+This checkout uses the Kotlin/JVM Gradle plugin for all modules. It builds and publishes
+JVM artifacts under the module names, including `kotlinx-coroutines-core` and
+`kotlinx-coroutines-test`. JS, Wasm, Native, and common metadata artifacts are not built.
 
-In common code that should get compiled for different platforms, you can add a dependency to `kotlinx-coroutines-core` right to the `commonMain` source set:
-
-```kotlin
-commonMain {
-    dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-    }
-}
-```
-
-Platform-specific dependencies are recommended to be used only for non-multiplatform projects that are compiled only for target platform.
-
-#### JS
-
-Kotlin/JS version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-js`](https://central.sonatype.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core-js/1.11.0)
-(follow the link to get the dependency declaration snippet).
-
-#### Native
-
-Kotlin/Native version of `kotlinx.coroutines` is published as 
-[`kotlinx-coroutines-core-$platform`](https://central.sonatype.com/search?q=kotlinx-coroutines-core&namespace=org.jetbrains.kotlinx) where `$platform` is 
-the target Kotlin/Native platform. 
-Targets are provided in accordance with [official K/N target support](https://kotlinlang.org/docs/native-target-support.html).
 ## Building and Contributing
 
 See [Contributing Guidelines](CONTRIBUTING.md).

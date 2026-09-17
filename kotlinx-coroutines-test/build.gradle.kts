@@ -1,9 +1,3 @@
-kotlin {
-    sourceSets {
-        jvmTest {
-            dependencies {
-                implementation(project(":kotlinx-coroutines-debug"))
-            }
-        }
-    }
+dependencies {
+    testImplementation(project(":kotlinx-coroutines-debug"))
 }

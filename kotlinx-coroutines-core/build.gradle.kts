@@ -1,19 +1,12 @@
 import org.gradle.api.tasks.testing.*
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.withType
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.dokka.gradle.tasks.DokkaBaseTask
-import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
-import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
-import org.jetbrains.kotlin.gradle.testing.*
 import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
-    kotlin("multiplatform")
-    kotlin("plugin.js-plain-objects")
+    kotlin("jvm")
     id("org.jetbrains.kotlinx.benchmark")
     id("org.jetbrains.dokka")
     id("org.jetbrains.kotlinx.kover")
@@ -21,124 +14,38 @@ plugins {
 
 apply(plugin = "pub-conventions")
 
-/* ==========================================================================
-  Configure source sets structure for kotlinx-coroutines-core:
+dependencies {
+    compileOnly("com.google.android:annotations:4.1.1.4")
+    testImplementation("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
+    testImplementation(project(":android-unit-tests"))
+    testImplementation("org.openjdk.jol:jol-core:0.16")
+}
 
-     TARGETS                            SOURCE SETS
-     ------------------------------------------------------------
-     wasmJs \-----------> web -------------+
-     js     /                              |
-                                           V
-     wasmWasi --------------------> jsAndWasmShared ----------+
-                                                              |
-                                                              V
-     jvm ----------------------------> concurrent -------> common
-                                        ^
-     ios     \                          |
-     macos   | ---> apple ---------> native
-     tvos    |                          ^
-     watchos /                          |
-                                        |
-     linux         \                    |
-     mingw         | --> nativeOther ---+
-     androidNative /
- ========================================================================== */
-
+val benchmarkSourceSet = sourceSets.create("benchmark")
 kotlin {
-    sourceSets {
-        // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
-        groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-        groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
-        jvmMain {
-            dependencies {
-                compileOnly("com.google.android:annotations:4.1.1.4")
-            }
-        }
-        jvmTest {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:lincheck:${version("lincheck")}")
-                implementation("org.jetbrains.kotlinx:kotlinx-knit-test:${version("knit")}")
-                implementation(project(":android-unit-tests"))
-                implementation("org.openjdk.jol:jol-core:0.16")
-            }
-        }
+    sourceSets.named("benchmark") {
+        kotlin.srcDirs("benchmarks/main/kotlin", "benchmarks/jvm/kotlin")
     }
-    setupBenchmarkSourceSets(sourceSets)
-
-    /*
-     * Configure two test runs for Native:
-     * 1) Main thread
-     * 2) BG thread (required for Dispatchers.Main tests on Darwin)
-     *
-     * All new MM targets are build with optimize = true to have stress tests properly run.
-     */
-    targets.withType(KotlinNativeTargetWithTests::class).configureEach {
-        binaries.test("workerTest", listOf(DEBUG)) {
-            val thisTest = this
-            freeCompilerArgs = freeCompilerArgs + listOf("-e", "kotlinx.coroutines.mainBackground")
-            testRuns.create("workerTest") {
-                this as KotlinTaskTestRun<*, *>
-                setExecutionSourceFrom(thisTest)
-                executionTask.configure {
-                    this as KotlinNativeTest
-                    targetName = "$targetName worker with new MM"
-                }
-            }
-        }
+    target.compilations.named("benchmark") {
+        associateWith(target.compilations.getByName("main"))
     }
+    // Keep the module name stable for coroutine debugger access to internal symbols.
+    compilerOptions.moduleName = project.name
+}
+dependencies {
+    add(benchmarkSourceSet.implementationConfigurationName,
+        "org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
+}
+benchmark {
+    targets.register("benchmark")
 }
 
-private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomainObjectContainer<KotlinSourceSet>) {
-    // Forgive me, Father, for I have sinned.
-    // Really, that is needed to have benchmark sourcesets be the part of the project, not a separate project
-    val benchmarkMain = ss.create("benchmarkMain") {
-        dependencies {
-            implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
-        }
-        // For each source set we have to manually set path to the sources, otherwise lookup will fail
-        kotlin.srcDir("benchmarks/main/kotlin")
-    }
-
-    targets.matching {
-        it.name != "metadata"
-            // Doesn't work, don't want to figure it out for now
-            && !it.name.contains("wasm")
-            && !it.name.contains("js")
-    }.all {
-        compilations.create("benchmark") {
-            associateWith(this@all.compilations.getByName("main"))
-            defaultSourceSet {
-                dependencies {
-                    implementation("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:${version("benchmarks")}")
-                }
-                dependsOn(benchmarkMain)
-            }
-        }
-    }
-
-    ss.named("jvmBenchmark") {
-        // For each source set we have to manually set path to the sources, otherwise lookup will fail
-        kotlin.srcDir("benchmarks/jvm/kotlin")
-    }
-
-    targets.matching { it.name != "metadata" }.all {
-        benchmark.targets.register("${name}Benchmark")
-    }
-}
-
-// Update module name for metadata artifact to avoid conflicts
-// see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata = tasks.getByName<KotlinCompilationTask<*>>("compileKotlinMetadata") {
-    compilerOptions {
-        freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
-    }
-}
-
-val jvmTest = tasks.getByName<Test>("jvmTest") {
+val jvmTest = tasks.getByName<Test>("test") {
     minHeapSize = "1g"
     maxHeapSize = "1g"
     enableAssertions = true
-    // 'stress' is required to be able to run all subpackage tests like ":jvmTests --tests "*channels*" -Pstress=true"
+    // 'stress' is required to be able to run all subpackage tests like ":test --tests "*channels*" -Pstress=true"
     if (!Idea.active && !providers.gradleProperty("stress").isPresent) {
         exclude("**/*LincheckTest*")
         exclude("**/*StressTest.*")
@@ -149,17 +56,7 @@ val jvmTest = tasks.getByName<Test>("jvmTest") {
     }
 }
 
-// Setup manifest for kotlinx-coroutines-core-jvm.jar
-val jvmJar = tasks.getByName<Jar>("jvmJar") { setupManifest(this) }
-
-/*
- * Setup manifest for kotlinx-coroutines-core.jar
- * This is convenient for users that pass -javaagent arg manually and also is a workaround #2619 and KTIJ-5659.
- * This manifest contains reference to AgentPremain that belongs to
- * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
- * any JVM project that depends on -core artifact also depends on -core-jvm one.
- */
-val allMetadataJar = tasks.getByName<Jar>("allMetadataJar") { setupManifest(this) }
+val jvmJar = tasks.getByName<Jar>("jar") { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
@@ -172,11 +69,10 @@ fun setupManifest(jar: Jar) {
     }
 }
 
-val compileTestKotlinJvm = tasks.getByName<KotlinJvmCompile>("compileTestKotlinJvm")
-val jvmTestClasses = tasks.getByName("jvmTestClasses")
+val compileTestKotlin = tasks.getByName<KotlinJvmCompile>("compileTestKotlin")
 
 val jvmStressTest = tasks.register<Test>("jvmStressTest") {
-    dependsOn(compileTestKotlinJvm)
+    dependsOn(compileTestKotlin)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
     minHeapSize = "1g"
@@ -193,7 +89,7 @@ val jvmStressTest = tasks.register<Test>("jvmStressTest") {
 }
 
 val jvmLincheckTest = tasks.register<Test>("jvmLincheckTest") {
-    dependsOn(compileTestKotlinJvm)
+    dependsOn(compileTestKotlin)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
     include("**/*LincheckTest*")
@@ -206,7 +102,7 @@ val jvmLincheckTest = tasks.register<Test>("jvmLincheckTest") {
 // Some bugs cannot be revealed when storing one request per segment,
 // and some are hard to detect when storing multiple requests.
 val jvmLincheckTestAdditional = tasks.register<Test>("jvmLincheckTestAdditional") {
-    dependsOn(compileTestKotlinJvm)
+    dependsOn(compileTestKotlin)
     classpath = jvmTest.classpath
     testClassesDirs = jvmTest.testClassesDirs
     include("**/RendezvousChannelLincheckTest*")
@@ -292,18 +188,5 @@ tasks.withType<AnimalSniffer> {
 }
 
 animalsniffer {
-    defaultTargets = setOf("jvmMain")
-}
-
-// Restores behavior that was before changes in https://youtrack.jetbrains.com/issue/KT-69701
-// as change could break unconventional access to internal symbols (without using '-Xfriends-path' argument) which
-// relies on module name to be stable between releases.
-// This is needed due to IDEA-335375 Change coroutine debugger implementation to use a new package
-// as the debugger uses internal symbols
-plugins.withId("org.jetbrains.kotlin.multiplatform") {
-    extensions.configure<KotlinMultiplatformExtension> {
-        targets.withType<KotlinJvmTarget>().configureEach {
-            compilerOptions.moduleName.value(project.name)
-        }
-    }
+    defaultTargets = setOf("main")
 }

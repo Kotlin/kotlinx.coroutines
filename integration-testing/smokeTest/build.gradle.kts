@@ -1,61 +1,27 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.HasConfigurableKotlinCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 
 plugins {
-    id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.kotlin.jvm")
 }
 
+val coroutinesVersion = providers.gradleProperty("coroutines_version").get()
+
 kotlin {
-    jvm()
-    js(IR) {
-        nodejs()
-    }
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        nodejs()
-    }
-
-    macosArm64()
-    // Deprecated for removal: see KT-78660
-    @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-    macosX64()
-    linuxArm64()
-    linuxX64()
-    mingwX64()
-
-    val coroutinesVersion = project.providers.gradleProperty("coroutines_version").get()
-
+    jvmToolchain(17)
+    compilerOptions.jvmTarget = JvmTarget.JVM_1_8
     sourceSets {
-        commonMain {
-            dependencies {
-                implementation(kotlin("stdlib-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-            }
-        }
-        commonTest {
-            dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
-                implementation(kotlin("test"))
-            }
-        }
-        jvmTest {
-            dependencies {
-                implementation(kotlin("test-junit"))
-            }
-        }
+        main { kotlin.srcDir("src/commonMain/kotlin") }
+        test { kotlin.srcDir("src/commonTest/kotlin") }
     }
+}
 
-    targets.all {
-        val kotlinCompilerTaskName = compilations.getByName("main").compileKotlinTaskName
-        @Suppress("UNCHECKED_CAST")
-        val kotlinCompilerTask = tasks.getByName(kotlinCompilerTaskName) as? HasConfigurableKotlinCompilerOptions<KotlinJvmCompilerOptions>
-        kotlinCompilerTask?.compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
-        }
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
+    testImplementation(kotlin("test-junit"))
 }

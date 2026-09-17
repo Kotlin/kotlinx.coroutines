@@ -1,54 +1,17 @@
-import org.gradle.api.*
 import org.jetbrains.kotlin.gradle.plugin.*
-import org.gradle.kotlin.dsl.*
 
 fun KotlinSourceSet.configureDirectoryPaths() {
-    if (project.isMultiplatform) {
-        val srcDir = if (name.endsWith("Main")) "src" else "test"
-        val platform = name.dropLast(4)
-        kotlin.srcDir("$platform/$srcDir")
-        if (name == "jvmMain") {
-            resources.srcDir("$platform/resources")
-        } else if (name == "jvmTest") {
-            resources.srcDir("$platform/test-resources")
-        }
-    } else {
-        when (name) {
-            "main" -> {
-                kotlin.srcDir("src")
-                resources.srcDir("resources")
-            }
-            "test" -> {
-                kotlin.srcDir("test")
-                resources.srcDir("test-resources")
-            }
-        }
+    val sourceDir = when (name) {
+        "main" -> "src"
+        "test" -> "test"
+        else -> return
     }
-}
-
-/**
- * Creates shared source sets for a group of source sets.
- *
- * [reverseDependencies] is a list of prefixes of names of source sets that depend on the new source set.
- * [dependencies] is a list of prefixes of names of source sets that the new source set depends on.
- * [groupName] is the prefix of the names of the new source sets.
- *
- * The suffixes of the source sets are "Main" and "Test".
- */
-fun NamedDomainObjectContainer<KotlinSourceSet>.groupSourceSets(
-    groupName: String,
-    reverseDependencies: List<String>,
-    dependencies: List<String>
-) {
-    val sourceSetSuffixes = listOf("Main", "Test")
-    for (suffix in sourceSetSuffixes) {
-        register(groupName + suffix) {
-            for (dep in dependencies) {
-                dependsOn(get(dep + suffix))
-            }
-            for (revDep in reverseDependencies) {
-                get(revDep + suffix).dependsOn(this)
-            }
-        }
+    val resourceDir = if (name == "main") "resources" else "test-resources"
+    if (project.hasSharedSources) {
+        kotlin.srcDirs("common/$sourceDir", "concurrent/$sourceDir", "jvm/$sourceDir")
+        resources.srcDir("jvm/$resourceDir")
+    } else {
+        kotlin.srcDir(sourceDir)
+        resources.srcDir(resourceDir)
     }
 }

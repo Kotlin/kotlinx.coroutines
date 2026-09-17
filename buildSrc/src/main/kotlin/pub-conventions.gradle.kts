@@ -20,12 +20,23 @@ publishing {
         }
     }
 
-    if (!isMultiplatform && !isBom) {
-        // Configure java publications for regular non-MPP modules
+    if (!isBom) {
+        // Publish each JVM library under its project coordinates.
         apply(plugin = "java-library")
 
-        // MPP projects pack their sources automatically, java libraries need to explicitly pack them
+        // Include sources with the JVM publication.
         project.extensions.getByType(JavaPluginExtension::class.java).withSourcesJar()
+        if (hasSharedSources) {
+            val moduleDirectory = layout.projectDirectory.asFile
+            tasks.named<Jar>("sourcesJar") {
+                // Shared and JVM sources can have the same relative filename.
+                // Preserve their directories so all implementations are included.
+                eachFile {
+                    path = file.relativeTo(moduleDirectory).invariantSeparatorsPath
+                }
+                includeEmptyDirs = false
+            }
+        }
 
         publications {
             register("mavenJava", MavenPublication::class) {
@@ -38,22 +49,8 @@ publishing {
     publications.withType(MavenPublication::class).all {
         pom.configureMavenCentralMetadata(project)
         signPublicationIfKeyPresent(project, this)
-        if (!isBom && name != "kotlinMultiplatform") {
+        if (!isBom) {
             artifact(emptyJavadoc)
-        }
-
-        val type = name
-        when (type) {
-            "kotlinMultiplatform" -> {
-                // With Kotlin 1.4 & HMPP, the root module should have no suffix in the ID, but for compatibility with
-                // the consumers who can't read Gradle module metadata, we publish the JVM artifacts in it, too
-                artifactId = project.name
-                project.reconfigureMultiplatformPublication(publications.getByName("jvm") as MavenPublication)
-            }
-
-            "metadata", "jvm", "js", "native" -> {
-                artifactId = "${project.name}-$type"
-            }
         }
     }
 

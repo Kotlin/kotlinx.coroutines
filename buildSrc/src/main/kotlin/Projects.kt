@@ -23,7 +23,8 @@ val sourceless = setOf("kotlinx.coroutines", "kotlinx-coroutines-bom")
 // Not published
 val unpublished = setOf("kotlinx.coroutines", "benchmarks", "android-unit-tests", testUtilsModule)
 
-val Project.isMultiplatform: Boolean get() = name in setOf(coreModule, "kotlinx-coroutines-test", testUtilsModule)
+// Modules retaining their shared/JVM source directory layout. All use the JVM plugin.
+val Project.hasSharedSources: Boolean get() = name in setOf(coreModule, "kotlinx-coroutines-test", testUtilsModule)
 val Project.isBom: Boolean get() = name == "kotlinx-coroutines-bom"
 
 val Project.abiCheckEnabled get() = name !in unpublished + "kotlinx-coroutines-bom"
