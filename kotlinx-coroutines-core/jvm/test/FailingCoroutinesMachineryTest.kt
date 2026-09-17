@@ -112,18 +112,20 @@ class FailingCoroutinesMachineryTest(
 
     @Test
     fun testElement() = runTest {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
         // Top-level throwing dispatcher may rethrow an exception right here
         runCatching {
-            launch(NonCancellable + dispatcher.value + exceptionHandler + element) {}
+            detachedScope.launch(dispatcher.value + exceptionHandler + element) {}
         }
         checkException()
     }
 
     @Test
     fun testNestedElement() = runTest {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
         // Top-level throwing dispatcher may rethrow an exception right here
         runCatching {
-            launch(NonCancellable + dispatcher.value + exceptionHandler) {
+            detachedScope.launch(dispatcher.value + exceptionHandler) {
                 launch(element) { }
             }
         }
@@ -132,7 +134,8 @@ class FailingCoroutinesMachineryTest(
 
     @Test
     fun testNestedDispatcherAndElement() = runTest {
-        launch(lazyOuterDispatcher.value + NonCancellable + exceptionHandler) {
+        val detachedScope = CoroutineScope(currentCoroutineContext() + Job())
+        detachedScope.launch(lazyOuterDispatcher.value + exceptionHandler) {
             launch(element + dispatcher.value) {  }
         }
         checkException()

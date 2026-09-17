@@ -11,7 +11,7 @@ fun main() = runBlocking {
                 delay(500L)
             }
         } finally {
-            withContext(NonCancellable) {
+            nonCancellable {
                 println("job: I'm running finally")
                 delay(1000L)
                 println("job: And I've just delayed for 1 sec because I'm non-cancellable")

@@ -25,7 +25,6 @@ More context elements:
 
 | **Name**                    | **Description**
 | --------------------------- | ---------------
-| [NonCancellable]            | A non-cancelable job that is always active
 | [CoroutineExceptionHandler] | Handler for uncaught exception
 
 Synchronization primitives for coroutines:
@@ -48,8 +47,8 @@ Top-level suspending functions:
 | [joinAll]                | Joins on all given jobs
 
 Cancellation support for user-defined suspending functions is available with [suspendCancellableCoroutine]
-helper function. [NonCancellable] job object is provided to suppress cancellation with 
-`withContext(NonCancellable) {...}` block of code.
+helper function.
+The [nonCancellable] function is provided to suppress cancellation inside its block of code.
 
 [Select][kotlinx.coroutines.selects.select] expression waits for the result of multiple suspending functions simultaneously:
 
@@ -104,7 +103,6 @@ Low-level primitives for finer-grained control of coroutines.
 [newSingleThreadContext]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-single-thread-context.html
 [newFixedThreadPoolContext]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/new-fixed-thread-pool-context.html
 [asCoroutineDispatcher]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/as-coroutine-dispatcher.html
-[NonCancellable]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/index.html
 [CoroutineExceptionHandler]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/index.html
 [delay]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html
 [yield]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html
@@ -114,6 +112,7 @@ Low-level primitives for finer-grained control of coroutines.
 [awaitAll]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-all.html
 [joinAll]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/join-all.html
 [suspendCancellableCoroutine]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/suspend-cancellable-coroutine.html
+[nonCancellable]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/non-cancellable.html
 [Job.join]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/join.html
 [Job.onJoin]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/on-join.html
 [Job.isCompleted]: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/is-completed.html

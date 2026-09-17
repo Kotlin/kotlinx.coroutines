@@ -115,25 +115,27 @@ class BroadcastTest : TestBase() {
 
     @Test
     fun testBroadcastCloseWithException() = runTest {
-        expect(1)
-        val b = broadcast(NonCancellable, capacity = 1) {
-            expect(2)
-            send(1)
-            expect(3)
-            send(2) // suspends
-            expect(5)
-            // additional attempts to send fail
-            assertFailsWith<TestException> { send(3) }
+        supervisorScope {
+            expect(1)
+            val b = broadcast(capacity = 1) {
+                expect(2)
+                send(1)
+                expect(3)
+                send(2) // suspends
+                expect(5)
+                // additional attempts to send fail
+                assertFailsWith<TestException> { send(3) }
+            }
+            val sub = b.openSubscription()
+            yield() // into broadcast
+            expect(4)
+            b.close(TestException()) // close broadcast channel with exception
+            assertTrue(b.isClosedForSend) // sub was also closed
+            assertEquals(1, sub.receive()) // 1st element received
+            assertEquals(2, sub.receive()) // 2nd element received
+            assertFailsWith<TestException> { sub.receive() } // then closed with exception
+            yield() // to cancel broadcast
+            finish(6)
         }
-        val sub = b.openSubscription()
-        yield() // into broadcast
-        expect(4)
-        b.close(TestException()) // close broadcast channel with exception
-        assertTrue(b.isClosedForSend) // sub was also closed
-        assertEquals(1, sub.receive()) // 1st element received
-        assertEquals(2, sub.receive()) // 2nd element received
-        assertFailsWith<TestException> { sub.receive() } // then closed with exception
-        yield() // to cancel broadcast
-        finish(6)
     }
 }

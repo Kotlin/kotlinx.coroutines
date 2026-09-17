@@ -539,10 +539,11 @@ class TestScopeTest {
         val thrown = TestException("x")
         return testResultChain({ _ ->
             runTest {
-                val job = launch(Dispatchers.Default + NonCancellable) {
-                    throw thrown
+                supervisorScope {
+                    launch(Dispatchers.Default) {
+                        throw thrown
+                    }
                 }
-                job.join()
             }
         }, {
             runTest {

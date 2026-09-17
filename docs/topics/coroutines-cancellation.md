@@ -436,14 +436,9 @@ In this example, storing the `BufferedReader` in a variable and closing it in th
 
 ### Run non-cancelable blocks
 
-You can prevent cancellation from affecting certain parts of a coroutine.
-To do so, pass [`NonCancellable`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-non-cancellable/) as an argument to the `withContext()` coroutine builder function.
+You can prevent cancellation from affecting certain parts of a coroutine using the [`nonCancellable`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/non-cancellable.html) function.
 
-> Avoid using `NonCancellable` with other coroutine builders like `.launch()` or `.async()`. Doing so disrupts structured concurrency by breaking the parent-child relationship.
->
-{style="warning"}
-
-`NonCancellable` is useful when you need to ensure that certain operations, such as closing resources with a suspending `close()` function,
+`nonCancellable` is useful when you need to ensure that certain operations, such as closing resources with a suspending `close()` function,
 complete even if the coroutine is canceled before they finish.
 
 Here's an example:
@@ -473,8 +468,8 @@ suspend fun main() {
             try {
                 awaitCancellation()
             } finally {
-                withContext(NonCancellable) {
-                    // Without withContext(NonCancellable),
+                nonCancellable {
+                    // Without nonCancellable,
                     // this function doesn't complete because the coroutine is canceled
                     shutdownServiceAndWait()
                 }

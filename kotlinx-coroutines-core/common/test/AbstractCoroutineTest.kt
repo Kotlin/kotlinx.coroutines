@@ -50,7 +50,9 @@ class AbstractCoroutineTest : TestBase() {
     fun testNotificationsWithException() = runTest {
         expect(1)
         val coroutineContext = coroutineContext // workaround for KT-22984
-        val coroutine = object : AbstractCoroutine<String>(coroutineContext + NonCancellable, true, false) {
+        val coroutine = object : AbstractCoroutine<String>(
+            coroutineContext + SupervisorJob(), true, false
+        ) {
             override fun onStart() {
                 expect(3)
             }

@@ -393,16 +393,18 @@ class FutureTest : TestBase() {
     @Test
     fun testUnhandledExceptionOnExternalCompletionIsNotReported() = runTest {
         expect(1)
-        // No parent here (NonCancellable), so nowhere to propagate exception
-        val result = future(NonCancellable + Dispatchers.Unconfined) {
-            try {
-                delay(Long.MAX_VALUE)
-            } finally {
-                expect(2)
-                throw TestException() // this exception cannot be handled
+        // The parent is a supervisor, so nowhere to propagate exception
+        supervisorScope {
+            val result = future(Dispatchers.Unconfined) {
+                try {
+                    delay(Long.MAX_VALUE)
+                } finally {
+                    expect(2)
+                    throw TestException() // this exception cannot be handled
+                }
             }
+            result.complete(Unit)
         }
-        result.complete(Unit)
         finish(3)
     }
 

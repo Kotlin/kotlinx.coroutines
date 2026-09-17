@@ -324,7 +324,7 @@ private class LazyDeferredCoroutine<T>(
  *
  * [context] specifies the additional context elements for the coroutine to combine with
  * the elements already present in the [currentCoroutineContext].
- * It is incorrect to pass a [Job] element there, unless it is [NonCancellable], as this breaks structured concurrency.
+ * It is incorrect to pass a [Job] element there, as this breaks structured concurrency.
  *
  * If the resulting [CoroutineScope.coroutineContext] is cancelled before the [block] starts running,
  * [block] will immediately finish with a [CancellationException],
@@ -346,8 +346,7 @@ private class LazyDeferredCoroutine<T>(
  *   but if they are `CopyableThreadContextElement`s, they are copied and merged as needed.
  * - Then, the [Job] in the [currentCoroutineContext], if any, is used as the *parent* of the new scope,
  *   unless overridden.
- *   Overriding the [Job] is forbidden with the notable exception of [NonCancellable];
- *   see a separate subsection below for details.
+ *   Overriding the [Job] is forbidden; see a separate subsection below for details.
  *   The new scope's [Job] is added to the resulting context.
  *
  * The [Job] of the new scope is not a normal child of the caller coroutine but a **lexically scoped** one,
@@ -355,37 +354,6 @@ private class LazyDeferredCoroutine<T>(
  * Instead, the exception leading to the failure will be rethrown to the caller of this function.
  *
  * ### Overriding the parent job
- *
- * #### [NonCancellable]
- *
- * Passing [NonCancellable] in the [context] argument is a special case that allows
- * the [block] to run even if the parent coroutine is cancelled.
- *
- * This is useful in particular for performing cleanup operations
- * if the cleanup procedure is itself a `suspend` function.
- *
- * Example:
- *
- * ```
- * class Connection {
- *     suspend fun terminate()
- * }
- *
- * val connection = Connection()
- * try {
- *     // some cancellable operations...
- * } finally {
- *     withContext(NonCancellable) {
- *         // this block will run even if the parent coroutine is cancelled
- *         connection.terminate()
- *     }
- * }
- * ```
- *
- * Beware that combining [NonCancellable] with context elements that change the dispatcher
- * will make this cleanup code incorrect. See the [NonCancellable] documentation for details.
- *
- * #### Other [Job] elements
  *
  * Passing a [Job] in the [context] argument breaks structured concurrency and is not a supported pattern.
  * It does not throw an exception only for backward compatibility reasons, as a lot of code was written this way.
@@ -426,7 +394,7 @@ private class LazyDeferredCoroutine<T>(
  *     deferred.cancel()
  *     // optional: wait for the `deferred` to finish running its code
  *     // after being cancelled
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         deferred.join()
  *     }
  * }
@@ -454,20 +422,14 @@ private class LazyDeferredCoroutine<T>(
  * in which [withContext] was invoked is cancelled by the time its dispatcher starts to execute the code,
  * it discards the result of [withContext] and throws a [CancellationException].
  *
- * On the other hand, if the dispatch from [withContext] back to the original context does not need to happen
- * (because of having the same dispatcher and not having to wait for the children)
- * *and* the [context] passed to [withContext] contains [NonCancellable],
- * then cancellation of the caller will not prevent a value from being successfully returned.
- *
  * ## Pitfalls
  *
  * ### Returning closeable resources
  *
  * Values returned from [withContext] will typically be lost if the caller is cancelled.
- * An important exception is the `withContext(NonCancellable)` pattern.
  *
  * See the corresponding section in the [coroutineScope] documentation for details,
- * as well as the [NonCancellable] documentation.
+ * as well as the [nonCancellable] documentation.
  */
 public suspend fun <T> withContext(
     context: CoroutineContext,

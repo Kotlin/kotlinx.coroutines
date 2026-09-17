@@ -139,8 +139,10 @@ class RunTestTest {
     }) {
         runTest(timeout = 10.milliseconds) {
             launch(start = CoroutineStart.UNDISPATCHED) {
-                withContext(NonCancellable + Dispatchers.Default) {
-                    delay(100.milliseconds)
+                nonCancellable {
+                    withContext(Dispatchers.Default) {
+                        delay(100.milliseconds)
+                    }
                 }
             }
             throw TestException("A")

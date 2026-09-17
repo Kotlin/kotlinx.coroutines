@@ -21,7 +21,7 @@ class RunBlockingJvmTest : TestBase() {
                         expect(2)
                         delay(Duration.INFINITE)
                     } finally {
-                        withContext(NonCancellable) {
+                        nonCancellable {
                             expect(3)
                             repeat(10) { yield() }
                             expect(4)
@@ -172,7 +172,7 @@ class RunBlockingJvmTest : TestBase() {
         val result = AtomicReference<Result<T>>()
         try {
             runBlocking {
-                withContext(NonCancellable) {
+                nonCancellable {
                     result.set(runCatching { action() })
                 }
             }

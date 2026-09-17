@@ -83,7 +83,7 @@ class JobExtensionsTest : TestBase() {
     @Test
     fun testJobExtension() = runTest {
         assertSame(coroutineContext[Job]!!, coroutineContext.job)
-        assertSame(NonCancellable, NonCancellable.job)
+        @Suppress("DEPRECATION") assertSame(NonCancellable, NonCancellable.job)
         assertSame(job, job.job)
         assertFailsWith<IllegalStateException> { EmptyCoroutineContext.job }
         assertFailsWith<IllegalStateException> { Dispatchers.Default.job }
