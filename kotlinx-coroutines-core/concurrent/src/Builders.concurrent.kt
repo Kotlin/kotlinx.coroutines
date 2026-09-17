@@ -73,6 +73,10 @@ import kotlin.jvm.JvmName
  *
  * See [CoroutineDispatcher] for the other implementations that are provided by `kotlinx.coroutines`.
  *
+ * If new tasks are submitted to the dispatcher created by [runBlocking] after this function returns,
+ * they are resubmitted to [Dispatchers.IO].
+ * This behavior is experimental and may change in future releases.
+ *
  * ## Pitfalls
  *
  * ### Calling from a suspend function
@@ -92,8 +96,6 @@ import kotlin.jvm.JvmName
  * block, potentially leading to thread starvation issues.
  * Additionally, the [currentCoroutineContext] will be ignored, and the new computation will run in the context of
  * the new `runBlocking` coroutine.
- *
- * Instead, write it like this:
  *
  * ```
  * suspend fun loadConfiguration() {
@@ -163,10 +165,10 @@ public fun <T> runBlocking(
     val newContext: CoroutineContext
     if (contextInterceptor == null) {
         // create or use private event loop if no dispatcher is specified
-        eventLoop = ThreadLocalEventLoop.eventLoop
+        eventLoop = ThreadLocalEventLoop.unconfinedEventLoop.useAsEventLoopForRunBlockingOrFail()
         newContext = GlobalScope.newCoroutineContext(context + eventLoop)
     } else {
-        eventLoop = ThreadLocalEventLoop.currentOrNull()
+        eventLoop = ThreadLocalEventLoop.currentOrNull()?.useAsEventLoopForRunBlockingOrFail()
         newContext = GlobalScope.newCoroutineContext(context)
     }
     return runBlockingImpl(newContext, eventLoop, block)
@@ -176,3 +178,6 @@ public fun <T> runBlocking(
 internal expect fun <T> runBlockingImpl(
     newContext: CoroutineContext, eventLoop: EventLoop?, block: suspend CoroutineScope.() -> T
 ): T
+
+private fun UnconfinedEventLoop.useAsEventLoopForRunBlockingOrFail(): EventLoop =
+    tryUseAsEventLoop() ?: throw IllegalStateException("runBlocking can not be run in direct dispatchers")
