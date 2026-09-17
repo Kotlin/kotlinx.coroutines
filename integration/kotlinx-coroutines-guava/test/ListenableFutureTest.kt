@@ -545,16 +545,18 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testUnhandledExceptionOnExternalCancellation() = runTest {
         expect(1)
-        // No parent here (NonCancellable), so nowhere to propagate exception
-        val result = future(NonCancellable + Dispatchers.Unconfined) {
-            try {
-                awaitCancellation()
-            } finally {
-                expect(2)
-                throw TestException() // this exception cannot be handled and is set to be lost.
+        // The parent is a supervisor, so nowhere to propagate exception
+        supervisorScope {
+            val result = future(Dispatchers.Unconfined) {
+                try {
+                    awaitCancellation()
+                } finally {
+                    expect(2)
+                    throw TestException() // this exception cannot be handled and is set to be lost.
+                }
             }
+            result.cancel(true)
         }
-        result.cancel(true)
         finish(3)
     }
 
@@ -562,16 +564,18 @@ class ListenableFutureTest : TestBase() {
     @Test
     fun testCancellationExceptionOnExternalCancellation() = runTest {
         expect(1)
-        // No parent here (NonCancellable), so nowhere to propagate exception
-        val result = future(NonCancellable + Dispatchers.Unconfined) {
-            try {
-                awaitCancellation()
-            } finally {
-                expect(2)
-                throw TestCancellationException() // this exception cannot be handled
+        // The parent is a supervisor, so nowhere to propagate exception
+        supervisorScope {
+            val result = future(Dispatchers.Unconfined) {
+                try {
+                    awaitCancellation()
+                } finally {
+                    expect(2)
+                    throw TestCancellationException() // this exception cannot be handled
+                }
             }
+            assertTrue(result.cancel(true))
         }
-        assertTrue(result.cancel(true))
         finish(3)
     }
 
@@ -607,12 +611,13 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testFutureChildException() = runTest {
-        val future = future(context = NonCancellable + Dispatchers.Unconfined) {
-            val foo = async<Int> { awaitCancellation() }
-            val bar = async<Int> { throw TestException() }
-            foo.await() + bar.await()
+        supervisorScope {
+            val future = future(context = Dispatchers.Unconfined) {
+                val foo = async<Int> { awaitCancellation() }
+                val bar = async<Int> { throw TestException() }
+                foo.await() + bar.await()
+            }
         }
-        future.checkFutureException<TestException>()
     }
 
     @Test
@@ -621,25 +626,27 @@ class ListenableFutureTest : TestBase() {
         val testException = TestException()
         val futureIsAllowedToFinish = CountDownLatch(1)
         // Don't propagate exception to the test and use different dispatchers as we are going to block test thread.
-        val future = future(context = NonCancellable + Dispatchers.Default) {
-            val foo = async<Int>(start = CoroutineStart.UNDISPATCHED) {
-                try {
-                    awaitCancellation()
-                } finally {
-                    futureIsAllowedToFinish.await()
-                    expect(3)
+        supervisorScope {
+            val future = future(context = Dispatchers.Default) {
+                val foo = async<Int>(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        futureIsAllowedToFinish.await()
+                        expect(3)
+                    }
                 }
+                val bar = async<Int> { throw testException }
+                foo.await() + bar.await()
             }
-            val bar = async<Int> { throw testException }
-            foo.await() + bar.await()
+            yield()
+            expect(2)
+            futureIsAllowedToFinish.countDown()
+            // Blocking get should succeed after internal coroutine completes.
+            val thrown = assertFailsWith<ExecutionException> { future.get() }
+            expect(4)
+            assertEquals(testException, thrown.cause)
         }
-        yield()
-        expect(2)
-        futureIsAllowedToFinish.countDown()
-        // Blocking get should succeed after internal coroutine completes.
-        val thrown = assertFailsWith<ExecutionException> { future.get() }
-        expect(4)
-        assertEquals(testException, thrown.cause)
         finish(5)
     }
 
@@ -756,7 +763,7 @@ class ListenableFutureTest : TestBase() {
         val exception = TestException("propagated to parent")
         val future = scope.future {
             cancelLatch.complete()
-            withContext(NonCancellable) {
+            nonCancellable {
                 throwLatch.join()
                 throw exception
             }

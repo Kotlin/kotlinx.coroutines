@@ -558,6 +558,10 @@ public final class kotlinx/coroutines/NonCancellable : kotlin/coroutines/Abstrac
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class kotlinx/coroutines/NonCancellableKt {
+	public static final fun nonCancellable (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class kotlinx/coroutines/NonDisposableHandle : kotlinx/coroutines/ChildHandle, kotlinx/coroutines/DisposableHandle {
 	public static final field INSTANCE Lkotlinx/coroutines/NonDisposableHandle;
 	public fun childCancelled (Ljava/lang/Throwable;)Z

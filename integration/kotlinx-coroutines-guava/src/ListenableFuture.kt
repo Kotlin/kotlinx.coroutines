@@ -241,7 +241,7 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
  *
  * This method is intended to be used with one-shot Futures, so on coroutine cancellation, the Future is cancelled as well.
  * If cancelling the given future is undesired, use [Futures.nonCancellationPropagating] or
- * [kotlinx.coroutines.NonCancellable].
+ * [kotlinx.coroutines.nonCancellable].
  */
 public suspend fun <T> ListenableFuture<T>.await(): T {
     try {

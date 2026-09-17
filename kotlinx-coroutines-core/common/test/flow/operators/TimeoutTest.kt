@@ -121,7 +121,7 @@ class TimeoutTest : TestBase() {
     fun testUpstreamExceptionsTakingPriority() = withVirtualTime {
         val flow = flow<Unit> {
             expect(2)
-            withContext(NonCancellable) {
+            nonCancellable {
                 delay(2.milliseconds)
             }
             assertFalse(currentCoroutineContext().isActive) // cancelled already

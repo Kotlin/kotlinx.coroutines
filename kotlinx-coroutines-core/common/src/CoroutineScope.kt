@@ -423,15 +423,14 @@ import kotlin.coroutines.intrinsics.*
  *
  * ```
  * scope.launch(start = CoroutineStart.ATOMIC) {
- *     // Do not move `NonCancellable` to the `context` argument of `launch`!
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // This code will run even if the parent coroutine is cancelled
  *     }
  * }
  * ```
  *
  * [CoroutineStart.ATOMIC] ensures that the new coroutine is not cancelled until it at least started to execute.
- * [NonCancellable] in [withContext] ensures that the code inside the block is executed even if the coroutine
+ * [nonCancellable] ensures that the code inside the block is executed even if the coroutine
  * created by [launch] is cancelled.
  */
 public interface CoroutineScope {
@@ -823,7 +822,7 @@ public object GlobalScope : CoroutineScope {
  * If cancellation during the acquisition of the resource is also undesired, the following pattern can be used:
  *
  * ```
- * withContext(NonCancellable) {
+ * nonCancellable {
  *     myLexicalScope {
  *         obtainResource()
  *     }
@@ -831,9 +830,9 @@ public object GlobalScope : CoroutineScope {
  * }
  * ```
  *
- * See [NonCancellable] for details.
+ * See [nonCancellable] for details.
  *
- * Be aware, however, that like any [NonCancellable] usage, this creates the risk of accessing values past the point
+ * Be aware, however, that like any [nonCancellable] usage, this creates the risk of accessing values past the point
  * where they are valid.
  * For example, if the caller coroutine scope is tied to the lifecycle of a UI element, with cancellation meaning
  * that the UI element was already disposed of, accessing the UI during the acquisition of a resource or
