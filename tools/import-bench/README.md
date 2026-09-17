@@ -45,7 +45,13 @@ Each measured run is a **cold Gradle import on a warm machine**:
 * the IDE's cached workspace model is dropped between runs, because otherwise the IDE
   decides the project is already configured and performs no import at all;
 * the IDE sandbox indexes are kept between runs, so indexing has almost nothing left to do
-  and does not compete with Gradle for cores.
+  and does not compete with Gradle for cores;
+* Gradle's classpath-snapshot cache (`caches/<version>/kotlin-dsl/classpath-snapshots`) is
+  kept, even though the rest of `kotlin-dsl` is deleted. Its entries are keyed by the
+  content hash of a dependency rather than by anything in this project, so anyone who has
+  built any Kotlin project already has them. Deleting it would model a machine that has
+  never run this Gradle version — a rarer thing than a fresh checkout — and would add
+  1–1.7 s per run of re-snapshotting every jar on three script classpaths.
 
 The first invocation performs two extra, discarded imports to settle those caches. Their
 numbers are thrown away. Changing `--state`, `--gradle` or `--kotlin-version` re-does it.

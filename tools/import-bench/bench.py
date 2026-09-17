@@ -513,12 +513,29 @@ def forget_project(sandbox):
 # Downloaded dependencies (modules-2) are always kept, so no run needs the network.
 SCRIPT_CACHES = ("kotlin-dsl", "groovy-dsl", "scripts", "scripts-remapped")
 
+# ... but not everything under those directories is compiled build logic. These entries
+# are keyed by the content hash of a dependency, not by anything in this project, so a
+# fresh checkout on a machine that has built anything else in Kotlin already has them.
+# Deleting them models a machine that has never seen this Gradle version, which is a
+# different and much rarer thing, and it costs 1-1.7 s per run: the daemon blocks in
+# KotlinCompileClasspathFingerprinter while the Kotlin Build Tools API re-snapshots
+# every jar on three script classpaths.
+KEEP_WITHIN_SCRIPT_CACHES = {"kotlin-dsl": ("classpath-snapshots",)}
+
 
 def cool_caches(gradle_home):
     for version in (gradle_home / "caches").glob("*"):
-        if version.is_dir():
-            for name in SCRIPT_CACHES:
-                rmtree(version / name)
+        if not version.is_dir():
+            continue
+        for name in SCRIPT_CACHES:
+            directory = version / name
+            keep = KEEP_WITHIN_SCRIPT_CACHES.get(name)
+            if keep and directory.is_dir():
+                for entry in directory.iterdir():
+                    if entry.name not in keep:
+                        rmtree(entry)
+            else:
+                rmtree(directory)
     rmtree(gradle_home / "caches/build-cache-1")
 
 
