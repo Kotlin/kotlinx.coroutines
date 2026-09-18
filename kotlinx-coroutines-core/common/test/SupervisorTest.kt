@@ -264,4 +264,9 @@ class SupervisorTest : TestBase() {
         job.join()
         finish(4)
     }
+
+    class SupervisorScopeIsLexicalScope: LexicalScopeTestBase() {
+        override suspend fun <T> scopeFunctionUnderTest(block: suspend CoroutineScope.() -> T): T =
+            supervisorScope(block)
+    }
 }
