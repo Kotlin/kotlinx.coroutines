@@ -10,7 +10,7 @@ and writes a self-contained HTML report with a total time, CPU time and a swimch
 ./bench --gradle 9.8.0-rc-1 --kotlin-version 2.3.21 --runs 5 --open
 ```
 
-The report lands in `build/import-bench/report/index.html`, with machine-readable numbers
+The report lands in `../../build/import-bench-xxh3`, with machine-readable numbers
 next to it in `summary.json`.
 
 ## Requirements
@@ -21,7 +21,7 @@ installation is found automatically; otherwise pass `--idea` or set `IDEA_HOME`.
 
 The benchmark starts its own headless IDE against a throwaway sandbox, so it will not
 touch the IDE you are working in. **Your checkout is never modified** — the project is
-hardlink-copied into `build/import-bench/project` and measured there.
+hardlink-copied into `../../build/import-bench-xxh3` and measured there.
 
 ## What the number means
 
@@ -39,7 +39,7 @@ Each measured run is a **cold Gradle import on a warm machine**:
 * the Gradle daemon is fresh — the IDE starts one and stops it when the project closes,
   so daemon startup and cold JIT are inside the number, which is what a first import
   after opening the IDE actually costs;
-* the Gradle home is isolated under `build/import-bench/gradle-home`, primed once from
+* the Gradle home is isolated under `../../build/import-bench-xxh3`, primed once from
   your `~/.gradle` by hardlinking, so dependencies are never re-downloaded and almost no
   extra disk is used — `du` will report tens of gigabytes that are not really there;
 * the IDE's cached workspace model is dropped between runs, because otherwise the IDE
@@ -95,7 +95,7 @@ cost in the import.
 | `--runs N` | measured runs, default 3; the median is reported and every run is listed. |
 | `--java-home` | JDK for the Gradle daemon (sets `org.gradle.java.home`). |
 | `--idea` | IntelliJ installation to drive. |
-| `--out` | output directory, default `build/import-bench`. |
+| `--out` | output directory, default `../../build/import-bench-xxh3`. |
 | `--heap`, `--gradle-jvmargs` | IDE heap and daemon JVM args. |
 | `--no-seed` | do not prime the isolated Gradle home from `~/.gradle`. Downloads everything. |
 | `--state` | `scripts` (default), `cold` or `warm`; see the table above. |
@@ -119,6 +119,6 @@ cost in the import.
   the report.
 * The benchmark drives an internal IDE entry point (`warmup`) that needs
   `idea.is.internal=true`; the sandbox sets it. If a future IDE renames or removes it, the
-  run fails with no sync span and the log under `build/import-bench/runs/` says why.
+  run fails with no sync span and the log under `../../build/import-bench-xxh3` says why.
 * Everything is one process tree on one machine: a busy laptop measures a busy laptop.
   Close other builds before caring about the last half second.
