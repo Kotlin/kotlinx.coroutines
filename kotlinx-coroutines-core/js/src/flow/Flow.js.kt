@@ -71,7 +71,6 @@ public actual interface Flow<out T> {
     @JsSymbol("asyncIterator")
     public fun asAsyncIterable(): JsAsyncIterableIterator<T> {
         lateinit var mainLoopJob: Job
-
         @Suppress("NOTHING_TO_INLINE")
         inline fun resolveRequestWithoutRunning(request: FlowAsyncIteratorResolution<T>) {
             when (request.command) {
@@ -80,11 +79,9 @@ public actual interface Flow<out T> {
                 FlowAsyncIteratorResolution.NEXT_ELEMENT -> request.resolve(JsIteratorResult(done = !mainLoopJob.isActive))
             }
         }
-
         val elementRequests = Channel<FlowAsyncIteratorResolution<T>>(onUndeliveredElement = {
             resolveRequestWithoutRunning(it)
         })
-
         fun scheduleNextCommand(command: FlowAsyncIteratorResolution.FlowCollectionCommand, value: Any? = VOID) = Promise { resolve, reject ->
             val ourRequest = FlowAsyncIteratorResolution(resolve, reject, command, value)
             GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -95,12 +92,10 @@ public actual interface Flow<out T> {
                 }
             }
         }
-
         fun startResolutionLoop() {
             mainLoopJob = GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
                 /** Receive the initial request. Until we know that some element is requested, we won't start the flow. */
                 var currentRequest = elementRequests.receive()
-
                 when (currentRequest.command) {
                     FlowAsyncIteratorResolution.MUST_RETURN -> currentRequest.resolve(JsIteratorResult(done = true))
                     FlowAsyncIteratorResolution.MUST_THROW -> currentRequest.reject(currentRequest.valueToThrow)
@@ -115,7 +110,6 @@ public actual interface Flow<out T> {
                                      * so even when the upstream is making progress, we refuse to acknowledge it. */
                                     elementRequests.receive()
                                 }
-
                                 when (currentRequest.command) {
                                     FlowAsyncIteratorResolution.MUST_THROW -> {
                                         /** Let cancellation handlers know the exact exception that went through.
@@ -126,10 +120,8 @@ public actual interface Flow<out T> {
                                         currentRequest.valueToThrow.toThrowableOrNull()?.let { throw it }
                                         false
                                     }
-
                                     FlowAsyncIteratorResolution.MUST_RETURN -> false
                                     FlowAsyncIteratorResolution.NEXT_ELEMENT -> true
-
                                     /* Should never happen, but if happens, better to stop collecting */
                                     else -> true
                                 }
@@ -146,20 +138,16 @@ public actual interface Flow<out T> {
                         }
                     }
                 }
-
                 elementRequests.cancel()
             }
         }
-
         val iterator = JsAsyncIterator<T>(
             next = { scheduleNextCommand(FlowAsyncIteratorResolution.NEXT_ELEMENT) },
             `return` = { scheduleNextCommand(FlowAsyncIteratorResolution.MUST_RETURN, it) },
             `throw` = { scheduleNextCommand(FlowAsyncIteratorResolution.MUST_THROW, it) }
         )
-
         iterator.asDynamic()[js("Symbol.asyncIterator")] = { iterator }
         startResolutionLoop()
-
         return iterator.unsafeCast<JsAsyncIterableIterator<T>>()
     }
 
