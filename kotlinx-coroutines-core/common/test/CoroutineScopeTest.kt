@@ -281,4 +281,9 @@ class CoroutineScopeTest : TestBase() {
         ::testIsActive.startCoroutine(Continuation(EmptyCoroutineContext){})
         assertTrue(invoked)
     }
+
+    class CoroutineScopeIsDecomposingLexicalScope: DecomposingLexicalScopeTestBase() {
+        override suspend fun <T> scopeFunctionUnderTest(block: suspend CoroutineScope.() -> T): T =
+            coroutineScope(block)
+    }
 }

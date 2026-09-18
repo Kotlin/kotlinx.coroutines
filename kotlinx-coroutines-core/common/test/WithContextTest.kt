@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
 
 class WithContextTest : TestBase() {
@@ -370,4 +371,14 @@ class WithContextTest : TestBase() {
 
     private fun String.wrap() = Wrapper(this)
     private fun Wrapper.unwrap() = value
+
+    class WithContextIsDecomposingLexicalScope: DecomposingLexicalScopeTestBase() {
+        override suspend fun <T> scopeFunctionUnderTest(block: suspend CoroutineScope.() -> T): T =
+            withContext(EmptyCoroutineContext, block)
+    }
+
+    class WithContextInDifferentDispatcherIsDecomposingLexicalScope: DecomposingLexicalScopeTestBase() {
+        override suspend fun <T> scopeFunctionUnderTest(block: suspend CoroutineScope.() -> T): T =
+            withContext(Dispatchers.Default, block)
+    }
 }
