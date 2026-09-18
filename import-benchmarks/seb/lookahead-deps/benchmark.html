@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Benchmark Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.7.14/vue.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.1/math.min.js"></script>
+    <style type="text/css">
+html {
+    position: relative;
+    min-height: 100%;
+}
+body {
+    font-family: 'Lato', sans-serif;
+    font-size: 13.5px;
+    margin-bottom: 3rem; /* Margin bottom by footer height */
+}
+div.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2.5rem; /* Set the fixed height of the footer here */
+    line-height: 2.5rem; /* Vertically center the text there */
+
+    padding-left: 1em;
+    padding-right: 1em;
+    color: #aaa;
+    background-color: #eee;
+    font-size: 13.5px;
+}
+div.footer .date {
+    float: left;
+}
+div.footer .version {
+    text-align: center;
+}
+div.footer .env {
+    float: right;
+}
+#data-table {
+    overflow-x: scroll;
+}
+th {
+    font-size: 16px;
+}
+th.center, td.center {
+    text-align: center;
+}
+th.dark, td.dark {
+    background-color: #f8f8f8;
+}
+tr:hover td.dark {
+    background-color: #e8e8e8;
+}
+tr.details {
+    border-top: 1px solid #ddd;
+    background-color: #eee;
+}
+span.title {
+    font-size: 16px;
+    font-weight: 300;
+}
+span.title.version {
+    color: #aaa;
+}
+span.description {
+    font-weight: bold;
+}
+.data {
+    font-size: 12px;
+    font-family: 'Roboto Mono', monospace;
+    white-space: nowrap;
+}
+.diff {
+    color: #aaa;
+}
+td.details .btn {
+    font-size: 10px;
+    padding: 2px 4px 2px 4px;
+}
+td.title {
+    white-space: nowrap;
+}
+td.numeric {
+    text-align: right;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+td.diff {
+    font-size: 9pt; color: #c0c0c0;
+}
+td.clickable {
+    cursor: pointer;
+}
+td.clickable .selection-icon {
+    width: 1em;
+}
+td.clickable:hover .selection-icon::before {
+    content: "\f00c";
+}
+td.clickable .selection-icon.selected::before {
+    content: "\f14a";
+}
+td.WARM_UP {
+    background-color: #fff8ee;
+}
+tr.baseline {
+    background-color: #ffeedd;
+}
+tr.baseline td.dark {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td {
+    background-color: #f8e8d8;
+}
+tr.baseline:hover td.dark {
+    background-color: #f0e0d0;
+}
+tr:hover td.WARM_UP {
+    background-color: #ffe6d4;
+}
+td.MEASURE {
+    background-color: #eeffee;
+}
+tr:hover td.MEASURE {
+    background-color: #d8ffd8;
+}
+div.controls {
+    font-size: 13.5px;
+}
+div.controls .btn {
+    font-size: 1em;
+    padding: .375em .75em;
+}
+.btn-separator:after {
+    content: ' ';
+    display: block;
+    margin: 0 1em;
+}
+    </style>
+</head>
+<body>
+<div id="app">
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="navbar-brand mb-0 h1">
+            <span>{{ benchmarkResult.title || "Benchmark results" }}</span>
+        </div>
+        <div class="navbar-brand mb-0 h1">Gradle Profiler</div>
+    </nav>
+    <div class='container-fluid'>
+        <div class='row mt-3'>
+            <div class='col'>
+                <canvas id='samples' style="width: 100%;"></canvas>
+            </div>
+        </div>
+        <div class="form-row mt-2 controls ml-auto mr-auto">
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <button class="btn btn-secondary" :class="{ active: !options.sorted }" @click="options.sorted = false">Historical</button>
+                    <button class="btn btn-secondary" :class="{ active: options.sorted }" @click="options.sorted = true">Sorted</button>
+                </div>
+            </div>
+            <template v-if="benchmarkResult.scenarios.length > 1 || benchmarkResult.scenarios[0].samples.length > 1">
+                <div class="btn-separator"></div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" @click="toggleAll(true)">Select all</button>
+                    <button class="btn btn-secondary" @click="toggleAll(false)">Clear all</button>
+                </div>
+                <div class="btn-separator"></div>
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <button class="btn btn-secondary" :class="{ active: options.showAll }" @click="options.showAll = true">Show all</button>
+                    <button class="btn btn-secondary" :class="{ active: !options.showAll }" @click="options.showAll = false">Show selected only</button>
+                </div>
+            </template>
+        </div>
+        <div class="row mt-3">
+            <div class='col' id="data-table">
+                <table class='table table-sm table-hover'>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Scenario</th>
+                            <th class="center dark" v-if="benchmarkResult.scenarios.length > 1">Baseline</th>
+                            <th class="center">Sample</th>
+                            <th v-for="(operation, index) in operations" class="center" :class="{ dark: index %2 === 0 }">{{ operation.title }}</th>
+                            <th :colspan="benchmarkResult.scenarios.map(scenario => scenario.iterations.length).max()">Iterations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template v-for="scenario in benchmarkResult.scenarios">
+                            <template v-for="(sample, index) in scenario.samples.filter(sample => options.showAll || sample.selected)">
+                                <tr :class="{ baseline: baseline === scenario }">
+                                    <td class="details" v-if="index === 0" :rowspan="rowCount(scenario)">
+                                        <button
+                                            class="btn btn-light"
+                                            @click="scenario.showDetails = !scenario.showDetails"
+                                            :title="scenario.showDetails ? 'Hide details' : 'Show details'">
+                                            <span class="fa">{{ scenario.showDetails ? "&#xf068;" : "&#xf067;" }}</span>
+                                        </button>
+                                    </td>
+                                    <td class="title" v-if="index === 0" :rowspan="rowCount(scenario)">
+                                        <span class="title">{{ scenario.definition.title }}</span>
+                                        <span class="title version" v-if="multipleBuildToolsPresent">({{ scenario.definition.buildTool }})</span>
+                                    </td>
+                                    <template v-if="benchmarkResult.scenarios.length > 1">
+                                        <td class="numeric data dark" v-if="baseline && baseline !== scenario" title="Confidence of difference to baseline">{{ uTest(scenario, baseline, sample) | percent }}</td>
+                                        <td class="center title dark" v-else-if="index == 0" :rowspan="rowCount(scenario)" @click="baseline = baseline ? null : scenario">
+                                            <input type="checkbox" :checked="baseline">
+                                        </td>
+                                    </template>
+                                    <td class="clickable data" @click="select(sample)" :style="{ color: sample.color }">
+                                        <span class="fa selection-icon" :class="{ selected: sample.selected }" :style="{ color: sample.color }"></span>
+                                        <span>{{ sample.name }}</span>
+                                    </td>
+                                    <td v-for="(operation, index) in operations" class="numeric data" :class="{ dark: index %2 === 0 }">
+                                        <div>{{ sample[operation.name] | numeric }}&nbsp;{{ sample.unit }}</div>
+                                        <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name)">
+                                            <div class="diff">{{ sample[operation.name] - baseline.samples.find(it => it.name === sample.name)[operation.name] | diff }}&nbsp;{{ sample.unit }}</div>
+                                            <div class="diff">{{ (sample[operation.name] / baseline.samples.find(it => it.name === sample.name)[operation.name]) - 1 | percentDiff }}</div>
+                                        </template>
+                                    </td>
+                                    <template v-for="(iteration, index) in scenario.iterations">
+                                        <td class="numeric data" :class="iteration.phase" :title="iteration.phase + ' #' + iteration.iteration">
+                                            <span>{{ iteration.values[sample.name] | numeric }}&nbsp;{{ sample.unit }}</span>
+                                            <template v-if="baseline && baseline !== scenario && baseline.samples.some(it => it.name === sample.name) && baseline.iterations[index]">
+                                                <div class="diff">{{ iteration.values[sample.name] - baseline.iterations[index].values[sample.name] | diff }}&nbsp;{{ sample.unit }}</div>
+                                                <div class="diff">{{ (iteration.values[sample.name] / baseline.iterations[index].values[sample.name]) - 1 | percentDiff }}</div>
+                                            </template>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                            <tr class="details" v-show="scenario.showDetails">
+                                <td :colspan="scenario.iterations.length + 10">
+                                    <ul>
+                                        <li>
+                                            <span class="description">Scenario name:</span>
+                                            <span class="data">{{ scenario.definition.name }}</span>
+                                        </li>
+                                        <li>
+                                            <span class="description">Build tool:</span>
+                                            <span class="data">{{ scenario.definition.buildTool }}</span>
+                                        </li>
+                                        <template v-if="scenario.definition.action">
+                                            <li>
+                                                <span class="description">Action:</span>
+                                                <span class="data">{{ scenario.definition.action }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Cleanup:</span>
+                                                <span class="data">{{ scenario.definition.cleanup }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Mutators:</span>
+                                                <span class="data" v-if="scenario.definition.mutators.length === 0">none</span>
+                                                <ul v-else>
+                                                    <li v-for="mutator in scenario.definition.mutators">
+                                                        <span class="data">{{ mutator }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">Run using:</span>
+                                                <span class="data">{{ scenario.definition.invoker }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Scan plugin:</span>
+                                                <span class="data">{{ scenario.definition.usesScanPlugin ? "yes" : "no" }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Gradle arguments:</span>
+                                                <ul>
+                                                    <li v-for="arg in scenario.definition.args">
+                                                        <span class="data">{{ arg }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">JVM arguments:</span>
+                                                <ul>
+                                                    <li v-for="arg in scenario.definition.jvmArgs">
+                                                        <span class="data">{{ arg }}</span>
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                            <li>
+                                                <span class="description">Gradle home:</span>
+                                                <span class="data">{{ scenario.definition.gradleHome }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="description">Java home:</span>
+                                                <span class="data">{{ scenario.definition.javaHome }}</span>
+                                            </li>
+                                        </template>
+                                        <template v-else>
+                                            <li>
+                                                <span class="description">Tasks:</span>
+                                                <span class="data">{{ scenario.definition.tasks }}</span>
+                                            </li>
+                                        </template>
+                                        <li v-if="scenario.definition.systemProperties">
+                                            <span class="description">System properties:</span>
+                                            <ul>
+                                                <li v-for="(value, key) in scenario.definition.systemProperties">
+                                                    <span class="data">{{ key }} = {{ value }}</span>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="footer fixed-bottom">
+        <div class="date">{{ new Date(Date.parse(benchmarkResult.date)) | date }}</div>
+        <div class="env">{{ benchmarkResult.environment.operatingSystem }}</div>
+        <div class="version">Gradle Profiler version {{ benchmarkResult.environment.profilerVersion }}</div>
+    </div>
+</div>
+<script>
+const benchmarkResult =
+{
+  "date": "2026-09-18T07:18:45.869451Z",
+  "environment": {
+    "profilerVersion": "0.25.2",
+    "operatingSystem": "mac os x aarch64 26.6.2"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "name": "idea-sync-cold-cold-cold",
+        "title": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+        "displayName": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+        "buildTool": "Gradle 9.9.0-20260918071003+0000",
+        "tasks": "IDE sync",
+        "version": "9.9.0-20260918071003+0000",
+        "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+        "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+        "usesScanPlugin": false,
+        "action": "IDE sync",
+        "cleanup": "do nothing",
+        "invoker": "IDE with clean cache before build with cold daemon",
+        "mutators": [
+          "ClearGradleUserHomeMutator",
+          "ClearProjectCacheMutator(BUILD)"
+        ],
+        "args": [],
+        "jvmArgs": [
+          "-Xmx3g",
+          "-Dfile.encoding\u003dUTF-8",
+          "-Duser.country\u003dUS",
+          "-Duser.language\u003den",
+          "-Duser.variant"
+        ],
+        "systemProperties": {},
+        "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317"
+      },
+      "samples": [
+        {
+          "name": "total execution time",
+          "unit": "ms"
+        },
+        {
+          "name": "Gradle total execution time",
+          "unit": "ms"
+        },
+        {
+          "name": "IDE execution time",
+          "unit": "ms"
+        }
+      ],
+      "iterations": [
+        {
+          "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_WARM_UP_1",
+          "phase": "WARM_UP",
+          "iteration": 1,
+          "title": "warm-up build #1",
+          "values": {
+            "total execution time": 101208.0,
+            "Gradle total execution time": 85154.0,
+            "IDE execution time": 16054.0
+          }
+        },
+        {
+          "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_1",
+          "phase": "MEASURE",
+          "iteration": 1,
+          "title": "measured build #1",
+          "values": {
+            "total execution time": 102749.0,
+            "Gradle total execution time": 86599.0,
+            "IDE execution time": 16150.0
+          }
+        },
+        {
+          "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_2",
+          "phase": "MEASURE",
+          "iteration": 2,
+          "title": "measured build #2",
+          "values": {
+            "total execution time": 102357.0,
+            "Gradle total execution time": 87017.0,
+            "IDE execution time": 15340.0
+          }
+        },
+        {
+          "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_3",
+          "phase": "MEASURE",
+          "iteration": 3,
+          "title": "measured build #3",
+          "values": {
+            "total execution time": 100238.0,
+            "Gradle total execution time": 85340.0,
+            "IDE execution time": 14898.0
+          }
+        }
+      ]
+    }
+  ]
+}
+;
+
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+// Mann-Whitney U test
+// Luke Mitchell, April 2016
+// https://github.com/lukem512/mann-whitney-utest
+
+// The object key used to store the observation value.
+var __key = 'val';
+
+// Rank the list.
+// Inspired by https://gist.github.com/gungorbudak/1c3989cc26b9567c6e50
+var rank = function(list) {
+
+	// First, sort in ascending order
+	list.sort(function(a, b) {
+		return (a[__key] - b[__key]);
+	});
+
+	// Second, add the rank to the objects
+	list = list.map(function(item, index) {
+		item.rank = index + 1;
+		return item;
+	});
+
+	// Third, use median values for groups with the same rank
+	for (var i = 0; i < list.length; /* nothing */ ) {
+		var count = 1;
+		var total = list[i].rank;
+
+		for (var j = 0; list[i + j + 1] && (list[i + j][__key] === list[i + j + 1][__key]); j++) {
+			total += list[i + j + 1].rank;
+			count++;
+		}
+
+		var rank = (total / count);
+
+		for (var k = 0; k < count; k++) {
+			list[i + k].rank = rank;
+		}
+
+		i = i + count;
+	}
+
+	return list;
+};
+
+// Compute the rank of a sample, given a ranked
+// list and a list of observations for that sample.
+var sampleRank = function(rankedList, observations) {
+
+	// Clone the array
+	var __observations = observations.slice(0);
+
+	// Compute the rank
+	var rank = 0;
+	rankedList.forEach(function(observation) {
+		var index = __observations.indexOf(observation[__key]);
+		if (index > -1) {
+			// Add the rank to the sum
+			rank += observation.rank;
+
+			// Remove the observation from the list
+    		__observations.splice(index, 1);
+		}
+	});
+
+	return rank;
+};
+
+// Compute the U value of a sample,
+// given the rank and the list of observations
+// for that sample.
+var uValue = function(rank, observations) {
+	var k = observations.length;
+	return rank - ((k * (k+1)) / 2);
+};
+
+// Check the U values are valid.
+// This utilises a property of the Mann-Whitney U test
+// that ensures the sum of the U values equals the product
+// of the number of observations.
+var check = module.exports.check = function(u, samples) {
+	return (u[0] + u[1]) == (samples[0].length * samples[1].length);
+};
+
+// Approximate the crticial value for the samples.
+// This is necessary when the sample sizes are greater than 20
+// as the U tables are limited to 20x20.
+// https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test#Normal_approximation_and_tie_correction
+var criticalValue = module.exports.criticalValue = function(u, samples) {
+	var uVal = Math.min(u[0], u[1]);
+	var prod = samples[0].length * samples[1].length;
+	var n  = samples[0].length + samples[1].length;
+	var mean = prod / 2;
+
+	// Count the ranks
+	var counts = {};
+	samples.forEach(function(sample) {
+		sample.forEach(function(o) {
+			if (!counts[o]) counts[o] = 1;
+			else counts[o]++;
+		});
+	});
+
+	// Find any tied ranks
+	var ties = Object.keys(counts)
+		.filter(function(key) { return counts[key] > 1 })
+		.map(function(tie) { return counts[tie] });
+	var k = ties.length;
+
+	// Compute correction
+	var correction = 0;
+	for (var i = 0; i < k; i++) {
+		correction += (Math.pow(ties[i],3) - ties[i]) / (n * (n-1));
+	}
+
+	// Compute standard deviation using correction for ties
+	var stddev = Math.sqrt(
+		(prod/12) * ((n + 1) - correction)
+	);
+
+	// Approximate the critical value
+	var z = Math.abs((uVal - mean) / stddev);
+	return z;
+};
+
+// Test the result for significance.
+// A result is significant if the lesser U-value is
+// less than the critical value.
+var significant = module.exports.significant = function(u, samples) {
+	return (Math.min(u[0], u[1]) < criticalValue(u, samples));
+};
+
+// Perform te Mann-Whitney U test on an array of samples.
+// The input should be of the form [[a, b, c], [e, f, g]]
+// where {a, b, ..., g} are numeric values forming two
+// samples.
+var test = module.exports.test = function(samples, key) {
+
+	// Perform validation
+	if (!Array.isArray(samples)) throw Error('Samples must be an array');
+	if (samples.length !== 2) throw Error('Samples must contain exactly two samples');
+
+	for (var i = 0; i < 2; i++) {
+		if (!samples[i] || samples[i].length == 0) throw Error('Samples cannot be empty');
+		if (!Array.isArray(samples[i])) throw Error('Sample ' + i + ' must be an array');
+	}
+
+	// Rank the entire list of observations
+	var all = samples[0].concat(samples[1]);
+
+	var unranked = all.map(function(val) {
+		var result = {};
+		result[__key] = val;
+		return result;
+	});
+
+	var ranked = rank(unranked);
+
+	// Compute the rank of each sample
+	var ranks = [];
+	for (var i = 0; i < 2; i++) {
+		ranks[i] = sampleRank(ranked, samples[i]);
+	}
+
+	// Compute the U values
+	var us = [];
+	for (var i = 0; i < 2; i++) {
+		us[i] = uValue(ranks[i], samples[i]);
+	}
+
+	// An optimisation is to use a property of the U test
+	// to calculate the U value of sample 1 based on the value
+	// of sample 0
+	// var u[1] = (samples[0].length * samples[1].length) - u[0];
+
+	// Return the array of U values
+	return us;
+};
+
+},{}],2:[function(require,module,exports){
+mwu = require("mann-whitney-utest");
+
+const Phase = {
+    WARM_UP: "WARM_UP",
+    MEASURE: "MEASURE"
+};
+
+Array.prototype.numericSort = function() {
+    return this.slice().sort((a, b) => a - b);
+}
+Array.prototype.reverseNumericSort = function() {
+    return this.slice().sort((a, b) => b - a);
+}
+Array.prototype.min = function() {
+    return Math.min(...this);
+}
+Array.prototype.mean = function() {
+    return this.reduce((sum, val) => sum + val) / this.length;
+}
+Array.prototype.max = function() {
+    return Math.max(...this);
+}
+Array.prototype.quantile = function(q) {
+    const sorted = this.numericSort();
+    const pos = (sorted.length - 1) * q;
+    const base = Math.floor(pos);
+    const rest = pos - base;
+    if (sorted[base + 1] !== undefined) {
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    } else {
+        return sorted[base];
+    }
+}
+Array.prototype.stddev = function() {
+    const mean = this.mean();
+    return Math.sqrt(this.map(x => Math.pow(x - mean, 2)).mean());
+}
+Array.prototype.unique = function() {
+    return [...new Set(this)];
+}
+const dataFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const labelFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const dataDiffFormat = new Intl.NumberFormat(navigator.language, { minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero" });
+const percentFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const percentDiffFormat = new Intl.NumberFormat(navigator.language, { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: "exceptZero"  });
+
+function measuredIterations(scenario) {
+    return scenario.iterations.filter(iteration => iteration.phase === Phase.MEASURE);
+}
+
+class Operation {
+    constructor(name, title, calculator) {
+        this.name = name;
+        this.title = title;
+        this.calculator = calculator;
+    }
+
+    apply(data) {
+        return this.calculator(data);
+    }
+}
+
+const OPERATIONS = module.exports.OPERATIONS = window.OPERATIONS = [
+    new Operation("mean", "Mean", (data) => data.mean()),
+    new Operation("min", "Min", (data) => data.min()),
+    new Operation("p25", "P25", (data) => data.quantile(.25)),
+    new Operation("median", "Median", (data) => data.quantile(.50)),
+    new Operation("p75", "P75", (data) => data.quantile(.75)),
+    new Operation("max", "Max", (data) => data.max()),
+    new Operation("stddev", "Std.dev", (data) => data.stddev())
+];
+
+new Vue({
+    el: '#app',
+    data: {
+        options: {
+            sorted: false,
+            showAll: true
+        },
+        benchmarkResult: benchmarkResult,
+        operations: OPERATIONS,
+        baseline: null
+    },
+    computed: {
+        multipleBuildToolsPresent: function() {
+            return this.benchmarkResult.scenarios.map(scenario => scenario.definition.buildTool).unique().length > 1;
+        },
+        chartData: function() {
+            const sorted = this.options.sorted;
+            const multipleBuildToolsPresent = this.multipleBuildToolsPresent;
+            return this.benchmarkResult.scenarios
+                .map(scenario => scenario.samples
+                    .filter(sample => sample.selected)
+                    .map(sample => {
+                        let data = measuredIterations(scenario)
+                            .map(iteration => iteration.values[sample.name]);
+                        if (sorted) {
+                            data = data.reverseNumericSort();
+                        }
+                        return {
+                            label: multipleBuildToolsPresent
+                                ? `${scenario.definition.title} ${scenario.definition.buildTool} (${sample.name})`
+                                : `${scenario.definition.title} (${sample.name})`,
+                            showLine: true,
+                            stepped: "middle",
+                            pointRadius: 0,
+                            pointHitRadius: 10,
+                            hoverRadius: 6,
+                            fill: false,
+                            borderWidth: sample.thickness,
+                            backgroundColor: sample.color,
+                            pointBackgroundColor: sample.color,
+                            borderColor: sample.color,
+                            data: data,
+                            sample: sample,
+                            yAxisID: sample.unit
+                        };
+                    }))
+                .flat();
+        }
+    },
+    watch: {
+        "options.sorted": function() {
+            this.updateData();
+        }
+    },
+    methods: {
+        select: function(sample) {
+            sample.selected = !sample.selected;
+            this.updateData();
+        },
+        toggleAll: function(selected) {
+            benchmarkResult.scenarios.forEach(scenario => scenario.samples.forEach(sample => sample.selected = selected));
+            this.updateData();
+        },
+        rowCount: function(scenario) {
+            return scenario.samples.filter(sample => this.options.showAll || sample.selected).length;
+        },
+        updateData: function() {
+            this.chart.data.datasets = this.chartData;
+            this.chart.update();
+        },
+        uTest: function(scenario, baseline, sample) {
+            const samples = [
+                measuredIterations(baseline).map(iteration => iteration.values[sample.name]),
+                measuredIterations(scenario).map(iteration => iteration.values[sample.name])
+            ];
+            const u = mwu.test(samples);
+            const z = mwu.criticalValue(u, samples);
+            return 0.5 * (1 + math.erf(z / math.sqrt(2)));
+        }
+    },
+    filters: {
+        "numeric": (value) => dataFormat.format(value),
+        "diff": (value) => dataDiffFormat.format(value),
+        "percent": (value) => isNaN(value) ? "" : percentFormat.format(value),
+        "percentDiff": (value) => isNaN(value) ? "" : percentDiffFormat.format(value),
+        "date": (value) => value.toLocaleString(navigator.language, {
+            year: 'numeric', month: 'long', day: 'numeric',
+            hour: 'numeric', minute: 'numeric', second: 'numeric',
+           timeZoneName: 'short'
+        })
+    },
+    beforeCreate: function() {
+        // Initialize sample config
+        benchmarkResult.scenarios.forEach((scenario, scenarioIndex, scenarios) => {
+            scenario.showDetails = false;
+            scenario.samples.forEach((sample, sampleIndex, samples) => {
+                sample.color = `hsl(${scenarioIndex * 360 / scenarios.length}, ${100 - 80 * sampleIndex / samples.length}%, ${30 + 40 * sampleIndex / samples.length}%)`;
+                sample.thickness = sampleIndex === 0 ? 3 : 2;
+                sample.selected = sampleIndex === 0;
+                const data = measuredIterations(scenario).map(iteration => iteration.values[sample.name]);
+                OPERATIONS.forEach(operation => sample[operation.name] = operation.apply(data));
+            });
+        });
+    },
+    created: function() {
+        // Set baseline for regression tests
+        this.baseline = this.multipleBuildToolsPresent
+            ? benchmarkResult.scenarios[0]
+            : null;
+    },
+    mounted: function() {
+        const ctx = document.getElementById('samples').getContext('2d');
+        const maxMeasuredIterations = benchmarkResult.scenarios
+            .map(scenario => measuredIterations(scenario).length)
+            .max();
+        const scales = benchmarkResult.scenarios
+            .flatMap(scenario => scenario.samples)
+            .map(sample => sample.unit)
+            .unique()
+            .reduce((scales, unit) => {
+                scales[unit] = {
+                    type: "linear",
+                    display: "auto",
+                    beginAtZero: true,
+                    position: Object.keys(scales).length % 2 === 0
+                        ? "left"
+                        : "right",
+                    ticks: {
+                        callback: function(value, index, ticks) {
+                            return labelFormat.format(value) + ' ' + unit;
+                        }
+                    }
+                };
+                return scales;
+            }, {});
+        Chart.defaults.font.family = "Lato";
+        Chart.defaults.font.size = "14";
+        const chart = this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from(Array(maxMeasuredIterations), (_, i) => (i + 1).toString()),
+                datasets: this.chartData
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: "index",
+                        position: "average",
+                        itemSort: (a, b) => b.yLabel - a.yLabel,
+                        callbacks: {
+                            title: (tooltips, data) => `Build #${tooltips[0].label}`,
+                            label: (context) => dataFormat.format(context.parsed.y) + " " + context.dataset.sample.unit + " – " + context.dataset.label
+                        }
+                    }
+                },
+                animation: {
+                    duration: 0
+                },
+                aspectRatio: 3,
+                scales: scales
+            }
+        });
+        document.fonts.ready.then(() => chart.update());
+    }
+});
+
+},{"mann-whitney-utest":1}]},{},[2]);
+
+
+</script>
+</body>
+</html>
