@@ -20,7 +20,8 @@ public expect object Dispatchers {
      * A coroutine dispatcher that is confined to the Main thread operating with UI objects.
      * Usually such dispatchers are single-threaded.
      *
-     * Access to this property may throw an [IllegalStateException] if no main dispatchers are present in the classpath.
+     * Access to this property throws an [IllegalStateException] if no main dispatchers are present in the classpath
+     * or if loading the main dispatcher fails.
      *
      * Depending on platform and classpath, it can be mapped to different dispatchers:
      * - On JVM it is either the Android main thread dispatcher, JavaFx, or Swing EDT dispatcher. It is chosen by the
