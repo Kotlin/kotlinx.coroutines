@@ -9,15 +9,13 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.internal.JsAsyncIterable
 import kotlinx.coroutines.internal.JsAsyncIterableIterator
 import kotlinx.coroutines.internal.JsAsyncIterator
 import kotlinx.coroutines.internal.JsIteratorResult
 import kotlinx.coroutines.internal.JsOptionalExport
-import kotlinx.js.JsPlainObject
-import kotlin.coroutines.ContinuationInterceptor
-import kotlin.coroutines.coroutineContext
-import kotlin.coroutines.resume
 import kotlin.js.Promise
 
 @JsOptionalExport(couldBeConvertedToExplicitExport = true)
@@ -69,103 +67,68 @@ public actual interface Flow<out T> {
     @ExperimentalCoroutinesApi
     @JsSymbol("asyncIterator")
     public fun asAsyncIterable(): JsAsyncIterableIterator<T> {
-        var isClosed = false
-        var collectionJob: Job? = null
-        var undeliveredError: Throwable? = null
-        val pendingNextRequests: JsArrayDeque<PromiseResolution<JsIteratorResult<T>>> = js("[]")
-        var producerContinuation: CancellableContinuation<Unit>? = null
-        @Suppress("NOTHING_TO_INLINE")
-        inline fun takeUndeliveredError(): Throwable? = undeliveredError.also { undeliveredError = null }
-        fun completePendingRequests() {
-            while (pendingNextRequests.length != 0) {
-                pendingNextRequests.shift().resolve(JsIteratorResult(done = true))
-            }
-        }
-        suspend fun emitValue(value: T) {
-            coroutineContext.ensureActive()
-            pendingNextRequests.shift().resolve(JsIteratorResult(value = value, done = false))
-            if (pendingNextRequests.length == 0) {
-                try {
-                    suspendCancellableCoroutine { producerContinuation = it }
-                } finally {
-                    producerContinuation = null
-                }
-            }
-        }
-        fun onFlowCompleted(cause: Throwable?) {
-            isClosed = true
-            if (cause != null && cause !is CancellationException) {
-                if (pendingNextRequests.length != 0) {
-                    pendingNextRequests.shift().reject(cause.toJsPromiseError())
-                } else {
-                    undeliveredError = cause
-                }
-            }
-            completePendingRequests()
-        }
-        // Reports the cleanup error only if the collection was still running, so that a repeated `return`/`throw`
-        // or a call after the flow has failed doesn't re-report an already delivered exception
-        fun close(cancellation: CancellationException, onClosed: (cleanupError: Throwable?) -> Unit) {
-            isClosed = true
-            completePendingRequests()
-            val job = collectionJob
-            if (job == null || job.isCompleted) {
-                onClosed(null)
-            } else {
-                job.cancel(cancellation)
-                job.invokeOnCompletion { onClosed(takeUndeliveredError()) }
-            }
-        }
-        val iterator = JsAsyncIterator<T>(
-            next = {
-                if (isClosed) {
-                    val error = takeUndeliveredError()
-                    return@JsAsyncIterator if (error != null) {
-                        Promise.reject(error.toJsPromiseError())
-                    } else {
-                        Promise.resolve(JsIteratorResult(done = true))
-                    }
-                }
-                Promise { resolve, reject ->
-                    pendingNextRequests.push(PromiseResolution(resolve, reject))
-                    val continuation = producerContinuation
-                    if (collectionJob == null) {
-                        collectionJob = GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                            try {
-                                collect(::emitValue)
-                                onFlowCompleted(null)
-                            } catch (e: Throwable) {
-                                onFlowCompleted(e)
+        val elementRequests = Channel<FlowCollectionCommandAndCompletion<T>>(onUndeliveredElement = {
+            it.resolveWithoutRunning()
+        })
+        GlobalScope.launch(Dispatchers.Unconfined, start = CoroutineStart.UNDISPATCHED) {
+            /** Receive the initial request. Until we know that some element is requested, we won't start the flow. */
+            var currentRequest = elementRequests.receive()
+            when (currentRequest.command) {
+                is FlowCollectionCommand.MustReturn -> currentRequest.resolveWithoutRunning()
+                is FlowCollectionCommand.MustThrow -> currentRequest.resolveWithoutRunning()
+                is FlowCollectionCommand.NextElement -> {
+                    try {
+                        /* Collecting flow values until we receive a request to stop. */
+                        collectWhile { element ->
+                            currentRequest.resolveElement(element)
+                            currentRequest = withContext(NonCancellable) {
+                                /** Using [NonCancellable] to ignore asynchronous upstream cancellation.
+                                 * We are not allowed to make any progress until the next command arrives from JS,
+                                 * so even when the upstream is making progress, we refuse to acknowledge it. */
+                                elementRequests.receive()
+                            }
+                            when (val cmd = currentRequest.command) {
+                                is FlowCollectionCommand.MustThrow -> {
+                                    /** Let cancellation handlers know the exact exception that went through.
+                                     * If there is no exception, we pretend this is a normal cancellation.
+                                     * Consistency with JS doesn't force us to do anything specific,
+                                     * as JS will throw `undefined` here, but we can't do that.
+                                     */
+                                    cmd.throwable?.let { throw it }
+                                    false
+                                }
+                                is FlowCollectionCommand.MustReturn -> false
+                                is FlowCollectionCommand.NextElement -> true
                             }
                         }
-                    } else if (continuation != null) {
-                        producerContinuation = null
-                        // Resume synchronously to run the flow up to the next element right inside `next()`,
-                        // consistently with the undispatched start
-                        continuation.resumeProducerUndispatched()
+                        currentRequest.resolveSuccessfulCompletion()
+                    } catch (e: Throwable) {
+                        currentRequest.rejectWithException(e)
                     }
                 }
+            }
+            elementRequests.cancel()
+        }
+        fun scheduleCommand(command: FlowCollectionCommand<T>) = Promise { resolve, reject ->
+            val ourRequest = FlowCollectionCommandAndCompletion(resolve, reject, command)
+            GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                try {
+                    elementRequests.send(ourRequest)
+                } catch (_: ClosedSendChannelException) {
+                    ourRequest.resolveWithoutRunning()
+                }
+            }
+        }
+        val iterator = JsAsyncIterator(
+            next = {
+                scheduleCommand(FlowCollectionCommand.NextElement())
             },
             `return` = { value ->
-                Promise { resolve, reject ->
-                    close(CancellationException("Flow collection was closed via AsyncIterator#return method")) { cleanupError ->
-                        if (cleanupError != null) {
-                            reject(cleanupError.toJsPromiseError())
-                        } else {
-                            resolve(JsIteratorResult(value = value, done = true))
-                        }
-                    }
-                }
+                scheduleCommand(FlowCollectionCommand.MustReturn(value))
             },
             `throw` = { err: dynamic ->
                 val cause = err.unsafeCast<JsPromiseError>().toThrowableOrNull()
-                val cancellation = cause as? CancellationException
-                    ?: CancellationException("Flow collection was closed via AsyncIterator#throw method", cause)
-                Promise { _, reject ->
-                    close(cancellation) { cleanupError ->
-                        reject(cleanupError?.toJsPromiseError() ?: err)
-                    }
-                }
+                scheduleCommand(FlowCollectionCommand.MustThrow(cause))
             }
         )
         iterator.asDynamic()[js("Symbol.asyncIterator")] = { iterator }
@@ -235,23 +198,38 @@ public actual interface Flow<out T> {
     }
 }
 
-private fun CancellableContinuation<Unit>.resumeProducerUndispatched() {
-    val dispatcher = context[ContinuationInterceptor] as? CoroutineDispatcher
-    if (dispatcher != null) {
-        dispatcher.resumeUndispatched(Unit)
-    } else {
-        resume(Unit)
+private sealed interface FlowCollectionCommand<U> {
+    class NextElement<U>: FlowCollectionCommand<U>
+    class MustReturn<U>(val value: U?): FlowCollectionCommand<U>
+    class MustThrow<U>(val throwable: Throwable?): FlowCollectionCommand<U>
+}
+
+private class FlowCollectionCommandAndCompletion<U>(
+    private val resolve: (JsIteratorResult<U>) -> Unit,
+    private val reject: (Throwable) -> Unit,
+    val command: FlowCollectionCommand<U>,
+) {
+    fun resolveSuccessfulCompletion() {
+        when (command) {
+            is FlowCollectionCommand.NextElement -> resolve(JsIteratorResult(value = undefined, done = true))
+            is FlowCollectionCommand.MustThrow -> resolve(JsIteratorResult(value = undefined, done = true))
+            is FlowCollectionCommand.MustReturn -> resolve(JsIteratorResult(value = command.value, done = true))
+        }
     }
-}
 
-private external interface JsArrayDeque<T> {
-    val length: Int
-    fun push(value: T)
-    fun shift(): T
-}
+    fun resolveWithoutRunning() {
+        when (command) {
+            is FlowCollectionCommand.NextElement -> resolve(JsIteratorResult(value = undefined, done = true))
+            is FlowCollectionCommand.MustThrow -> reject(command.throwable ?: undefined.unsafeCast<Throwable>())
+            is FlowCollectionCommand.MustReturn -> resolve(JsIteratorResult(value = command.value, done = true))
+        }
+    }
 
-@JsPlainObject
-internal external interface PromiseResolution<T> {
-    val resolve: (T) -> Unit
-    val reject: (JsPromiseError) -> Unit
+    fun rejectWithException(throwable: Throwable) {
+        reject(throwable)
+    }
+
+    fun resolveElement(value: U) {
+        resolve(JsIteratorResult(value = value, done = false))
+    }
 }
