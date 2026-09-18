@@ -18,22 +18,22 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testSimpleAwait() {
+    fun testSimpleConsume() {
         val service = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = GlobalScope.future {
-            service.submit(Callable<String> {
+            service.submit(Callable {
                 "O"
-            }).await() + "K"
+            }).consume() + "K"
         }
         assertEquals("OK", future.get())
     }
 
     @Test
-    fun testAwaitWithContext() = runTest {
+    fun testConsumeWithContext() = runTest {
         val future = SettableFuture.create<Int>()
         val deferred = async {
             withContext(Dispatchers.Default) {
-                future.await()
+                future.consume()
             }
         }
 
@@ -42,11 +42,11 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testAwaitWithCancellation() = runTest(expected = {it is TestCancellationException}) {
+    fun testConsumeWithCancellation() = runTest(expected = {it is TestCancellationException}) {
         val future = SettableFuture.create<Int>()
         val deferred = async {
             withContext(Dispatchers.Default) {
-                future.await()
+                future.consume()
             }
         }
 
@@ -60,7 +60,7 @@ class ListenableFutureTest : TestBase() {
         val toAwait = SettableFuture.create<String>()
         toAwait.set("O")
         val future = GlobalScope.future {
-            toAwait.await() + "K"
+            toAwait.consume() + "K"
         }
         assertEquals("OK", future.get())
     }
@@ -69,7 +69,7 @@ class ListenableFutureTest : TestBase() {
     fun testWaitForFuture() {
         val toAwait = SettableFuture.create<String>()
         val future = GlobalScope.future {
-            toAwait.await() + "K"
+            toAwait.consume() + "K"
         }
         assertFalse(future.isDone)
         toAwait.set("O")
@@ -82,7 +82,7 @@ class ListenableFutureTest : TestBase() {
         toAwait.setException(IllegalArgumentException("O"))
         val future = GlobalScope.future {
             try {
-                toAwait.await()
+                toAwait.consume()
             } catch (e: RuntimeException) {
                 assertIs<IllegalArgumentException>(e)
                 e.message!!
@@ -96,7 +96,7 @@ class ListenableFutureTest : TestBase() {
         val toAwait = SettableFuture.create<String>()
         val future = GlobalScope.future {
             try {
-                toAwait.await()
+                toAwait.consume()
             } catch (e: RuntimeException) {
                 assertIs<IllegalArgumentException>(e)
                 e.message!!
@@ -111,7 +111,7 @@ class ListenableFutureTest : TestBase() {
     fun testExceptionInsideCoroutine() {
         val service = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = GlobalScope.future {
-            if (service.submit(Callable<Boolean> { true }).await()) {
+            if (service.submit(Callable { true }).consume()) {
                 throw IllegalStateException("OK")
             }
             "fail"
@@ -145,12 +145,12 @@ class ListenableFutureTest : TestBase() {
         }
         expect(3)
         val future = deferred.asListenableFuture()
-        assertEquals("OK", future.await())
+        assertEquals("OK", future.consume())
         finish(4)
     }
 
     @Test
-    fun testWaitForDeferredAsListenableFuture() = runBlocking {
+    fun testConsumeDeferredAsListenableFuture() = runBlocking {
         expect(1)
         val deferred = async {
             expect(3) // will complete later
@@ -158,7 +158,7 @@ class ListenableFutureTest : TestBase() {
         }
         expect(2)
         val future = deferred.asListenableFuture()
-        assertEquals("OK", future.await()) // await yields main thread to deferred coroutine
+        assertEquals("OK", future.consume()) // consume yields main thread to deferred coroutine
         finish(4)
     }
 
@@ -178,13 +178,13 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testCancellableAwait() = runBlocking {
+    fun testCancellableConsume() = runBlocking {
         expect(1)
         val toAwait = SettableFuture.create<String>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                toAwait.await() // suspends
+                toAwait.consume() // suspends
             } catch (e: CancellationException) {
                 expect(5) // should throw cancellation exception
                 throw e
@@ -199,14 +199,13 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testFutureAwaitCancellationPropagatingToDeferred() = runTest {
-
+    fun testFutureConsumeCancellationPropagatingToDeferred() = runTest {
         val latch = CountDownLatch(1)
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { latch.await(); 42 })
         val deferred = async {
             expect(2)
-            future.await()
+            future.consume()
         }
         expect(1)
         yield()
@@ -221,14 +220,13 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testFutureAwaitCancellationPropagatingToDeferredNoInterruption() = runTest {
-
+    fun testFutureConsumeCancellationPropagatingToDeferredNoInterruption() = runTest {
         val latch = CountDownLatch(1)
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { latch.await(); 42 })
         val deferred = async {
             expect(2)
-            future.await()
+            future.consume()
         }
         expect(1)
         yield()
@@ -249,7 +247,7 @@ class ListenableFutureTest : TestBase() {
         val future = executor.submit(Callable { latch.await(); 42 })
         val deferred = async {
             expect(2)
-            future.await()
+            future.consume()
         }
         val asListenableFuture = deferred.asListenableFuture()
         expect(1)
@@ -272,7 +270,7 @@ class ListenableFutureTest : TestBase() {
         val future = executor.submit(Callable { latch.await(); 42 })
         val deferred = async {
             expect(2)
-            future.await()
+            future.consume()
         }
         val asListenableFuture = deferred.asListenableFuture()
         expect(1)
@@ -295,7 +293,7 @@ class ListenableFutureTest : TestBase() {
         val future = SettableFuture.create<Void>()
         val deferred = async {
             expect(2)
-            future.await()
+            future.consume()
         }
         val asListenableFuture = deferred.asListenableFuture()
         expect(1)
@@ -338,7 +336,7 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testFutureCancellation() = runTest {
-        val future = awaitFutureWithCancel(true)
+        val future = awaitOrConsumeFutureWithCancel(true)
         assertTrue(future.isCancelled)
         assertFailsWith<CancellationException> { future.get() }
         finish(4)
@@ -363,7 +361,7 @@ class ListenableFutureTest : TestBase() {
 
     @Test
     fun testNoFutureCancellation() = runTest {
-        val future = awaitFutureWithCancel(false)
+        val future = awaitOrConsumeFutureWithCancel(false)
         assertFalse(future.isCancelled)
         @Suppress("BlockingMethodInNonBlockingContext")
         assertEquals(42, future.get())
@@ -371,14 +369,14 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Test
-    fun testCancelledDeferredAsListenableFutureAwaitThrowsCancellation() = runTest {
+    fun testCancelledDeferredAsListenableFutureConsumeThrowsCancellation() = runTest {
         val future = Futures.immediateCancelledFuture<Int>()
         val asDeferred = future.asDeferred()
         val asDeferredAsFuture = asDeferred.asListenableFuture()
 
         assertTrue(asDeferredAsFuture.isCancelled)
         assertFailsWith<CancellationException> {
-            asDeferredAsFuture.await()
+            asDeferredAsFuture.consume()
         }
     }
 
@@ -711,13 +709,13 @@ class ListenableFutureTest : TestBase() {
     }
 
     @Suppress("SuspendFunctionOnCoroutineScope")
-    private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): ListenableFuture<Int> {
+    private suspend fun CoroutineScope.awaitOrConsumeFutureWithCancel(doConsume: Boolean): ListenableFuture<Int> {
         val latch = CountDownLatch(1)
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable { latch.await(); 42 })
         val deferred = async {
             expect(2)
-            if (cancellable) future.await()
+            if (doConsume) future.consume()
             else future.asDeferred().await()
         }
         expect(1)
@@ -784,8 +782,7 @@ class ListenableFutureTest : TestBase() {
         repeat(1000) {
             supervisorScope { // Don't propagate failures in children to parent and other children.
                 val innerFuture = SettableFuture.create<Unit>()
-                val outerFuture = async { innerFuture.await() }
-
+                val outerFuture = async { innerFuture.consume() }
                 withContext(Dispatchers.Default) {
                     launch { innerFuture.setException(TestException("can be lost")) }
                     launch { outerFuture.cancel() }
