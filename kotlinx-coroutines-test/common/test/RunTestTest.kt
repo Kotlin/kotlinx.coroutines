@@ -9,6 +9,7 @@ import kotlin.test.*
 import kotlin.test.assertFailsWith
 import kotlin.time.*
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 class RunTestTest {
@@ -112,7 +113,10 @@ class RunTestTest {
                 assertFalse((e.message ?: "").contains(name2))
             }
         }) {
-            runTest(timeout = 10.milliseconds) {
+            // Supplying UnconfinedTestDispatcher effectively ignores yield in the runTest implementation,
+            // so that as much of the body as possible is executed before the timeout is set up.
+            // This makes this test deterministic.
+            runTest(UnconfinedTestDispatcher(), timeout = 1.nanoseconds) {
                 launch(CoroutineName(name1)) {
                     CompletableDeferred<Unit>().await()
                 }
