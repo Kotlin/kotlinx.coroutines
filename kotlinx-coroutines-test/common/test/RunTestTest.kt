@@ -114,7 +114,7 @@ class RunTestTest {
             }
         }) {
             // Supplying UnconfinedTestDispatcher effectively ignores yield in the runTest implementation,
-            // so that the body is executed as much as possible before the timeout is set up.
+            // so that as much of the body as possible is executed before the timeout is set up.
             // This makes this test deterministic.
             runTest(UnconfinedTestDispatcher(), timeout = 1.nanoseconds) {
                 launch(CoroutineName(name1)) {
