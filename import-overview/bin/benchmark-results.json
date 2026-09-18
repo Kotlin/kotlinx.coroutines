@@ -1,0 +1,1721 @@
+{
+  "schema_version": 1,
+  "datasets": {
+    "baseline": {
+      "date": "2026-09-17T14:29:47.728371Z",
+      "environment": {
+        "profilerVersion": "0.25.2",
+        "operatingSystem": "mac os x aarch64 26.6.2"
+      },
+      "scenarios": [
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_6dd08dbf"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_6dd08dbf_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 36403.0,
+                "Gradle total execution time": 24226.0,
+                "IDE execution time": 12177.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 2459.0,
+                "Gradle total execution time": 1553.0,
+                "IDE execution time": 906.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 2046.0,
+                "Gradle total execution time": 1104.0,
+                "IDE execution time": 942.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 1965.0,
+                "Gradle total execution time": 1007.0,
+                "IDE execution time": 958.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-cold",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_cold_28207028"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_cold_28207028_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 83253.0,
+                "Gradle total execution time": 19317.0,
+                "IDE execution time": 63936.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_cold_28207028_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 70892.0,
+                "Gradle total execution time": 10808.0,
+                "IDE execution time": 60084.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_cold_28207028_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 68265.0,
+                "Gradle total execution time": 12039.0,
+                "IDE execution time": 56226.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_cold_28207028_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 73716.0,
+                "Gradle total execution time": 11538.0,
+                "IDE execution time": 62178.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-cold-warm",
+            "title": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Warm IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Warm IntelliJ caches using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with cold daemon",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_warm_1ea5c3b4"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_warm_1ea5c3b4_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 12736.0,
+                "Gradle total execution time": 10607.0,
+                "IDE execution time": 2129.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 10179.0,
+                "Gradle total execution time": 9723.0,
+                "IDE execution time": 456.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 9191.0,
+                "Gradle total execution time": 8880.0,
+                "IDE execution time": 311.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 7438.0,
+                "Gradle total execution time": 7180.0,
+                "IDE execution time": 258.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-cold-cold",
+            "title": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_cold_6b404761"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_cold_6b404761_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 63542.0,
+                "Gradle total execution time": 11177.0,
+                "IDE execution time": 52365.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_cold_6b404761_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 62048.0,
+                "Gradle total execution time": 10571.0,
+                "IDE execution time": 51477.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_cold_6b404761_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 61404.0,
+                "Gradle total execution time": 10802.0,
+                "IDE execution time": 50602.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_cold_cold_6b404761_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 61177.0,
+                "Gradle total execution time": 10996.0,
+                "IDE execution time": 50181.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-root-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Root build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Root build script change using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 15977.0,
+                "Gradle total execution time": 14146.0,
+                "IDE execution time": 1831.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 2919.0,
+                "Gradle total execution time": 1936.0,
+                "IDE execution time": 983.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 2445.0,
+                "Gradle total execution time": 1490.0,
+                "IDE execution time": 955.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 2187.0,
+                "Gradle total execution time": 1240.0,
+                "IDE execution time": 947.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-buildSrc-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, buildSrc build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, buildSrc build script change using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 14834.0,
+                "Gradle total execution time": 12848.0,
+                "IDE execution time": 1986.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 2636.0,
+                "Gradle total execution time": 1655.0,
+                "IDE execution time": 981.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 2274.0,
+                "Gradle total execution time": 1334.0,
+                "IDE execution time": 940.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 2230.0,
+                "Gradle total execution time": 1246.0,
+                "IDE execution time": 984.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-core-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Core build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Core build script change using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/kotlinx-coroutines-core/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 14947.0,
+                "Gradle total execution time": 12972.0,
+                "IDE execution time": 1975.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 2749.0,
+                "Gradle total execution time": 1785.0,
+                "IDE execution time": 964.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 2437.0,
+                "Gradle total execution time": 1515.0,
+                "IDE execution time": 922.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 2304.0,
+                "Gradle total execution time": 1323.0,
+                "IDE execution time": 981.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-core-dependency-addition",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Add Gson to core",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Add Gson to core using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "run tasks __benchmark_core_dependency_baseline__",
+            "invoker": "IDE",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {}
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": []
+        },
+        {
+          "definition": {
+            "name": "idea-sync-cold-cold-cold",
+            "title": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260916220000+0000",
+            "buildTool": "Gradle 9.9.0-20260916220000+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260916220000+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260916220000+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearGradleUserHomeMutator",
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_cold_cold_cold_ba898317"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_cold_cold_cold_ba898317_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 154143.0,
+                "Gradle total execution time": 125961.0,
+                "IDE execution time": 28182.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_cold_cold_cold_ba898317_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 142243.0,
+                "Gradle total execution time": 111646.0,
+                "IDE execution time": 30597.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_cold_cold_cold_ba898317_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 154418.0,
+                "Gradle total execution time": 122882.0,
+                "IDE execution time": 31536.0
+              }
+            },
+            {
+              "id": "_89eb554f_1a33_4600_99c6_1ba1e0ec4bba_idea_sync_cold_cold_cold_ba898317_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 157004.0,
+                "Gradle total execution time": 127602.0,
+                "IDE execution time": 29402.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "gradle-xxh3-hash": {
+      "date": "2026-09-17T16:00:37.814912Z",
+      "environment": {
+        "profilerVersion": "0.25.2",
+        "operatingSystem": "mac os x aarch64 26.6.2"
+      },
+      "scenarios": [
+        {
+          "definition": {
+            "name": "idea-sync-cold-cold-cold",
+            "title": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260917154113+0000",
+            "buildTool": "Gradle 9.9.0-20260917154113+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260917154113+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearGradleUserHomeMutator",
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_739d5429_93d1_40cb_92f9_59f3ad12a69d_idea_sync_cold_cold_cold_ba898317"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_739d5429_93d1_40cb_92f9_59f3ad12a69d_idea_sync_cold_cold_cold_ba898317_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 126290.0,
+                "Gradle total execution time": 111645.0,
+                "IDE execution time": 14645.0
+              }
+            },
+            {
+              "id": "_739d5429_93d1_40cb_92f9_59f3ad12a69d_idea_sync_cold_cold_cold_ba898317_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 123961.0,
+                "Gradle total execution time": 108888.0,
+                "IDE execution time": 15073.0
+              }
+            },
+            {
+              "id": "_739d5429_93d1_40cb_92f9_59f3ad12a69d_idea_sync_cold_cold_cold_ba898317_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 124029.0,
+                "Gradle total execution time": 109070.0,
+                "IDE execution time": 14959.0
+              }
+            },
+            {
+              "id": "_739d5429_93d1_40cb_92f9_59f3ad12a69d_idea_sync_cold_cold_cold_ba898317_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 124938.0,
+                "Gradle total execution time": 109834.0,
+                "IDE execution time": 15104.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "lookahead-deps": {
+      "date": "2026-09-18T07:18:45.869451Z",
+      "environment": {
+        "profilerVersion": "0.25.2",
+        "operatingSystem": "mac os x aarch64 26.6.2"
+      },
+      "scenarios": [
+        {
+          "definition": {
+            "name": "idea-sync-cold-cold-cold",
+            "title": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearGradleUserHomeMutator",
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 101208.0,
+                "Gradle total execution time": 85154.0,
+                "IDE execution time": 16054.0
+              }
+            },
+            {
+              "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 102749.0,
+                "Gradle total execution time": 86599.0,
+                "IDE execution time": 16150.0
+              }
+            },
+            {
+              "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 102357.0,
+                "Gradle total execution time": 87017.0,
+                "IDE execution time": 15340.0
+              }
+            },
+            {
+              "id": "_cf699b9e_f00a_42c1_9cba_41431a9f4056_idea_sync_cold_cold_cold_ba898317_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 100238.0,
+                "Gradle total execution time": 85340.0,
+                "IDE execution time": 14898.0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "lookahead-deps-full": {
+      "date": "2026-09-18T07:37:44.081312Z",
+      "environment": {
+        "profilerVersion": "0.25.2",
+        "operatingSystem": "mac os x aarch64 26.6.2"
+      },
+      "scenarios": [
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_6dd08dbf"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_6dd08dbf_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 10613.0,
+                "Gradle total execution time": 8515.0,
+                "IDE execution time": 2098.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 1957.0,
+                "Gradle total execution time": 1046.0,
+                "IDE execution time": 911.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 1973.0,
+                "Gradle total execution time": 1077.0,
+                "IDE execution time": 896.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_6dd08dbf_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 1647.0,
+                "Gradle total execution time": 793.0,
+                "IDE execution time": 854.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-cold",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_cold_28207028"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_cold_28207028_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 41962.0,
+                "Gradle total execution time": 9338.0,
+                "IDE execution time": 32624.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_cold_28207028_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 42268.0,
+                "Gradle total execution time": 9790.0,
+                "IDE execution time": 32478.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_cold_28207028_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 43254.0,
+                "Gradle total execution time": 10018.0,
+                "IDE execution time": 33236.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_cold_28207028_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 41346.0,
+                "Gradle total execution time": 8881.0,
+                "IDE execution time": 32465.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-cold-warm",
+            "title": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Warm IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Warm IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with cold daemon",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_warm_1ea5c3b4"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_warm_1ea5c3b4_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 9900.0,
+                "Gradle total execution time": 7751.0,
+                "IDE execution time": 2149.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 6472.0,
+                "Gradle total execution time": 6146.0,
+                "IDE execution time": 326.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 6454.0,
+                "Gradle total execution time": 6166.0,
+                "IDE execution time": 288.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_warm_1ea5c3b4_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 6707.0,
+                "Gradle total execution time": 6157.0,
+                "IDE execution time": 550.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-cold-cold",
+            "title": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Warm Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_cold_6b404761"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_cold_6b404761_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 42024.0,
+                "Gradle total execution time": 9595.0,
+                "IDE execution time": 32429.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_cold_6b404761_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 42500.0,
+                "Gradle total execution time": 9322.0,
+                "IDE execution time": 33178.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_cold_6b404761_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 36595.0,
+                "Gradle total execution time": 7845.0,
+                "IDE execution time": 28750.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_cold_cold_6b404761_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 37883.0,
+                "Gradle total execution time": 7853.0,
+                "IDE execution time": 30030.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-root-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Root build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Root build script change using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 15362.0,
+                "Gradle total execution time": 12659.0,
+                "IDE execution time": 2703.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 3872.0,
+                "Gradle total execution time": 2901.0,
+                "IDE execution time": 971.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 2286.0,
+                "Gradle total execution time": 1427.0,
+                "IDE execution time": 859.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_root_build_script_change_8e03cd49_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 2618.0,
+                "Gradle total execution time": 1760.0,
+                "IDE execution time": 858.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-buildSrc-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, buildSrc build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, buildSrc build script change using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 23246.0,
+                "Gradle total execution time": 21196.0,
+                "IDE execution time": 2050.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 3208.0,
+                "Gradle total execution time": 2259.0,
+                "IDE execution time": 949.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 4650.0,
+                "Gradle total execution time": 3699.0,
+                "IDE execution time": 951.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_buildSrc_build_script_change_bf4ba58f_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 7145.0,
+                "Gradle total execution time": 6238.0,
+                "IDE execution time": 907.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-core-build-script-change",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Core build script change",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Core build script change using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE",
+            "mutators": [
+              "ApplyBuildScriptChangeFileMutator(/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/kotlinx-coroutines-core/build.gradle.kts)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 17948.0,
+                "Gradle total execution time": 15960.0,
+                "IDE execution time": 1988.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 3269.0,
+                "Gradle total execution time": 2284.0,
+                "IDE execution time": 985.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 6952.0,
+                "Gradle total execution time": 5902.0,
+                "IDE execution time": 1050.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_warm_warm_warm_core_build_script_change_2fa91a80_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 5369.0,
+                "Gradle total execution time": 4292.0,
+                "IDE execution time": 1077.0
+              }
+            }
+          ]
+        },
+        {
+          "definition": {
+            "name": "idea-sync-warm-warm-warm-core-dependency-addition",
+            "title": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Add Gson to core",
+            "displayName": "Sync: Warm Gradle User Home, Warm Gradle Daemon, Warm IntelliJ caches, Add Gson to core using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "run tasks __benchmark_core_dependency_baseline__",
+            "invoker": "IDE",
+            "mutators": [],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {}
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": []
+        },
+        {
+          "definition": {
+            "name": "idea-sync-cold-cold-cold",
+            "title": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches",
+            "displayName": "Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260918071003+0000",
+            "buildTool": "Gradle 9.9.0-20260918071003+0000",
+            "tasks": "IDE sync",
+            "version": "9.9.0-20260918071003+0000",
+            "gradleHome": "/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260918071003+0000",
+            "javaHome": "/Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr",
+            "usesScanPlugin": false,
+            "action": "IDE sync",
+            "cleanup": "do nothing",
+            "invoker": "IDE with clean cache before build with cold daemon",
+            "mutators": [
+              "ClearGradleUserHomeMutator",
+              "ClearProjectCacheMutator(BUILD)"
+            ],
+            "args": [],
+            "jvmArgs": [
+              "-Xmx3g",
+              "-Dfile.encoding=UTF-8",
+              "-Duser.country=US",
+              "-Duser.language=en",
+              "-Duser.variant"
+            ],
+            "systemProperties": {},
+            "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_cold_cold_cold_ba898317"
+          },
+          "samples": [
+            {
+              "name": "total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "Gradle total execution time",
+              "unit": "ms"
+            },
+            {
+              "name": "IDE execution time",
+              "unit": "ms"
+            }
+          ],
+          "iterations": [
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_cold_cold_cold_ba898317_WARM_UP_1",
+              "phase": "WARM_UP",
+              "iteration": 1,
+              "title": "warm-up build #1",
+              "values": {
+                "total execution time": 105858.0,
+                "Gradle total execution time": 88723.0,
+                "IDE execution time": 17135.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_cold_cold_cold_ba898317_MEASURE_1",
+              "phase": "MEASURE",
+              "iteration": 1,
+              "title": "measured build #1",
+              "values": {
+                "total execution time": 104147.0,
+                "Gradle total execution time": 88293.0,
+                "IDE execution time": 15854.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_cold_cold_cold_ba898317_MEASURE_2",
+              "phase": "MEASURE",
+              "iteration": 2,
+              "title": "measured build #2",
+              "values": {
+                "total execution time": 100505.0,
+                "Gradle total execution time": 86957.0,
+                "IDE execution time": 13548.0
+              }
+            },
+            {
+              "id": "_80173924_e4e2_4ae5_befa_4dbc441c1461_idea_sync_cold_cold_cold_ba898317_MEASURE_3",
+              "phase": "MEASURE",
+              "iteration": 3,
+              "title": "measured build #3",
+              "values": {
+                "total execution time": 104655.0,
+                "Gradle total execution time": 87888.0,
+                "IDE execution time": 16767.0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

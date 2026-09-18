@@ -1,0 +1,400 @@
+
+* Started at 2026-09-17T15:50:43.460585Z
+
+* Settings
+Project dir: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+Output dir: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/benchmark-out
+Profiler: none
+Benchmark: true
+Versions: []
+Gradle User Home: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+Targets: [idea-sync-cold-cold-cold]
+Warm-ups: 1
+Builds: 3
+
+* Inspecting the build using its default Gradle version
+Downloading file:/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle/wrapper/../../env/gradle/gradle-9.9.0-bin.zip
+................................................................................................................................
+Calculating task graph as no cached configuration is available for tasks: :help
+> Task :buildSrc:checkKotlinCompilerVersion
+> Task :buildSrc:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :buildSrc:generateExternalPluginSpecBuilders
+> Task :buildSrc:extractPrecompiledScriptPluginPlugins
+> Task :buildSrc:generateScriptPluginAdapters
+> Task :buildSrc:pluginDescriptors
+> Task :buildSrc:processResources
+> Task :buildSrc:compilePluginsBlocks
+> Task :buildSrc:generatePrecompiledScriptPluginAccessors
+> Task :buildSrc:compileKotlin
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+w: file:///Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/kotlinx-coroutines-bom/build.gradle.kts:45:15: Suppression of error 'NULL_FOR_NONNULL_TYPE' might compile and work, but the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue
+
+> Task :help
+
+Welcome to Gradle 9.9.0-20260917154113+0000.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see more detail about a task, run gradle help --task <task>
+
+To see a list of command-line options, run gradle --help
+
+For more detail on using Gradle, see https://docs.gradle.org/9.9.0-20260917154113+0000/userguide/command_line_interface.html
+
+For troubleshooting, visit https://help.gradle.org
+
+[Incubating] Problems report is available at: file:///Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.9.0-20260917154113+0000/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 49s
+11 actionable tasks: 11 executed
+Configuration cache entry stored.
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+
+Welcome to Gradle 9.9.0-20260917154113+0000!
+
+Stopping Daemon(s)
+1 Daemon stopped
+
+* Scenarios
+Scenario: Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260917154113+0000
+  Gradle 9.9.0-20260917154113+0000 (/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000)
+  Run using: IDE with clean cache before build with cold daemon
+  Run: IDE sync
+  Cleanup: do nothing
+  Gradle args: []
+  Build operations trace: false
+  Build changes: [ClearGradleUserHomeMutator, ClearProjectCacheMutator(BUILD)]
+  Warm-ups: 1
+  Builds: 3
+
+* Running scenario Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches using Gradle 9.9.0-20260917154113+0000 (scenario 1/1)
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+No Gradle daemons are running.
+
+* Build details
+Gradle version: Gradle 9.9.0-20260917154113+0000
+Java home: /Users/Sebastian.Sellmair/.sdkman/candidates/java/21.0.8-jbr
+OS: mac os x aarch64 26.6.2
+JVM args:
+  -Xmx3g
+  -Dfile.encoding=UTF-8
+  -Duser.country=US
+  -Duser.language=en
+  -Duser.variant
+  -Dorg.gradle.profiler.scenario=idea-sync-cold-cold-cold
+Gradle args:
+  --gradle-user-home
+  /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+  -I
+  /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/gradleProfiler4910483107790860756.gradle
+
+* Running cleanup for warm-up build #1
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+No Gradle daemons are running.
+
+* Running warm-up build #1
+> Clearing Gradle User Home directory: '/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home'
+> Cleaning project .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/.gradle
+> Cleaning buildSrc .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/.gradle
+
+
+* Starting IntelliJ IDEA at /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app
+* Start command: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea
+* Additional JVM args:
+  -javaagent:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/ide-agent14894230554075679181.jar=64807,/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support11794296074126018190.jar
+  --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+  -Xbootclasspath/a:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/asm10373254090424799648.jar:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/client-protocol18126466528858724434.jar
+  -Xms256m
+  -Xmx4096m
+  -Didea.gradle.distributionType=BUNDLED
+  -Dgradle.profiler.startup.port=64805
+  -Dgradle.profiler.port=64806
+  -Didea.plugins.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/plugins
+  -Didea.config.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/config
+  -Didea.log.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs
+  -Didea.trust.all.projects=true
+  -Didea.system.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/system
+  -Dexternal.system.auto.import.disabled=true
+* Additional JVM args can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.vmoptions
+* IDEA properties:
+* IDEA properties can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.properties
+* IntelliJ IDEA logs can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs/idea.log
+* Using command line: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+
+Running command /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+PROFILER AGENT RUNNING
+* Connected to controller process
+* Cleaning IntelliJ IDEA cache, this will require a restart...
+
+
+* Starting IntelliJ IDEA at /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app
+* Start command: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea
+* Additional JVM args:
+  -javaagent:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/ide-agent3250419249884982244.jar=64850,/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support12101018160353841195.jar
+  --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+  -Xbootclasspath/a:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/asm15195161410165743499.jar:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/client-protocol8040624206054322689.jar
+  -Xms256m
+  -Xmx4096m
+  -Didea.gradle.distributionType=BUNDLED
+  -Dgradle.profiler.startup.port=64848
+  -Dgradle.profiler.port=64849
+  -Didea.plugins.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/plugins
+  -Didea.config.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/config
+  -Didea.log.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs
+  -Didea.trust.all.projects=true
+  -Didea.system.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/system
+  -Dexternal.system.auto.import.disabled=true
+* Additional JVM args can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.vmoptions
+* IDEA properties:
+* IDEA properties can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.properties
+* IntelliJ IDEA logs can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs/idea.log
+* Using command line: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+
+Running command /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+PROFILER AGENT RUNNING
+* Connected to controller process
+* Running sync in IntelliJ IDEA...
+* Sent sync request
+* Sync has started, waiting for it to complete...
+* Injecting support classes from /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support12101018160353841195.jar
+* Instrumenting GradleConnector
+* Creating project connection
+* Using Gradle home: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000
+* Instrumenting GradleConnector
+* Instrumenting BuildExecuter
+* Starting tooling API operation org.gradle.tooling.internal.consumer.DefaultPhasedBuildActionExecuter@7d76dc0a
+* Gradle invocation 1 has started, waiting for it to complete...
+* Using Gradle args: [--gradle-user-home, /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home, -I, /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/gradleProfiler4910483107790860756.gradle]
+* Using JVM args: [-Xmx3g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant, -Dorg.gradle.profiler.scenario=idea-sync-cold-cold-cold, -Dorg.gradle.profiler.phase=WARM_UP, -Dorg.gradle.profiler.phase.display.name=warm-up, -Dorg.gradle.profiler.number=1, -Dorg.gradle.profiler.step=BUILD]
+OPERATION COMPLETE: null
+* Gradle invocation 1 has completed in: 111645ms
+* Full Gradle execution time: 111645ms
+* Full IntelliJ IDEA execution time: 14645ms
+* Full sync has completed in: 126290ms and it SUCCEEDED
+Used daemon with pid 99011
+Execution time 126290 ms
+
+* Using args for instrumented builds:
+
+* Running cleanup for measured build #1
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+
+Welcome to Gradle 9.9.0-20260917154113+0000!
+
+Stopping Daemon(s)
+1 Daemon stopped
+
+* Running measured build #1
+> Clearing Gradle User Home directory: '/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home'
+> Cleaning project .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/.gradle
+> Cleaning buildSrc .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/.gradle
+* Cleaning IntelliJ IDEA cache, this will require a restart...
+
+
+* Starting IntelliJ IDEA at /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app
+* Start command: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea
+* Additional JVM args:
+  -javaagent:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/ide-agent11734368208491218619.jar=65293,/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support17016351359064976219.jar
+  --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+  -Xbootclasspath/a:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/asm18180800119531028068.jar:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/client-protocol8669622957090646363.jar
+  -Xms256m
+  -Xmx4096m
+  -Didea.gradle.distributionType=BUNDLED
+  -Dgradle.profiler.startup.port=65291
+  -Dgradle.profiler.port=65292
+  -Didea.plugins.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/plugins
+  -Didea.config.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/config
+  -Didea.log.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs
+  -Didea.trust.all.projects=true
+  -Didea.system.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/system
+  -Dexternal.system.auto.import.disabled=true
+* Additional JVM args can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.vmoptions
+* IDEA properties:
+* IDEA properties can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.properties
+* IntelliJ IDEA logs can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs/idea.log
+* Using command line: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+
+Running command /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+PROFILER AGENT RUNNING
+* Connected to controller process
+* Running sync in IntelliJ IDEA...
+* Sent sync request
+* Sync has started, waiting for it to complete...
+* Injecting support classes from /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support17016351359064976219.jar
+* Instrumenting GradleConnector
+* Creating project connection
+* Using Gradle home: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000
+* Instrumenting GradleConnector
+* Instrumenting BuildExecuter
+* Starting tooling API operation org.gradle.tooling.internal.consumer.DefaultPhasedBuildActionExecuter@8d4acb4
+* Gradle invocation 1 has started, waiting for it to complete...
+* Using Gradle args: [--gradle-user-home, /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home, -I, /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/gradleProfiler4910483107790860756.gradle]
+* Using JVM args: [-Xmx3g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant, -Dorg.gradle.profiler.scenario=idea-sync-cold-cold-cold, -Dorg.gradle.profiler.phase=MEASURE, -Dorg.gradle.profiler.phase.display.name=measured, -Dorg.gradle.profiler.number=1, -Dorg.gradle.profiler.step=BUILD]
+OPERATION COMPLETE: null
+* Gradle invocation 1 has completed in: 108888ms
+* Full Gradle execution time: 108888ms
+* Full IntelliJ IDEA execution time: 15073ms
+* Full sync has completed in: 123961ms and it SUCCEEDED
+Used daemon with pid 99632
+Execution time 123961 ms
+
+* Running cleanup for measured build #2
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+
+Welcome to Gradle 9.9.0-20260917154113+0000!
+
+Stopping Daemon(s)
+1 Daemon stopped
+
+* Running measured build #2
+> Clearing Gradle User Home directory: '/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home'
+> Cleaning project .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/.gradle
+> Cleaning buildSrc .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/.gradle
+* Cleaning IntelliJ IDEA cache, this will require a restart...
+
+
+* Starting IntelliJ IDEA at /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app
+* Start command: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea
+* Additional JVM args:
+  -javaagent:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/ide-agent2682705656883019373.jar=49315,/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support10729375260390614849.jar
+  --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+  -Xbootclasspath/a:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/asm8727621130145575747.jar:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/client-protocol11532244637144449255.jar
+  -Xms256m
+  -Xmx4096m
+  -Didea.gradle.distributionType=BUNDLED
+  -Dgradle.profiler.startup.port=49313
+  -Dgradle.profiler.port=49314
+  -Didea.plugins.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/plugins
+  -Didea.config.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/config
+  -Didea.log.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs
+  -Didea.trust.all.projects=true
+  -Didea.system.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/system
+  -Dexternal.system.auto.import.disabled=true
+* Additional JVM args can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.vmoptions
+* IDEA properties:
+* IDEA properties can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.properties
+* IntelliJ IDEA logs can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs/idea.log
+* Using command line: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+
+Running command /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+PROFILER AGENT RUNNING
+* Connected to controller process
+* Running sync in IntelliJ IDEA...
+* Sent sync request
+* Sync has started, waiting for it to complete...
+* Injecting support classes from /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support10729375260390614849.jar
+* Instrumenting GradleConnector
+* Creating project connection
+* Using Gradle home: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000
+* Instrumenting GradleConnector
+* Instrumenting BuildExecuter
+* Starting tooling API operation org.gradle.tooling.internal.consumer.DefaultPhasedBuildActionExecuter@5deff08d
+* Gradle invocation 1 has started, waiting for it to complete...
+* Using Gradle args: [--gradle-user-home, /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home, -I, /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/gradleProfiler4910483107790860756.gradle]
+* Using JVM args: [-Xmx3g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant, -Dorg.gradle.profiler.scenario=idea-sync-cold-cold-cold, -Dorg.gradle.profiler.phase=MEASURE, -Dorg.gradle.profiler.phase.display.name=measured, -Dorg.gradle.profiler.number=2, -Dorg.gradle.profiler.step=BUILD]
+OPERATION COMPLETE: null
+* Gradle invocation 1 has completed in: 109070ms
+* Full Gradle execution time: 109070ms
+* Full IntelliJ IDEA execution time: 14959ms
+* Full sync has completed in: 124029ms and it SUCCEEDED
+Used daemon with pid 228
+Execution time 124029 ms
+
+* Running cleanup for measured build #3
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+
+Welcome to Gradle 9.9.0-20260917154113+0000!
+
+Stopping Daemon(s)
+1 Daemon stopped
+
+* Running measured build #3
+> Clearing Gradle User Home directory: '/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home'
+> Cleaning project .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/.gradle
+> Cleaning buildSrc .gradle cache: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/buildSrc/.gradle
+* Cleaning IntelliJ IDEA cache, this will require a restart...
+
+
+* Starting IntelliJ IDEA at /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app
+* Start command: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea
+* Additional JVM args:
+  -javaagent:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/ide-agent11658149736401124703.jar=49746,/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support6687270652770127944.jar
+  --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+  -Xbootclasspath/a:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/asm16183097260090403010.jar:/private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/client-protocol14792829860848420879.jar
+  -Xms256m
+  -Xmx4096m
+  -Didea.gradle.distributionType=BUNDLED
+  -Dgradle.profiler.startup.port=49744
+  -Dgradle.profiler.port=49745
+  -Didea.plugins.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/plugins
+  -Didea.config.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/config
+  -Didea.log.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs
+  -Didea.trust.all.projects=true
+  -Didea.system.path=/Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/system
+  -Dexternal.system.auto.import.disabled=true
+* Additional JVM args can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.vmoptions
+* IDEA properties:
+* IDEA properties can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/scenarioOptions/idea.properties
+* IntelliJ IDEA logs can be found at: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/idea-sandbox/logs/idea.log
+* Using command line: /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+
+Running command /Users/Sebastian.Sellmair/Applications/IntelliJ IDEA.app/Contents/MacOS/idea /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines
+PROFILER AGENT RUNNING
+* Connected to controller process
+* Running sync in IntelliJ IDEA...
+* Sent sync request
+* Sync has started, waiting for it to complete...
+* Injecting support classes from /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/instrumentation-support6687270652770127944.jar
+* Instrumenting GradleConnector
+* Creating project connection
+* Using Gradle home: /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000
+* Instrumenting GradleConnector
+* Instrumenting BuildExecuter
+* Starting tooling API operation org.gradle.tooling.internal.consumer.DefaultPhasedBuildActionExecuter@7e02a90c
+* Gradle invocation 1 has started, waiting for it to complete...
+* Using Gradle args: [--gradle-user-home, /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home, -I, /private/var/folders/bb/knlwqxjd1c3_f3wxjdtbw4rc0000gp/T/gradleProfiler4910483107790860756.gradle]
+* Using JVM args: [-Xmx3g, -Dfile.encoding=UTF-8, -Duser.country=US, -Duser.language=en, -Duser.variant, -Dorg.gradle.profiler.scenario=idea-sync-cold-cold-cold, -Dorg.gradle.profiler.phase=MEASURE, -Dorg.gradle.profiler.phase.display.name=measured, -Dorg.gradle.profiler.number=3, -Dorg.gradle.profiler.step=BUILD]
+OPERATION COMPLETE: null
+* Gradle invocation 1 has completed in: 109834ms
+* Full Gradle execution time: 109834ms
+* Full IntelliJ IDEA execution time: 15104ms
+* Full sync has completed in: 124938ms and it SUCCEEDED
+Used daemon with pid 897
+Execution time 124938 ms
+* Stopping IntelliJ IDEA....
+* IntelliJ IDEA stopped.
+
+* Stopping daemons
+Running command /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home/wrapper/dists/gradle-9.9.0-bin/a6urkf1odb3il94l2pqayyhkp/gradle-9.9.0-20260917154113+0000/bin/gradle --stop --gradle-user-home /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/gradle-user-home
+
+Welcome to Gradle 9.9.0-20260917154113+0000!
+
+No Gradle daemons are running.
+
+* Results written to /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/benchmark-out
+  /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/benchmark-out/benchmark.csv
+  /Users/Sebastian.Sellmair/JetBrainsProjects/kotlinx.coroutines/benchmark-out/benchmark.html
+
