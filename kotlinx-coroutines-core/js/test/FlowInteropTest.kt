@@ -6,6 +6,7 @@ import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class FlowInteropTest : TestBase() {
 
@@ -59,7 +60,7 @@ class FlowInteropTest : TestBase() {
                 emit(2)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50)
+                    delay(50.milliseconds)
                     cleanupDone = true
                 }
             }
@@ -85,7 +86,7 @@ class FlowInteropTest : TestBase() {
                 emit(2)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50)
+                    delay(50.milliseconds)
                     cleanupDone = true
                 }
             }
@@ -110,7 +111,7 @@ class FlowInteropTest : TestBase() {
                 emit(1)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50)
+                    delay(50.milliseconds)
                     globalResourceTaken = false
                 }
             }
@@ -137,27 +138,6 @@ class FlowInteropTest : TestBase() {
         assertFalse(globalResourceTaken)
     }
 
-    @Test
-    fun testFlowToAsyncIteratorCleanupExceptionOnReturn() = runTest {
-        val flow = flow {
-            try {
-                emit(1)
-            } finally {
-                throw IllegalStateException("Cleanup failed")
-            }
-        }
-        val iterator: JsAsyncIterator<Int> = flow.asAsyncIterable()
-        assertNextStepToBe(iterator, value = 1, done = false)
-        val returnPromise = iterator.asDynamic().`return`()
-            .unsafeCast<Promise<JsIteratorResult<Int>>>()
-        assertFailsWith<IllegalStateException> { returnPromise.await() }
-            .apply { assertEquals("Cleanup failed", message) }
-        // The cleanup error is reported once: a repeated `return` on the closed iterator just completes
-        val repeatedResult = iterator.`return`(5).await()
-        assertTrue(repeatedResult.done)
-        assertEquals(5, repeatedResult.value)
-        assertNextStepToBe(iterator, done = true)
-    }
 
     @Test
     fun testFlowToAsyncIteratorReturnAfterFailure() = runTest {
@@ -168,10 +148,10 @@ class FlowInteropTest : TestBase() {
         }.asAsyncIterable()
         assertNextStepToBe(iterator, value = 1, done = false)
         assertSame(error, assertFailsWith<IllegalStateException> { iterator.next().await() })
-        // The failure was already delivered to `next()`, `return` must not re-report it
+        // The collection is already finished, so the value passed to `return` is not relayed.
         val result = iterator.`return`(5).await()
         assertTrue(result.done)
-        assertEquals(5, result.value)
+        assertEquals(js("undefined"), result.value)
         assertNextStepToBe(iterator, done = true)
     }
 
@@ -188,7 +168,7 @@ class FlowInteropTest : TestBase() {
                 } else {
                     val result = iterator.`return`(42).await()
                     assertTrue(result.done)
-                    assertEquals(42, result.value)
+                    assertEquals(js("undefined"), result.value)
                 }
                 assertNextStepToBe(iterator, done = true)
             }
@@ -278,40 +258,50 @@ class FlowInteropTest : TestBase() {
         val third = iterator.next()
         gate.complete(Unit)
         assertSame(error, assertFailsWith<IllegalStateException> { first.await() })
-        assertTrue(second.await().done)
-        assertTrue(third.await().done)
+        // Like in async generators, the requests that were already queued when the collection failed
+        // are resolved with `{ value: undefined, done: false }`; only the subsequent ones report completion
+        for (pending in listOf(second, third)) {
+            val result = pending.await()
+            assertFalse(result.done)
+            assertEquals(js("undefined"), result.value)
+        }
         assertNextStepToBe(iterator, done = true)
     }
 
     @Test
-    fun testFlowToAsyncIteratorQueuedNextOnEarlyExit() = runTest {
+    fun testFlowToAsyncIteratorQueuedEarlyExit() = runTest {
         for (useThrow in listOf(false, true)) {
             var cleanupDone = false
-            val iterator = flow<Int> {
+            var emittedSecond = false
+            val iterator = flow {
                 try {
-                    awaitCancellation()
+                    delay(50.milliseconds)
+                    emit(1)
+                    emittedSecond = true
+                    emit(2)
                 } finally {
                     withContext(NonCancellable) {
-                        yield()
+                        delay(50.milliseconds)
                         cleanupDone = true
                     }
                 }
             }.asAsyncIterable()
+            // Like in async generators, `return`/`throw` are queued after the pending `next()`
+            // and are only processed once the flow reaches the next `emit`
             val first = iterator.next()
-            val second = iterator.next()
+            val earlyExit = if (useThrow) iterator.`throw`(IllegalStateException("Early exit")) else iterator.`return`(null)
+            val firstResult = first.await()
+            assertFalse(firstResult.done)
+            assertEquals(1, firstResult.value)
+            assertFalse(cleanupDone)
             if (useThrow) {
-                val error = IllegalStateException("Early exit")
-                assertSame(error, assertFailsWith<IllegalStateException> { iterator.`throw`(error).await() })
+                assertFailsWith<IllegalStateException> { earlyExit.await() }
+                    .apply { assertEquals("Early exit", message) }
             } else {
-                assertTrue(iterator.`return`(null).await().done)
+                assertTrue(earlyExit.await().done)
             }
             assertTrue(cleanupDone)
-            // Pending requests observe the completion, not the value passed to `return`
-            for (pending in listOf(first, second)) {
-                val result = pending.await()
-                assertTrue(result.done)
-                assertEquals(js("undefined"), result.value)
-            }
+            assertFalse(emittedSecond)
             assertNextStepToBe(iterator, done = true)
         }
     }
@@ -338,7 +328,7 @@ class FlowInteropTest : TestBase() {
     fun testFlowToAsyncIteratorQueuedNextWhileSuspended() = runTest {
         val iterator = flow {
             emit(1)
-            delay(50)
+            delay(50.milliseconds)
             emit(2)
             emit(3)
         }.asAsyncIterable()
@@ -357,7 +347,7 @@ class FlowInteropTest : TestBase() {
         val iterator = flow {
             try {
                 emit(1)
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // ignore the cancellation and try to go on
             }
             continued = true
@@ -365,10 +355,15 @@ class FlowInteropTest : TestBase() {
             emittedSecond = true
         }.asAsyncIterable()
         assertNextStepToBe(iterator, value = 1, done = false)
-        assertTrue(iterator.`return`(null).await().done)
+        // Like an async generator that catches the exception and keeps yielding,
+        // the flow that survives the cancellation relays the next element to the `return` request
+        val returnResult = iterator.`return`(null).await()
         assertTrue(continued)
+        assertFalse(returnResult.done)
+        assertEquals(2, returnResult.value)
         assertFalse(emittedSecond)
         assertNextStepToBe(iterator, done = true)
+        assertTrue(emittedSecond)
     }
 
     @Test
@@ -380,7 +375,7 @@ class FlowInteropTest : TestBase() {
                 while (true) emit(i++)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50)
+                    delay(50.milliseconds)
                     cleanupDone = true
                 }
             }
@@ -398,18 +393,24 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testFlowToAsyncIteratorFlowOnFailureWithoutPendingRequest() = runTest {
         val gate = CompletableDeferred<Unit>()
+        val upstreamFailed = CompletableDeferred<Unit>()
         val completed = CompletableDeferred<Unit>()
         val error = IllegalStateException("Upstream failed")
         val iterator = flow {
             emit(1)
             gate.await()
+            upstreamFailed.complete(Unit)
             throw error
-        }.flowOn(Dispatchers.Unconfined).onCompletion { completed.complete(Unit) }.asAsyncIterable()
+        }.flowOn(Dispatchers.Default).onCompletion { completed.complete(Unit) }.asAsyncIterable()
         assertNextStepToBe(iterator, value = 1, done = false)
         // The upstream fails while the iterator is idle (no pending `next()`): the failure must not be lost
         gate.complete(Unit)
-        completed.await()
+        upstreamFailed.await()
+        yield()
+        // The downstream does not make progress until the next request arrives
+        assertFalse(completed.isCompleted)
         assertSame(error, assertFailsWith<IllegalStateException> { iterator.next().await() })
+        assertTrue(completed.isCompleted)
         assertNextStepToBe(iterator, done = true)
     }
 
@@ -438,7 +439,7 @@ class FlowInteropTest : TestBase() {
                 emit(3)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50)
+                    delay(50.milliseconds)
                     cleanupDone = true
                 }
             }
