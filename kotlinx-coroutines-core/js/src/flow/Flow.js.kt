@@ -126,7 +126,6 @@ public actual interface Flow<out T> {
                                     else -> true
                                 }
                             }
-
                             currentRequest.resolve(
                                 JsIteratorResult(
                                     done = true,
