@@ -6,7 +6,7 @@ project_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # Pass scenario names to select cases; otherwise run the scenario file's defaults.
 gradle-profiler --benchmark \
     --warmups 1 \
-    --iterations 3 \
+    --iterations 1 \
     --project-dir "$project_dir" \
     --scenario-file "$project_dir/performance.scenarios" \
     --idea-install-dir "${IDEA_INSTALL_DIR:-$HOME/Applications/IntelliJ IDEA.app}" \
