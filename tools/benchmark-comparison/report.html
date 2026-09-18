@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lookahead dependencies · Benchmark comparison</title>
+<style>
+:root { color-scheme: dark; --bg:#0c1220; --panel:#151e30; --line:#2b3851; --text:#edf2fc; --muted:#aab8d0; --base:#8b9eff; --candidate:#53dccb; --good:#6de4b3; --bad:#ff9b9b; }
+* { box-sizing:border-box; }
+body { margin:0; background:radial-gradient(ellipse at top right,#1c3051 0,transparent 55%),var(--bg); color:var(--text); font:15px/1.6 system-ui,sans-serif; }
+main { max-width:1440px; margin:auto; padding:48px 32px; }
+h1 { font-size:clamp(30px,4vw,52px); line-height:1.12; letter-spacing:-.04em; margin:14px 0; }
+h2 { font-size:22px; margin:0 0 12px; } h3 { font-size:16px; }
+p { margin:8px 0; } a { color:var(--candidate); } code { overflow-wrap:anywhere; }
+.eyebrow { color:var(--candidate); text-transform:uppercase; letter-spacing:.17em; font-size:12px; font-weight:700; }
+.muted,small { color:var(--muted); } .subtitle { max-width:800px; font-size:17px; }
+.sources,.cards { display:grid; gap:16px; margin:24px 0; }
+.sources { grid-template-columns:1fr 1fr; } .cards { grid-template-columns:repeat(4,1fr); }
+.panel,.card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; }
+.source { border-top:3px solid var(--base); } .source:last-child { border-top-color:var(--candidate); }
+.source strong { font-size:18px; } .source small { display:block; margin-top:6px; }
+.card strong { display:block; font-size:32px; letter-spacing:-.04em; margin:6px 0; }
+.card span { color:var(--muted); font-size:13px; }
+.notice { border-left:3px solid #e5bc73; padding:12px 18px; background:#292536; border-radius:0 10px 10px 0; margin:24px 0; }
+.controls { display:flex; flex-wrap:wrap; gap:14px; align-items:end; margin:24px 0; }
+label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); font-weight:600; }
+input,select,button { font:inherit; color:var(--text); background:var(--bg); border:1px solid #455570; border-radius:8px; padding:10px 12px; }
+input { min-width:230px; } button,select,summary { cursor:pointer; }
+:focus-visible { outline:3px solid var(--candidate); outline-offset:3px; }
+.table-wrap { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums; }
+th { color:var(--muted); font-size:12px; text-align:right; font-weight:600; padding:14px 12px; border-bottom:1px solid var(--line); }
+td { padding:18px 12px; text-align:right; border-bottom:1px solid var(--line); vertical-align:top; }
+th:first-child,td:first-child { text-align:left; } .comparison { min-width:940px; }
+.comparison td:first-child { width:36%; } .comparison td small { display:block; font-size:12px; }
+.comparison tr:hover { background:#1a263b; }
+.scenario-button { border:0; background:none; padding:0; font-weight:650; text-align:left; color:var(--text); }
+.scenario-button:hover { color:var(--candidate); }
+.badge { display:inline-block; border-radius:6px; padding:3px 8px; white-space:nowrap; font-size:13px; background:#26334b; }
+.good { color:var(--good); } .bad { color:var(--bad); }
+.bars { width:160px; display:grid; gap:7px; margin-top:5px; } .bar-track { background:#263249; height:8px; border-radius:4px; overflow:hidden; }
+.bar { height:100%; background:var(--base); border-radius:4px; } .bar.candidate { background:var(--candidate); }
+.legend { display:flex; flex-wrap:wrap; gap:18px; color:var(--muted); font-size:12px; margin-top:18px; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--base); margin-right:6px; } .dot.candidate { background:var(--candidate); }
+.detail { margin-top:24px; border-top:3px solid var(--candidate); } .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.detail table { font-size:13px; } .detail th,.detail td { padding:9px 10px; }
+.detail-heading { display:flex; justify-content:space-between; align-items:start; gap:12px; }
+.warmup { color:var(--muted); } .metadata { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; color:var(--muted); }
+details { margin-top:20px; } summary { font-weight:650; } li { margin:8px 0; }
+footer { margin:30px 0 0; color:var(--muted); font-size:12px; }
+[hidden] { display:none !important; }
+@media(max-width:850px) { main { padding:28px 16px; } .cards { grid-template-columns:1fr 1fr; } .sources,.detail-grid { grid-template-columns:1fr; } .panel { padding:16px; } }
+@media(max-width:450px) { .cards { grid-template-columns:1fr; } .controls label,input,select { width:100%; } }
+@media print { :root { color-scheme:light; --bg:white; --panel:white; --text:#111; --muted:#444; --line:#ccc; --good:#087344; --bad:#b22; } body { background:white; } .controls,button#close-detail { display:none; } main { padding:0; } .table-wrap { overflow:visible; } .comparison { min-width:0; } .bars { width:90px; } }
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="eyebrow">kotlinx.coroutines / IDE sync performance</div>
+<h1>Lookahead dependencies.<br>A closer look at the trade-offs.</h1>
+<p class="subtitle muted">Compare <strong>lookahead-deps-full</strong> against <strong>baseline</strong>, from cold imports to build-script edits. Lower execution time is better.</p>
+</header>
+<section class="sources" id="sources" aria-label="Source benchmarks"></section>
+<div class="notice"><strong>Directional evidence, not a significance claim.</strong> Only three measured runs per populated scenario, collected on different dates with different Gradle snapshots. Dependency addition has no samples in either report. Warm-ups are excluded from all summaries.</div>
+<section class="cards" id="cards" aria-label="Comparison summary" aria-live="polite"></section>
+<section class="panel">
+<h2>Explore the comparison</h2>
+<p class="muted">Choose a metric and statistic. Select a scenario to inspect every run and the Gradle / IDE breakdown.</p>
+<div class="controls">
+<label>Metric<select id="metric"><option value="total execution time">Total execution time</option><option value="Gradle total execution time">Gradle execution time</option><option value="IDE execution time">IDE execution time</option></select></label>
+<label>Statistic<select id="stat"><option value="median">Median</option><option value="mean">Mean</option></select></label>
+<label>Show<select id="filter"><option value="all">All scenarios</option><option value="good">Faster</option><option value="bad">Slower</option><option value="missing">Missing data</option></select></label>
+<label>Sort by<select id="sort"><option value="original">Scenario order</option><option value="change">Largest improvement %</option><option value="regression">Largest regression %</option><option value="saved">Most time saved</option></select></label>
+<label>Search scenarios<input id="search" type="search" placeholder="e.g. cold, buildSrc, Gson"></label>
+</div>
+<p id="count" class="muted" aria-live="polite"></p>
+<div class="table-wrap"><table class="comparison"><thead><tr><th scope="col">Scenario / cache state</th><th scope="col">Baseline</th><th scope="col">Lookahead</th><th scope="col">Change</th><th scope="col">Time saved</th><th scope="col">Relative duration</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="legend"><span><i class="dot"></i>Baseline</span><span><i class="dot candidate"></i>Lookahead</span><span>Bars use a separate scale per row · range = observed min–max · negative change = faster</span></div>
+</section>
+<section id="detail" class="panel detail" hidden aria-label="Scenario details"></section>
+<section class="panel" style="margin-top:24px">
+<h2>How to read these results</h2>
+<ul>
+<li><strong>Change</strong> = (lookahead ÷ baseline − 1) × 100. <strong>Time saved</strong> = baseline − lookahead. Positive time saved means faster; negative means slower.</li>
+<li><strong>Summary cards cover all comparable scenarios</strong> for the chosen metric and statistic, independent of search and filters. The geometric mean gives each scenario equal weight; it is not a total workflow time or a claim of statistical significance.</li>
+<li><strong>Median is the default.</strong> Mean is also available to expose sensitivity to slow runs. Ranges and sample standard deviations describe observed variability, not confidence intervals. Run numbers are not paired experimental observations.</li>
+<li><strong>Cache order:</strong> Gradle User Home / Gradle Daemon / IntelliJ caches. Project caches are cleared alongside cold IntelliJ caches, per <code>performance.scenarios</code>. Script-change scenarios start with all three warm.</li>
+<li><strong>Components:</strong> Total, Gradle, and IDE times are taken directly from the profiler. Independently computed component medians need not sum to the total median.</li>
+<li><strong>Provenance:</strong> Values come from the structured <code>benchmarkResult</code> embedded in each original HTML report, matched by scenario and metric names. The CSV exports have unescaped commas in titles and collapsed empty fields; they are not used. Missing samples are never treated as zero.</li>
+<li><strong>Limits:</strong> These runs alone do not isolate the effect of the lookahead change from other snapshot differences, run order, or machine state. Repeat the experiment before treating small changes or variable regressions as conclusive.</li>
+</ul>
+</section>
+<footer>Self-contained report · no network access or external libraries required · regenerate with <code>python3 tools/benchmark-comparison/generate.py</code></footer>
+<noscript><p>This interactive report requires JavaScript. Open the original reports in the baseline and lookahead-deps-full folders to inspect source data.</p></noscript>
+</main>
+<script id="benchmark-data" type="application/json">__BENCHMARK_DATA__</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("benchmark-data").textContent);
+const sides = ["baseline", "lookahead-deps-full"];
+const metrics = ["total execution time", "Gradle total execution time", "IDE execution time"];
+const $ = id => document.getElementById(id);
+const esc = value => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const maps = sides.map(side => new Map(data[side].scenarios.map(s => [s.definition.name, s])));
+const names = [...new Set(maps.flatMap(map => [...map.keys()]))];
+let selected = null;
+function values(scenario, metric) {
+    return (scenario?.iterations || []).filter(i => i.phase === "MEASURE")
+        .map(i => i.values[metric]).filter(v => Number.isFinite(v));
+}
+function summarize(samples, statistic) {
+    if (!samples.length) return null;
+    const sorted = [...samples].sort((a,b) => a-b);
+    const mean = samples.reduce((a,b) => a+b,0) / samples.length;
+    const middle = Math.floor(samples.length/2);
+    const median = samples.length % 2 ? sorted[middle] : (sorted[middle-1]+sorted[middle])/2;
+    return {value:statistic === "mean" ? mean : median, min:sorted[0], max:sorted.at(-1), n:samples.length,
+        sd:samples.length > 1 ? Math.sqrt(samples.reduce((sum,x) => sum+(x-mean)**2,0)/(samples.length-1)) : null};
+}
+function compare(name, metric, statistic) {
+    const [a,b] = maps.map(map => summarize(values(map.get(name),metric),statistic));
+    return {name,a,b,change:a && b && a.value > 0 ? (b.value/a.value-1)*100 : null,
+        saved:a && b ? a.value-b.value : null};
+}
+const seconds = ms => ms == null ? "—" : `${(ms/1000).toFixed(3)} s`;
+const signed = (n,digits=1) => `${n > 0 ? "+" : ""}${n.toFixed(digits)}`;
+const tone = n => n == null || n === 0 ? "" : n < 0 ? "good" : "bad";
+function label(name) {
+    const suffix = name.replace("idea-sync-", "");
+    const edits = {"root-build-script-change":"Root build script change", "buildSrc-build-script-change":"buildSrc build script change", "core-build-script-change":"Core build script change", "core-dependency-addition":"Add Gson to core"};
+    return edits[suffix.replace("warm-warm-warm-", "")] || (suffix === "warm-warm-warm" ? "Warm sync" : suffix === "cold-cold-cold" ? "Fully cold sync" : "Sync · " + suffix.replaceAll("-", " / "));
+}
+function cacheState(name) { return name.replace("idea-sync-", "").split("-").slice(0,3).join(" / "); }
+function cell(s) { return s ? `${seconds(s.value)}<small>${seconds(s.min)}–${seconds(s.max)} · n=${s.n}</small>` : '<span class="muted">No samples</span>'; }
+function render() {
+    const metric = $("metric").value, statistic = $("stat").value;
+    const all = names.map(name => compare(name,metric,statistic));
+    const comparable = all.filter(r => r.change != null);
+    const positive = comparable.filter(r => r.a.value > 0 && r.b.value > 0);
+    const geo = positive.length ? (Math.exp(positive.reduce((sum,r) => sum+Math.log(r.b.value/r.a.value),0)/positive.length)-1)*100 : null;
+    const best = [...comparable].sort((a,b) => a.change-b.change)[0];
+    const worst = [...comparable].sort((a,b) => b.change-a.change)[0];
+    $("cards").innerHTML = `
+        <article class="card"><span>Geometric mean change</span><strong class="${tone(geo)}">${geo == null ? "—" : signed(geo)+"%"}</strong><span>${positive.length} scenarios · ${esc(statistic)} · equal weight</span></article>
+        <article class="card"><span>Faster / slower / unchanged</span><strong>${comparable.filter(r=>r.change<0).length} / ${comparable.filter(r=>r.change>0).length} / ${comparable.filter(r=>r.change===0).length}</strong><span>${all.length-comparable.length} unavailable · ${esc(metric)}</span></article>
+        <article class="card"><span>Lowest relative change</span><strong class="${tone(best?.change)}">${best ? signed(best.change)+"%" : "—"}</strong><span>${best ? esc(label(best.name)) : "No comparable data"}</span></article>
+        <article class="card"><span>Highest relative change</span><strong class="${tone(worst?.change)}">${worst ? signed(worst.change)+"%" : "—"}</strong><span>${worst ? esc(label(worst.name)) : "No comparable data"}</span></article>`;
+    const query = $("search").value.trim().toLowerCase();
+    const filtered = all.filter(r => (r.name+" "+label(r.name)+" "+(maps[0].get(r.name)||maps[1].get(r.name)).definition.title).toLowerCase().includes(query))
+        .filter(r => $("filter").value === "all" || ($("filter").value === "missing" ? r.change == null : tone(r.change) === $("filter").value));
+    const sort = $("sort").value;
+    if (sort !== "original") filtered.sort((a,b) => {
+        if (a.change == null) return b.change == null ? 0 : 1;
+        if (b.change == null) return -1;
+        return sort === "saved" ? b.saved-a.saved : sort === "regression" ? b.change-a.change : a.change-b.change;
+    });
+    $("count").textContent = `${filtered.length} of ${all.length} scenarios · ${statistic} ${metric} · seconds`;
+    $("rows").innerHTML = filtered.length ? filtered.map(r => {
+        const max = Math.max(r.a?.value || 0,r.b?.value || 0);
+        return `<tr><td><button class="scenario-button" data-name="${esc(r.name)}" aria-expanded="${selected===r.name}" aria-controls="detail">${esc(label(r.name))} ↗</button><small>${esc(cacheState(r.name))}</small></td>
+            <td>${cell(r.a)}</td><td>${cell(r.b)}</td>
+            <td><span class="badge ${tone(r.change)}">${r.change == null ? "Unavailable" : signed(r.change)+"%"}</span><small>${r.change == null ? "No comparison" : r.change < 0 ? "Faster" : r.change > 0 ? "Slower" : "Unchanged"}</small></td>
+            <td class="${tone(r.change)}">${r.saved == null ? "—" : signed(r.saved/1000,3)+" s"}</td>
+            <td>${r.a && r.b && max > 0 ? `<div class="bars" aria-hidden="true"><div class="bar-track"><div class="bar" style="width:${r.a.value/max*100}%"></div></div><div class="bar-track"><div class="bar candidate" style="width:${r.b.value/max*100}%"></div></div></div>` : "—"}</td></tr>`;
+    }).join("") : '<tr><td colspan="6">No scenarios match these filters.</td></tr>';
+    if (selected) renderDetail();
+}
+function renderDetail() {
+    const scenario = maps[0].get(selected) || maps[1].get(selected);
+    $("detail").hidden = false;
+    $("detail").innerHTML = `<div class="detail-heading"><div><div class="eyebrow">Scenario deep dive</div><h2 id="detail-title" tabindex="-1">${esc(label(selected))}</h2></div><button id="close-detail" aria-label="Close scenario details">Close ×</button></div>
+        <p class="muted">${esc(scenario.definition.title)}</p><p><code>${esc(selected)}</code></p>
+        <h3>Component comparison · ${esc($("stat").value)}</h3>
+        <div class="table-wrap"><table><thead><tr><th>Metric</th><th>Baseline</th><th>Lookahead</th><th>Change</th></tr></thead><tbody>${metrics.map(metric => {
+            const r = compare(selected,metric,$("stat").value);
+            return `<tr><td>${esc(metric)}</td><td>${seconds(r.a?.value)}</td><td>${seconds(r.b?.value)}</td><td class="${tone(r.change)}">${r.change == null ? "—" : signed(r.change)+"%"}</td></tr>`;
+        }).join("")}</tbody></table></div>
+        <div class="detail-grid">${sides.map((side,index) => {
+            const s = maps[index].get(selected);
+            const stats = summarize(values(s,$("metric").value),$("stat").value);
+            return `<div><h3>${esc(side)} · raw runs</h3><p class="muted">Selected metric sample SD: ${seconds(stats?.sd)} · n=${stats?.n || 0}</p>
+                <div class="table-wrap"><table><thead><tr><th>Iteration</th><th>Total (s)</th><th>Gradle (s)</th><th>IDE (s)</th></tr></thead><tbody>${s?.iterations.length ? s.iterations.map(i => `<tr class="${i.phase === "WARM_UP" ? "warmup" : ""}"><td>${esc(i.title)}${i.phase === "WARM_UP" ? " (excluded)" : ""}</td>${metrics.map(m => `<td>${i.values[m] == null ? "—" : (i.values[m]/1000).toFixed(3)}</td>`).join("")}</tr>`).join("") : '<tr><td colspan="4">No samples recorded; this is not a zero-duration run.</td></tr>'}</tbody></table></div>
+                <details><summary>Source scenario configuration</summary><pre class="metadata">${esc(JSON.stringify(s?.definition || {},null,2))}</pre></details></div>`;
+        }).join("")}</div>`;
+    $("close-detail").onclick = () => {
+        const previous = selected;
+        selected = null; $("detail").hidden = true; render();
+        [...$("rows").querySelectorAll("button")].find(b => b.dataset.name === previous)?.focus();
+    };
+}
+$("sources").innerHTML = sides.map(side => {
+    const source = data[side], definitions = source.scenarios.map(s => s.definition);
+    return `<article class="panel source"><div class="eyebrow">${side === "baseline" ? "Reference" : "Candidate"}</div><strong>${esc(side)}</strong>
+        <small>Gradle ${esc([...new Set(definitions.map(d=>d.version))].join(", "))}</small>
+        <small>${esc(source.date)} · ${esc(source.environment.operatingSystem)} · Profiler ${esc(source.environment.profilerVersion)}</small>
+        <small>Java: ${esc([...new Set(definitions.map(d=>d.javaHome.split("/").pop()))].join(", "))}</small>
+        <p><a href="${side}/benchmark.html">Original report ↗</a> · <a href="${side}/profile.log">Profiler log ↗</a></p></article>`;
+}).join("");
+$("rows").addEventListener("click", event => {
+    const button = event.target.closest("button[data-name]");
+    if (!button) return;
+    selected = button.dataset.name; render();
+    $("detail-title").focus({preventScroll:true});
+    $("detail").scrollIntoView({block:"start"});
+});
+["metric","stat","filter","sort"].forEach(id => $(id).addEventListener("change",render));
+$("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Current vs previous · kotlinx.coroutines benchmarks</title>
+<style>
+:root { color-scheme:dark; --bg:#0b1220; --panel:#141f32; --line:#2b3b55; --text:#eff5ff; --muted:#abbcd4; --accent:#72ddd2; --good:#82e4b5; --bad:#ffaaa7; }
+* { box-sizing:border-box; }
+body { margin:0; background:radial-gradient(ellipse at top right,#213a57,transparent 55%),var(--bg); color:var(--text); font:15px/1.6 system-ui,sans-serif; }
+main { max-width:1540px; margin:auto; padding:44px 28px; }
+h1 { font-size:clamp(32px,5vw,60px); letter-spacing:-.045em; line-height:1.1; margin:14px 0; }
+h2 { font-size:22px; margin:0 0 10px; } h3 { font-size:16px; }
+p { margin:8px 0; } a { color:var(--accent); } small,.muted { color:var(--muted); }
+code { overflow-wrap:anywhere; } .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.16em; font-size:12px; font-weight:700; }
+.subtitle { max-width:850px; font-size:18px; color:var(--muted); }
+.panel,.card { border:1px solid var(--line); background:var(--panel); border-radius:16px; padding:22px; margin-top:22px; min-width:0; }
+.notice { border-left:3px solid #e7c483; background:#292839; padding:16px 20px; margin:24px 0; border-radius:0 12px 12px 0; }
+.cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; } .card { margin:0; }
+.card strong { display:block; font-size:30px; letter-spacing:-.035em; margin:4px 0; } .card span { color:var(--muted); font-size:12px; }
+.controls { display:flex; flex-wrap:wrap; gap:16px; margin:22px 0; align-items:end; }
+label { display:flex; flex-direction:column; gap:6px; color:var(--muted); font-size:12px; font-weight:650; }
+select,input { font:inherit; padding:10px 12px; border:1px solid #506480; border-radius:8px; color:var(--text); background:var(--bg); max-width:100%; }
+:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
+.table-wrap { overflow-x:auto; } table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+th,td { padding:14px 12px; border-bottom:1px solid var(--line); text-align:right; vertical-align:top; }
+th { color:var(--muted); font-size:12px; } th:first-child,td:first-child { text-align:left; }
+td small { display:block; font-size:11px; } tbody th { color:var(--text); font-size:14px; font-weight:600; }
+.matrix { min-width:1040px; } .comparison { min-width:850px; }
+.current { background:#1a3544; } .good { color:var(--good); } .bad { color:var(--bad); }
+.badge { white-space:nowrap; font-weight:650; } .bar-track { width:130px; height:6px; background:#2e3d55; border-radius:4px; margin-top:7px; }
+.bar { height:100%; background:#9aaeff; border-radius:4px; } .bar.current-bar { background:var(--accent); }
+.legend { display:flex; flex-wrap:wrap; gap:20px; font-size:12px; color:var(--muted); margin-top:14px; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; background:#9aaeff; } .dot.now { background:var(--accent); }
+details { border-top:1px solid var(--line); padding:12px 0; } summary { cursor:pointer; font-weight:600; }
+.raw-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; } .raw-grid table { font-size:12px; } .raw-grid td,.raw-grid th { padding:8px; }
+.metadata { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; color:var(--muted); }
+li { margin:8px 0; } footer { color:var(--muted); font-size:12px; margin-top:24px; }
+@media(max-width:850px) { main { padding:28px 14px; } .cards { grid-template-columns:repeat(2,1fr); } .raw-grid { grid-template-columns:1fr; } .panel { padding:16px; } }
+@media(max-width:450px) { .cards { grid-template-columns:1fr; } .controls label { width:100%; } }
+@media print { :root { color-scheme:light; --bg:white; --panel:white; --text:#111; --muted:#444; --line:#ccc; --good:#075d35; --bad:#a11; } body { background:white; } main { padding:0; } .controls { display:none; } .table-wrap { overflow:visible; } table.matrix,table.comparison { min-width:0; font-size:10px; } th,td { padding:6px; } .current,.notice { background:#eee; } }
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">kotlinx.coroutines / IDE sync benchmarks</div>
+<h1>Current run.<br>Historical perspective.</h1>
+<p class="subtitle"><code>benchmark-out</code> compared with all four profiler reports in <code>import-benchmarks/seb</code>. Durations are in seconds; lower is better.</p></header>
+<div class="notice"><strong>One current measurement, not a performance verdict.</strong> The current report has one measured run per populated scenario; previous reports have three. Warm-ups are excluded. Different Gradle snapshots and run dates mean changes cannot be attributed to a specific optimization. Missing data is never treated as zero.</div>
+<section class="panel" aria-label="Comparison controls">
+<h2>Choose your comparison</h2>
+<div class="controls">
+<label>Previous run<select id="previous"><option value="baseline">baseline</option><option value="gradle-xxh3-hash">gradle-xxh3-hash · cold only</option><option value="lookahead-deps">lookahead-deps · cold only</option><option value="lookahead-deps-full" selected>lookahead-deps-full · latest previous</option></select></label>
+<label>Metric<select id="metric"><option>total execution time</option><option>Gradle total execution time</option><option>IDE execution time</option></select></label>
+<label>Statistic<select id="stat"><option value="median">Median</option><option value="mean">Mean</option></select></label>
+<label>Search scenarios<input type="search" id="search" placeholder="e.g. cold, core, buildSrc"></label>
+</div><p class="muted">Default: the latest historical report. The current mean and median are identical because n = 1.</p>
+</section>
+<section class="cards" id="cards" aria-label="Summary" aria-live="polite" style="margin-top:22px"></section>
+<section class="panel"><h2 id="comparison-title">Scenario comparison</h2>
+<p id="count" class="muted" aria-live="polite"></p>
+<div class="table-wrap"><table class="comparison"><thead><tr><th scope="col">Scenario</th><th scope="col">Previous</th><th scope="col">Current</th><th scope="col">Change</th><th scope="col">Time saved</th><th scope="col">Relative duration</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="legend"><span><i class="dot"></i>Previous</span><span><i class="dot now"></i>Current</span><span>Independent bar scale per scenario · negative change = faster · ranges = observed min–max</span></div>
+</section>
+<section class="panel"><h2>All runs at a glance</h2><p class="muted">Uses the selected metric, statistic, and search. Each historical cell shows current change relative to that run; the histories are not pooled.</p>
+<div class="table-wrap"><table class="matrix"><thead id="matrix-head"></thead><tbody id="matrix"></tbody></table></div></section>
+<section class="panel"><h2>Inspect the measurements</h2><p class="muted">All three metrics for the selected pair. Warm-ups are shown but excluded from every summary.</p><div id="details"></div></section>
+<section class="panel"><h2>Source reports &amp; provenance</h2><div class="table-wrap"><table><thead><tr><th scope="col">Source</th><th scope="col">Report timestamp (UTC)</th><th scope="col">Gradle version</th><th scope="col">Populated / defined scenarios</th></tr></thead><tbody id="sources"></tbody></table></div><div id="environment"></div>
+<h3>Separate trace evidence — excluded from numerical comparisons</h3>
+<p class="muted"><a href="import-benchmarks/yahor/traces-1789726526259.json">Yahor’s trace export</a> contains two import traces, not scenario-labelled profiler measurements. Cache state, warm-up status, and equivalent measurement boundaries are not established, so these traces are not mixed with the benchmark results.</p></section>
+<section class="panel"><h2>Methodology &amp; limitations</h2><ul>
+<li>Match by exact scenario name and metric name in the structured <code>benchmarkResult</code> embedded in the original HTML reports. CSV exports are not used because their titles contain unescaped commas and empty fields are collapsed.</li>
+<li><strong>Change</strong> = (current / previous − 1) × 100. <strong>Time saved</strong> = previous − current. Percent changes use unrounded values. A zero previous duration has no defined percentage.</li>
+<li>Summary cards cover all comparable scenarios for the selected pair and metric, independent of search. The geometric mean of current / previous ratios weights scenarios equally; it is not a total workflow time. Only positive durations enter that mean.</li>
+<li>Ranges describe observed variation, not confidence intervals. The single current measurement cannot estimate current variability; no significance tests or causal claims are made. Run numbers are not paired observations.</li>
+<li>Cache order is <strong>Gradle User Home / Gradle Daemon / IntelliJ caches</strong>. Project caches are cleared with cold IntelliJ caches per <code>performance.scenarios</code>. Build-script changes start warm / warm / warm.</li>
+<li>Dependency addition (Gson) has no measurements. The <code>gradle-xxh3-hash</code> and <code>lookahead-deps</code> reports only contain the fully cold scenario. “Not recorded” and “No measured samples” are distinct from zero.</li>
+<li>Total, Gradle, and IDE durations come directly from the profiler. Independently calculated component medians need not sum to the total median. Repeat runs under controlled conditions before interpreting small differences.</li>
+</ul></section>
+<footer>Self-contained, offline report · regenerate: <code>python3 tools/benchmark-comparison/compare_current.py</code></footer>
+<noscript><p>This interactive comparison requires JavaScript. Original reports: <a href="benchmark-out/benchmark.html">current</a>, <a href="import-benchmarks/seb/baseline/benchmark.html">baseline</a>, <a href="import-benchmarks/seb/gradle-xxh3-hash/benchmark.html">gradle-xxh3-hash</a>, <a href="import-benchmarks/seb/lookahead-deps/benchmark.html">lookahead-deps</a>, <a href="import-benchmarks/seb/lookahead-deps-full/benchmark.html">lookahead-deps-full</a>.</p></noscript>
+</main>
+<script id="benchmark-data" type="application/json">__BENCHMARK_DATA__</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("benchmark-data").textContent);
+const $ = id => document.getElementById(id);
+const esc = value => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const history = Object.keys(data).filter(key => key !== "current");
+const metrics = ["total execution time", "Gradle total execution time", "IDE execution time"];
+const maps = Object.fromEntries(Object.entries(data).map(([key, report]) => [key, new Map(report.scenarios.map(s => [s.definition.name, s]))]));
+const names = [...new Set(Object.values(maps).flatMap(map => [...map.keys()]))];
+function scenario(name) { return Object.values(maps).map(map => map.get(name)).find(Boolean); }
+function title(name) {
+    const suffix = name.replace("idea-sync-", "");
+    const edits = {"root-build-script-change":"Root build script change", "buildSrc-build-script-change":"buildSrc build script change", "core-build-script-change":"Core build script change", "core-dependency-addition":"Add Gson to core"};
+    return edits[suffix.replace("warm-warm-warm-", "")] || "Sync · " + suffix.split("-").join(" / ");
+}
+function values(s, metric) { return (s?.iterations || []).filter(i => i.phase === "MEASURE").map(i => i.values[metric]).filter(Number.isFinite); }
+function summarize(samples, stat) {
+    if (!samples.length) return null;
+    const sorted = [...samples].sort((a,b) => a-b), n = sorted.length;
+    const mean = sorted.reduce((a,b) => a+b, 0) / n;
+    return {value:stat === "mean" ? mean : (sorted[Math.floor(n/2)] + sorted[Math.floor((n-1)/2)]) / 2, n, min:sorted[0], max:sorted[n-1]};
+}
+function compare(name, previous, metric, stat) {
+    const a = summarize(values(maps[previous].get(name), metric), stat);
+    const b = summarize(values(maps.current.get(name), metric), stat);
+    return {name, a, b, change:a && b && a.value > 0 ? (b.value/a.value-1)*100 : null, saved:a && b ? a.value-b.value : null};
+}
+const seconds = value => (value / 1000).toFixed(3) + " s";
+const signed = (value, digits=1) => (value > 0 ? "+" : "") + value.toFixed(digits);
+const tone = value => value === null || value === 0 ? "muted" : value < 0 ? "good" : "bad";
+const percentage = value => value === null ? "—" : signed(value) + "%";
+function cell(summary, present) {
+    if (!summary) return `<span class="muted">${present ? "No measured samples" : "Not recorded"}</span>`;
+    return `${seconds(summary.value)}<small>n = ${summary.n} · ${summary.n === 1 ? "single measurement" : seconds(summary.min) + "–" + seconds(summary.max)}</small>`;
+}
+function raw(side, name) {
+    const s = maps[side].get(name);
+    const rows = (s?.iterations || []).map(i => `<tr class="${i.phase === "MEASURE" ? "" : "muted warmup"}"><th scope="row">${esc(i.phase)} #${esc(i.iteration)}</th>${metrics.map(m => `<td>${Number.isFinite(i.values[m]) ? seconds(i.values[m]) : "—"}</td>`).join("")}</tr>`).join("");
+    return `<div><h3>${esc(side)}</h3>${rows ? `<div class="table-wrap"><table><thead><tr><th>Run</th><th>Total</th><th>Gradle</th><th>IDE</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="muted">${s ? "No samples recorded" : "Scenario not recorded"}</p>`}</div>`;
+}
+function render() {
+    const previous = $("previous").value, metric = $("metric").value, stat = $("stat").value;
+    const all = names.map(name => compare(name, previous, metric, stat));
+    const comparable = all.filter(r => r.a && r.b), positive = comparable.filter(r => r.a.value > 0 && r.b.value > 0);
+    const geo = positive.length ? (Math.exp(positive.reduce((sum,r) => sum + Math.log(r.b.value/r.a.value), 0)/positive.length)-1)*100 : null;
+    const faster = comparable.filter(r => r.saved > 0).length, slower = comparable.filter(r => r.saved < 0).length;
+    $("cards").innerHTML = `<div class="card"><span>Geometric mean change</span><strong class="${tone(geo)}">${percentage(geo)}</strong><span>${positive.length} scenarios · vs ${esc(previous)}</span></div><div class="card"><span>Current is faster / slower</span><strong>${faster} / ${slower}</strong><span>${comparable.length-faster-slower} unchanged · observed, not significant</span></div><div class="card"><span>Comparable scenarios</span><strong>${comparable.length} / ${names.length}</strong><span>Missing data excluded, not zero-filled</span></div><div class="card"><span>Current measured runs</span><strong>n = 1</strong><span>per populated scenario · previous n = 3</span></div>`;
+    const query = $("search").value.toLowerCase();
+    const shown = all.filter(r => (r.name + " " + scenario(r.name).definition.title).toLowerCase().includes(query));
+    $("comparison-title").textContent = `Current vs ${previous}`;
+    $("count").textContent = `${shown.length} scenarios shown · ${stat} · ${metric}`;
+    $("rows").innerHTML = shown.map(r => {
+        const scale = Math.max(r.a?.value || 0, r.b?.value || 0, 1);
+        const bars = r.a && r.b ? `<div class="bar-track"><div class="bar" style="width:${r.a.value/scale*100}%"></div></div><div class="bar-track"><div class="bar current-bar" style="width:${r.b.value/scale*100}%"></div></div>` : "—";
+        return `<tr><th scope="row">${esc(title(r.name))}<small class="muted" style="display:block">${esc(scenario(r.name).definition.title.replace("Sync: ", ""))}</small></th><td>${cell(r.a, maps[previous].has(r.name))}</td><td class="current">${cell(r.b, maps.current.has(r.name))}</td><td class="badge ${tone(r.change)}">${percentage(r.change)}</td><td>${r.saved === null ? "—" : signed(r.saved/1000,3) + " s"}</td><td>${bars}</td></tr>`;
+    }).join("") || '<tr><td colspan="6">No scenarios match your search.</td></tr>';
+    $("matrix-head").innerHTML = `<tr><th scope="col">Scenario</th><th scope="col" class="current">Current</th>${history.map(h => `<th scope="col">${esc(h)}</th>`).join("")}</tr>`;
+    $("matrix").innerHTML = shown.map(r => `<tr><th scope="row">${esc(title(r.name))}</th><td class="current">${cell(r.b,maps.current.has(r.name))}</td>${history.map(h => { const c=compare(r.name,h,metric,stat); return `<td>${cell(c.a,maps[h].has(r.name))}<small class="${tone(c.change)}">${c.change === null ? "" : "Current: " + percentage(c.change)}</small></td>`; }).join("")}</tr>`).join("") || '<tr><td colspan="6">No scenarios match your search.</td></tr>';
+    $("details").innerHTML = shown.map(r => `<details><summary>${esc(title(r.name))}</summary><div class="raw-grid">${raw(previous,r.name)}${raw("current",r.name)}</div></details>`).join("") || '<p class="muted">No scenarios match your search.</p>';
+}
+$("sources").innerHTML = Object.entries(data).map(([key,report]) => `<tr><th scope="row"><a href="${esc(report.path)}">${esc(key)}</a></th><td>${esc(report.date)}</td><td>${esc([...new Set(report.scenarios.map(s => s.definition.version))].join(", "))}</td><td>${report.scenarios.filter(s => values(s,metrics[0]).length).length} / ${report.scenarios.length}</td></tr>`).join("");
+$("environment").innerHTML = Object.entries(data).map(([key,report]) => `<details><summary>${esc(key)} · environment &amp; invocation metadata</summary><pre class="metadata">${esc(JSON.stringify({environment:report.environment,scenarios:report.scenarios.map(s => ({name:s.definition.name,javaHome:s.definition.javaHome,jvmArgs:s.definition.jvmArgs,invoker:s.definition.invoker,mutators:s.definition.mutators}))},null,2))}</pre></details>`).join("");
+for (const id of ["previous","metric","stat"]) $(id).addEventListener("change",render);
+$("search").addEventListener("input",render);
+render();
+</script>
+</body></html>

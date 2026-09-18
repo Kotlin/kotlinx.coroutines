@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "documentation_date": "2026-09-18",
+  "subject_revision_at_start": "3393e3f70f8cd037aa404d306e97b7c4f63daade",
+  "new_sync_executed": false,
+  "new_telemetry_trace_collected": false,
+  "user_supplied_jaeger_export": "import-benchmarks/yahor/traces-1789726526259.json",
+  "services_started": false,
+  "cache_reset_performed": false,
+  "local_http_checks": [
+    {"url":"http://localhost:16686/","curl_http_code":"000","result":"Connection refused; curl exit 7"},
+    {"url":"http://localhost:4318/","curl_http_code":"000","result":"Connection refused; curl exit 7"}
+  ],
+  "measurement_source": "Existing import-benchmarks/seb reports and user-supplied yahor Jaeger export; no new sync run by the documentation author",
+  "limitations": [
+    "No per-work-item durations or CPU profiles in the benchmark reports; the separately supplied Jaeger export is from another environment",
+    "Source revisions are not mapped to the binaries of the historical benchmark runs",
+    "Dependency-addition scenario failed before samples; cold-IDE scenarios confound cache and daemon dimensions",
+    "Exact Java-agent daemon export/flush behavior not audited",
+    "External repository search was limited; source paths were followed directly"
+  ],
+  "external_references": [
+    {"id":"G1","url":"https://docs.gradle.org/current/userguide/build_lifecycle_intermediate.html","observed_document_version":"9.7.1"},
+    {"id":"G2","url":"https://docs.gradle.org/current/userguide/kotlin_dsl.html","observed_document_version":"9.7.1"},
+    {"id":"G3","url":"https://docs.gradle.org/current/userguide/gradle_daemon.html","observed_document_version":"9.7.0"},
+    {"id":"local-build-inputs","path":"inputs/","note":"Current inputs; not a historical run manifest"}
+  ]
+}

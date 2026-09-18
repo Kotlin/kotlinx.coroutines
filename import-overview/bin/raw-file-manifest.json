@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "files": [
+    {
+      "source": "import-benchmarks/seb/baseline/benchmark.html",
+      "path": "benchmarks/baseline/benchmark.html",
+      "bytes": 59394,
+      "sha256": "db82b3866e58993d980dd7ab3b5c78643086644f021c3c1c98036c2fb918a362"
+    },
+    {
+      "source": "import-benchmarks/seb/baseline/benchmark.csv",
+      "path": "benchmarks/baseline/benchmark.csv",
+      "bytes": 4849,
+      "sha256": "47f628f2edbb82c23d5bd345be9489acee0b6a8769ef3087ffaa7cd82aed73d1"
+    },
+    {
+      "source": "import-benchmarks/seb/baseline/profile.log",
+      "path": "benchmarks/baseline/profile.log",
+      "bytes": 124565,
+      "sha256": "a585d466084f9a175b1071a7003f7441e8c4cb04fbfd20286471635a7a212e10"
+    },
+    {
+      "source": "import-benchmarks/seb/gradle-xxh3-hash/benchmark.html",
+      "path": "benchmarks/gradle-xxh3-hash/benchmark.html",
+      "bytes": 35032,
+      "sha256": "b93810991d4af04298a696b77c2ba420364bdc6bf13d0b910e04dc85ec769d73"
+    },
+    {
+      "source": "import-benchmarks/seb/gradle-xxh3-hash/benchmark.csv",
+      "path": "benchmarks/gradle-xxh3-hash/benchmark.csv",
+      "bytes": 620,
+      "sha256": "249fbfa0ff873d9a852652d25e6f821b8f526b3a9c791191baed667a87828be5"
+    },
+    {
+      "source": "import-benchmarks/seb/gradle-xxh3-hash/profile.log",
+      "path": "benchmarks/gradle-xxh3-hash/profile.log",
+      "bytes": 25889,
+      "sha256": "1a5a76c0cece950e96a102bab4cbc69204e9a4af627454e6a2251963acece277"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps/benchmark.html",
+      "path": "benchmarks/lookahead-deps/benchmark.html",
+      "bytes": 35028,
+      "sha256": "e579a26493bf2e67a6837462c150bcf8dd54f7c71aa95b76d8f9a3d7b5011a7b"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps/benchmark.csv",
+      "path": "benchmarks/lookahead-deps/benchmark.csv",
+      "bytes": 616,
+      "sha256": "b60918e28c59aad1c53c78f50e3e1391fbb26c7347bfc3b20e1d8f6c46723dd5"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps/profile.log",
+      "path": "benchmarks/lookahead-deps/profile.log",
+      "bytes": 25877,
+      "sha256": "c008a65291691ea3675155f2563a7c4b3f7cef9b87861a32839ab823892dc6ec"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps-full/benchmark.html",
+      "path": "benchmarks/lookahead-deps-full/benchmark.html",
+      "bytes": 59379,
+      "sha256": "77c581dd5e25d4afa78ae3e13a7198f52d3571648380becae530033bd5e30bbe"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps-full/benchmark.csv",
+      "path": "benchmarks/lookahead-deps-full/benchmark.csv",
+      "bytes": 4834,
+      "sha256": "4f9675503d3b88a16009324febba2d43e85eefd5c6c62b7bc10a46cdfc734e91"
+    },
+    {
+      "source": "import-benchmarks/seb/lookahead-deps-full/profile.log",
+      "path": "benchmarks/lookahead-deps-full/profile.log",
+      "bytes": 123911,
+      "sha256": "fabe1cef6f9c3af095d7b64fd695d3d55cdd31292c7bff14dcf0d1758ca8775e"
+    },
+    {
+      "source": "performance.scenarios",
+      "path": "inputs/performance.scenarios",
+      "bytes": 3031,
+      "sha256": "db1c228f4f590020dfd27e1d9f55854f6976aaec94080278c686cc30de1894dd"
+    },
+    {
+      "source": "benchmark-idea-sync.sh",
+      "path": "inputs/benchmark-idea-sync.sh",
+      "bytes": 595,
+      "sha256": "11460bf0623a9bd9f944566edad6cfd5a3c1cffaf5b697f1e46e4b9364108f7b"
+    },
+    {
+      "source": "benchmark-idea-sync-cold3.sh",
+      "path": "inputs/benchmark-idea-sync-cold3.sh",
+      "bytes": 621,
+      "sha256": "e13b1805599b2e41d3afb1266dbca65333a14fbbbfa6b774088883abeb529698"
+    },
+    {
+      "source": "gradle/wrapper/gradle-wrapper.properties",
+      "path": "inputs/gradle/wrapper/gradle-wrapper.properties",
+      "bytes": 255,
+      "sha256": "afc6712f193392af018c335a6fc13d31e2be7478f7d77e7635e3d8097a3d45e8"
+    },
+    {
+      "source": "gradle.properties",
+      "path": "inputs/gradle.properties",
+      "bytes": 1964,
+      "sha256": "d3f6e88bca63fc869d4b76f0d511b63a0126843a0e1776f376a0faf7ba111c4e"
+    },
+    {
+      "source": "settings.gradle.kts",
+      "path": "inputs/settings.gradle.kts",
+      "bytes": 1715,
+      "sha256": "fe5d3398bd42ea1f30617679fec3504a2ffd41328be55c1011d62bd9e812f851"
+    },
+    {
+      "source": "build.gradle.kts",
+      "path": "inputs/build.gradle.kts",
+      "bytes": 4285,
+      "sha256": "894deeb4a5bac8b151c61a386de4855c33937e566e7c5123f422d323cb64668e"
+    },
+    {
+      "source": "buildSrc/build.gradle.kts",
+      "path": "inputs/buildSrc/build.gradle.kts",
+      "bytes": 3028,
+      "sha256": "de2553ce1a5437daf7d3037411d982be2cf80e1dc62d580a10d9659dd7896a77"
+    },
+    {
+      "source": "kotlinx-coroutines-core/build.gradle.kts",
+      "path": "inputs/kotlinx-coroutines-core/build.gradle.kts",
+      "bytes": 7163,
+      "sha256": "1060a6771cfbb1b805cc94fc62444b865d65b964c90fbaa891b679e2416a237b"
+    }
+  ]
+}

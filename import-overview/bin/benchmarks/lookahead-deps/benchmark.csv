@@ -1,0 +1,8 @@
+scenario,Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches,Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches,Sync: Cold Gradle User Home, Cold Gradle Daemon, Cold IntelliJ caches
+version,Gradle 9.9.0-20260918071003+0000,Gradle 9.9.0-20260918071003+0000,Gradle 9.9.0-20260918071003+0000
+tasks,IDE sync,IDE sync,IDE sync
+value,total execution time,Gradle total execution time,IDE execution time
+warm-up build #1,101208.00,85154.00,16054.00
+measured build #1,102749.00,86599.00,16150.00
+measured build #2,102357.00,87017.00,15340.00
+measured build #3,100238.00,85340.00,14898.00

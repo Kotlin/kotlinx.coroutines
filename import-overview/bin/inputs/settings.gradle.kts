@@ -1,0 +1,56 @@
+pluginManagement {
+    val javafxPluginVersion = providers.gradleProperty("javafx_plugin_version").get()
+    plugins {
+        id("org.openjfx.javafxplugin") version javafxPluginVersion
+        id("me.champeau.jmh") version "0.7.3"
+    }
+
+    repositories {
+        maven(file("env/kotlin"))
+        maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.2"
+}
+
+rootProject.name = "kotlinx.coroutines"
+
+fun module(path: String) {
+    val i = path.lastIndexOf("/")
+    val name = path.substring(i + 1)
+    include(name)
+    project(":$name").projectDir = file(path)
+}
+val prop = providers.systemProperty("build_snapshot_train").orNull
+extra["build_snapshot_train"] = if (prop != null && prop != "") "true" else "false"
+// ---------------------------
+
+include("benchmarks")
+module("test-utils")
+
+include("kotlinx-coroutines-core")
+
+module("kotlinx-coroutines-test")
+module("kotlinx-coroutines-debug")
+module("kotlinx-coroutines-bom")
+
+
+module("integration/kotlinx-coroutines-guava")
+module("integration/kotlinx-coroutines-jdk8")
+module("integration/kotlinx-coroutines-slf4j")
+module("integration/kotlinx-coroutines-play-services")
+
+module("reactive/kotlinx-coroutines-reactive")
+module("reactive/kotlinx-coroutines-reactor")
+module("reactive/kotlinx-coroutines-jdk9")
+module("reactive/kotlinx-coroutines-rx2")
+module("reactive/kotlinx-coroutines-rx3")
+module("ui/kotlinx-coroutines-android")
+module("ui/kotlinx-coroutines-android/android-unit-tests")
+if (JavaVersion.current().isJava11Compatible()) {
+    module("ui/kotlinx-coroutines-javafx")
+}
+module("ui/kotlinx-coroutines-swing")

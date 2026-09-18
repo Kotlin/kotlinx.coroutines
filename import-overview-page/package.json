@@ -1,0 +1,20 @@
+{
+  "name": "gradle-import-overview",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/core.test.js && python3 -B -m unittest discover -p 'test_*.py'",
+    "test:browser": "playwright test",
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1 --directory .."
+  },
+  "dependencies": {
+    "dompurify": "3.4.15",
+    "marked": "18.0.13"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "esbuild": "0.28.2"
+  }
+}

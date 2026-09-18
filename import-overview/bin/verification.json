@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "tests": {
+    "command": "python3 -B -m unittest discover -s import-overview/bin -p 'test_*.py' -q",
+    "passed": 19,
+    "failed": 0
+  },
+  "artifact_checks": {
+    "markdown_pages": 13,
+    "local_links_resolved": 125,
+    "preserved_file_hashes_verified": 22,
+    "source_reference_ids": 71,
+    "canonical_trace_spans": 971,
+    "detailed_trace_table_rows_matched_to_json": 18,
+    "benchmark_measured_iterations": 54,
+    "benchmark_warmup_iterations": 18,
+    "benchmark_scenarios_without_measurements": 2,
+    "all_work_catalog_citations_resolve": true
+  },
+  "commands_completed": [
+    "python3 import-overview/bin/prepare_evidence.py --sources",
+    "python3 -B import-overview/bin/analyze_trace.py",
+    "git diff --check"
+  ],
+  "not_executed": [
+    "New Gradle sync or application compilation",
+    "Jaeger service startup or new telemetry capture",
+    "Runtime reproduction of candidate optimizations",
+    "Visual rendering of Mermaid diagrams"
+  ]
+}

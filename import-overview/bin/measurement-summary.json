@@ -1,0 +1,842 @@
+{
+  "schema_version": 1,
+  "aggregation": "Per-metric median/min/max; only MEASURE iterations; no pairing across datasets",
+  "scenarios": [
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-warm",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            2459.0,
+            2046.0,
+            1965.0
+          ],
+          "median": 2046.0,
+          "min": 1965.0,
+          "max": 2459.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            1553.0,
+            1104.0,
+            1007.0
+          ],
+          "median": 1104.0,
+          "min": 1007.0,
+          "max": 1553.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            906.0,
+            942.0,
+            958.0
+          ],
+          "median": 942.0,
+          "min": 906.0,
+          "max": 958.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-cold",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            70892.0,
+            68265.0,
+            73716.0
+          ],
+          "median": 70892.0,
+          "min": 68265.0,
+          "max": 73716.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            10808.0,
+            12039.0,
+            11538.0
+          ],
+          "median": 11538.0,
+          "min": 10808.0,
+          "max": 12039.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            60084.0,
+            56226.0,
+            62178.0
+          ],
+          "median": 60084.0,
+          "min": 56226.0,
+          "max": 62178.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-cold-warm",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            10179.0,
+            9191.0,
+            7438.0
+          ],
+          "median": 9191.0,
+          "min": 7438.0,
+          "max": 10179.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            9723.0,
+            8880.0,
+            7180.0
+          ],
+          "median": 8880.0,
+          "min": 7180.0,
+          "max": 9723.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            456.0,
+            311.0,
+            258.0
+          ],
+          "median": 311.0,
+          "min": 258.0,
+          "max": 456.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-cold-cold",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            62048.0,
+            61404.0,
+            61177.0
+          ],
+          "median": 61404.0,
+          "min": 61177.0,
+          "max": 62048.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            10571.0,
+            10802.0,
+            10996.0
+          ],
+          "median": 10802.0,
+          "min": 10571.0,
+          "max": 10996.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            51477.0,
+            50602.0,
+            50181.0
+          ],
+          "median": 50602.0,
+          "min": 50181.0,
+          "max": 51477.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-warm-root-build-script-change",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            2919.0,
+            2445.0,
+            2187.0
+          ],
+          "median": 2445.0,
+          "min": 2187.0,
+          "max": 2919.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            1936.0,
+            1490.0,
+            1240.0
+          ],
+          "median": 1490.0,
+          "min": 1240.0,
+          "max": 1936.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            983.0,
+            955.0,
+            947.0
+          ],
+          "median": 955.0,
+          "min": 947.0,
+          "max": 983.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-warm-buildSrc-build-script-change",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            2636.0,
+            2274.0,
+            2230.0
+          ],
+          "median": 2274.0,
+          "min": 2230.0,
+          "max": 2636.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            1655.0,
+            1334.0,
+            1246.0
+          ],
+          "median": 1334.0,
+          "min": 1246.0,
+          "max": 1655.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            981.0,
+            940.0,
+            984.0
+          ],
+          "median": 981.0,
+          "min": 940.0,
+          "max": 984.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-warm-core-build-script-change",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            2749.0,
+            2437.0,
+            2304.0
+          ],
+          "median": 2437.0,
+          "min": 2304.0,
+          "max": 2749.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            1785.0,
+            1515.0,
+            1323.0
+          ],
+          "median": 1515.0,
+          "min": 1323.0,
+          "max": 1785.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            964.0,
+            922.0,
+            981.0
+          ],
+          "median": 964.0,
+          "min": 922.0,
+          "max": 981.0
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-warm-warm-warm-core-dependency-addition",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 0,
+      "status": "no-measurements",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "dataset": "baseline",
+      "scenario": "idea-sync-cold-cold-cold",
+      "gradle_version": "9.9.0-20260916220000+0000",
+      "report_date": "2026-09-17T14:29:47.728371Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            142243.0,
+            154418.0,
+            157004.0
+          ],
+          "median": 154418.0,
+          "min": 142243.0,
+          "max": 157004.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            111646.0,
+            122882.0,
+            127602.0
+          ],
+          "median": 122882.0,
+          "min": 111646.0,
+          "max": 127602.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            30597.0,
+            31536.0,
+            29402.0
+          ],
+          "median": 30597.0,
+          "min": 29402.0,
+          "max": 31536.0
+        }
+      }
+    },
+    {
+      "dataset": "gradle-xxh3-hash",
+      "scenario": "idea-sync-cold-cold-cold",
+      "gradle_version": "9.9.0-20260917154113+0000",
+      "report_date": "2026-09-17T16:00:37.814912Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            123961.0,
+            124029.0,
+            124938.0
+          ],
+          "median": 124029.0,
+          "min": 123961.0,
+          "max": 124938.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            108888.0,
+            109070.0,
+            109834.0
+          ],
+          "median": 109070.0,
+          "min": 108888.0,
+          "max": 109834.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            15073.0,
+            14959.0,
+            15104.0
+          ],
+          "median": 15073.0,
+          "min": 14959.0,
+          "max": 15104.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps",
+      "scenario": "idea-sync-cold-cold-cold",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:18:45.869451Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            102749.0,
+            102357.0,
+            100238.0
+          ],
+          "median": 102357.0,
+          "min": 100238.0,
+          "max": 102749.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            86599.0,
+            87017.0,
+            85340.0
+          ],
+          "median": 86599.0,
+          "min": 85340.0,
+          "max": 87017.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            16150.0,
+            15340.0,
+            14898.0
+          ],
+          "median": 15340.0,
+          "min": 14898.0,
+          "max": 16150.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-warm",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            1957.0,
+            1973.0,
+            1647.0
+          ],
+          "median": 1957.0,
+          "min": 1647.0,
+          "max": 1973.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            1046.0,
+            1077.0,
+            793.0
+          ],
+          "median": 1046.0,
+          "min": 793.0,
+          "max": 1077.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            911.0,
+            896.0,
+            854.0
+          ],
+          "median": 896.0,
+          "min": 854.0,
+          "max": 911.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-cold",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            42268.0,
+            43254.0,
+            41346.0
+          ],
+          "median": 42268.0,
+          "min": 41346.0,
+          "max": 43254.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            9790.0,
+            10018.0,
+            8881.0
+          ],
+          "median": 9790.0,
+          "min": 8881.0,
+          "max": 10018.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            32478.0,
+            33236.0,
+            32465.0
+          ],
+          "median": 32478.0,
+          "min": 32465.0,
+          "max": 33236.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-cold-warm",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            6472.0,
+            6454.0,
+            6707.0
+          ],
+          "median": 6472.0,
+          "min": 6454.0,
+          "max": 6707.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            6146.0,
+            6166.0,
+            6157.0
+          ],
+          "median": 6157.0,
+          "min": 6146.0,
+          "max": 6166.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            326.0,
+            288.0,
+            550.0
+          ],
+          "median": 326.0,
+          "min": 288.0,
+          "max": 550.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-cold-cold",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            42500.0,
+            36595.0,
+            37883.0
+          ],
+          "median": 37883.0,
+          "min": 36595.0,
+          "max": 42500.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            9322.0,
+            7845.0,
+            7853.0
+          ],
+          "median": 7853.0,
+          "min": 7845.0,
+          "max": 9322.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            33178.0,
+            28750.0,
+            30030.0
+          ],
+          "median": 30030.0,
+          "min": 28750.0,
+          "max": 33178.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-warm-root-build-script-change",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            3872.0,
+            2286.0,
+            2618.0
+          ],
+          "median": 2618.0,
+          "min": 2286.0,
+          "max": 3872.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            2901.0,
+            1427.0,
+            1760.0
+          ],
+          "median": 1760.0,
+          "min": 1427.0,
+          "max": 2901.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            971.0,
+            859.0,
+            858.0
+          ],
+          "median": 859.0,
+          "min": 858.0,
+          "max": 971.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-warm-buildSrc-build-script-change",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            3208.0,
+            4650.0,
+            7145.0
+          ],
+          "median": 4650.0,
+          "min": 3208.0,
+          "max": 7145.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            2259.0,
+            3699.0,
+            6238.0
+          ],
+          "median": 3699.0,
+          "min": 2259.0,
+          "max": 6238.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            949.0,
+            951.0,
+            907.0
+          ],
+          "median": 949.0,
+          "min": 907.0,
+          "max": 951.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-warm-core-build-script-change",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            3269.0,
+            6952.0,
+            5369.0
+          ],
+          "median": 5369.0,
+          "min": 3269.0,
+          "max": 6952.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            2284.0,
+            5902.0,
+            4292.0
+          ],
+          "median": 4292.0,
+          "min": 2284.0,
+          "max": 5902.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            985.0,
+            1050.0,
+            1077.0
+          ],
+          "median": 1050.0,
+          "min": 985.0,
+          "max": 1077.0
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-warm-warm-warm-core-dependency-addition",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 0,
+      "status": "no-measurements",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [],
+          "median": null,
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "dataset": "lookahead-deps-full",
+      "scenario": "idea-sync-cold-cold-cold",
+      "gradle_version": "9.9.0-20260918071003+0000",
+      "report_date": "2026-09-18T07:37:44.081312Z",
+      "measurement_count": 3,
+      "status": "measured",
+      "metrics": {
+        "total execution time": {
+          "unit": "ms",
+          "values": [
+            104147.0,
+            100505.0,
+            104655.0
+          ],
+          "median": 104147.0,
+          "min": 100505.0,
+          "max": 104655.0
+        },
+        "Gradle total execution time": {
+          "unit": "ms",
+          "values": [
+            88293.0,
+            86957.0,
+            87888.0
+          ],
+          "median": 87888.0,
+          "min": 86957.0,
+          "max": 88293.0
+        },
+        "IDE execution time": {
+          "unit": "ms",
+          "values": [
+            15854.0,
+            13548.0,
+            16767.0
+          ],
+          "median": 15854.0,
+          "min": 13548.0,
+          "max": 16767.0
+        }
+      }
+    }
+  ]
+}
