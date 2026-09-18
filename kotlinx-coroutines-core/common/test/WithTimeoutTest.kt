@@ -78,7 +78,7 @@ class WithTimeoutTest : TestBase() {
      * Tests that [withTimeout] waits for children coroutines to complete.
      */
     @Test
-    fun testWithTimeoutChildWait() = runTest {
+    fun testWithTimeoutChildWait() = withVirtualTime {
         expect(1)
         withTimeout(100) {
             expect(2)
