@@ -36,18 +36,8 @@ abstract class SchedulerTestBase : TestBase() {
         }
 
         private fun maxSequenceNumber(): Int? {
-            return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.maxOrNull()
-        }
-
-        private fun sequenceNumber(threadName: String): Int {
-            val suffix = threadName.substring(threadName.lastIndexOf("-") + 1)
-            val separatorIndex = suffix.indexOf(' ')
-            if (separatorIndex == -1) {
-                return suffix.toInt()
-            }
-
-            return suffix.substring(0, separatorIndex).toInt()
+            return Thread.getAllStackTraces().keys.asSequence()
+                .filterIsInstance<CoroutineScheduler.Worker>().maxOfOrNull { it.indexInArray }
         }
 
         suspend fun Iterable<Job>.joinAll() = forEach { it.join() }
