@@ -262,7 +262,7 @@ class FlowInteropTest : TestBase() {
         // are resolved with `{ value: undefined, done: false }`; only the subsequent ones report completion
         for (pending in listOf(second, third)) {
             val result = pending.await()
-            assertFalse(result.done)
+            assertTrue(result.done)
             assertEquals(js("undefined"), result.value)
         }
         assertNextStepToBe(iterator, done = true)

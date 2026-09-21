@@ -108,12 +108,12 @@ public actual interface ReceiveChannel<out E> {
             // In JavaScript, missing arguments are assigned `undefined`, so `value` becomes `undefined`.
             // This matches the iterator protocol, where `return(value)` accepts zero or one argument.
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters#description
-            `return` = { value: E? ->
+            _return = { value: E? ->
                 wasEarlyFinished = true
                 if (cancelOnEarlyExit) cancel()
                 Promise.resolve(JsIteratorResult(value = value, done = true))
             },
-            `throw` = { err: dynamic ->
+            _throw = { err: dynamic ->
                 wasEarlyFinished = true
                 val cause = err.unsafeCast<JsPromiseError>().toThrowableOrNull()
                 if (cancelOnEarlyExit) {
