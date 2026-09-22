@@ -22,3 +22,7 @@ idea-sandbox
 .output.txt
 env/kotlin/**
 env/gradle/**
+guh
+gradle-user-home**
+.junie
+artifacts
