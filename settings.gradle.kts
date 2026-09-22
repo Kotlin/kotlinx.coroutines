@@ -8,7 +8,7 @@ pluginManagement {
     repositories {
         maven(file("env/kotlin"))
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
-        gradlePluginPortal()
+        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     }
 }
 

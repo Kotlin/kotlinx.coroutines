@@ -4,25 +4,21 @@ plugins {
     `kotlin-dsl`
 }
 
-val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
 val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
 val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
 
 repositories {
     maven(file("../env/kotlin"))
 
-    mavenCentral()
-    if (cacheRedirectorEnabled) {
-        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-    } else {
-        maven("https://plugins.gradle.org/m2")
-    }
+    maven("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2")
+    maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
     if (!kotlinDevUrl.isNullOrEmpty()) {
         maven(kotlinDevUrl)
     }
     if (buildSnapshotTrain) {
         mavenLocal()
     }
+
 }
 
 val gradleProperties = Properties().apply {

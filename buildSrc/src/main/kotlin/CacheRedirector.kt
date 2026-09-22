@@ -7,12 +7,6 @@ import org.gradle.kotlin.dsl.*
 import java.net.*
 
 /**
- * Enabled via environment variable, so that it can be reliably accessed from any piece of the build script,
- * including buildSrc within TeamCity CI.
- */
-private val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-
-/**
  *  The list of repositories supported by cache redirector should be synced with the list at https://cache-redirector.jetbrains.com/redirects_generated.html
  *  To add a repository to the list create an issue in ADM project (example issue https://youtrack.jetbrains.com/issue/IJI-149)
  */
@@ -83,13 +77,11 @@ private fun Project.checkRedirectUrl(url: URI, containerName: String): URI {
             " Check buildSrc/src/main/kotlin/CacheRedirector.kt for details."
         logger.warn("WARNING - $msg\n$details")
     }
-    return if (cacheRedirectorEnabled) redirected ?: url else url
+    return redirected ?: url
 }
 
 private fun Project.checkRedirect(repositories: RepositoryHandler, containerName: String) {
-    if (cacheRedirectorEnabled) {
-        logger.info("Redirecting repositories for $containerName")
-    }
+    logger.info("Redirecting repositories for $containerName")
     for (repository in repositories) {
         when (repository) {
             is MavenArtifactRepository -> repository.url = checkRedirectUrl(repository.url, containerName)
@@ -116,10 +108,6 @@ object CacheRedirector {
 
     @JvmStatic
     fun maybeRedirect(url: String): String {
-        if (!cacheRedirectorEnabled) return url
         return URI(url).maybeRedirect()?.toString() ?: url
     }
-
-    @JvmStatic
-    val isEnabled get() = cacheRedirectorEnabled
 }
