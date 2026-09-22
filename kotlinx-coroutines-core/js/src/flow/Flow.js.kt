@@ -157,8 +157,8 @@ public actual interface Flow<out T> {
          * Converts a JavaScript AsyncIterable to a Kotlin Flow.
          *
          * The resulting flow will iterate through all values produced by the async iterable.
-         * If the flow collection is canceled or fails, the iterator's `return()` method will be called
-         * to properly clean up the async iterable.
+         * If the flow collection is canceled or fails, the iterator's `return()` method (if present) will be called
+         * to properly clean up the async iterable, see [from] for the details.
          */
         @JsStatic
         @ExperimentalCoroutinesApi
@@ -168,28 +168,38 @@ public actual interface Flow<out T> {
         /**
          * Converts a JavaScript async generator function to a Kotlin Flow.
          *
-         * The generator will be invoked to get an async iterator for collection.
-         * Cancellation or failure during a collection triggers the iterator's `return()` method
-         * to ensure proper cleanup.
+         * The generator will be invoked to get an async iterator for each collection.
+         *
+         * The iterator is closed the same way `for await` does it:
+         * - When the iterator reports completion (`done: true`) or its `next()` fails, the iterator is considered
+         *   finished and `return()` is not called. The failure of `next()` is rethrown to the collector as is.
+         * - When the collection is cancelled or fails downstream while the iterator is still alive,
+         *   the iterator's `return()` method is called (if it is present, as it is optional in the protocol)
+         *   and the promise it returns is awaited. The original exception is then rethrown; if `return()` itself fails,
+         *   its exception is attached to the original one as a suppressed exception and does not replace it.
          */
         @JsStatic
         @JsName("fromAsyncGenerator")
         @ExperimentalCoroutinesApi
         public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> = flow {
-            var completed = false
             val iterator = generator()
-            try {
-                while (true) {
-                    val result = iterator.next().await()
-                    if (result.done) {
-                        completed = true
-                        break
-                    }
-                    emit(result.value.unsafeCast<T>())
+            val isThereReturnMethod = jsTypeOf(iterator.`return`) == "function"
+            while (true) {
+                val result = try {
+                    iterator.next().await()
+                } catch (e: CancellationException) {
+                    /* The collector was cancelled while waiting for the element: the iterator is still alive,
+                     * so it must be closed. Any other failure of `next()` means the iterator is finished,
+                     * so it is rethrown as is. */
+                    if (isThereReturnMethod) iterator.closeOnFailure(e)
+                    throw e
                 }
-            } finally {
-                if (!completed) {
-                    iterator.asDynamic().`return`().unsafeCast<Promise<*>>().await()
+                if (result.done) return@flow
+                try {
+                    emit(result.value.unsafeCast<T>())
+                } catch (e: dynamic) {
+                    if (isThereReturnMethod) iterator.closeOnFailure(e)
+                    throw e
                 }
             }
         }
@@ -198,14 +208,25 @@ public actual interface Flow<out T> {
          * Converts a JavaScript AsyncIterator to a Kotlin Flow.
          *
          * The resulting flow emits items produced by the iterator until it reports completion.
-         * If a collection is canceled or fails, the iterator's `return()` method is called
-         * to close the iterator.
+         * If a collection is canceled or fails, the iterator's `return()` method (if present) is called
+         * to close the iterator, see [from] for the details.
          */
         @JsStatic
         @JsName("fromAsyncIterator")
         @ExperimentalCoroutinesApi
         public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> =
             from { iterator }
+    }
+}
+
+private suspend fun JsAsyncIterator<*>.closeOnFailure(cause: Throwable) {
+    val iterator = asDynamic()
+    try {
+        withContext(NonCancellable) {
+            iterator.`return`().unsafeCast<Promise<*>>().await()
+        }
+    } catch (e: dynamic) {
+        cause.addSuppressed(e)
     }
 }
 

@@ -458,6 +458,136 @@ class FlowInteropTest : TestBase() {
         assertNextStepToBe(iterator, done = true)
     }
 
+    @Test
+    fun testAsyncGeneratorToFlowBasic() = runTest {
+        // `new Function` is used since the Kotlin/JS compiler does not support `async function*` inside `js()`
+        val generator = js("new Function('return async function*() { yield 1; yield 2; yield 3; }')()")
+            .unsafeCast<() -> JsAsyncIterator<Int>>()
+        assertEquals(listOf(1, 2, 3), Flow.from(generator).toList())
+        assertEquals(listOf(1, 2, 3), Flow.from(generator).toList())
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowWithoutReturnMethod() = runTest {
+        var i = 0
+        val iterator = asyncIterator(next = {
+            Promise.resolve(if (i < 3) JsIteratorResult(value = i++, done = false) else JsIteratorResult(done = true))
+        })
+        assertEquals(0, Flow.from(iterator).first())
+        assertEquals(listOf(1, 2), Flow.from(iterator).toList())
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowCallsReturnOnEarlyExit() = runTest {
+        var i = 0
+        var returnCalls = 0
+        val iterator = asyncIterator<Int>(
+            next = { Promise.resolve(JsIteratorResult(value = i++, done = false)) },
+            `return` = { returnCalls++; Promise.resolve(JsIteratorResult(value = it, done = true)) }
+        )
+        assertEquals(listOf(0, 1), Flow.from(iterator).take(2).toList())
+        assertEquals(1, returnCalls)
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowCallsReturnOnCancellationWhileAwaitingNext() = runTest {
+        var returnCalls = 0
+        val iterator = asyncIterator<Int>(
+            next = { Promise { _, _ -> /* never settles */ } },
+            `return` = { returnCalls++; Promise.resolve(JsIteratorResult(value = it, done = true)) }
+        )
+        val job = launch(start = CoroutineStart.UNDISPATCHED) {
+            Flow.from(iterator).collect { expectUnreached() }
+        }
+        assertEquals(0, returnCalls)
+        job.cancelAndJoin()
+        assertEquals(1, returnCalls)
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowNextRejection() = runTest {
+        var i = 0
+        var returnCalls = 0
+        val error = IllegalStateException("next failed")
+        val iterator = asyncIterator(
+            next = { if (i++ == 0) Promise.resolve(JsIteratorResult(value = 1, done = false)) else Promise.reject(error) },
+            `return` = { returnCalls++; Promise.reject(IllegalArgumentException("return failed")) }
+        )
+        val collected = mutableListOf<Int>()
+        assertSame(error, assertFailsWith<IllegalStateException> {
+            Flow.from(iterator).collect { collected.add(it) }
+        })
+        assertEquals(listOf(1), collected)
+        assertEquals(0, returnCalls)
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowNextThrowsSynchronously() = runTest {
+        val error = IllegalStateException("next failed")
+        val iterator = asyncIterator<Int>(next = { throw error })
+        assertSame(error, assertFailsWith<IllegalStateException> { Flow.from(iterator).toList() })
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowDownstreamFailureWithFailingReturn() = runTest {
+        var returnCalls = 0
+        val downstreamError = IllegalStateException("downstream failed")
+        val returnError = IllegalArgumentException("return failed")
+        val iterator = asyncIterator<Int>(
+            next = { Promise.resolve(JsIteratorResult(value = 1, done = false)) },
+            `return` = { returnCalls++; Promise.reject(returnError) }
+        )
+        // The downstream failure must not be replaced by the failure of `return()`
+        val e = assertFailsWith<IllegalStateException> {
+            Flow.from(iterator).collect { throw downstreamError }
+        }
+        assertSame(downstreamError, e)
+        assertEquals(1, returnCalls)
+        assertSame(returnError, e.suppressedExceptions.single())
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowReturnIsAwaited() = runTest {
+        var cleanupDone = false
+        val iterator = asyncIterator(
+            next = { Promise.resolve(JsIteratorResult(value = 1, done = false)) },
+            `return` = { value ->
+                Promise { resolve, _ ->
+                    GlobalScope.launch {
+                        delay(50.milliseconds)
+                        cleanupDone = true
+                        resolve(JsIteratorResult(value = value, done = true))
+                    }
+                }
+            }
+        )
+        assertEquals(1, Flow.from(iterator).first())
+        assertTrue(cleanupDone)
+    }
+
+    @Test
+    fun testAsyncIteratorToFlowNoReturnOnNormalCompletion() = runTest {
+        var i = 0
+        var returnCalls = 0
+        val iterator = asyncIterator(
+            next = { Promise.resolve(if (i < 2) JsIteratorResult(value = i++, done = false) else JsIteratorResult(done = true)) },
+            `return` = { returnCalls++; Promise.resolve(JsIteratorResult(done = true)) }
+        )
+        assertEquals(listOf(0, 1), Flow.from(iterator).toList())
+        assertEquals(0, returnCalls)
+    }
+
+    /** Builds a hand-written async iterator; `return` is omitted from the object when not provided. */
+    private fun <T> asyncIterator(
+        next: () -> Promise<JsIteratorResult<T>>,
+        `return`: ((T?) -> Promise<JsIteratorResult<T>>)? = null
+    ): JsAsyncIterator<T> {
+        val iterator = js("{}")
+        iterator.next = next
+        if (`return` != null) iterator.`return` = `return`
+        return iterator.unsafeCast<JsAsyncIterator<T>>()
+    }
+
     private suspend fun <T> assertNextStepToBe(
         iterator: JsAsyncIterator<T>,
         value: T? = js("undefined"),
