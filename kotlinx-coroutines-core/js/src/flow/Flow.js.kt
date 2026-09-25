@@ -155,19 +155,6 @@ public actual interface Flow<out T> {
     // shadowing on the JS side doesn't break implementation
     public companion object {
         /**
-         * Converts a JavaScript AsyncIterable to a Kotlin Flow.
-         *
-         * The resulting flow will iterate through all values produced by the async iterable.
-         * If the flow collection is canceled or fails, the iterator's `return()` method (if present) will be called
-         * to properly clean up the async iterable, see [fromAsyncGenerator] for the details.
-         */
-        @JsStatic
-        @JsName("fromAsync")
-        @Deprecated("", level = DeprecationLevel.HIDDEN)
-        public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
-            createFlowFromAsyncSource(source)
-
-        /**
          * Converts a JavaScript async generator function to a Kotlin Flow.
          *
          * The generator will be invoked to get an async iterator for each collection.
@@ -186,13 +173,12 @@ public actual interface Flow<out T> {
         public fun <T> fromAsync(source: () -> JsAsyncIterator<T>): Flow<T> =
             createFlowFromAsyncSource(source)
 
-        /**
-         * Converts a JavaScript AsyncIterator to a Kotlin Flow.
-         *
-         * The resulting flow emits items produced by the iterator until it reports completion.
-         * If a collection is canceled or fails, the iterator's `return()` method (if present) is called
-         * to close the iterator, see [fromAsyncGenerator] for the details.
-         */
+        @JsStatic
+        @JsName("fromAsync")
+        @Deprecated("", level = DeprecationLevel.HIDDEN)
+        public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
+            createFlowFromAsyncSource(source)
+
         @JsStatic
         @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
