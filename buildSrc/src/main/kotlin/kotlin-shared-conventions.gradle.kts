@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -109,7 +110,42 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         }
         js {
             outputModuleName = project.name
-            nodejs()
+
+            // The part for testing with the latest JS target supported
+            val mainCompilation = compilations.getByName("main")
+            val testCompilation = compilations.getByName("test")
+
+            val latestJsCompilation = compilations.create("latestJsTest") {
+                associateWith(mainCompilation)
+                defaultSourceSet.dependsOn(testCompilation.defaultSourceSet)
+                binaries.executable(this)
+                binaries.configureEach {
+                    linkTask.configure {
+                        compilerOptions {
+                            target.set("es2015")
+                            moduleKind.set(JsModuleKind.MODULE_COMMONJS) // Mocha adapter doesn't support ES modules yet
+                            freeCompilerArgs.add("-Xes-long-as-bigint")
+                        }
+                    }
+                }
+            }
+
+            nodejs {
+                val latestTargetRun = testRuns.create("latestTarget") {
+                    setExecutionSourceFrom(latestJsCompilation)
+                    executionTask.configure {
+                        val devBinary = latestJsCompilation.binaries
+                            .matching { it.mode == KotlinJsBinaryMode.DEVELOPMENT }
+                            .single()
+
+                        inputFileProperty.set(devBinary.mainFileSyncPath)
+                    }
+                }
+
+                testTask {
+                    dependsOn(latestTargetRun.executionTask)
+                }
+            }
         }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmJs {
