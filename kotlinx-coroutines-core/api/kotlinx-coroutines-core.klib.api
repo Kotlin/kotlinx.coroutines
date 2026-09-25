@@ -232,13 +232,13 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.flow/Flow { // kotli
     abstract suspend fun collect(kotlinx.coroutines.flow/FlowCollector<#A>) // kotlinx.coroutines.flow/Flow.collect|collect(kotlinx.coroutines.flow.FlowCollector<1:0>){}[0]
 
     // Targets: [js]
-    open fun asAsyncIterable(): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.flow/Flow.asAsyncIterable|asAsyncIterable(){}[0]
+    open fun asyncIterator(): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.flow/Flow.asyncIterator|asyncIterator(){}[0]
 
     // Targets: [js]
     final object Companion { // kotlinx.coroutines.flow/Flow.Companion|null[0]
-        final fun <#A2: kotlin/Any?> from(kotlin/Function0<kotlinx.coroutines.internal/JsAsyncIterator<#A2>>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlin.Function0<kotlinx.coroutines.internal.JsAsyncIterator<0:0>>){0§<kotlin.Any?>}[0]
-        final fun <#A2: kotlin/Any?> from(kotlinx.coroutines.internal/JsAsyncIterable<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlinx.coroutines.internal.JsAsyncIterable<0:0>){0§<kotlin.Any?>}[0]
-        final fun <#A2: kotlin/Any?> from(kotlinx.coroutines.internal/JsAsyncIterator<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.from|from(kotlinx.coroutines.internal.JsAsyncIterator<0:0>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> fromAsyncGenerator(kotlin/Function0<kotlinx.coroutines.internal/JsAsyncIterator<#A2>>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsyncGenerator|fromAsyncGenerator(kotlin.Function0<kotlinx.coroutines.internal.JsAsyncIterator<0:0>>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> fromAsyncIterable(kotlinx.coroutines.internal/JsAsyncIterable<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsyncIterable|fromAsyncIterable(kotlinx.coroutines.internal.JsAsyncIterable<0:0>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> fromAsyncIterator(kotlinx.coroutines.internal/JsAsyncIterator<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsyncIterator|fromAsyncIterator(kotlinx.coroutines.internal.JsAsyncIterator<0:0>){0§<kotlin.Any?>}[0]
     }
 }
 
