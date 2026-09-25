@@ -63,7 +63,8 @@ public actual interface Flow<out T> {
         @Suppress("NOTHING_TO_INLINE")
         inline fun resolveRequestWithoutRunning(request: FlowAsyncIteratorResolution<T>) {
             when (request.command) {
-                FlowAsyncIteratorResolution.MUST_RETURN, FlowAsyncIteratorResolution.NEXT_ELEMENT -> request.resolve(JsIteratorResult(done = true))
+                FlowAsyncIteratorResolution.NEXT_ELEMENT -> request.resolve(JsIteratorResult(done = true))
+                FlowAsyncIteratorResolution.MUST_RETURN -> request.resolve(JsIteratorResult(value = request.valueToReturn, done = true))
                 FlowAsyncIteratorResolution.MUST_THROW -> request.reject(request.valueToThrow)
             }
         }
@@ -84,7 +85,7 @@ public actual interface Flow<out T> {
             /** Receive the initial request. Until we know that some element is requested, we won't start the flow. */
             var currentRequest = elementRequests.receive()
             when (currentRequest.command) {
-                FlowAsyncIteratorResolution.MUST_RETURN -> currentRequest.resolve(JsIteratorResult(done = true))
+                FlowAsyncIteratorResolution.MUST_RETURN -> currentRequest.resolve(JsIteratorResult(value = currentRequest.valueToReturn, done = true))
                 FlowAsyncIteratorResolution.MUST_THROW -> currentRequest.reject(currentRequest.valueToThrow)
                 FlowAsyncIteratorResolution.NEXT_ELEMENT -> {
                     try {

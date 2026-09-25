@@ -151,7 +151,7 @@ class FlowInteropTest : TestBase() {
         // The collection is already finished, so the value passed to `return` is not relayed.
         val result = iterator.`return`(5).await()
         assertTrue(result.done)
-        assertEquals(js("undefined"), result.value)
+        assertEquals(5, result.value)
         assertNextStepToBe(iterator, done = true)
     }
 
@@ -168,7 +168,7 @@ class FlowInteropTest : TestBase() {
                 } else {
                     val result = iterator.`return`(42).await()
                     assertTrue(result.done)
-                    assertEquals(js("undefined"), result.value)
+                    assertEquals(42, result.value)
                 }
                 assertNextStepToBe(iterator, done = true)
             }
