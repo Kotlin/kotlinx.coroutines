@@ -219,17 +219,27 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ReceiveChan
     open suspend fun receiveOrNull(): #A? // kotlinx.coroutines.channels/ReceiveChannel.receiveOrNull|receiveOrNull(){}[0]
 
     // Targets: [js]
-    open fun asyncIterator(): kotlinx.coroutines.channels/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(){}[0]
+    open fun asyncIterator(): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(){}[0]
 
     // Targets: [js]
-    open fun asyncIterator(kotlin/Boolean = ...): kotlinx.coroutines.channels/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlin.Boolean){}[0]
+    open fun asyncIterator(kotlin/Boolean = ...): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlin.Boolean){}[0]
 
     // Targets: [js]
-    open fun asyncIterator(kotlinx.coroutines.channels/ChannelIteratorOptions? = ...): kotlinx.coroutines.channels/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlinx.coroutines.channels.ChannelIteratorOptions?){}[0]
+    open fun asyncIterator(kotlinx.coroutines.channels/ChannelIteratorOptions? = ...): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlinx.coroutines.channels.ChannelIteratorOptions?){}[0]
 }
 
 abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.flow/Flow { // kotlinx.coroutines.flow/Flow|null[0]
     abstract suspend fun collect(kotlinx.coroutines.flow/FlowCollector<#A>) // kotlinx.coroutines.flow/Flow.collect|collect(kotlinx.coroutines.flow.FlowCollector<1:0>){}[0]
+
+    // Targets: [js]
+    open fun asyncIterator(): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.flow/Flow.asyncIterator|asyncIterator(){}[0]
+
+    // Targets: [js]
+    final object Companion { // kotlinx.coroutines.flow/Flow.Companion|null[0]
+        final fun <#A2: kotlin/Any?> fromAsync(kotlin/Function0<kotlinx.coroutines.internal/JsAsyncIterator<#A2>>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsync|fromAsync(kotlin.Function0<kotlinx.coroutines.internal.JsAsyncIterator<0:0>>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> fromAsync(kotlinx.coroutines.internal/JsAsyncIterable<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsync|fromAsync(kotlinx.coroutines.internal.JsAsyncIterable<0:0>){0§<kotlin.Any?>}[0]
+        final fun <#A2: kotlin/Any?> fromAsync(kotlinx.coroutines.internal/JsAsyncIterator<#A2>): kotlinx.coroutines.flow/Flow<#A2> // kotlinx.coroutines.flow/Flow.Companion.fromAsync|fromAsync(kotlinx.coroutines.internal.JsAsyncIterator<0:0>){0§<kotlin.Any?>}[0]
+    }
 }
 
 abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.flow/SharedFlow : kotlinx.coroutines.flow/Flow<#A> { // kotlinx.coroutines.flow/SharedFlow|null[0]
@@ -1290,24 +1300,6 @@ final fun <#A: kotlin/Any?> (kotlinx.coroutines/CoroutineScope).kotlinx.coroutin
 
 // Targets: [js]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines/Deferred<#A>).kotlinx.coroutines/asPromise(): kotlin.js/Promise<#A> // kotlinx.coroutines/asPromise|asPromise@kotlinx.coroutines.Deferred<0:0>(){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_copy_1tks5(noinline kotlinx.coroutines.channels/JsAsyncIterableIterator<#A>, noinline kotlin/Function0<kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ..., noinline kotlin/Function1<#A?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ..., noinline kotlin/Function1<kotlin/Any?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ...): kotlinx.coroutines.channels/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_copy_1tks5|kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_copy_1tks5(kotlinx.coroutines.channels.JsAsyncIterableIterator<0:0>;kotlin.Function0<kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<0:0?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<kotlin.Any?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_invoke_jkqnwo(noinline kotlin/Function0<kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<#A?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<kotlin/Any?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>): kotlinx.coroutines.channels/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_invoke_jkqnwo|kotlinx_coroutines_channels_JsAsyncIterableIterator_Companion_xrml8x_invoke_jkqnwo(kotlin.Function0<kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<0:0?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<kotlin.Any?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_copy_1tks5(noinline kotlinx.coroutines.channels/JsAsyncIterator<#A>, noinline kotlin/Function0<kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ..., noinline kotlin/Function1<#A?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ..., noinline kotlin/Function1<kotlin/Any?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>> = ...): kotlinx.coroutines.channels/JsAsyncIterator<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_copy_1tks5|kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_copy_1tks5(kotlinx.coroutines.channels.JsAsyncIterator<0:0>;kotlin.Function0<kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<0:0?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<kotlin.Any?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo(noinline kotlin/Function0<kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<#A?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>, noinline kotlin/Function1<kotlin/Any?, kotlin.js/Promise<kotlinx.coroutines.channels/JsIteratorResult<#A>>>): kotlinx.coroutines.channels/JsAsyncIterator<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo|kotlinx_coroutines_channels_JsAsyncIterator_Companion_btfdib_invoke_jkqnwo(kotlin.Function0<kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<0:0?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>;kotlin.Function1<kotlin.Any?,kotlin.js.Promise<kotlinx.coroutines.channels.JsIteratorResult<0:0>>>){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5(noinline kotlinx.coroutines.channels/JsIteratorResult<#A>, noinline #A? = ..., noinline kotlin/Boolean = ...): kotlinx.coroutines.channels/JsIteratorResult<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5|kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_copy_1tks5(kotlinx.coroutines.channels.JsIteratorResult<0:0>;0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
-
-// Targets: [js]
-final inline fun <#A: out kotlin/Any?> kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo(noinline #A? = ..., noinline kotlin/Boolean): kotlinx.coroutines.channels/JsIteratorResult<#A> // kotlinx.coroutines.channels/kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo|kotlinx_coroutines_channels_JsIteratorResult_Companion_6yc9qk_invoke_jkqnwo(0:0?;kotlin.Boolean){0§<kotlin.Any?>}[0]
 
 // Targets: [js]
 final suspend fun (org.w3c.dom/Window).kotlinx.coroutines/awaitAnimationFrame(): kotlin/Double // kotlinx.coroutines/awaitAnimationFrame|awaitAnimationFrame@org.w3c.dom.Window(){}[0]

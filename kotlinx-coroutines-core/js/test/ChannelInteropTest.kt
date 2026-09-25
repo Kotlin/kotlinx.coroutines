@@ -1,6 +1,7 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
 import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
@@ -179,14 +180,14 @@ class ChannelInteropTest : TestBase() {
                 assertNextStepToBe(iterator, value = 1, done = false)
                 when (earlyExitType) {
                     EarlyExitType.RETURN_42 -> {
-                        val returnResult = iterator.asDynamic().`return`(42)
+                        val returnResult = iterator.`return`(42)
                             .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
                         producer.await().apply { assertNull(cause) }
                         assertEquals(true, returnResult.done)
                         assertEquals(42, returnResult.value)
                     }
                     EarlyExitType.RETURN -> {
-                        val returnResult = iterator.asDynamic().`return`()
+                        val returnResult = iterator.`return`()
                             .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
                         producer.await().apply { assertNull(cause) }
                         assertEquals(true, returnResult.done)
@@ -224,13 +225,13 @@ class ChannelInteropTest : TestBase() {
                 assertNextStepToBe(iterator, value = 1, done = false)
                 when (earlyExitType) {
                     EarlyExitType.RETURN_42 -> {
-                        val returnResult = iterator.asDynamic().`return`(42)
+                        val returnResult = iterator.`return`(42)
                             .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
                         assertEquals(true, returnResult.done)
                         assertEquals(42, returnResult.value)
                     }
                     EarlyExitType.RETURN -> {
-                        val returnResult = iterator.asDynamic().`return`()
+                        val returnResult = iterator.`return`()
                             .unsafeCast<Promise<JsIteratorResult<Int>>>().await()
                         assertEquals(true, returnResult.done)
                     }
