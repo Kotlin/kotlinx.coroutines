@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalStdlibApi::class)
-@file:Suppress("INVISIBLE_REFERENCE")
 package kotlinx.coroutines.internal
 
 import kotlin.js.Promise
@@ -10,8 +9,8 @@ internal external interface JsIteratorResult<out T> {
     public val done: Boolean
 }
 
-@kotlin.internal.InlineOnly
-internal inline fun <T> JsIteratorResult(value: T? = VOID, done: Boolean): JsIteratorResult<T> =
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> JsIteratorResult(value: T? = js("undefined"), done: Boolean): JsIteratorResult<T> =
     js("{ value: value, done: done }")
 
 @JsName("AsyncIterator")
@@ -23,7 +22,11 @@ internal external interface JsAsyncIterator<out T> {
     public val `throw`: (value: Any?) -> Promise<JsIteratorResult<T>>
 }
 
-@kotlin.internal.InlineOnly
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun JsAsyncIterator<*>.`return`(): Promise<*> =
+    asDynamic().`return`()
+
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T> JsAsyncIterator(
     noinline next: () -> Promise<JsIteratorResult<T>>,
     noinline _return: (value: @UnsafeVariance T?) -> Promise<JsIteratorResult<T>>,

@@ -16,6 +16,7 @@ import kotlinx.coroutines.internal.JsAsyncIterableIterator
 import kotlinx.coroutines.internal.JsAsyncIterator
 import kotlinx.coroutines.internal.JsIteratorResult
 import kotlinx.coroutines.internal.JsOptionalExport
+import kotlinx.coroutines.internal.`return`
 import kotlin.js.Promise
 
 @JsOptionalExport(couldBeConvertedToExplicitExport = true)
@@ -40,20 +41,12 @@ public actual interface Flow<out T> {
      * stays suspended at `emit` until the next element is requested. Nothing is buffered.
      *
      * Early exit via `return` or `throw` cancels the collection and settles the returned promise only after
-     * the flow has finished its cleanup (all `finally` blocks have completed). Unlike async generators,
-     * `return`/`throw` are eager: the collection is cancelled immediately, and pending `next()` promises are
-     * resolved with `{ done: true }` rather than waiting for further elements. `throw(error)` cancels
-     * the collection with a [CancellationException] whose cause is `error`, so the flow cannot recover from it;
-     * the returned promise is rejected with `error`, or with the exception thrown by the flow's cleanup, if any.
+     * the flow has finished its cleanup. Like in async generators, calls are queued: `return`/`throw` take effect
+     * only after the previously issued `next()` calls are settled. `throw(error)` aborts the collection by throwing
+     * `error` from the suspended `emit` if it is a [Throwable] (otherwise it acts like `return()`); the returned
+     * promise is rejected with `error`, or with the exception thrown by the flow's cleanup, if any.
      * If the flow fails, the pending `next()` promise is rejected with the exception, and the following calls
      * report completion.
-     *
-     * Kotlin usage:
-     * ```
-     * val flow = flowOf(1, 2, 3)
-     * val asyncIterable = flow.asAsyncIterable()
-     * // pass asyncIterable to JS code expecting AsyncIterable
-     * ```
      *
      * JavaScript/TypeScript usage:
      * ```javascript
@@ -64,9 +57,9 @@ public actual interface Flow<out T> {
      *
      * This API is experimental: behavior and lifecycle semantics may change in future releases.
      */
-    @ExperimentalCoroutinesApi
     @JsSymbol("asyncIterator")
-    public fun asAsyncIterable(): JsAsyncIterableIterator<T> {
+    @Deprecated("", level = DeprecationLevel.HIDDEN)
+    public fun asyncIterator(): JsAsyncIterableIterator<T> {
         @Suppress("NOTHING_TO_INLINE")
         inline fun resolveRequestWithoutRunning(request: FlowAsyncIteratorResolution<T>) {
             when (request.command) {
@@ -117,7 +110,11 @@ public actual interface Flow<out T> {
                                 FlowAsyncIteratorResolution.MUST_RETURN -> false
                                 FlowAsyncIteratorResolution.NEXT_ELEMENT -> true
                                 /* Should never happen */
-                                else -> error("Unexpected command value ${currentRequest.command}. It should be either ${FlowAsyncIteratorResolution.MUST_THROW}, ${FlowAsyncIteratorResolution.MUST_RETURN}, or ${FlowAsyncIteratorResolution.NEXT_ELEMENT}")
+                                else -> error(
+                                    "Unexpected command value ${currentRequest.command}. It should be either ${
+                                        FlowAsyncIteratorResolution.MUST_THROW
+                                    }, ${FlowAsyncIteratorResolution.MUST_RETURN}, or ${FlowAsyncIteratorResolution.NEXT_ELEMENT}"
+                                )
                             }
                         }
                         currentRequest.resolve(
@@ -158,77 +155,76 @@ public actual interface Flow<out T> {
          *
          * The resulting flow will iterate through all values produced by the async iterable.
          * If the flow collection is canceled or fails, the iterator's `return()` method (if present) will be called
-         * to properly clean up the async iterable, see [from] for the details.
+         * to properly clean up the async iterable, see [fromAsyncGenerator] for the details.
          */
         @JsStatic
-        @ExperimentalCoroutinesApi
-        public fun <T> from(async: JsAsyncIterable<T>): Flow<T> =
-            from(async.asyncIterator())
+        @JsName("fromAsyncIterable")
+        @Deprecated("", level = DeprecationLevel.HIDDEN)
+        public fun <T> fromAsyncIterable(async: JsAsyncIterable<T>): Flow<T> =
+            createFlowFromAsyncGenerator { async.asyncIterator() }
 
         /**
          * Converts a JavaScript async generator function to a Kotlin Flow.
          *
          * The generator will be invoked to get an async iterator for each collection.
          *
-         * The iterator is closed the same way `for await` does it:
-         * - When the iterator reports completion (`done: true`) or its `next()` fails, the iterator is considered
-         *   finished and `return()` is not called. The failure of `next()` is rethrown to the collector as is.
-         * - When the collection is cancelled or fails downstream while the iterator is still alive,
-         *   the iterator's `return()` method is called (if it is present, as it is optional in the protocol)
-         *   and the promise it returns is awaited. The original exception is then rethrown; if `return()` itself fails,
-         *   its exception is attached to the original one as a suppressed exception and does not replace it.
+         * The iterator is closed as follows:
+         * - When the iterator reports completion (`done: true`), it is considered finished and `return()` is not called.
+         * - When `next()` fails, or the collection is canceled or fails downstream, the iterator's `return()` method
+         *   is called (if it is present, as it is optional in the protocol) and the promise it returns is awaited.
+         *   The original exception is then rethrown.
+         * - If `return()` itself fails, its exception replaces the original one when the original is
+         *   a [CancellationException]; otherwise, it is attached to the original one as a suppressed exception.
          */
         @JsStatic
         @JsName("fromAsyncGenerator")
-        @ExperimentalCoroutinesApi
-        public fun <T> from(generator: () -> JsAsyncIterator<T>): Flow<T> = flow {
-            val iterator = generator()
-            val isThereReturnMethod = jsTypeOf(iterator.`return`) == "function"
-            while (true) {
-                val result = try {
-                    iterator.next().await()
-                } catch (e: CancellationException) {
-                    /* The collector was cancelled while waiting for the element: the iterator is still alive,
-                     * so it must be closed. Any other failure of `next()` means the iterator is finished,
-                     * so it is rethrown as is. */
-                    if (isThereReturnMethod) iterator.closeOnFailure(e)
-                    throw e
-                }
-                if (result.done) return@flow
-                try {
-                    emit(result.value.unsafeCast<T>())
-                } catch (e: dynamic) {
-                    if (isThereReturnMethod) iterator.closeOnFailure(e)
-                    throw e
-                }
-            }
-        }
+        @Deprecated("", level = DeprecationLevel.HIDDEN)
+        public fun <T> fromAsyncGenerator(generator: () -> JsAsyncIterator<T>): Flow<T> =
+            createFlowFromAsyncGenerator(generator)
 
         /**
          * Converts a JavaScript AsyncIterator to a Kotlin Flow.
          *
          * The resulting flow emits items produced by the iterator until it reports completion.
          * If a collection is canceled or fails, the iterator's `return()` method (if present) is called
-         * to close the iterator, see [from] for the details.
+         * to close the iterator, see [fromAsyncGenerator] for the details.
          */
         @JsStatic
         @JsName("fromAsyncIterator")
-        @ExperimentalCoroutinesApi
-        public fun <T> from(iterator: JsAsyncIterator<T>): Flow<T> =
-            from { iterator }
+        @Deprecated("", level = DeprecationLevel.HIDDEN)
+        public fun <T> fromAsyncIterator(iterator: JsAsyncIterator<T>): Flow<T> =
+            createFlowFromAsyncGenerator { iterator }
     }
 }
 
-private suspend fun JsAsyncIterator<*>.closeOnFailure(cause: Throwable) {
-    val iterator = asDynamic()
-    try {
-        withContext(NonCancellable) {
-            iterator.`return`().unsafeCast<Promise<*>>().await()
+private fun <T> createFlowFromAsyncGenerator(generator: () -> JsAsyncIterator<T>) = flow {
+        val iterator = generator()
+        while (true) {
+            try {
+                val result = iterator.next().await()
+                if (result.done) return@flow
+                emit(result.value.unsafeCast<T>())
+            } catch (e: dynamic) {
+                val isCancellationException = e is CancellationException
+                // `return` function is optional in iterator
+                // however we should always call it in case of an exception
+                // to close the iterator.
+                if (jsTypeOf(iterator.`return`) == "function") {
+                    // We do this to not lose the exception thrown by `emit`/`next`
+                    try {
+                        iterator.`return`().await()
+                    } catch (returnException: dynamic) {
+                        if (isCancellationException) throw returnException
+                        (e as? Throwable)?.addSuppressed(returnException)
+                    }
+                }
+                if (isCancellationException && !currentCoroutineContext().isActive) {
+                    return@flow
+                }
+                throw e
+            }
         }
-    } catch (e: dynamic) {
-        cause.addSuppressed(e)
     }
-}
 
 internal val <T> FlowAsyncIteratorResolution<T>.valueToReturn: T
     inline get() = value.unsafeCast<T>()
