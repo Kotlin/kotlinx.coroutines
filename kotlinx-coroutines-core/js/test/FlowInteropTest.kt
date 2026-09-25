@@ -637,8 +637,8 @@ class FlowInteropTest : TestBase() {
      * we're accessing them via fully qualified names in JavaScript
      */
     private fun <T> Flow.Companion.fromAsyncGenerator(x: () -> JsAsyncIterator<T>): Flow<T> =
-        asDynamic().fromAsyncGenerator(x)
+        asDynamic().fromAsync(x)
 
     private fun <T> Flow.Companion.fromAsyncIterator(x: JsAsyncIterator<T>): Flow<T> =
-        asDynamic().fromAsyncIterator(x)
+        asDynamic().fromAsync(x)
 }

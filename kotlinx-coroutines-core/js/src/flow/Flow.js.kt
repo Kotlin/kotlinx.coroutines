@@ -150,6 +150,9 @@ public actual interface Flow<out T> {
     // However, the described way of exporting factory functions forces the functions always to be exported (even if people don't use them and don't export Flow),
     // and that may cause bundle size problems (at least right now).
     // So, until the bundle size problem is solved, we keep those factory functions inside Flow, with possibility to move them outside later.
+    @Suppress("JS_NAME_CLASH")
+    // The name class allows to define overloads on the TypeScript side. Since we delegate to a single function,
+    // shadowing on the JS side doesn't break implementation
     public companion object {
         /**
          * Converts a JavaScript AsyncIterable to a Kotlin Flow.
@@ -159,10 +162,10 @@ public actual interface Flow<out T> {
          * to properly clean up the async iterable, see [fromAsyncGenerator] for the details.
          */
         @JsStatic
-        @JsName("fromAsyncIterable")
+        @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
-        public fun <T> fromAsyncIterable(async: JsAsyncIterable<T>): Flow<T> =
-            createFlowFromAsyncGenerator { async.asyncIterator() }
+        public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
+            createFlowFromAsyncSource(source)
 
         /**
          * Converts a JavaScript async generator function to a Kotlin Flow.
@@ -178,10 +181,10 @@ public actual interface Flow<out T> {
          *   a [CancellationException]; otherwise, it is attached to the original one as a suppressed exception.
          */
         @JsStatic
-        @JsName("fromAsyncGenerator")
+        @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
-        public fun <T> fromAsyncGenerator(generator: () -> JsAsyncIterator<T>): Flow<T> =
-            createFlowFromAsyncGenerator(generator)
+        public fun <T> fromAsync(source: () -> JsAsyncIterator<T>): Flow<T> =
+            createFlowFromAsyncSource(source)
 
         /**
          * Converts a JavaScript AsyncIterator to a Kotlin Flow.
@@ -191,14 +194,21 @@ public actual interface Flow<out T> {
          * to close the iterator, see [fromAsyncGenerator] for the details.
          */
         @JsStatic
-        @JsName("fromAsyncIterator")
+        @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
-        public fun <T> fromAsyncIterator(iterator: JsAsyncIterator<T>): Flow<T> =
-            createFlowFromAsyncGenerator { iterator }
+        public fun <T> fromAsync(source: JsAsyncIterator<T>): Flow<T> =
+            createFlowFromAsyncSource(source)
     }
 }
 
-private fun <T> createFlowFromAsyncGenerator(generator: () -> JsAsyncIterator<T>) = flow {
+private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
+    val asyncIteratorSymbol = js("Symbol.asyncIterator")
+    val generator: () -> JsAsyncIterator<T> = when {
+        jsTypeOf(asyncSource) == "function" -> asyncSource
+        jsTypeOf(asyncSource[asyncIteratorSymbol]) == "function" -> {{ asyncSource[asyncIteratorSymbol]() }}
+        else -> {{ asyncSource }}
+    }
+    return flow {
         val iterator = generator()
         while (true) {
             try {
@@ -226,6 +236,7 @@ private fun <T> createFlowFromAsyncGenerator(generator: () -> JsAsyncIterator<T>
             }
         }
     }
+}
 
 internal val <T> FlowAsyncIteratorResolution<T>.valueToReturn: T
     inline get() = value.unsafeCast<T>()
