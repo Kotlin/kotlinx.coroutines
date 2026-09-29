@@ -227,7 +227,7 @@ suspend fun loadArticles(service: BlogService): List<Article> {
 > 
 {style="tip"}
 
-Using the same loading process as in the [blocking implementation](#implement-the-blocking-function), replace the `TODO()` placeholder with code that:
+Using the same loading process as in the [blocking implementation](#task--implement-the-blocking-function), replace the `TODO()` placeholder with code that:
 
 * Loads the available `ArticleInfo` objects.
 * Loads the comments for each article.
