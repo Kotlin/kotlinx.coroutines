@@ -52,7 +52,7 @@ public actual interface Flow<out T> {
     @Deprecated("", level = DeprecationLevel.HIDDEN)
     @Suppress("EXPOSED_FUNCTION_RETURN_TYPE")
     public fun asyncIterator(): JsAsyncIterableIterator<T> {
-        fun resolveRequestWithoutRunning(request: FlowAsyncIteratorResolution<T>) {
+        fun resolveRequestWithoutElement(request: FlowAsyncIteratorResolution<T>) {
             when (request.command) {
                 FlowAsyncIteratorCommand.NEXT_ELEMENT ->
                     request.resolve(JsIteratorResult(done = true))
@@ -61,7 +61,7 @@ public actual interface Flow<out T> {
                 FlowAsyncIteratorCommand.MUST_THROW -> request.reject(request.valueToThrow)
             }
         }
-        val elementRequests = Channel(onUndeliveredElement = ::resolveRequestWithoutRunning)
+        val elementRequests = Channel(onUndeliveredElement = ::resolveRequestWithoutElement)
         fun scheduleNextCommand(
             command: FlowAsyncIteratorCommand.CommandType, value: Any?
         ) = Promise { resolve, reject ->
@@ -70,7 +70,7 @@ public actual interface Flow<out T> {
                 try {
                     elementRequests.send(ourRequest)
                 } catch (_: ClosedSendChannelException) {
-                    resolveRequestWithoutRunning(ourRequest)
+                    resolveRequestWithoutElement(ourRequest)
                 }
             }
         }
@@ -113,16 +113,7 @@ public actual interface Flow<out T> {
                                 )
                             }
                         }
-                        currentRequest.resolve(
-                            JsIteratorResult(
-                                done = true,
-                                value = if (currentRequest.command == FlowAsyncIteratorCommand.MUST_RETURN) {
-                                    currentRequest.valueToReturn
-                                } else {
-                                    js("undefined")
-                                }
-                            )
-                        )
+                        resolveRequestWithoutElement(currentRequest)
                     } catch (e: dynamic) {
                         currentRequest.reject(e)
                     }
