@@ -2,10 +2,11 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.testing.*
 import kotlin.js.*
 import kotlin.test.*
-import kotlin.time.Duration.Companion.milliseconds
 
 class FlowInteropTest : TestBase() {
 
@@ -52,6 +53,7 @@ class FlowInteropTest : TestBase() {
 
     @Test
     fun testFlowToAsyncIteratorEarlyReturnWaitsForCleanup() = runTest {
+        val mayCleanup = Job()
         var cleanupDone = false
         val flow = flow {
             try {
@@ -59,7 +61,7 @@ class FlowInteropTest : TestBase() {
                 emit(2)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50.milliseconds)
+                    mayCleanup.join()
                     cleanupDone = true
                 }
             }
@@ -69,6 +71,7 @@ class FlowInteropTest : TestBase() {
         val returnPromise = iterator.asDynamic().`return`(42)
             .unsafeCast<Promise<JsIteratorResult<Int>>>()
         assertFalse(cleanupDone)
+        mayCleanup.complete()
         val returnResult = returnPromise.await()
         assertTrue(cleanupDone)
         assertEquals(true, returnResult.done)
@@ -78,6 +81,7 @@ class FlowInteropTest : TestBase() {
 
     @Test
     fun testFlowToAsyncIteratorEarlyThrowWaitsForCleanup() = runTest {
+        val mayCleanup = Job()
         var cleanupDone = false
         val flow = flow {
             try {
@@ -85,7 +89,7 @@ class FlowInteropTest : TestBase() {
                 emit(2)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50.milliseconds)
+                    mayCleanup.join()
                     cleanupDone = true
                 }
             }
@@ -95,6 +99,7 @@ class FlowInteropTest : TestBase() {
         val error = js("new Error('test error')")
         val throwPromise = iterator.`throw`(error)
         assertFalse(cleanupDone)
+        mayCleanup.complete()
         assertFailsWith<Throwable> { throwPromise.await() }
             .apply { assertEquals("test error", message) }
         assertTrue(cleanupDone)
@@ -103,6 +108,7 @@ class FlowInteropTest : TestBase() {
 
     @Test
     fun testFlowToAsyncIteratorReleasesResourceLikeFirst() = runTest {
+        val cleanupPermission = Mutex(locked = true)
         var globalResourceTaken = false
         val resourceUsingFlow = flow {
             globalResourceTaken = true
@@ -110,30 +116,39 @@ class FlowInteropTest : TestBase() {
                 emit(1)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50.milliseconds)
-                    globalResourceTaken = false
+                    cleanupPermission.withLock {
+                        globalResourceTaken = false
+                    }
                 }
             }
         }
-        assertEquals(1, resourceUsingFlow.first())
+        cleanupPermission.withoutLock {
+            assertEquals(1, resourceUsingFlow.first())
+        }
         assertFalse(globalResourceTaken)
         // The channel-based approach: the resource is still taken when `receive()` returns
         coroutineScope {
             val channel = resourceUsingFlow.buffer(0).produceIn(this)
             assertEquals(1, channel.receive())
             assertTrue(globalResourceTaken)
+            cleanupPermission.unlock()
             channel.cancel()
         }
+        cleanupPermission.lock()
         assertFalse(globalResourceTaken)
         val earlyExitIterator = resourceUsingFlow.asDynamic()[js("Symbol.asyncIterator")]().unsafeCast<JsAsyncIterator<*>>()
         assertNextStepToBe(earlyExitIterator, value = 1, done = false)
         assertTrue(globalResourceTaken)
-        assertTrue(earlyExitIterator.`return`(null).await().done)
+        cleanupPermission.withoutLock {
+            assertTrue(earlyExitIterator.`return`(null).await().done)
+        }
         assertFalse(globalResourceTaken)
         val fullIterator = resourceUsingFlow.asDynamic()[js("Symbol.asyncIterator")]().unsafeCast<JsAsyncIterator<*>>()
         assertNextStepToBe(fullIterator, value = 1, done = false)
         assertTrue(globalResourceTaken)
-        assertNextStepToBe(fullIterator, done = true)
+        cleanupPermission.withoutLock {
+            assertNextStepToBe(fullIterator, done = true)
+        }
         assertFalse(globalResourceTaken)
     }
 
@@ -270,17 +285,18 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testFlowToAsyncIteratorQueuedEarlyExit() = runTest {
         for (useThrow in listOf(false, true)) {
+            val mayCleanup = Job()
             var cleanupDone = false
             var emittedSecond = false
             val iterator = flow {
                 try {
-                    delay(50.milliseconds)
+                    yield()
                     emit(1)
                     emittedSecond = true
                     emit(2)
                 } finally {
                     withContext(NonCancellable) {
-                        delay(50.milliseconds)
+                        mayCleanup.join()
                         cleanupDone = true
                     }
                 }
@@ -293,6 +309,7 @@ class FlowInteropTest : TestBase() {
             assertFalse(firstResult.done)
             assertEquals(1, firstResult.value)
             assertFalse(cleanupDone)
+            mayCleanup.complete()
             if (useThrow) {
                 assertFailsWith<IllegalStateException> { earlyExit.await() }
                     .apply { assertEquals("Early exit", message) }
@@ -327,7 +344,7 @@ class FlowInteropTest : TestBase() {
     fun testFlowToAsyncIteratorQueuedNextWhileSuspended() = runTest {
         val iterator = flow {
             emit(1)
-            delay(50.milliseconds)
+            yield()
             emit(2)
             emit(3)
         }.asDynamic()[js("Symbol.asyncIterator")]().unsafeCast<JsAsyncIterator<*>>()
@@ -367,6 +384,7 @@ class FlowInteropTest : TestBase() {
 
     @Test
     fun testFlowToAsyncIteratorFlowOnCleanup() = runTest {
+        val mayCleanup = Job()
         var cleanupDone = false
         val iterator = flow {
             try {
@@ -374,7 +392,7 @@ class FlowInteropTest : TestBase() {
                 while (true) emit(i++)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50.milliseconds)
+                    mayCleanup.join()
                     cleanupDone = true
                 }
             }
@@ -384,6 +402,7 @@ class FlowInteropTest : TestBase() {
         // The upstream runs in a separate coroutine (buffered `flowOn`), its cleanup is still awaited
         val returnPromise = iterator.`return`(null)
         assertFalse(cleanupDone)
+        mayCleanup.complete()
         assertTrue(returnPromise.await().done)
         assertTrue(cleanupDone)
         assertNextStepToBe(iterator, done = true)
@@ -438,7 +457,7 @@ class FlowInteropTest : TestBase() {
                 emit(3)
             } finally {
                 withContext(NonCancellable) {
-                    delay(50.milliseconds)
+                    yield()
                     cleanupDone = true
                 }
             }
@@ -577,7 +596,7 @@ class FlowInteropTest : TestBase() {
             `return` = { value ->
                 Promise { resolve, _ ->
                     GlobalScope.launch {
-                        delay(50.milliseconds)
+                        yield()
                         cleanupDone = true
                         resolve(JsIteratorResult(value = value, done = true))
                     }
@@ -648,4 +667,13 @@ class FlowInteropTest : TestBase() {
 
     private fun <T> Flow.Companion.fromAsyncIterable(x: JsAsyncIterable<T>): Flow<T> =
         asDynamic().fromAsync(x)
+}
+
+private suspend inline fun <T> Mutex.withoutLock(block: suspend () -> T): T {
+    unlock()
+    try {
+        return block()
+    } finally {
+        lock()
+    }
 }
