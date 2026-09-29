@@ -144,7 +144,7 @@ public actual interface Flow<out T> {
         /**
          * Represents a function returning a JS async iterator as a Kotlin Flow.
          *
-         * The [source] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
+         * The [items] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
          * `next()` is repeatedly called on the iterator until completion,
          * and the returned values are [emitted][FlowCollector.emit] downstream.
          *
@@ -165,13 +165,13 @@ public actual interface Flow<out T> {
         @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
         @Suppress("EXPOSED_PARAMETER_TYPE")
-        public fun <T> fromAsync(source: () -> JsAsyncIterator<T>): Flow<T> =
-            createFlowFromAsyncSource(source)
+        public fun <T> fromAsync(items: () -> JsAsyncIterator<T>): Flow<T> =
+            createFlowFromAsyncSource(items)
 
         /**
          * Represents a function returning a `JsAsyncIterable` as a Kotlin Flow.
          *
-         * The [source] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
+         * The [items] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
          * `next()` is repeatedly called on the iterator until completion,
          * and the returned values are [emitted][FlowCollector.emit] downstream.
          *
@@ -192,8 +192,8 @@ public actual interface Flow<out T> {
         @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
         @Suppress("EXPOSED_PARAMETER_TYPE")
-        public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
-            createFlowFromAsyncSource(source)
+        public fun <T> fromAsync(items: JsAsyncIterable<T>): Flow<T> =
+            createFlowFromAsyncSource(items)
     }
 }
 
