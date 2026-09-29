@@ -133,6 +133,6 @@ In the next part of the tutorial, you'll use `channelFlow()` to load comments co
     <a as="button" href="coroutines-tutorial-cancel-coroutines.md" mode="outline" icon="arrow-left" icon-position="left">Previous step</a>
   </li>
   <li>
-    <a as="button" href="concurrent-progress.md" mode="classic" icon="arrow-right" icon-position="right">Next step</a>
+    <a as="button" href="coroutines-tutorial-channelflow.md" mode="classic" icon="arrow-right" icon-position="right">Next step</a>
   </li>
 </list>

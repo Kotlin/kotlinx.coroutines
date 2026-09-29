@@ -1,16 +1,17 @@
 <contribute-url>https://github.com/Kotlin/kotlinx.coroutines/edit/master/docs/topics/</contribute-url> <show-structure depth="2"/>
 
-[//]: # (title: Emit concurrent results with channelFlow – tutorial)
+[//]: # (title: Emit values concurrently with channelFlow – tutorial)
 
-In this part of the tutorial, you'll use `channelFlow()` to load comments for several articles concurrently and report each `Article` object when its comments become available.
+In this part of the tutorial, you'll use `channelFlow()` to load comments for articles concurrently.
+This way the application can display each resulting `Article` object as soon as its comments become available.
 
 ## Emit values concurrently with `channelFlow()`
 
 The `flow()` builder function is simple and efficient for flows that emit values from one coroutine.
 To produce values from multiple coroutines concurrently, use the [`channelFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/channel-flow.html) builder function.
 
-Like `flow()`, `channelFlow()` creates a cold flow.
-However, its block provides a `CoroutineScope` for starting child coroutines and a `SendChannel` for sending values from them.
+Like `flow()`, `channelFlow()` creates a cold flow, but it uses a [_channel_](channels.md) to send values from multiple coroutines.
+Its block provides a `CoroutineScope` for starting child coroutines and a [`SendChannel`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-send-channel/) for sending values from them.
 
 Inside a `channelFlow()` block:
 
@@ -33,7 +34,7 @@ fun messageFlow(): Flow<String> = channelFlow {
 
 Because the child coroutines run concurrently, the order in which the collector receives their values isn't guaranteed.
 
-## Task — Implement concurrent progress reporting
+### Task — Implement concurrent progress reporting
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task5AsyncProgress.kt` file.
 It contains the `observeArticlesConcurrently()` function with a `TODO()` placeholder:
@@ -45,8 +46,6 @@ fun observeArticlesConcurrently(service: BlogService): Flow<Article> {
 }
 ```
 
-The application invokes this function when you select **CONCURRENT_WITH_PROGRESS** from the **Loading Mode** menu.
-
 Implement the function so that it:
 
 * Requests the list of available articles.
@@ -54,9 +53,9 @@ Implement the function so that it:
 * Loads comments for the articles concurrently.
 * Sends each resulting `Article` object when its comments have loaded.
 
-### Tip for concurrent progress reporting {initial-collapse-state="collapsed" collapsible="true" id="concurrent-progress-tip"}
+#### Tip for concurrent progress reporting {initial-collapse-state="collapsed" collapsible="true" id="concurrent-progress-tip"}
 
-Use `channelFlow()` to create the flow.
+Use the `channelFlow()` function to create the flow.
 Inside its block, use a `for` loop to start a child coroutine for each `ArticleInfo` object:
 
 ```kotlin
@@ -69,14 +68,13 @@ for (articleInfo in list) {
 
 Each child coroutine can call the suspending `getComments()` function and send the resulting `Article` object independently.
 
-### Solution for concurrent progress reporting {initial-collapse-state="collapsed" collapsible="true" id="concurrent-progress-solution"}
+#### Solution for concurrent progress reporting {initial-collapse-state="collapsed" collapsible="true" id="concurrent-progress-solution"}
 
 1. Use the `channelFlow()` builder function to create the flow.
 2. Call the `getArticleInfoList()` function and store the returned list.
 3. Use a `for` loop to process each `ArticleInfo` object.
-4. For each object, call the `.launch()` coroutine builder function to start a child coroutine.
+4. For each object, call the `.launch()` coroutine builder function to start a child coroutine that loads its comments.
 5. In each child coroutine:
-
     * Call the `getComments()` function.
     * Create an `Article` object from the article information and comments.
     * Use the `send()` function to send the `Article` object.
@@ -94,9 +92,9 @@ fun observeArticlesConcurrently(service: BlogService): Flow<Article> = channelFl
 ```
 
 Each `.launch()` call starts a child coroutine that requests comments for one article.
-When the comments arrive, the coroutine creates and sends the corresponding `Article` object.
+After the `getComments()` function returns the comments, the coroutine creates and sends the corresponding `Article` object.
 
-## Observe concurrent progress
+### Observe concurrent progress
 
 Run the application, select **CONCURRENT_WITH_PROGRESS** from the **Loading Mode** menu, and click **Load comments**.
 
@@ -117,7 +115,9 @@ The application updates the displayed article list after receiving each object.
 Loading takes approximately 2 seconds, and the articles appear progressively.
 Because the comments requests take different amounts of time, the order of the displayed articles isn't guaranteed.
 
-## Test your implementation
+![Articles appearing progressively while channelFlow loads comments concurrently](concurrent-channelflow-loading.png){width="700"}
+
+### Test your implementation
 
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task5AsyncProgressKtTest.kt` file.
 
@@ -128,17 +128,16 @@ The tests use the Turbine library to collect the flow and check that the `observ
 * Completes within the expected concurrent loading time.
 
 The result test compares sets instead of lists because concurrent loading doesn't guarantee the order of the emitted objects.
-The tests use virtual time, so you don't have to wait for the simulated delays.
 
-In the next part of the tutorial, you'll handle failures while loading comments from an unstable network.
+In the next part of the tutorial, you'll handle exceptions when comment requests fail from an unstable network.
 
 ## Next step
 
 <list columns="2" id="tour-nav">
   <li>
-    <a as="button" href="loading-progress.md" mode="outline" icon="arrow-left" icon-position="left">Previous step</a>
+    <a as="button" href="coroutines-tutorial-loading-progress-with-flow.md" mode="outline" icon="arrow-left" icon-position="left">Previous step</a>
   </li>
   <li>
-    <a as="button" href="flow-failures.md" mode="classic" icon="arrow-right" icon-position="right">Next step</a>
+    <a as="button" href="coroutines-tutorial-exceptions.md" mode="classic" icon="arrow-right" icon-position="right">Next step</a>
   </li>
 </list>
