@@ -14,13 +14,13 @@ internal expect class SafeCollector<T>(
 ) : FlowCollector<T> {
     internal val collector: FlowCollector<T>
     internal val collectContext: CoroutineContext
-    internal val collectContextSize: Int
     public fun releaseIntercepted()
     public override suspend fun emit(value: T)
 }
 
 @JvmName("checkContext") // For prettier stack traces
 internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
+    if (currentContext === collectContext) return
     val result = currentContext.fold(0) fold@{ count, element ->
         val key = element.key
         val collectElement = collectContext[key]
@@ -79,7 +79,8 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
          */
         if (collectJob == null) count else count + 1
     }
-    if (result != collectContextSize) {
+    // For most cases, this is invoked at most once per collector, so not caching the result.
+    if (result != collectContext.fold(0) { count, _ -> count + 1 }) {
         error(
             "Flow invariant is violated:\n" +
                     "\t\tFlow was collected in $collectContext,\n" +
