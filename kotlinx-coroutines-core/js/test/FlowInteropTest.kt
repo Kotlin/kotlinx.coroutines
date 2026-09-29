@@ -475,13 +475,13 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testAsyncIteratorToFlowWithoutReturnMethod() = runTest {
         var i = 0
-        val iterator = asyncIterator(next = {
+        val iterable = asyncIterable(next = {
             Promise.resolve(if (i < 3) JsIteratorResult(value = i++, done = false) else JsIteratorResult(done = true))
         })
-        assertEquals(0, Flow.fromAsyncIterator(iterator).first())
+        assertEquals(0, Flow.fromAsyncIterable(iterable).first())
         assertEquals(
             listOf(1, 2),
-            Flow.fromAsyncIterator(iterator).toList()
+            Flow.fromAsyncIterable(iterable).toList()
         )
     }
 
@@ -489,13 +489,13 @@ class FlowInteropTest : TestBase() {
     fun testAsyncIteratorToFlowCallsReturnOnEarlyExit() = runTest {
         var i = 0
         var returnCalls = 0
-        val iterator = asyncIterator(
+        val iterable = asyncIterable(
             next = { Promise.resolve(JsIteratorResult(value = i++, done = false)) },
             `return` = { returnCalls++; Promise.resolve(JsIteratorResult(value = it, done = true)) }
         )
         assertEquals(
             listOf(0, 1),
-            Flow.fromAsyncIterator(iterator).take(2).toList()
+            Flow.fromAsyncIterable(iterable).take(2).toList()
         )
         assertEquals(1, returnCalls)
     }
@@ -503,12 +503,12 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testAsyncIteratorToFlowCallsReturnOnCancellationWhileAwaitingNext() = runTest {
         var returnCalls = 0
-        val iterator = asyncIterator<Int>(
+        val iterable = asyncIterable<Int>(
             next = { Promise { _, _ -> /* never settles */ } },
             `return` = { returnCalls++; Promise.resolve(JsIteratorResult(value = it, done = true)) }
         )
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            Flow.fromAsyncIterator(iterator).collect { expectUnreached() }
+            Flow.fromAsyncIterable(iterable).collect { expectUnreached() }
         }
         assertEquals(0, returnCalls)
         job.cancelAndJoin()
@@ -520,7 +520,7 @@ class FlowInteropTest : TestBase() {
         var i = 0
         var returnCalls = 0
         val error = IllegalStateException("next failed")
-        val iterator = asyncIterator(
+        val iterable = asyncIterable(
             next = {
                 if (i++ == 0) Promise.resolve(
                     JsIteratorResult(
@@ -533,7 +533,7 @@ class FlowInteropTest : TestBase() {
         )
         val collected = mutableListOf<Int>()
         assertSame(error, assertFailsWith<IllegalStateException> {
-            Flow.fromAsyncIterator(iterator).collect { collected.add(it) }
+            Flow.fromAsyncIterable(iterable).collect { collected.add(it) }
         })
         assertEquals(listOf(1), collected)
         assertEquals(1, returnCalls)
@@ -542,11 +542,11 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testAsyncIteratorToFlowNextThrowsSynchronously() = runTest {
         val error = IllegalStateException("next failed")
-        val iterator = asyncIterator<Int>(next = { throw error })
+        val iterable = asyncIterable<Int>(next = { throw error })
         assertSame(
             error,
             assertFailsWith<IllegalStateException> {
-                Flow.fromAsyncIterator(iterator).toList()
+                Flow.fromAsyncIterable(iterable).toList()
             })
     }
 
@@ -555,13 +555,13 @@ class FlowInteropTest : TestBase() {
         var returnCalls = 0
         val downstreamError = IllegalStateException("downstream failed")
         val returnError = IllegalArgumentException("return failed")
-        val iterator = asyncIterator(
+        val iterable = asyncIterable(
             next = { Promise.resolve(JsIteratorResult(value = 1, done = false)) },
             `return` = { returnCalls++; Promise.reject(returnError) }
         )
         // The downstream failure must not be replaced by the failure of `return()`
         val e = assertFailsWith<IllegalStateException> {
-            Flow.fromAsyncIterator(iterator)
+            Flow.fromAsyncIterable(iterable)
                 .collect { throw downstreamError }
         }
         assertSame(downstreamError, e)
@@ -572,7 +572,7 @@ class FlowInteropTest : TestBase() {
     @Test
     fun testAsyncIteratorToFlowReturnIsAwaited() = runTest {
         var cleanupDone = false
-        val iterator = asyncIterator(
+        val iterable = asyncIterable(
             next = { Promise.resolve(JsIteratorResult(value = 1, done = false)) },
             `return` = { value ->
                 Promise { resolve, _ ->
@@ -584,7 +584,7 @@ class FlowInteropTest : TestBase() {
                 }
             }
         )
-        assertEquals(1, Flow.fromAsyncIterator(iterator).first())
+        assertEquals(1, Flow.fromAsyncIterable(iterable).first())
         assertTrue(cleanupDone)
     }
 
@@ -592,7 +592,7 @@ class FlowInteropTest : TestBase() {
     fun testAsyncIteratorToFlowNoReturnOnNormalCompletion() = runTest {
         var i = 0
         var returnCalls = 0
-        val iterator = asyncIterator(
+        val iterable = asyncIterable(
             next = {
                 Promise.resolve(
                     if (i < 2) JsIteratorResult(
@@ -605,20 +605,28 @@ class FlowInteropTest : TestBase() {
         )
         assertEquals(
             listOf(0, 1),
-            Flow.fromAsyncIterator(iterator).toList()
+            Flow.fromAsyncIterable(iterable).toList()
         )
         assertEquals(0, returnCalls)
     }
 
-    /** Builds a hand-written async iterator; `return` is omitted from the object when not provided. */
-    private fun <T> asyncIterator(
+    /**
+     * Builds a hand-written async iterable whose `[Symbol.asyncIterator]()` returns a new iterator on each call.
+     * All the iterators share [next] and [return] (and so the state they capture);
+     * `return` is omitted from the iterator when not provided.
+     */
+    private fun <T> asyncIterable(
         next: () -> Promise<JsIteratorResult<T>>,
         `return`: ((T?) -> Promise<JsIteratorResult<T>>)? = null
-    ): JsAsyncIterator<T> {
-        val iterator = js("{}")
-        iterator.next = next
-        if (`return` != null) iterator.`return` = `return`
-        return iterator.unsafeCast<JsAsyncIterator<T>>()
+    ): JsAsyncIterable<T> {
+        val iterable = js("{}")
+        iterable[js("Symbol.asyncIterator")] = {
+            val iterator = js("{}")
+            iterator.next = next
+            if (`return` != null) iterator.`return` = `return`
+            iterator
+        }
+        return iterable.unsafeCast<JsAsyncIterable<T>>()
     }
 
     private suspend fun <T> assertNextStepToBe(
@@ -638,6 +646,6 @@ class FlowInteropTest : TestBase() {
     private fun <T> Flow.Companion.fromAsyncGenerator(x: () -> JsAsyncIterator<T>): Flow<T> =
         asDynamic().fromAsync(x)
 
-    private fun <T> Flow.Companion.fromAsyncIterator(x: JsAsyncIterator<T>): Flow<T> =
+    private fun <T> Flow.Companion.fromAsyncIterable(x: JsAsyncIterable<T>): Flow<T> =
         asDynamic().fromAsync(x)
 }

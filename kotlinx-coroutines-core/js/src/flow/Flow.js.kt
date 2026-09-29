@@ -178,12 +178,6 @@ public actual interface Flow<out T> {
         @Deprecated("", level = DeprecationLevel.HIDDEN)
         public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
             createFlowFromAsyncSource(source)
-
-        @JsStatic
-        @JsName("fromAsync")
-        @Deprecated("", level = DeprecationLevel.HIDDEN)
-        public fun <T> fromAsync(source: JsAsyncIterator<T>): Flow<T> =
-            createFlowFromAsyncSource(source)
     }
 }
 
