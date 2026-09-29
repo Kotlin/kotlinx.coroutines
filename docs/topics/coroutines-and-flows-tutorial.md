@@ -23,8 +23,8 @@ To implement these loading strategies, you'll progress through the following ste
    <img src="icon-2.svg" width="20" alt="Second step"/> <a href="coroutines-tutorial-concurrent-loading.md">Load articles concurrently</a><br/>
    <img src="icon-3.svg" width="20" alt="Third step"/> <a href="coroutines-tutorial-cancel-coroutines.md">Cancel concurrent loading with structured concurrency</a><br/>
    <img src="icon-4.svg" width="20" alt="Fourth step"/> <a href="coroutines-tutorial-loading-progress-with-flow.md">Show loading progress with a flow</a><br/>
-   <img src="icon-5.svg" width="20" alt="Fifth step"/> <a href="concurrent-progress.md">Emit concurrent results with channelFlow()</a><br/>
-   <img src="icon-6.svg" width="20" alt="Sixth step"/> <a href="flow-failures.md">Handle exceptions while loading articles</a><br/>
+   <img src="icon-5.svg" width="20" alt="Fifth step"/> <a href="coroutines-tutorial-channelflow.md">Emit values concurrently with channelFlow()</a><br/>
+   <img src="icon-6.svg" width="20" alt="Sixth step"/> <a href="coroutines-tutorial-exceptions.md">Handle exceptions while loading articles</a><br/>
 </p>
 
 ## Before you start
