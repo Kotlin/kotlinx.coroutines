@@ -153,7 +153,6 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             delay(1000.milliseconds)
             expectUnreached()
-            "OK"
         }
         assertNull(result)
         finish(3)
@@ -169,7 +168,6 @@ class WithTimeoutOrNullTest : TestBase() {
             } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
-            "OK"
         }
         assertNull(result)
         finish(4)
@@ -188,7 +186,6 @@ class WithTimeoutOrNullTest : TestBase() {
                     throw TestException()
                 }
                 expectUnreached()
-                "OK"
             }
             expectUnreached()
         } catch (_: TestException) {

@@ -110,7 +110,6 @@ class WithTimeoutTest : TestBase() {
                 expect(2)
                 delay(1000)
                 expectUnreached()
-                "OK"
             }
         } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out waiting for 100 ms", e.message)
@@ -128,9 +127,9 @@ class WithTimeoutTest : TestBase() {
             try {
                 delay(1000)
             } catch (_: TimeoutCancellationException) {
-                finish(3)
+                expect(3)
             }
-            "OK"
+            finish(4)
         }
         expectUnreached()
     }
@@ -148,7 +147,6 @@ class WithTimeoutTest : TestBase() {
                     throw TestException()
                 }
                 expectUnreached()
-                "OK"
             }
             expectUnreached()
         } catch (_: TestException) {
@@ -162,7 +160,6 @@ class WithTimeoutTest : TestBase() {
         try {
             withTimeout(-1) {
                 expectUnreached()
-                "OK"
             }
         } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out immediately", e.message)
