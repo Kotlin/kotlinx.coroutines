@@ -100,6 +100,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 withTimeout(10) {
                     awaitCancellation()
                 }
+                expectUnreached()
             }
             expectUnreached()
         }
