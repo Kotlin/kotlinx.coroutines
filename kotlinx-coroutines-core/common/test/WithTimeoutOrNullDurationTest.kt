@@ -14,7 +14,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(10.seconds) {
+        val result = withTimeoutOrNull(1.milliseconds) {
             expect(2)
             "OK"
         }
@@ -103,6 +103,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                 }
                 expectUnreached()
             }
+            expectUnreached()
         }
         finish(1)
     }
@@ -140,16 +141,10 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeoutOrNull(100.milliseconds) {
+        val result = withTimeoutOrNull(1.milliseconds) {
             bad
         }
         assertSame(bad, result)
-    }
-
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("Should not be called")
-        override fun hashCode(): Int = error("Should not be called")
-        override fun toString(): String = error("Should not be called")
     }
 
     @Test
@@ -159,7 +154,6 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expect(2)
             delay(1000.milliseconds)
             expectUnreached()
-            "OK"
         }
         assertNull(result)
         finish(3)
@@ -172,10 +166,9 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expect(2)
             try {
                 delay(1000.milliseconds)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
-            "OK"
         }
         assertNull(result)
         finish(4)
@@ -189,12 +182,11 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000.milliseconds)
-                } catch (_: CancellationException) {
+                } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
                 }
                 expectUnreached()
-                "OK"
             }
             expectUnreached()
         } catch (_: TestException) {
@@ -211,7 +203,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expectUnreached()
         }
         assertNull(result)
-        result = withTimeoutOrNull(0.milliseconds) {
+        result = withTimeoutOrNull(Duration.ZERO) {
             expectUnreached()
         }
         assertNull(result)
@@ -219,17 +211,15 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testExceptionFromWithinTimeout() = runTest {
+    fun testExceptionFromWithinTimeout() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
-        try {
-            expect(2)
-            withTimeoutOrNull<Unit>(1000.milliseconds) {
-                expect(3)
-                throw TestException()
-            }
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
+        withTimeoutOrNull(1.seconds) {
+            finish(2)
+            throw TestException()
         }
+        @Suppress("UNREACHABLE_CODE")
+        expectUnreached()
     }
 }

@@ -1,3 +1,5 @@
+@file:Suppress("ConvertLongToDuration")
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -11,7 +13,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeoutOrNull(10_000) {
+        val result = withTimeoutOrNull(1) {
             expect(2)
             "OK"
         }
@@ -98,6 +100,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 withTimeout(10) {
                     awaitCancellation()
                 }
+                expectUnreached()
             }
             expectUnreached()
         }
@@ -137,7 +140,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeoutOrNull(100) {
+        val result = withTimeoutOrNull(1) {
             bad
         }
         assertSame(bad, result)
@@ -150,7 +153,6 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             delay(1000)
             expectUnreached()
-            "OK"
         }
         assertNull(result)
         finish(3)
@@ -163,10 +165,9 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             try {
                 delay(1000)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
-            "OK"
         }
         assertNull(result)
         finish(4)
@@ -180,12 +181,11 @@ class WithTimeoutOrNullTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (_: CancellationException) {
+                } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
                 }
                 expectUnreached()
-                "OK"
             }
             expectUnreached()
         } catch (_: TestException) {
@@ -198,7 +198,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testNegativeTimeout() = runTest {
         expect(1)
-        var result = withTimeoutOrNull(-1) {
+        var result = withTimeoutOrNull((-1)) {
             expectUnreached()
         }
         assertNull(result)
@@ -210,17 +210,15 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testExceptionFromWithinTimeout() = runTest {
+    fun testExceptionFromWithinTimeout() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
-        try {
-            expect(2)
-            withTimeoutOrNull(1000) {
-                expect(3)
-                throw TestException()
-            }
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
+        withTimeoutOrNull(1000) {
+            finish(2)
+            throw TestException()
         }
+        @Suppress("UNREACHABLE_CODE")
+        expectUnreached()
     }
 }

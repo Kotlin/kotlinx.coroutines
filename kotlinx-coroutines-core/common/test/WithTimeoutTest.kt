@@ -1,3 +1,5 @@
+@file:Suppress("ConvertLongToDuration")
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -10,7 +12,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10_000) {
+        val result = withTimeout(1) {
             expect(2)
             "OK"
         }
@@ -59,13 +61,12 @@ class WithTimeoutTest : TestBase() {
         finish(8)
     }
 
-
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutCancellationException }
     ) {
         withTimeout(100) {
             while (true) {
@@ -95,7 +96,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100) {
+        val result = withTimeout(1) {
             bad
         }
         assertSame(bad, result)
@@ -107,47 +108,56 @@ class WithTimeoutTest : TestBase() {
         try {
             withTimeout(100) {
                 expect(2)
-                delay(1000)
-                expectUnreached()
-                "OK"
+                awaitCancellation()
             }
-        } catch (e: CancellationException) {
+        } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out waiting for 100 ms", e.message)
             finish(3)
         }
     }
 
     @Test
+    fun testCompositionWithDelay() = runTest(
+        expected = { it is TimeoutCancellationException }
+    ) {
+        expect(1)
+        withTimeout(1) {
+            finish(2)
+            delay(1)
+            expectUnreached()
+        }
+    }
+
+    @Test
     fun testSuppressExceptionWithResult() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutCancellationException }
     ) {
         expect(1)
         withTimeout(100) {
             expect(2)
             try {
-                delay(1000)
-            } catch (_: CancellationException) {
-                finish(3)
+                awaitCancellation()
+            } catch (_: TimeoutCancellationException) {
+                expect(3)
             }
-            "OK"
+            finish(4)
         }
         expectUnreached()
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest{
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         try {
             withTimeout(100) {
                 expect(2)
                 try {
-                    delay(1000)
-                } catch (_: CancellationException) {
+                    awaitCancellation()
+                } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
                 }
                 expectUnreached()
-                "OK"
             }
             expectUnreached()
         } catch (_: TestException) {
@@ -161,7 +171,6 @@ class WithTimeoutTest : TestBase() {
         try {
             withTimeout(-1) {
                 expectUnreached()
-                "OK"
             }
         } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out immediately", e.message)
@@ -170,19 +179,16 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testExceptionFromWithinTimeout() = runTest {
+    fun testExceptionFromWithinTimeout() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
-        @Suppress("UNREACHABLE_CODE")
-        try {
-            expect(2)
-            withTimeout(1000) {
-                expect(3)
-                throw TestException()
-            }
-            expectUnreached()
-        } catch (e: TestException) {
-            finish(4)
+        withTimeout(1000) {
+            finish(2)
+            throw TestException()
         }
+        @Suppress("UNREACHABLE_CODE")
+        expectUnreached()
     }
 
     @Test
@@ -192,7 +198,6 @@ class WithTimeoutTest : TestBase() {
             timeoutJob = coroutineContext[Job]!!
             timeoutJob.invokeOnCompletion { }
         }
-
         handle.dispose()
         timeoutJob.join()
         assertTrue(timeoutJob.isCompleted)

@@ -2,14 +2,15 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class WithTimeoutOrNullJvmTest : TestBase() {
     @Test
     fun testOuterTimeoutFiredBeforeInner() = runTest {
-        val result = withTimeoutOrNull(100) {
+        val result = withTimeoutOrNull(100.milliseconds) {
             Thread.sleep(200) // wait enough for outer timeout to fire
             withContext(NonCancellable) { yield() } // give an event loop a chance to run and process that cancellation
-            withTimeoutOrNull(100) {
+            withTimeoutOrNull(100.milliseconds) {
                 yield() // will cancel because of outer timeout
                 expectUnreached()
             }
@@ -21,7 +22,7 @@ class WithTimeoutOrNullJvmTest : TestBase() {
 
     @Test
     fun testIgnoredTimeout() = runTest {
-        val value = withTimeout(1) {
+        val value = withTimeout(1.milliseconds) {
             Thread.sleep(10)
             42
         }
@@ -31,7 +32,7 @@ class WithTimeoutOrNullJvmTest : TestBase() {
 
     @Test
     fun testIgnoredTimeoutOnNull() = runTest {
-        val value = withTimeoutOrNull(1) {
+        val value = withTimeoutOrNull(1.milliseconds) {
             Thread.sleep(10)
             42
         }
@@ -42,20 +43,20 @@ class WithTimeoutOrNullJvmTest : TestBase() {
     @Test
     fun testIgnoredTimeoutOnNullThrowsCancellation() = runTest {
         try {
-            withTimeoutOrNull(1) {
+            withTimeoutOrNull(1.milliseconds) {
                 expect(1)
                 Thread.sleep(10)
                 throw CancellationException()
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(2)
         }
     }
 
     @Test
     fun testIgnoredTimeoutOnNullThrowsOnYield() = runTest {
-        val value = withTimeoutOrNull(1) {
+        val value = withTimeoutOrNull(1.milliseconds) {
             Thread.sleep(75)
             yield()
         }

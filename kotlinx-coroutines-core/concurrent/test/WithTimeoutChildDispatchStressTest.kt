@@ -2,6 +2,7 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 class WithTimeoutChildDispatchStressTest : TestBase() {
     private val N_REPEATS = 10_000 * stressTestMultiplier
@@ -14,7 +15,7 @@ class WithTimeoutChildDispatchStressTest : TestBase() {
     @Test
     fun testChildDispatch() = runBlocking {
         repeat(N_REPEATS) {
-            val result = withTimeout(5000) {
+            val result = withTimeout(5.seconds) {
                 // child in different dispatcher
                 val job = launch(Dispatchers.Default) {
                     // done nothing, but dispatches to join from another thread
