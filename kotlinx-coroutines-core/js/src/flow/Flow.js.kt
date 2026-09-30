@@ -202,7 +202,7 @@ private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
     val generator: () -> JsAsyncIterator<T> = when {
         jsTypeOf(asyncSource) == "function" -> asyncSource
         jsTypeOf(asyncSource[asyncIteratorSymbol]) == "function" -> {{ asyncSource[asyncIteratorSymbol]() }}
-        else -> error("Expected a JS async iterable or a function returning an iterator, got $asyncSource")
+        else -> error("Expected a JS async iterable or an async generator function, got ${asyncSource?.constructor?.name}")
     }
     return flow {
         val iterator = generator()
