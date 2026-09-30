@@ -135,7 +135,7 @@ class WithTimeoutTest : TestBase() {
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest{
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         try {
             withTimeout(100) {
@@ -180,7 +180,7 @@ class WithTimeoutTest : TestBase() {
                 throw TestException()
             }
             expectUnreached()
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(4)
         }
     }

@@ -68,7 +68,7 @@ class WithTimeoutDurationTest : TestBase() {
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest(
-            expected = { it is CancellationException }
+        expected = { it is CancellationException }
     ) {
         withTimeout(100.milliseconds) {
             while (true) {
@@ -128,7 +128,7 @@ class WithTimeoutDurationTest : TestBase() {
 
     @Test
     fun testSuppressExceptionWithResult() = runTest(
-            expected = { it is CancellationException }
+        expected = { it is CancellationException }
     ) {
         expect(1)
         withTimeout(100.milliseconds) {
