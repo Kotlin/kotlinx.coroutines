@@ -49,7 +49,7 @@ class WithTimeoutOrNullJvmTest : TestBase() {
                 throw CancellationException()
             }
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             finish(2)
         }
     }

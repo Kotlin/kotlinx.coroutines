@@ -64,7 +64,7 @@ class WithTimeoutThreadDispatchTest : TestBase() {
                 withTimeout(100.milliseconds) {
                     try {
                         expect(3)
-                        delay(1000)
+                        delay(1000.milliseconds)
                         expectUnreached()
                     } catch (e: CancellationException) {
                         expect(4)

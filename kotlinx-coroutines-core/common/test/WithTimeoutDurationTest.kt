@@ -62,7 +62,6 @@ class WithTimeoutDurationTest : TestBase() {
         finish(8)
     }
 
-
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
@@ -175,13 +174,13 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         expect(1)
-        @Suppress("UNREACHABLE_CODE")
         try {
             expect(2)
             withTimeout(1.seconds) {
                 expect(3)
                 throw TestException()
             }
+            @Suppress("UNREACHABLE_CODE")
             expectUnreached()
         } catch (_: TestException) {
             finish(4)
