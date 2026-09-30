@@ -169,7 +169,7 @@ public actual interface Flow<out T> {
             createFlowFromAsyncSource(items)
 
         /**
-         * Represents a function returning a `JsAsyncIterable` as a Kotlin Flow.
+         * Represents a function returning a `AsyncIterable` as a Kotlin Flow.
          *
          * The [items] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
          * `next()` is repeatedly called on the iterator until completion,
