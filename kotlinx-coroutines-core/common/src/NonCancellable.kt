@@ -378,10 +378,26 @@ public suspend fun <T> nonCancellable(
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
+    val callerJob = currentCoroutineContext()[Job]
     @Suppress("DEPRECATION")
     return withContext(NonCancellable) {
         coroutineScope {
-            block()
+            val currentJob = currentCoroutineContext().job
+            /** Obtain a strong reference to the current coroutine on the caller. See #1061.
+             * `onCancelling = false` ensures there is no way the caller can invoke this handler before we exit
+             * the `coroutineScope`. */
+            val disposable = callerJob?.invokeOnCompletion(
+                onCancelling = false,
+                invokeImmediately = false,
+            ) {
+                // No-op, but preserves a reference
+                currentJob.isActive
+            }
+            try {
+                block()
+            } finally {
+                disposable?.dispose()
+            }
         }
     }
 }
