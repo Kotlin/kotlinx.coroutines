@@ -13,7 +13,6 @@ import ru.vyarus.gradle.plugin.animalsniffer.AnimalSniffer
 
 plugins {
     kotlin("multiplatform")
-    kotlin("plugin.js-plain-objects")
     id("org.jetbrains.kotlinx.benchmark")
     id("org.jetbrains.dokka")
     id("org.jetbrains.kotlinx.kover")
