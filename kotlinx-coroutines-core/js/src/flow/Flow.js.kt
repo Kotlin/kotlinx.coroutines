@@ -156,7 +156,7 @@ public actual interface Flow<out T> {
          * Usage example for JS:
          *
          * ```
-         * Flow.from(async function* () { ... })
+         * Flow.fromAsync(async function* () { ... })
          * ```
          *
          * This API is experimental: behavior and lifecycle semantics may change in future releases.
