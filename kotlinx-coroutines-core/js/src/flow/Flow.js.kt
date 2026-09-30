@@ -1,83 +1,76 @@
-@file:OptIn(
-    ExperimentalJsExport::class,
-    ExperimentalJsStatic::class,
-    ExperimentalWasmJsInterop::class,
-    ExperimentalStdlibApi::class
-)
-@file:Suppress("INVISIBLE_REFERENCE", "EXPOSED_FUNCTION_RETURN_TYPE", "EXPOSED_PARAMETER_TYPE")
-
+@file:OptIn(ExperimentalJsStatic::class, ExperimentalWasmJsInterop::class, ExperimentalStdlibApi::class)
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.internal.JsAsyncIterable
-import kotlinx.coroutines.internal.JsAsyncIterableIterator
-import kotlinx.coroutines.internal.JsAsyncIterator
-import kotlinx.coroutines.internal.JsIteratorResult
-import kotlinx.coroutines.internal.JsOptionalExport
-import kotlinx.coroutines.internal.`return`
-import kotlin.js.Promise
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.internal.*
+import kotlin.js.*
 
-@JsOptionalExport(couldBeConvertedToExplicitExport = true)
+@Suppress("INVISIBLE_REFERENCE") @JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public actual interface Flow<out T> {
     @JsExport.Ignore
     public actual suspend fun collect(collector: FlowCollector<T>)
 
     /**
-     * Represents [Flow] as a JavaScript [AsyncIterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols)
+     * Returns a JavaScript [`AsyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator)
+     * for this [Flow].
      *
-     * Use it when a [Flow] needs to be exposed to JavaScript APIs that consume
-     * `AsyncIterable` (for example, via `for await (...)`).
+     * This method is used to implement the JavaScript [async-iteration protocol](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols),
+     * to support [collecting][Flow.collect] this [Flow] with `for await ... of`.
      *
-     * The flow is collected lazily: the collection starts on the first `next()` call and runs in a coroutine
-     * launched in [GlobalScope] on [Dispatchers.Default]. Since there is no caller coroutine on the JavaScript side,
-     * the collection has no parent [Job]: it is not cancelled together with any Kotlin scope and its lifecycle
-     * is controlled solely through the iterator (`next`, `return`, `throw`). The upstream context can still be
-     * configured with [flowOn].
+     * The JavaScript side does not propagate any [CoroutineContext] to the [Flow.collect] call. Therefore:
+     * - The coroutine context of the new coroutine is [Dispatchers.Default]; nothing is inherited from the caller.
+     *   To configure the coroutine context of the flow, use [flowOn].
+     * - The collection has no parent [Job]: it is not cancelled together with any Kotlin scope,
+     *   and its lifecycle is controlled solely through the iterator (`next`, `return`, `throw`).
      *
-     * Elements are relayed with rendezvous-style backpressure, like in an async generator: each `next()` call
-     * synchronously runs the flow until the next element is emitted (or until the flow suspends), and the flow
-     * stays suspended at `emit` until the next element is requested. Nothing is buffered.
+     * The flow is collected lazily: the collection starts on the first `next()` call, and subsequent elements
+     * are relayed with rendezvous-style backpressure consistently with the behavior of asynchronous iterators.
+     * Each `next()` call synchronously runs the flow until the next element is emitted (or until the flow suspends),
+     * and the flow stays suspended at `emit` until the next element is requested. Nothing is buffered.
+     * Use [buffer] to configure this behavior and remove or reduce the backpressure.
      *
      * Early exit via `return` or `throw` cancels the collection and settles the returned promise only after
      * the flow has finished its cleanup. Like in async generators, calls are queued: `return`/`throw` take effect
      * only after the previously issued `next()` calls are settled. `throw(error)` aborts the collection by throwing
-     * `error` from the suspended `emit` if it is a [Throwable] (otherwise it acts like `return()`); the returned
-     * promise is rejected with `error`, or with the exception thrown by the flow's cleanup, if any.
+     * `error` from the suspended `emit` if it is a [Throwable] (otherwise it acts like `return()`).
      * If the flow fails, the pending `next()` promise is rejected with the exception, and the following calls
      * report completion.
      *
      * JavaScript/TypeScript usage:
      * ```javascript
      * for await (const value of flow) {
-     *   console.log(value)
+     *     console.log(value)
      * }
      *```
      *
      * This API is experimental: behavior and lifecycle semantics may change in future releases.
      */
     @JsSymbol("asyncIterator")
+    // the deprecation message must be empty, or the API will be exported as deprecated to JS
     @Deprecated("", level = DeprecationLevel.HIDDEN)
+    @Suppress("EXPOSED_FUNCTION_RETURN_TYPE")
     public fun asyncIterator(): JsAsyncIterableIterator<T> {
-        @Suppress("NOTHING_TO_INLINE")
-        inline fun resolveRequestWithoutRunning(request: FlowAsyncIteratorResolution<T>) {
+        fun resolveRequestWithoutElement(request: FlowAsyncIteratorResolution<T>) {
             when (request.command) {
-                FlowAsyncIteratorResolution.NEXT_ELEMENT -> request.resolve(JsIteratorResult(done = true))
-                FlowAsyncIteratorResolution.MUST_RETURN -> request.resolve(JsIteratorResult(value = request.valueToReturn, done = true))
-                FlowAsyncIteratorResolution.MUST_THROW -> request.reject(request.valueToThrow)
+                FlowAsyncIteratorCommand.NEXT_ELEMENT ->
+                    request.resolve(JsIteratorResult(done = true))
+                FlowAsyncIteratorCommand.MUST_RETURN ->
+                    request.resolve(JsIteratorResult(value = request.valueToReturn, done = true))
+                FlowAsyncIteratorCommand.MUST_THROW -> request.reject(request.valueToThrow)
             }
         }
-        val elementRequests = Channel<FlowAsyncIteratorResolution<T>>(onUndeliveredElement = {
-            resolveRequestWithoutRunning(it)
-        })
-        fun scheduleNextCommand(command: FlowAsyncIteratorResolution.FlowCollectionCommand, value: Any? = VOID) = Promise { resolve, reject ->
+        val elementRequests = Channel(onUndeliveredElement = ::resolveRequestWithoutElement)
+        fun scheduleNextCommand(
+            command: FlowAsyncIteratorCommand.CommandType, value: Any?
+        ) = Promise { resolve, reject ->
             val ourRequest = FlowAsyncIteratorResolution(resolve, reject, command, value)
             GlobalScope.launch(start = CoroutineStart.UNDISPATCHED) {
                 try {
                     elementRequests.send(ourRequest)
                 } catch (_: ClosedSendChannelException) {
-                    resolveRequestWithoutRunning(ourRequest)
+                    resolveRequestWithoutElement(ourRequest)
                 }
             }
         }
@@ -85,9 +78,10 @@ public actual interface Flow<out T> {
             /** Receive the initial request. Until we know that some element is requested, we won't start the flow. */
             var currentRequest = elementRequests.receive()
             when (currentRequest.command) {
-                FlowAsyncIteratorResolution.MUST_RETURN -> currentRequest.resolve(JsIteratorResult(value = currentRequest.valueToReturn, done = true))
-                FlowAsyncIteratorResolution.MUST_THROW -> currentRequest.reject(currentRequest.valueToThrow)
-                FlowAsyncIteratorResolution.NEXT_ELEMENT -> {
+                FlowAsyncIteratorCommand.MUST_RETURN ->
+                    currentRequest.resolve(JsIteratorResult(value = currentRequest.valueToReturn, done = true))
+                FlowAsyncIteratorCommand.MUST_THROW -> currentRequest.reject(currentRequest.valueToThrow)
+                FlowAsyncIteratorCommand.NEXT_ELEMENT -> {
                     try {
                         /* Collecting flow values until we receive a request to stop. */
                         collectWhile { element ->
@@ -99,7 +93,7 @@ public actual interface Flow<out T> {
                                 elementRequests.receive()
                             }
                             when (currentRequest.command) {
-                                FlowAsyncIteratorResolution.MUST_THROW -> {
+                                FlowAsyncIteratorCommand.MUST_THROW -> {
                                     /** Let cancellation handlers know the exact exception that went through.
                                      * If there is no exception, we pretend this is a normal cancellation.
                                      * Consistency with JS doesn't force us to do anything specific,
@@ -108,26 +102,18 @@ public actual interface Flow<out T> {
                                     currentRequest.valueToThrow.toThrowableOrNull()?.let { throw it }
                                     false
                                 }
-                                FlowAsyncIteratorResolution.MUST_RETURN -> false
-                                FlowAsyncIteratorResolution.NEXT_ELEMENT -> true
+                                FlowAsyncIteratorCommand.MUST_RETURN -> false
+                                FlowAsyncIteratorCommand.NEXT_ELEMENT -> true
                                 /* Should never happen */
                                 else -> error(
-                                    "Unexpected command value ${currentRequest.command}. It should be either ${
-                                        FlowAsyncIteratorResolution.MUST_THROW
-                                    }, ${FlowAsyncIteratorResolution.MUST_RETURN}, or ${FlowAsyncIteratorResolution.NEXT_ELEMENT}"
+                                    "Unexpected command value ${currentRequest.command}. " +
+                                    "It should be either ${FlowAsyncIteratorCommand.MUST_THROW}, " +
+                                    "${FlowAsyncIteratorCommand.MUST_RETURN}, or " +
+                                    "${FlowAsyncIteratorCommand.NEXT_ELEMENT}"
                                 )
                             }
                         }
-                        currentRequest.resolve(
-                            JsIteratorResult(
-                                done = true,
-                                value = if (currentRequest.command == FlowAsyncIteratorResolution.MUST_RETURN) {
-                                    currentRequest.valueToReturn
-                                } else {
-                                    VOID
-                                }
-                            )
-                        )
+                        resolveRequestWithoutElement(currentRequest)
                     } catch (e: dynamic) {
                         currentRequest.reject(e)
                     }
@@ -136,9 +122,9 @@ public actual interface Flow<out T> {
             elementRequests.cancel()
         }
         val iterator = JsAsyncIterator(
-            next = { scheduleNextCommand(FlowAsyncIteratorResolution.NEXT_ELEMENT) },
-            _return = { scheduleNextCommand(FlowAsyncIteratorResolution.MUST_RETURN, it) },
-            _throw = { scheduleNextCommand(FlowAsyncIteratorResolution.MUST_THROW, it) }
+            next = { scheduleNextCommand(FlowAsyncIteratorCommand.NEXT_ELEMENT, js("undefined")) },
+            _return = { scheduleNextCommand(FlowAsyncIteratorCommand.MUST_RETURN, it) },
+            _throw = { scheduleNextCommand(FlowAsyncIteratorCommand.MUST_THROW, it) }
         )
         iterator.asDynamic()[js("Symbol.asyncIterator")] = { iterator }
         return iterator.unsafeCast<JsAsyncIterableIterator<T>>()
@@ -147,7 +133,8 @@ public actual interface Flow<out T> {
     @JsExport.Ignore
     // Important note: it would be much nicer to place those factory functions outside of Flow
     // so from both Kotlin and TypeScript side it could be used without importing Flow (like in `flowOf` or `flow`)
-    // However, the described way of exporting factory functions forces the functions always to be exported (even if people don't use them and don't export Flow),
+    // However, the described way of exporting factory functions forces the functions always to be exported
+    // (even if people don't use them and don't export Flow),
     // and that may cause bundle size problems (at least right now).
     // So, until the bundle size problem is solved, we keep those factory functions inside Flow, with possibility to move them outside later.
     @Suppress("JS_NAME_CLASH")
@@ -155,27 +142,56 @@ public actual interface Flow<out T> {
     // shadowing on the JS side doesn't break implementation
     public companion object {
         /**
-         * Converts a JavaScript async generator function to a Kotlin Flow.
+         * Represents a function returning a JS async generator function as a Kotlin Flow.
          *
-         * The generator will be invoked to get an async iterator for each collection.
+         * The [source] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
+         * `next()` is repeatedly called on the iterator until completion,
+         * and the returned values are [emitted][FlowCollector.emit] downstream.
          *
-         * The iterator is closed as follows:
-         * - When the iterator reports completion (`done: true`), it is considered finished and `return()` is not called.
-         * - When `next()` fails, or the collection is canceled or fails downstream, the iterator's `return()` method
-         *   is called (if it is present, as it is optional in the protocol) and the promise it returns is awaited.
-         *   The original exception is then rethrown.
-         * - If `return()` itself fails, its exception replaces the original one when the original is
-         *   a [CancellationException]; otherwise, it is attached to the original one as a suppressed exception.
+         * If the downstream throws an exception, the collecting coroutine is cancelled or a `next()` call fails,
+         * flow collection finishes prematurely.
+         * In that case, `return()` is called on the iterator.
+         * The completion of the [Promise] returned by `return()` is awaited in a non-cancellable manner.
+         *
+         * Usage example for JS:
+         *
+         * ```
+         * Flow.fromAsync(async function* () { ... })
+         * ```
+         *
+         * This API is experimental: behavior and lifecycle semantics may change in future releases.
          */
         @JsStatic
         @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
+        @Suppress("EXPOSED_PARAMETER_TYPE")
         public fun <T> fromAsync(source: () -> JsAsyncIterator<T>): Flow<T> =
             createFlowFromAsyncSource(source)
 
+        /**
+         * Represents a function returning a `AsyncIterable` as a Kotlin Flow.
+         *
+         * The [source] will be invoked to get an async iterator separately for each [collect][Flow.collect] invocation.
+         * `next()` is repeatedly called on the iterator until completion,
+         * and the returned values are [emitted][FlowCollector.emit] downstream.
+         *
+         * If the downstream throws an exception, the collecting coroutine is cancelled or a `next()` call fails,
+         * flow collection finishes prematurely.
+         * In that case, `return()` is called on the iterator.
+         * The completion of the [Promise] returned by `return()` is awaited in a non-cancellable manner.
+         *
+         * Usage example for JS:
+         *
+         * ```
+         * Flow.fromAsync(async function* () { ... })
+         * ```
+         *
+         * This API is experimental: behavior and lifecycle semantics may change in future releases.
+         */
         @JsStatic
         @JsName("fromAsync")
         @Deprecated("", level = DeprecationLevel.HIDDEN)
+        @Suppress("EXPOSED_PARAMETER_TYPE")
         public fun <T> fromAsync(source: JsAsyncIterable<T>): Flow<T> =
             createFlowFromAsyncSource(source)
     }
@@ -186,31 +202,30 @@ private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
     val generator: () -> JsAsyncIterator<T> = when {
         jsTypeOf(asyncSource) == "function" -> asyncSource
         jsTypeOf(asyncSource[asyncIteratorSymbol]) == "function" -> {{ asyncSource[asyncIteratorSymbol]() }}
-        else -> {{ asyncSource }}
+        else -> error("Expected a JS async iterable or an async generator function, got ${asyncSource?.constructor?.name}")
     }
     return flow {
         val iterator = generator()
         while (true) {
             try {
                 val result = iterator.next().await()
-                if (result.done) return@flow
+                if (result.done) break
                 emit(result.value.unsafeCast<T>())
             } catch (e: dynamic) {
-                val isCancellationException = e is CancellationException
                 // `return` function is optional in iterator
                 // however we should always call it in case of an exception
                 // to close the iterator.
                 if (jsTypeOf(iterator.`return`) == "function") {
                     // We do this to not lose the exception thrown by `emit`/`next`
                     try {
-                        iterator.`return`().await()
+                        // Prevent coroutine cancellation from making us exit before the cleanup is done
+                        withContext(NonCancellable) {
+                            iterator.`return`().await()
+                        }
                     } catch (returnException: dynamic) {
-                        if (isCancellationException) throw returnException
+                        if (e is CancellationException) throw returnException
                         (e as? Throwable)?.addSuppressed(returnException)
                     }
-                }
-                if (isCancellationException && !currentCoroutineContext().isActive) {
-                    return@flow
                 }
                 throw e
             }
@@ -218,13 +233,13 @@ private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
     }
 }
 
-internal val <T> FlowAsyncIteratorResolution<T>.valueToReturn: T
+private val <T> FlowAsyncIteratorResolution<T>.valueToReturn: T
     inline get() = value.unsafeCast<T>()
 
-internal val FlowAsyncIteratorResolution<*>.valueToThrow: JsPromiseError
+private val FlowAsyncIteratorResolution<*>.valueToThrow: JsPromiseError
     inline get() = value.unsafeCast<JsPromiseError>()
 
-internal external interface FlowAsyncIteratorResolution<T> {
+private external interface FlowAsyncIteratorResolution<T> {
     val resolve: (JsIteratorResult<T>) -> Unit
     val reject: (JsPromiseError) -> Unit
 
@@ -233,43 +248,44 @@ internal external interface FlowAsyncIteratorResolution<T> {
      *
      * Determines what the collection loop should do next and how [value] must be interpreted.
      * One of exactly three values:
-     * - [NEXT_ELEMENT] (`0`) — `next()` was called: run the flow until the next element is emitted.
-     * - [MUST_THROW] (`1`) — `throw(error)` was called: cancel the collection and reject the promise with the error.
-     * - [MUST_RETURN] (`2`) — `return(value)` was called: cancel the collection and resolve the promise with `{ done: true, value }`.
+     * - [FlowAsyncIteratorCommand.NEXT_ELEMENT] (`0`) —
+     *   `next()` was called: run the flow until the next element is emitted.
+     * - [FlowAsyncIteratorCommand.MUST_THROW] (`1`) —
+     *   `throw(error)` was called: cancel the collection and reject the promise with the error.
+     * - [FlowAsyncIteratorCommand.MUST_RETURN] (`2`) —
+     *   `return(value)` was called: cancel the collection and resolve the promise with `{ done: true, value }`.
      *
-     * @see [FlowAsyncIteratorResolution.Companion]
+     * @see [FlowAsyncIteratorCommand]
      */
-    val command: FlowCollectionCommand
+    val command: FlowAsyncIteratorCommand.CommandType
 
     /**
      * The argument that accompanied the JavaScript call which produced this request.
      * Its meaning depends on [command]:
-     * - [NEXT_ELEMENT]: unused, always `undefined`.
-     * - [MUST_THROW]: the error passed to `throw(error)`, an arbitrary JavaScript value
+     * - [FlowAsyncIteratorCommand.NEXT_ELEMENT]: unused, always `undefined`.
+     * - [FlowAsyncIteratorCommand.MUST_THROW]: the error passed to `throw(error)`, an arbitrary JavaScript value
      *   (not necessarily a [Throwable]); read it via [valueToThrow].
-     * - [MUST_RETURN]: the value passed to `return(value)`, an arbitrary JavaScript value
+     * - [FlowAsyncIteratorCommand.MUST_RETURN]: the value passed to `return(value)`, an arbitrary JavaScript value
      *   (or `undefined` if none was given) that is relayed as the `value` of the final `{ done: true }` result;
      *   read it via [valueToReturn].
      */
     val value: Any?
-
-    typealias FlowCollectionCommand = Int
-
-    @Suppress("WRONG_INITIALIZER_OF_EXTERNAL_DECLARATION")
-    companion object {
-        /** `next()` was called: the flow should produce the next element. */
-        internal const val NEXT_ELEMENT: FlowCollectionCommand = 0
-        /** `throw(error)` was called: the collection must be canceled with the given error. */
-        internal const val MUST_THROW: FlowCollectionCommand = 1
-        /** `return(value)` was called: the collection must be canceled and complete with the given value. */
-        internal const val MUST_RETURN: FlowCollectionCommand = 2
-    }
 }
 
-@kotlin.internal.InlineOnly
-internal inline fun <T> FlowAsyncIteratorResolution(
+private object FlowAsyncIteratorCommand {
+    typealias CommandType = Int
+    /** `next()` was called: the flow should produce the next element. */
+    const val NEXT_ELEMENT: CommandType = 0
+    /** `throw(error)` was called: the collection must be canceled with the given error. */
+    const val MUST_THROW: CommandType = 1
+    /** `return(value)` was called: the collection must be canceled and complete with the given value. */
+    const val MUST_RETURN: CommandType = 2
+}
+
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
+private inline fun <T> FlowAsyncIteratorResolution(
     noinline resolve: (JsIteratorResult<T>) -> Unit,
     noinline reject: (JsPromiseError) -> Unit,
-    command: FlowAsyncIteratorResolution.FlowCollectionCommand,
+    command: FlowAsyncIteratorCommand.CommandType,
     value: Any?
 ): FlowAsyncIteratorResolution<T> = js("{ resolve: resolve, reject: reject, command: command, value: value }")

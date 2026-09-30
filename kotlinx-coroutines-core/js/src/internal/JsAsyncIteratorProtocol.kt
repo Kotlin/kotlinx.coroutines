@@ -23,8 +23,12 @@ internal external interface JsAsyncIterator<out T> {
 }
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun JsAsyncIterator<*>.`return`(): Promise<*> =
+internal inline fun <T> JsAsyncIterator<T>.`return`(): Promise<JsIteratorResult<T>> =
     asDynamic().`return`()
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun <T> JsAsyncIterator<T>.`throw`(): Promise<JsIteratorResult<T>> =
+    asDynamic().`throw`()
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun <T> JsAsyncIterator(

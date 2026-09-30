@@ -222,9 +222,6 @@ abstract interface <#A: out kotlin/Any?> kotlinx.coroutines.channels/ReceiveChan
     open fun asyncIterator(): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(){}[0]
 
     // Targets: [js]
-    open fun asyncIterator(kotlin/Boolean = ...): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlin.Boolean){}[0]
-
-    // Targets: [js]
     open fun asyncIterator(kotlinx.coroutines.channels/ChannelIteratorOptions? = ...): kotlinx.coroutines.internal/JsAsyncIterableIterator<#A> // kotlinx.coroutines.channels/ReceiveChannel.asyncIterator|asyncIterator(kotlinx.coroutines.channels.ChannelIteratorOptions?){}[0]
 }
 
