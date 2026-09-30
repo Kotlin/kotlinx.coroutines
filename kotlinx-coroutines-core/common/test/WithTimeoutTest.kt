@@ -1,3 +1,5 @@
+@file:Suppress("ConvertLongToDuration")
+
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
