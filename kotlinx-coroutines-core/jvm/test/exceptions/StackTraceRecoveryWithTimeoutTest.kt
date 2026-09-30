@@ -4,6 +4,7 @@ import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.rules.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class StackTraceRecoveryWithTimeoutTest : TestBase() {
 
@@ -20,7 +21,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerWithTimeout() {
-        withTimeout(200) {
+        withTimeout(200.milliseconds) {
             suspendForever()
         }
         expectUnreached()
@@ -41,7 +42,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerChildWithTimeout() {
-        withTimeout(200) {
+        withTimeout(200.milliseconds) {
             launch {
                 withTimeoutInChild()
             }
@@ -51,7 +52,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun withTimeoutInChild() {
-        withTimeout(300) {
+        withTimeout(300.milliseconds) {
             hang {  }
         }
         expectUnreached()
@@ -67,7 +68,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun outerChild() {
-        withTimeout(200) {
+        withTimeout(200.milliseconds) {
             launch {
                 smallWithTimeout()
             }
@@ -77,7 +78,7 @@ class StackTraceRecoveryWithTimeoutTest : TestBase() {
     }
 
     private suspend fun smallWithTimeout() {
-        withTimeout(100) {
+        withTimeout(100.milliseconds) {
             suspendForever()
         }
         expectUnreached()

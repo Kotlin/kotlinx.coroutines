@@ -7,6 +7,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.milliseconds
 
 class WithTimeoutOrNullThreadDispatchTest : TestBase() {
     var executor: ExecutorService? = null
@@ -59,10 +60,10 @@ class WithTimeoutOrNullThreadDispatchTest : TestBase() {
         withContext(dispatcher) {
             expect(2)
             assertEquals(thread, Thread.currentThread())
-            val result = withTimeoutOrNull(100) {
+            val result = withTimeoutOrNull(100.milliseconds) {
                 try {
                     expect(3)
-                    delay(1000)
+                    delay(1000.milliseconds)
                     expectUnreached()
                 } catch (e: CancellationException) {
                     expect(4)
