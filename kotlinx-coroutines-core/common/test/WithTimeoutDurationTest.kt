@@ -179,19 +179,16 @@ class WithTimeoutDurationTest : TestBase() {
     }
 
     @Test
-    fun testExceptionFromWithinTimeout() = runTest {
+    fun testExceptionFromWithinTimeout() = runTest(
+        expected = { it is TestException }
+    ) {
         expect(1)
-        try {
-            expect(2)
-            withTimeout(1.seconds) {
-                expect(3)
-                throw TestException()
-            }
-            @Suppress("UNREACHABLE_CODE")
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
+        withTimeout(1.seconds) {
+            finish(2)
+            throw TestException()
         }
+        @Suppress("UNREACHABLE_CODE")
+        expectUnreached()
     }
 
     @Test
