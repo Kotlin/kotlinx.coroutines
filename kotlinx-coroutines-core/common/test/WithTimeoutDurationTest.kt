@@ -109,12 +109,23 @@ class WithTimeoutDurationTest : TestBase() {
         try {
             withTimeout(100.milliseconds) {
                 expect(2)
-                delay(1000.milliseconds)
-                expectUnreached()
+                awaitCancellation()
             }
         } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out waiting for 100 ms", e.message)
             finish(3)
+        }
+    }
+
+    @Test
+    fun testCompositionWithDelay() =  runTest(
+        expected = { it is TimeoutCancellationException }
+    ) {
+        expect(1)
+        withTimeout(1.milliseconds) {
+            finish(2)
+            delay(1.milliseconds)
+            expectUnreached()
         }
     }
 
