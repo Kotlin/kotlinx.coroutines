@@ -67,7 +67,7 @@ class WithTimeoutTest : TestBase() {
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutCancellationException }
     ) {
         withTimeout(100) {
             while (true) {
@@ -113,7 +113,7 @@ class WithTimeoutTest : TestBase() {
                 expectUnreached()
                 "OK"
             }
-        } catch (e: CancellationException) {
+        } catch (e: TimeoutCancellationException) {
             assertEquals("Timed out waiting for 100 ms", e.message)
             finish(3)
         }
@@ -121,14 +121,14 @@ class WithTimeoutTest : TestBase() {
 
     @Test
     fun testSuppressExceptionWithResult() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutCancellationException }
     ) {
         expect(1)
         withTimeout(100) {
             expect(2)
             try {
                 delay(1000)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 finish(3)
             }
             "OK"
@@ -144,7 +144,7 @@ class WithTimeoutTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (_: CancellationException) {
+                } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
                 }

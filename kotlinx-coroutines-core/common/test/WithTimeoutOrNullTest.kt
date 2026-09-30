@@ -163,7 +163,7 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             try {
                 delay(1000)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
             "OK"
@@ -180,7 +180,7 @@ class WithTimeoutOrNullTest : TestBase() {
                 expect(2)
                 try {
                     delay(1000)
-                } catch (_: CancellationException) {
+                } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
                 }
