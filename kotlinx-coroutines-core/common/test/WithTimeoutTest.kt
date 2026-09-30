@@ -198,7 +198,6 @@ class WithTimeoutTest : TestBase() {
             timeoutJob = coroutineContext[Job]!!
             timeoutJob.invokeOnCompletion { }
         }
-
         handle.dispose()
         timeoutJob.join()
         assertTrue(timeoutJob.isCompleted)

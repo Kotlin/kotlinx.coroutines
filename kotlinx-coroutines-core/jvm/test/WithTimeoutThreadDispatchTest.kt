@@ -72,7 +72,7 @@ class WithTimeoutThreadDispatchTest : TestBase() {
                         throw e // rethrow
                     }
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 expect(5)
                 assertEquals(thread, Thread.currentThread())
             }
