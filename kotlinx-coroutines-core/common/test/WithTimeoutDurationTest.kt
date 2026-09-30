@@ -137,7 +137,7 @@ class WithTimeoutDurationTest : TestBase() {
         withTimeout(100.milliseconds) {
             expect(2)
             try {
-                delay(1000.milliseconds)
+                awaitCancellation()
             } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
@@ -153,7 +153,7 @@ class WithTimeoutDurationTest : TestBase() {
             withTimeout(100.milliseconds) {
                 expect(2)
                 try {
-                    delay(1000.milliseconds)
+                    awaitCancellation()
                 } catch (_: TimeoutCancellationException) {
                     expect(3)
                     throw TestException()
