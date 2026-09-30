@@ -328,6 +328,10 @@ private class StateFlowImpl<T>(
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
+    init {
+        collectStacktrace(this, NULL.unbox<T>(initialState))
+    }
+
     public override var value: T
         get() = NULL.unbox(_state.value)
         set(value) { updateState(null, value ?: NULL) }
@@ -342,7 +346,15 @@ private class StateFlowImpl<T>(
             val oldState = _state.value
             if (expectedState != null && oldState != expectedState) return false // CAS support
             if (oldState == newState) return true // Don't do anything if value is not changing, but CAS -> true
+
+            // Collect the stacktrace before publishing the new state
+            // because it becomes immediately visible for collectors, and hence can be requested from the debugger.
+            // Also need to indicate the state, because the old state might be requested from the debugger
+            // before this state is published.
+            collectStacktrace(this, NULL.unbox<T>(newState))
             _state.value = newState
+            dropStacktrace(this, NULL.unbox<T>(oldState))
+
             curSequence = sequence
             if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
                 curSequence++ // make it odd
@@ -410,7 +422,7 @@ private class StateFlowImpl<T>(
                 collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collector.emit(NULL.unbox(newState))
+                    collector.emit(matchStacktrace(this, NULL.unbox<T>(newState)))
                     oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot
