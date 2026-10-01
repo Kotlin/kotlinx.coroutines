@@ -48,12 +48,15 @@ In these files, you'll find the `TODO()` placeholders to complete.
 
 ![The coroutines and flows tutorial project structure ](coroutines-tutorial-project-structure.png){width="700"}
 
-You won't modify the following directories, but you can inspect them to understand how the application and tests work:
+If you'd like to practice writing flow tests, the `desktop-client/src/jvmTest/kotlin/org/example/articles/exercises` directory contains optional exercises.
+
+You can inspect the following directories and modules to understand how the tasks connect to the application, and you'll also modify some of their files later in the tutorial:
 
 * `desktop-client/src/jvmMain/kotlin/org/example/articles/ui` contains the Compose UI and the view model that calls your task functions.
 * `desktop-client/src/jvmMain/kotlin/org/example/articles/network` contains the blocking and suspending clients for loading articles and comments.
+* `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks` contains the test files referenced throughout the tutorial.
 * `desktop-client/src/jvmTest/kotlin/org/example/articles/data` contains the mock service and expected results used by the tests.
-* `server` contains the local Ktor server and the simulated delays and failures.
+* `server` contains the local Ktor server and simulates response delays and unsuccessful HTTP responses.
 * `shared` contains the article data and local server configuration shared by the client and server.
 
 You can find solutions for all the tasks on the `solutions` branch of the [project's repository](https://github.com/kotlin-hands-on/intro-coroutines-flows/tree/solutions).
