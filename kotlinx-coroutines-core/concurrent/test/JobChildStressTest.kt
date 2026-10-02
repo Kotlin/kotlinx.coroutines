@@ -82,7 +82,7 @@ class JobChildStressTest : TestBase() {
                 // optionally, add a completion handler to the parent job, so that the child tries to enter a list with
                 // multiple elements, not just one.
                 if (iteration.mod(2) == 0) {
-                    deferred.invokeOnCompletion { }
+                    val _ = deferred.invokeOnCompletion { }
                 }
                 launch(pool + deferred) {
                     deferred.complete(Unit) // Transition deferred into "completing" state waiting for current child

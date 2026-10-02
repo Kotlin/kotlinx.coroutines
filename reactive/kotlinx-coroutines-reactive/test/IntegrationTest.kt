@@ -11,6 +11,7 @@ import java.lang.IllegalStateException
 import java.lang.RuntimeException
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(Parameterized::class)
 class IntegrationTest(
@@ -29,7 +30,7 @@ class IntegrationTest(
     companion object {
         @Parameterized.Parameters(name = "ctx={0}, delay={1}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = Ctx.values().flatMap { ctx ->
+        fun params(): Collection<Array<Any>> = Ctx.entries.flatMap { ctx ->
             listOf(false, true).map { delay ->
                 arrayOf(ctx, delay)
             }
@@ -39,7 +40,7 @@ class IntegrationTest(
     @Test
     fun testEmpty(): Unit = runBlocking {
         val pub = publish<String>(ctx(coroutineContext)) {
-            if (delay) delay(1)
+            if (delay) delay(1.milliseconds)
             // does not send anything
         }
         assertFailsWith<NoSuchElementException> { pub.awaitFirst() }
@@ -56,7 +57,7 @@ class IntegrationTest(
     @Test
     fun testSingle() = runBlocking {
         val pub = publish(ctx(coroutineContext)) {
-            if (delay) delay(1)
+            if (delay) delay(1.milliseconds)
             send("OK")
         }
         assertEquals("OK", pub.awaitFirst())
@@ -76,9 +77,11 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            publish<String> {
-                awaitCancellation()
-            }.awaitFirst()
+            throw assertFailsWith<CancellationException> {
+                publish<String> {
+                    awaitCancellation()
+                }.awaitFirst()
+            }
         }
         job.cancel()
     }
@@ -102,8 +105,8 @@ class IntegrationTest(
      */
     @Test
     fun testNotCompletingFailedAwait() = runTest {
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<IllegalArgumentException> {
             Publisher<Int> { sub ->
                 sub.onSubscribe(object: Subscription {
                     override fun request(n: Long) {
@@ -119,10 +122,8 @@ class IntegrationTest(
                     }
                 })
             }.awaitSingle()
-        } catch (e: java.lang.IllegalArgumentException) {
-            expect(5)
         }
-        finish(6)
+        finish(5)
     }
 
     /**
@@ -150,7 +151,7 @@ class IntegrationTest(
         ) {
             assertCallsExceptionHandlerWith<IllegalStateException> {
                 try {
-                    publisher(block).operation()
+                    val _ = publisher(block).operation()
                 } catch (e: Throwable) {
                     if (e.message != dummyMessage)
                         throw e
@@ -163,41 +164,39 @@ class IntegrationTest(
         }
 
         // Rule 1.1 broken: the publisher produces more values than requested.
-        assertDetectsBadPublisher<Int>({ awaitFirst() }, "provided more") {
+        assertDetectsBadPublisher({ awaitFirst() }, "provided more") {
             onNext(1)
             onNext(2)
             onComplete()
         }
 
         // Rule 1.7 broken: the publisher calls a method on a subscriber after reaching the terminal state.
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, "terminal state") {
+        assertDetectsBadPublisher({ awaitSingle() }, "terminal state") {
             onNext(1)
             onError(dummyThrowable)
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitFirst() }, "terminal state") {
+        assertDetectsBadPublisher({ awaitFirst() }, "terminal state") {
             onNext(0)
             onComplete()
             onComplete()
         }
-        assertDetectsBadPublisher<Int>({ awaitFirstOrDefault(1) }, "terminal state") {
+        assertDetectsBadPublisher({ awaitFirstOrDefault(1) }, "terminal state") {
             onComplete()
             onNext(3)
         }
-        assertDetectsBadPublisher<Int>({ awaitSingle() }, "terminal state") {
+        assertDetectsBadPublisher({ awaitSingle() }, "terminal state") {
             onError(dummyThrowable)
             onNext(3)
         }
 
         // Rule 1.9 broken (the first signal to the subscriber was not 'onSubscribe')
         assertCallsExceptionHandlerWith<IllegalStateException> {
-            try {
+            assertFailsWith<NoSuchElementException> {
                 Publisher<Int> { subscriber ->
                     subscriber.onNext(3)
                     subscriber.onComplete()
                 }.awaitFirst()
-            } catch (e: NoSuchElementException) {
-                // intentionally blank
             }
         }.let { assertTrue(it.message?.contains("onSubscribe") ?: false) }
     }
@@ -206,16 +205,13 @@ class IntegrationTest(
     fun testPublishWithTimeout() = runTest {
         val publisher = publish<Int> {
             expect(2)
-            withTimeout(1) { delay(100) }
+            withTimeout(1.milliseconds) { delay(100.milliseconds) }
         }
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(3)
         }
-        finish(4)
+        finish(3)
     }
 
 }
-

@@ -163,11 +163,13 @@ class ShareInTest : TestBase() {
                 subs += shared
                     .onEach { value -> // only the first threshold subscribers get the value
                         when (i) {
-                            in 1..threshold -> log.trySend("sub$i: $value")
+                            in 1..threshold -> {
+                                val _ = log.trySend("sub$i: $value")
+                            }
                             else -> expectUnreached()
                         }
                     }
-                    .onCompletion { log.trySend("sub$i: completion") }
+                    .onCompletion { val _ = log.trySend("sub$i: completion") }
                     .launchIn(this)
                 checkStartTransition(i)
             }
@@ -194,8 +196,8 @@ class ShareInTest : TestBase() {
         val started: Boolean get() = _started.value
         fun start() = check(_started.compareAndSet(expect = false, update = true))
         fun stop() = check(_started.compareAndSet(expect = true, update = false))
-        suspend fun awaitStart() = withTimeout(timeLimit) { _started.first { it } }
-        suspend fun awaitStop() = withTimeout(timeLimit) { _started.first { !it } }
+        suspend fun awaitStart() = withTimeout(timeLimit) { _started.collectWhile { !it } }
+        suspend fun awaitStop() = withTimeout(timeLimit) { _started.collectWhile { it } }
     }
 
     private suspend fun FlowState.track(block: suspend () -> Unit) {

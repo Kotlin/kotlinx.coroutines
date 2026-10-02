@@ -22,7 +22,7 @@ class MemoryFootprintTest : TestBase(true) {
     private fun jobWithChildren(numberOfChildren: Int): Job {
         val result = Job()
         repeat(numberOfChildren) {
-            Job(result)
+            val _ = Job(result)
         }
         return result
     }

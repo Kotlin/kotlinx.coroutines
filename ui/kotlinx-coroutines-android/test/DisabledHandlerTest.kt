@@ -37,7 +37,7 @@ class DisabledHandlerTest : TestBase() {
     @Test
     fun testInvokeOnCancellation() = runTest {
         val job = launch(disabledDispatcher, start = CoroutineStart.LAZY) { expectUnreached() }
-        job.invokeOnCompletion { if (it != null) expect(2) }
+        val _ = job.invokeOnCompletion { if (it != null) expect(2) }
         yield()
         expect(1)
         job.join()

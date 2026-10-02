@@ -1,10 +1,10 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.testing.TestBase
-import org.junit.Test
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
+import kotlin.test.*
 
 /**
  * This stress test has 2 threads adding on one side on list, 2 more threads adding on the other,
@@ -30,7 +30,7 @@ class LockFreeLinkedListLongStressTest : TestBase() {
         for (j in 0 until nAddThreads)
             threads += thread(start = false, name = "adder-$j") {
                 for (i in j until nAdded step nAddThreads) {
-                    list.addLast(IntNode(i), Int.MAX_VALUE)
+                    assertTrue(list.addLast(IntNode(i), Int.MAX_VALUE))
                 }
                 println("${Thread.currentThread().name} completed")
                 workingAdders.decrementAndGet()

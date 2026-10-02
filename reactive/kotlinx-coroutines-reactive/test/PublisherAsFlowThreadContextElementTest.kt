@@ -37,13 +37,13 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
     fun testDataIsCopiedThroughFlowOnUndispatched() = runTest {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
-        Publisher<Int> { it ->
+        Publisher<Unit> { it ->
             it.onSubscribe(object : Subscription {
                 override fun request(n: Long) {
                     val threadLocalData = threadLocalData.get()
                     assertNotSame(originalData, threadLocalData)
                     assertEquals(originalData, threadLocalData)
-                    it.onNext(1)
+                    it.onNext(Unit)
                     it.onComplete()
                 }
 
@@ -58,13 +58,13 @@ class PublisherAsFlowThreadContextElementTest: TestBase() {
     fun testDataIsCopiedThroughFlowOnDispatched() = runTest {
         val originalData = mutableListOf("X")
         val root = MyMutableElement(originalData)
-        Publisher<Int> { it ->
+        Publisher<Unit> { it ->
             it.onSubscribe(object : Subscription {
                 override fun request(n: Long) {
                     val threadLocalData = threadLocalData.get()
                     assertNotSame(originalData, threadLocalData)
                     assertEquals(originalData, threadLocalData)
-                    it.onNext(1)
+                    it.onNext(Unit)
                     it.onComplete()
                 }
 

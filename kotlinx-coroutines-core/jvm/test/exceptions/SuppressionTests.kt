@@ -36,13 +36,13 @@ class SuppressionTests : TestBase() {
             }
         }
 
-        coroutine.invokeOnCompletion(onCancelling = true) {
+        val _ = coroutine.invokeOnCompletion(onCancelling = true) {
             assertIs<ArithmeticException>(it)
             assertTrue(it.suppressed.isEmpty())
             expect(6)
         }
 
-        coroutine.invokeOnCompletion {
+        val _ = coroutine.invokeOnCompletion {
             assertIs<ArithmeticException>(it)
             checkException<IOException>(it.suppressed[0])
             expect(9)

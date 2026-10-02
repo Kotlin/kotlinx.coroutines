@@ -3,7 +3,6 @@ package kotlinx.coroutines.android
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.jf.dexlib2.*
-import org.junit.Test
 import java.io.*
 import java.util.stream.*
 import kotlin.test.*
@@ -17,10 +16,9 @@ class R8ServiceLoaderOptimizationTest : TestBase() {
         val serviceLoaderInvocations = r8Dex.types.any {
             it.type == "Ljava/util/ServiceLoader;"
         }
-        assertEquals(
-                false,
-                serviceLoaderInvocations,
-                "References to the ServiceLoader class were found in the resulting DEX."
+        assertFalse(
+            serviceLoaderInvocations,
+            "References to the ServiceLoader class were found in the resulting DEX."
         )
     }
 
@@ -29,8 +27,7 @@ class R8ServiceLoaderOptimizationTest : TestBase() {
         val hasAndroidDispatcher = r8DexNoOptim.classes.any {
             it.type == "Lkotlinx/coroutines/android/AndroidDispatcherFactory;"
         }
-
-        assertEquals(true, hasAndroidDispatcher)
+        assertTrue(hasAndroidDispatcher)
     }
 
     @Test
@@ -41,16 +38,16 @@ class R8ServiceLoaderOptimizationTest : TestBase() {
                 "META-INF/proguard/coroutines.pro",
                 "META-INF/com.android.tools/r8-upto-1.6.0/coroutines.pro"
         )
-        paths.associateWith { path ->
+        val _ = paths.associateWith { path ->
             val ruleSet = javaClass.classLoader.getResourceAsStream(path)!!.bufferedReader().lines().filter { line ->
                 line.isNotBlank() && !line.startsWith("#")
             }.collect(Collectors.toSet())
             ruleSet
         }.asSequence().reduce { acc, entry ->
             assertEquals(
-                    acc.value,
-                    entry.value,
-                    "Rule sets between ${acc.key} and ${entry.key} don't match."
+                acc.value,
+                entry.value,
+                "Rule sets between ${acc.key} and ${entry.key} don't match."
             )
             entry
         }

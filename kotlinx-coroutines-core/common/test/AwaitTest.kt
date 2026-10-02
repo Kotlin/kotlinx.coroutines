@@ -127,7 +127,7 @@ class AwaitTest : TestBase() {
             }
 
             expect(2)
-            awaitAll(inner)
+            val _ = awaitAll(inner)
             expectUnreached()
         }
 
@@ -143,7 +143,8 @@ class AwaitTest : TestBase() {
     @Test
     fun testAwaitAllPartiallyCompleted() = runTest {
         val d1 = async { expect(1); 1 }
-        d1.await()
+        val d1Result = d1.await()
+        assertEquals(1, d1Result)
         val d2 = async { expect(3); 2 }
         expect(2)
         assertEquals(listOf(1, 2), awaitAll(d1, d2))
@@ -183,7 +184,8 @@ class AwaitTest : TestBase() {
         val d2 = CompletableDeferred(Unit)
         val job = async { expect(3) }
         expect(1)
-        awaitAll(d1, d2)
+        val results = awaitAll(d1, d2)
+        assertEquals(listOf(Unit, Unit), results)
         expect(2)
         job.await()
         finish(4)
@@ -195,7 +197,8 @@ class AwaitTest : TestBase() {
         val d2 = CompletableDeferred(Unit)
         val job = async { expect(2) }
         expect(1)
-        listOf(d1, d2, job).awaitAll()
+        val results = listOf(d1, d2, job).awaitAll()
+        assertEquals(listOf(Unit, Unit, Unit), results)
         finish(3)
     }
 
@@ -364,7 +367,8 @@ class AwaitTest : TestBase() {
             deferred.complete("OK")
         }
         expect(2)
-        awaitAll(delegate)
+        val result = awaitAll(delegate)
+        assertEquals(listOf("OK"), result)
         finish(4)
     }
 

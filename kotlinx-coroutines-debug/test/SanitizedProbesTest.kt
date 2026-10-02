@@ -1,17 +1,14 @@
 @file:Suppress("PackageDirectoryMismatch")
 package definitely.not.kotlinx.coroutines
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.debug.*
 import kotlinx.coroutines.selects.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.*
+import java.util.concurrent.ExecutionException
 import kotlin.test.*
 
 class SanitizedProbesTest : DebugTestBase() {
-    @Before
+    @BeforeTest
     override fun setUp() {
         super.setUp()
         DebugProbes.sanitizeStackTraces = true
@@ -84,7 +81,7 @@ class SanitizedProbesTest : DebugTestBase() {
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)",
 
             "Coroutine \"coroutine#2\":StandaloneCoroutine{Active}@1b68b9a4, state: SUSPENDED\n" +
-                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt)\n" +
+                "\tat definitely.not.kotlinx.coroutines.SanitizedProbesTest\$launchSelector\$1\$1\$1\$1.invokeSuspend(SanitizedProbesTest.kt)\n" +
                 "\tat _COROUTINE._CREATION._(CoroutineDebugging.kt)\n" +
                 "\tat kotlin.coroutines.intrinsics.IntrinsicsKt__IntrinsicsJvmKt.createCoroutineUnintercepted(IntrinsicsJvm.kt:116)\n" +
                 "\tat kotlinx.coroutines.intrinsics.CancellableKt.startCoroutineCancellable(Cancellable.kt:25)\n" +
@@ -104,11 +101,13 @@ class SanitizedProbesTest : DebugTestBase() {
     private fun CoroutineScope.launchSelector(): Job {
         val job = CompletableDeferred(Unit)
         return launch {
-            select<Int> {
-                job.onJoin {
-                    expect(2)
-                    delay(Long.MAX_VALUE)
-                    1
+            throw assertFailsWith<CancellationException> {
+                select<Int> {
+                    job.onJoin {
+                        expect(2)
+                        delay(Long.MAX_VALUE)
+                        1
+                    }
                 }
             }
         }

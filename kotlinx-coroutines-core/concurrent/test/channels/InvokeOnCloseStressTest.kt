@@ -44,12 +44,12 @@ class InvokeOnCloseStressTest : TestBase(), CoroutineScope {
 
             val j2 = async {
                 latch.await()
-                channel.invokeOnClose { counter.incrementAndFetch() }
+                channel.invokeOnClose { counter.increment() }
             }
 
             val j3 = async {
                 latch.await()
-                channel.invokeOnClose { counter.incrementAndFetch() }
+                channel.invokeOnClose { counter.increment() }
             }
 
             latch.countDown()

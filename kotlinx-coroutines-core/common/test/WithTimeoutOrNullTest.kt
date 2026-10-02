@@ -85,9 +85,11 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testThrowException() = runTest(expected = {it is AssertionError}) {
-        withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
-            throw AssertionError()
+    fun testThrowException() = runTest {
+        assertFailsWith<AssertionError> {
+            withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
+                throw AssertionError()
+            }
         }
     }
 
@@ -108,16 +110,16 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest(expected = { it is TimeoutCancellationException }) {
-        withTimeoutOrNull(Long.MAX_VALUE) {
-            // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-            withTimeout(10) {
-                delay(Long.MAX_VALUE)
-                1
+    fun testNestedTimeout() = runTest {
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeoutOrNull(Long.MAX_VALUE) {
+                // Exception from this withTimeout is not suppressed by withTimeoutOrNull
+                withTimeout(10) {
+                    delay(Long.MAX_VALUE)
+                    1
+                }
             }
         }
-
-        expectUnreached()
     }
 
     @Test
@@ -180,24 +182,18 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
-        try {
-            withTimeoutOrNull(100) {
+        assertFailsWith<TestException> {
+            withTimeoutOrNull<String>(100) {
                 expect(2)
-                try {
+                assertFailsWith<CancellationException> {
                     delay(1000)
-                } catch (_: CancellationException) {
-                    expect(3)
-                    throw TestException()
                 }
-                expectUnreached()
-                "OK"
+                expect(3)
+                throw TestException()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            // catches TestException
-            finish(4)
-
         }
+        // catches TestException
+        finish(4)
     }
 
     @Test

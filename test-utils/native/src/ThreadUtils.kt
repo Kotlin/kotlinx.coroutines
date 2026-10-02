@@ -22,7 +22,7 @@ actual class MultiplatformThread actual constructor(
             error("Cannot call start() on a MultiplatformThread which has already started")
         }
         worker = Worker.start(name = name)
-        worker!!.execute(TransferMode.SAFE, {
+        val _ = worker!!.execute(TransferMode.SAFE, {
             Runnable {
                 try {
                     block.run()

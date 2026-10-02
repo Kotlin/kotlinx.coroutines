@@ -2,11 +2,14 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.selects.*
 import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.testing.*
 import kotlin.concurrent.atomics.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class MutexCancellationStressTest : TestBase() {
     @Test
@@ -23,21 +26,22 @@ class MutexCancellationStressTest : TestBase() {
             // ATOMIC to always have a chance to proceed
             launch(dispatcher + CoroutineName(coroutineName), CoroutineStart.ATOMIC) {
                 while (!completed.load()) {
-                    // Stress out holdsLock
-                    mutex.holdsLock(mutexOwners[(jobId + 1) % mutexJobNumber])
+                    // Stress out holdsLock hanging
+                    val _ = mutex.holdsLock(mutexOwners[(jobId + 1) % mutexJobNumber])
                     // Stress out lock-like primitives
                     if (mutex.tryLock(mutexOwners[jobId])) {
-                        counterLocal[jobId].incrementAndFetch()
+                        counterLocal[jobId].increment()
                         counter++
                         mutex.unlock(mutexOwners[jobId])
                     }
                     mutex.withLock(mutexOwners[jobId]) {
-                        counterLocal[jobId].incrementAndFetch()
+                        counterLocal[jobId].increment()
                         counter++
+                        Unit
                     }
                     @Suppress("DEPRECATION") select<Unit> {
                         mutex.onLock(mutexOwners[jobId]) {
-                            counterLocal[jobId].incrementAndFetch()
+                            counterLocal[jobId].increment()
                             counter++
                             mutex.unlock(mutexOwners[jobId])
                         }
@@ -49,7 +53,7 @@ class MutexCancellationStressTest : TestBase() {
         val checkProgressJob = launch(dispatcher + CoroutineName("checkProgressJob")) {
             var lastCounterLocalSnapshot = (0 until mutexJobNumber).map { 0 }
             while (!completed.load()) {
-                delay(500)
+                delay(500.milliseconds)
                 // If we've caught the completion after delay, then there is a chance no progress were made whatsoever, bail out
                 if (completed.load()) return@launch
                 val c = counterLocal.map { it.load() }
@@ -68,10 +72,10 @@ class MutexCancellationStressTest : TestBase() {
                 cancellingJobId = (cancellingJobId + 1) % mutexJobNumber
             }
         }
-        delay(2000L * stressTestMultiplier)
+        delay(2.seconds * stressTestMultiplier)
         completed.store(true)
         cancellationJob.join()
-        mutexJobs.forEach { it.join() }
+        mutexJobs.joinAll()
         checkProgressJob.join()
         assertEquals(counter, counterLocal.sumOf { it.load() })
         dispatcher.close()

@@ -1,9 +1,9 @@
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.testing.*
-import kotlinx.coroutines.*
+import java.util.TreeSet
+import kotlin.random.Random
 import kotlin.test.*
-import java.util.*
 
 class ThreadSafeHeapTest : TestBase() {
     internal class Node(val value: Int) : ThreadSafeHeapNode, Comparable<Node> {
@@ -37,13 +37,13 @@ class ThreadSafeHeapTest : TestBase() {
         assertEquals(n1, h.removeFirstOrNull())
         assertEquals(-1, n1.index)
         assertEquals(n2, h.peek())
-        h.remove(n2)
+        assertTrue(h.remove(n2))
         assertEquals(n3, h.peek())
-        h.remove(n4)
+        assertTrue(h.remove(n4))
         assertEquals(n3, h.peek())
-        h.remove(n3)
+        assertTrue(h.remove(n3))
         assertEquals(n5, h.peek())
-        h.remove(n5)
+        assertTrue(h.remove(n5))
         assertNull(h.peek())
     }
 

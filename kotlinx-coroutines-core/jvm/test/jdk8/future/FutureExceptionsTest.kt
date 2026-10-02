@@ -58,11 +58,10 @@ class FutureExceptionsTest : TestBase() {
             val future = CompletableFuture<Int>()
             val chained = transformer(future)
             future.completeExceptionally(exception)
-            try {
+            val e = assertFailsWith<Throwable> {
                 chained.await()
-            } catch (e: Throwable) {
-                assertTrue(expected(e))
             }
+            assertTrue(expected(e))
         }
 
         // Slow path
@@ -74,11 +73,10 @@ class FutureExceptionsTest : TestBase() {
                 future.completeExceptionally(exception)
             }
 
-            try {
+            val e = assertFailsWith<Throwable> {
                 chained.await()
-            } catch (e: Throwable) {
-                assertTrue(expected(e))
             }
+            assertTrue(expected(e))
         }
     }
 }

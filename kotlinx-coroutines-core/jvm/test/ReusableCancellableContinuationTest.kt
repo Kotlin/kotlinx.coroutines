@@ -34,7 +34,7 @@ class ReusableCancellableContinuationTest : TestBase() {
         }
 
         repeat(iterations) {
-            suspender {
+            val _ = suspender {
                 assertTrue(channel.trySend(it).isSuccess)
             }
         }

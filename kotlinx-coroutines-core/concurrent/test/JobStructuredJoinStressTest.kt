@@ -21,7 +21,7 @@ class JobStructuredJoinStressTest : TestBase() {
     fun testStressSuspendCancellable() = runTest {
         stress { job ->
             suspendCancellableCoroutine { cont ->
-                job.invokeOnCompletion { cont.resume(Unit) }
+                val _ = job.invokeOnCompletion { cont.resume(Unit) }
             }
         }
     }
@@ -30,7 +30,7 @@ class JobStructuredJoinStressTest : TestBase() {
     fun testStressSuspendCancellableReusable() = runTest {
         stress { job ->
             suspendCancellableCoroutineReusable { cont ->
-                job.invokeOnCompletion { cont.resume(Unit) }
+                val _ = job.invokeOnCompletion { cont.resume(Unit) }
             }
         }
     }
@@ -47,7 +47,7 @@ class JobStructuredJoinStressTest : TestBase() {
                     try {
                         join(job)
                         error("Should not complete successfully")
-                    } catch (e: CancellationException) {
+                    } catch (_: CancellationException) {
                         // must always crash with cancellation exception
                         expect(2 + index)
                     } catch (e: Throwable) {

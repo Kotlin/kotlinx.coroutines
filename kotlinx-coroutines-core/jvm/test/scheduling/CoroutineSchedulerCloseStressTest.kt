@@ -3,11 +3,11 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.testing.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
-import org.junit.Test
 import org.junit.runner.*
 import org.junit.runners.*
 import java.util.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
 class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
@@ -16,7 +16,7 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
     companion object {
         @Parameterized.Parameters(name = "mode={0}")
         @JvmStatic
-        fun params(): Collection<Array<Any>> = Mode.values().map { arrayOf<Any>(it) }
+        fun params(): Collection<Array<Any>> = Mode.entries.map { arrayOf(it) }
     }
 
     private val MAX_LEVEL = 5
@@ -49,12 +49,13 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
         started.value = 0
         finished.value = 0
         withContext(dispatcher) {
-            launchChild(0, 0)
+            val _ = launchChild(0, 0)
         }
         assertEquals(N_COROS, started.value)
         assertEquals(N_COROS, finished.value)
     }
 
+    @IgnorableReturnValue
     // Index and level are used only for debugging purpose
     private fun CoroutineScope.launchChild(index: Int, level: Int): Job = launch(start = CoroutineStart.ATOMIC) {
         started.incrementAndGet()
@@ -64,7 +65,7 @@ class CoroutineSchedulerCloseStressTest(private val mode: Mode) : TestBase() {
                 launchChild(2 * index + 2, level + 1)
             } else {
                 if (rnd.nextBoolean()) {
-                    delay(1000)
+                    delay(1.seconds)
                 } else {
                     yield()
                 }

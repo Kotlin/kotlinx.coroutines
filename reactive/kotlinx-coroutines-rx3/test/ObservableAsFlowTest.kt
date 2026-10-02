@@ -20,7 +20,7 @@ class ObservableAsFlowTest : TestBase() {
         var onError = 0
 
         val source = rxObservable(currentDispatcher()) {
-            coroutineContext[Job]?.invokeOnCompletion {
+            val _ = coroutineContext[Job]?.invokeOnCompletion {
                 if (it is CancellationException) ++onCancelled
             }
 
@@ -116,7 +116,7 @@ class ObservableAsFlowTest : TestBase() {
     @Test
     fun testLateOnSubscribe() {
         var observer: Observer<in Int>? = null
-        val source = ObservableSource<Int> { observer = it }
+        val source = ObservableSource { observer = it }
         val flow = source.asFlow()
         assertNull(observer)
         val job = GlobalScope.launch(Dispatchers.Unconfined) {

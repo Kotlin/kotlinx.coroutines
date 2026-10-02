@@ -1,23 +1,27 @@
+@file:OptIn(ExperimentalAtomicApi::class)
+
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.testing.*
-import kotlinx.atomicfu.*
 import kotlinx.coroutines.*
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("DEPRECATION_ERROR")
 class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
     private val nSenders = 2
     private val nReceivers = 3
     private val nEvents =  (if (isNative) 5_000 else 500_000) * stressTestMultiplier
-    private val timeLimit = 30_000L * stressTestMultiplier // 30 sec
+    private val timeLimit = 30.seconds * stressTestMultiplier
 
     private val broadcast = ConflatedBroadcastChannel<Int>()
 
-    private val sendersCompleted = atomic(0)
-    private val receiversCompleted = atomic(0)
-    private val sentTotal = atomic(0)
-    private val receivedTotal = atomic(0)
+    private val sendersCompleted = AtomicInt(0)
+    private val receiversCompleted = AtomicInt(0)
+    private val sentTotal = AtomicInt(0)
+    private val receivedTotal = AtomicInt(0)
 
     @Test
     fun testStressNotify()= runTest {
@@ -26,12 +30,12 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
             launch(Dispatchers.Default + CoroutineName("Sender$senderId")) {
                 repeat(nEvents) { i ->
                     if (i % nSenders == senderId) {
-                        broadcast.trySend(i)
-                        sentTotal.incrementAndGet()
+                        val _ = broadcast.trySend(i)
+                        sentTotal.increment()
                         yield()
                     }
                 }
-                sendersCompleted.incrementAndGet()
+                sendersCompleted.increment()
             }
         }
         val receivers = List(nReceivers) { receiverId ->
@@ -40,41 +44,41 @@ class ConflatedBroadcastChannelNotifyStressTest : TestBase() {
                 while (isActive) {
                     val i = waitForEvent()
                     if (i > last) {
-                        receivedTotal.incrementAndGet()
+                        receivedTotal.increment()
                         last = i
                     }
                     if (i >= nEvents) break
                     yield()
                 }
-                receiversCompleted.incrementAndGet()
+                receiversCompleted.increment()
             }
         }
         // print progress
         val progressJob = launch {
             var seconds = 0
             while (true) {
-                delay(1000)
-                println("${++seconds}: Sent ${sentTotal.value}, received ${receivedTotal.value}")
+                delay(1.seconds)
+                println("${++seconds}: Sent ${sentTotal.load()}, received ${receivedTotal.load()}")
             }
         }
         try {
             withTimeout(timeLimit) {
-                senders.forEach { it.join() }
-                broadcast.trySend(nEvents) // last event to signal receivers termination
-                receivers.forEach { it.join() }
+                senders.joinAll()
+                val _ = broadcast.trySend(nEvents) // last event to signal receivers termination
+                receivers.joinAll()
             }
         } catch (e: CancellationException) {
             println("!!! Test timed out $e")
         }
         progressJob.cancel()
         println("Tested with nSenders=$nSenders, nReceivers=$nReceivers")
-        println("Completed successfully ${sendersCompleted.value} sender coroutines")
-        println("Completed successfully ${receiversCompleted.value} receiver coroutines")
-        println("                  Sent ${sentTotal.value} events")
-        println("              Received ${receivedTotal.value} events")
-        assertEquals(nSenders, sendersCompleted.value)
-        assertEquals(nReceivers, receiversCompleted.value)
-        assertEquals(nEvents, sentTotal.value)
+        println("Completed successfully ${sendersCompleted.load()} sender coroutines")
+        println("Completed successfully ${receiversCompleted.load()} receiver coroutines")
+        println("                  Sent ${sentTotal.load()} events")
+        println("              Received ${receivedTotal.load()} events")
+        assertEquals(nSenders, sendersCompleted.load())
+        assertEquals(nReceivers, receiversCompleted.load())
+        assertEquals(nEvents, sentTotal.load())
     }
 
     private suspend fun waitForEvent(): Int =

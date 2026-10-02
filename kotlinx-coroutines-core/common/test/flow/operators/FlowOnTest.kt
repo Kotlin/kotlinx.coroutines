@@ -133,10 +133,12 @@ class FlowOnTest : TestBase() {
     }
 
     @Test
-    fun testFlowOnWithJob() = runTest({ it is IllegalArgumentException }) {
-        flow {
-            emit(1)
-        }.flowOn(NamedDispatchers("foo") + Job())
+    fun testFlowOnWithJob() = runTest {
+        assertFailsWith<IllegalArgumentException> {
+            flow {
+                emit(1)
+            }.flowOn(NamedDispatchers("foo") + Job())
+        }
     }
 
     @Test
@@ -144,15 +146,17 @@ class FlowOnTest : TestBase() {
         val latch = Channel<Unit>()
         expect(1)
         val job = launch(NamedDispatchers("launch")) {
-            flow<Int> {
-                expect(2)
-                latch.send(Unit)
-                expect(3)
-                hang {
-                    assertEquals("cancelled", NamedDispatchers.name())
-                    expect(5)
-                }
-            }.flowOn(NamedDispatchers("cancelled")).single()
+            assertFailsWith<CancellationException> {
+                flow<Int> {
+                    expect(2)
+                    latch.send(Unit)
+                    expect(3)
+                    hang {
+                        assertEquals("cancelled", NamedDispatchers.name())
+                        expect(5)
+                    }
+                }.flowOn(NamedDispatchers("cancelled")).single()
+            }
         }
 
         latch.receive()
@@ -166,7 +170,7 @@ class FlowOnTest : TestBase() {
     @Test
     fun testFlowOnCancellationHappensBefore() = runTest {
         launch {
-            try {
+            assertFailsWith<CancellationException> {
                 flow<Int> {
                     expect(1)
                     val flowJob = kotlin.coroutines.coroutineContext[Job]!!
@@ -176,9 +180,8 @@ class FlowOnTest : TestBase() {
                     }
                     hang { expect(3) }
                 }.flowOn(NamedDispatchers("upstream")).single()
-            } catch (e: CancellationException) {
-                expect(4)
             }
+            expect(4)
         }.join()
         ensureActive()
         finish(5)
@@ -276,7 +279,7 @@ class FlowOnTest : TestBase() {
 
     @Test
     fun testAtomicStart() = runTest {
-        try {
+        assertFailsWith<CancellationException> {
             coroutineScope {
                 val job = coroutineContext[Job]!!
                 val flow = flow {
@@ -296,9 +299,8 @@ class FlowOnTest : TestBase() {
                     job.cancel()
                 }
             }
-        } catch (e: CancellationException) {
-            finish(6)
         }
+        finish(6)
     }
 
     @Test

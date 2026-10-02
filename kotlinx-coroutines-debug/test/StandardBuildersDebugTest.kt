@@ -1,7 +1,5 @@
 package kotlinx.coroutines.debug
 
-import kotlinx.coroutines.testing.*
-import org.junit.Test
 import kotlin.test.*
 
 class StandardBuildersDebugTest : DebugTestBase() {
@@ -41,8 +39,8 @@ class StandardBuildersDebugTest : DebugTestBase() {
             }
         }
         // Start coroutines
-        fromIterator.hasNext()
-        fromSequence.hasNext()
+        val _ = fromIterator.hasNext()
+        val _ = fromSequence.hasNext()
         return fromSequence to fromIterator
     }
 }

@@ -86,7 +86,7 @@ class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
         mainLooper.pause()
         launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
             expect(1)
-            awaitFrame()
+            assertEquals(0L, awaitFrame())
             expect(3)
         }
         expect(2)
@@ -100,7 +100,7 @@ class HandlerDispatcherTest : MainDispatcherTestBase.WithRealTimeDelay() {
         val mainLooper = Shadows.shadowOf(Looper.getMainLooper())
         launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
             expect(1)
-            awaitFrame()
+            assertEquals(10000000L, awaitFrame())
             expect(4)
         }
         // Run choreographer detection

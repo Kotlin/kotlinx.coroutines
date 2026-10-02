@@ -145,14 +145,14 @@ class TickerChannelCommonTest(private val channelFactory: Channel) : TestBase() 
         delayChannel.cancel()
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeDelay() {
-        channelFactory(-1)
+        assertFailsWith<IllegalArgumentException> { channelFactory(-1) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeInitialDelay() {
-        channelFactory(initialDelay = -1, delay = 100)
+        assertFailsWith<IllegalArgumentException> { channelFactory(initialDelay = -1, delay = 100) }
     }
 }
 
