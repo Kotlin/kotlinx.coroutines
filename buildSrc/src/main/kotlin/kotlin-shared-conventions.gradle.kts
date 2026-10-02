@@ -201,7 +201,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
             apiVersion = it
         }
         if (isMainTaskName && !unpublished.contains(project.name)) {
-            // setWarningsAsErrors(project)
+            setWarningsAsErrors(project)
             freeCompilerArgs.addAll(
                 "-Xexplicit-api=strict",
                 "-Xdont-warn-on-error-suppression",
