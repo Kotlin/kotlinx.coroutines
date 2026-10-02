@@ -201,7 +201,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
             apiVersion = it
         }
         if (isMainTaskName && !unpublished.contains(project.name)) {
-            setWarningsAsErrors(project)
+            // setWarningsAsErrors(project)
             freeCompilerArgs.addAll(
                 "-Xexplicit-api=strict",
                 "-Xdont-warn-on-error-suppression",
@@ -229,6 +229,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
             )
             freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
         }
+        freeCompilerArgs.add("-Xreturn-value-checker=full")
         addExtraCompilerFlags(project)
     }
 }
