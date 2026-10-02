@@ -104,11 +104,11 @@ private fun Throwable.attachStacktraceFrom(thread: Thread) {
  * Tests should be wrapped in this if they intend to use [fakeDelay].
  */
 internal fun <T> withFakeDelayForTesting(block: () -> T): T {
-    fakeDelaysRequestsFromTests.fetchAndAdd(1)
+    val _ = fakeDelaysRequestsFromTests.fetchAndAdd(1)
     try {
         return block()
     } finally {
-        fakeDelaysRequestsFromTests.fetchAndAdd(-1)
+        val _ = fakeDelaysRequestsFromTests.fetchAndAdd(-1)
     }
 }
 

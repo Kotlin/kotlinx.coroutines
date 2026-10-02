@@ -60,6 +60,8 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
     public fun addLast(node: T): Unit = synchronized(this) { addImpl(node) }
 
     // Condition also receives current first node in the heap
+    // TODO: doesn't need to return the `Boolean`
+    @IgnorableReturnValue
     public inline fun addLastIf(node: T, cond: (T?) -> Boolean): Boolean = synchronized(this) {
         if (cond(firstImpl())) {
             addImpl(node)
@@ -75,7 +77,7 @@ public open class ThreadSafeHeap<T> : SynchronizedObject() where T: ThreadSafeHe
         } else {
             val index = node.index
             assert { index >= 0 }
-            removeAtImpl(index)
+            val _ = removeAtImpl(index)
             true
         }
     }

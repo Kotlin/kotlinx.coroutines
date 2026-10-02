@@ -290,8 +290,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                     else -> {
                         // update to full-blown queue to add one more
                         val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                        newQueue.addLast(queue as Runnable)
-                        newQueue.addLast(task)
+                        val _ = newQueue.addLast(queue as Runnable)
+                        val _ = newQueue.addLast(task)
                         if (_queue.compareAndSet(queue, newQueue)) return true
                     }
                 }
@@ -326,11 +326,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                 // make sure that moving from delayed to queue removes from delayed only after it is added to queue
                 // to make sure that 'isEmpty' and `nextTime` that check both of them
                 // do not transiently report that both delayed and queue are empty during move
-                delayed.removeFirstIf {
-                    if (it.timeToExecute(now)) {
-                        enqueueImpl(it)
-                    } else
-                        false
+                val _ = delayed.removeFirstIf {
+                    it.timeToExecute(now) && enqueueImpl(it)
                 } ?: break // quit loop when nothing more to remove or enqueueImpl returns false on "isComplete"
             }
         }
@@ -350,7 +347,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
                     else -> {
                         // update to full-blown queue to close
                         val newQueue = Queue<Runnable>(Queue.INITIAL_CAPACITY, singleConsumer = true)
-                        newQueue.addLast(queue as Runnable)
+                        val _ = newQueue.addLast(queue as Runnable)
                         if (_queue.compareAndSet(queue, newQueue)) return
                     }
                 }
@@ -476,7 +473,7 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         final override fun dispose(): Unit = synchronized(this) {
             val heap = _heap
             if (heap === DISPOSED_TASK) return // already disposed
-            (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
+            val _ = (heap as? DelayedTaskQueue)?.remove(this) // remove if it is in heap (first)
             _heap = DISPOSED_TASK // never add again to any heap
         }
 

@@ -11,9 +11,8 @@ public external class JsPromiseInterfaceForTesting {
     /**
      * @suppress
      */
-    public fun then(onFulfilled: ((Unit) -> Unit), onRejected: ((Throwable) -> Unit)): JsPromiseInterfaceForTesting
-    /**
-     * @suppress
-     */
-    public fun then(onFulfilled: ((Unit) -> Unit)): JsPromiseInterfaceForTesting
+    public fun then(
+        onFulfilled: ((Unit) -> JsPromiseInterfaceForTesting),
+        onRejected: ((Throwable) -> JsPromiseInterfaceForTesting)
+    ): JsPromiseInterfaceForTesting
 }

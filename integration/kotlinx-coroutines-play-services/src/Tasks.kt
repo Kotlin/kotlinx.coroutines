@@ -15,8 +15,9 @@ import kotlin.coroutines.*
 public fun <T> Deferred<T>.asTask(): Task<T> {
     val cancellation = CancellationTokenSource()
     val source = TaskCompletionSource<T>(cancellation.token)
-
-    invokeOnCompletion callback@{
+    // Ignoring the disposable handle, since we can never know if the returned `Task` is still useful.
+    // `Task` can't be cancelled externally.
+    val _ = invokeOnCompletion callback@{
         if (it is CancellationException) {
             cancellation.cancel()
             return@callback
@@ -82,7 +83,7 @@ private fun <T> Task<T>.asDeferredImpl(cancellationTokenSource: CancellationToke
     }
 
     if (cancellationTokenSource != null) {
-        deferred.invokeOnCompletion {
+        val _ = deferred.invokeOnCompletion {
             cancellationTokenSource.cancel()
         }
     }

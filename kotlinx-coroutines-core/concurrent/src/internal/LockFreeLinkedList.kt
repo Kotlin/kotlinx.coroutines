@@ -95,7 +95,7 @@ public actual open class LockFreeLinkedListNode {
      * Forbids adding new items to this list.
      */
     public actual fun close(forbiddenElementsBit: Int) {
-        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+        val _ = addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
     }
 
     /**
@@ -140,6 +140,7 @@ public actual open class LockFreeLinkedListNode {
      * **Note**: Invocation of this operation does not guarantee that remove was actually complete if result was `false`.
      * In particular, invoking [nextNode].[prevNode] might still return this node even though it is "already removed".
      */
+    @IgnorableReturnValue
     public actual open fun remove(): Boolean =
         removeOrNext() == null
 
@@ -153,7 +154,7 @@ public actual open class LockFreeLinkedListNode {
             val removed = (next as Node).removed()
             if (_next.compareAndSet(next, removed)) {
                 // was removed successfully (linearized remove) -- fixup the list
-                next.correctPrev()
+                val _ = next.correctPrev()
                 return null
             }
         }
@@ -193,7 +194,9 @@ public actual open class LockFreeLinkedListNode {
             if (next._prev.compareAndSet(nextPrev, this)) {
                 // This newly added node could have been removed, and the above CAS would have added it physically again.
                 // Let us double-check for this situation and correct if needed
-                if (isRemoved) next.correctPrev()
+                if (isRemoved) {
+                    val _ = next.correctPrev()
+                }
                 return
             }
         }

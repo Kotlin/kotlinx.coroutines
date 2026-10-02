@@ -68,12 +68,12 @@ private class SubscriptionChannel<T> :
     }
 
     override fun onSuccess(t: T & Any) {
-        trySend(t)
+        val _ = trySend(t)
         close(cause = null)
     }
 
     override fun onNext(t: T & Any) {
-        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
+        val _ = trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

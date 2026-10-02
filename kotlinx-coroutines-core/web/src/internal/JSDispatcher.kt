@@ -12,7 +12,6 @@ internal expect fun w3cClearTimeout(window: W3CWindow, handle: Int)
 internal expect class ScheduledMessageQueue(dispatcher: SetTimeoutBasedDispatcher) : MessageQueue {
     override fun schedule()
     override fun reschedule()
-    internal fun setTimeout(timeout: Int)
 }
 
 internal expect class WindowMessageQueue(window: W3CWindow) : MessageQueue {
@@ -74,7 +73,7 @@ internal class WindowDispatcher(private val window: W3CWindow) : CoroutineDispat
 
 internal object SetTimeoutDispatcher : SetTimeoutBasedDispatcher() {
     override fun scheduleQueueProcessing() {
-        messageQueue.setTimeout(0)
+        messageQueue.reschedule()
     }
 }
 
