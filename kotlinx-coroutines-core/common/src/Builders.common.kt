@@ -197,6 +197,7 @@ import kotlin.jvm.*
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code which will be invoked in the child coroutine.
  **/
+@IgnorableReturnValue
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,

@@ -1796,9 +1796,9 @@ internal open class BufferedChannel<E>(
     final override fun cancel(cause: Throwable?): Boolean = cancelImpl(cause)
 
     @Suppress("OVERRIDE_DEPRECATION")
-    final override fun cancel() { cancelImpl(null) }
+    final override fun cancel() { val _ = cancelImpl(null) }
 
-    final override fun cancel(cause: CancellationException?) { cancelImpl(cause) }
+    final override fun cancel(cause: CancellationException?) { val _ = cancelImpl(cause) }
 
     internal open fun cancelImpl(cause: Throwable?): Boolean =
         closeOrCancelImpl(cause ?: CancellationException("Channel was cancelled"), cancel = true)
@@ -1938,7 +1938,7 @@ internal open class BufferedChannel<E>(
      * Completes the started [close] or [cancel] procedure.
      */
     private fun completeCloseOrCancel() {
-        isClosedForSend // must finish the started close/cancel if one is detected.
+        val _ = isClosedForSend // must finish the started close/cancel if one is detected.
     }
 
     protected open val isConflatedDropOldest get() = false
@@ -2210,7 +2210,7 @@ internal open class BufferedChannel<E>(
             is CancellableContinuation<*> -> resumeWithException(if (receiver) receiveException else sendException)
             is ReceiveCatching<*> -> cont.resume(closed(closeCause))
             is BufferedChannel<*>.BufferedChannelIterator -> tryResumeHasNextOnClosedChannel()
-            is SelectInstance<*> -> trySelect(this@BufferedChannel, CHANNEL_CLOSED)
+            is SelectInstance<*> -> { val _ = trySelect(this@BufferedChannel, CHANNEL_CLOSED) }
             else -> error("Unexpected waiter: $this")
         }
     }
@@ -2245,7 +2245,7 @@ internal open class BufferedChannel<E>(
         // for senders or the flag whether there still
         // exist elements to retrieve for receivers.
         CLOSE_STATUS_CLOSED -> {
-            completeClose(sendersAndCloseStatusCur.sendersCounter)
+            val _ = completeClose(sendersAndCloseStatusCur.sendersCounter)
             // When `isClosedForReceive` is `false`, always return `true`.
             // Otherwise, it is possible that the channel is closed but
             // still has elements to retrieve.
@@ -2472,7 +2472,7 @@ internal open class BufferedChannel<E>(
                 val segment = it.segment
                 // Advance the `bufferEnd` segment if required.
                 if (!isRendezvousOrUnlimited && id <= bufferEndCounter / SEGMENT_SIZE) {
-                    bufferEndSegment.moveForward(segment)
+                    val _ = bufferEndSegment.moveForward(segment)
                 }
                 // Is the required segment removed?
                 if (segment.id > id) {

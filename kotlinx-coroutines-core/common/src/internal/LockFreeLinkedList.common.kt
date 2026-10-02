@@ -7,6 +7,7 @@ public expect open class LockFreeLinkedListNode() {
     public val prevNode: LockFreeLinkedListNode
     public fun addLast(node: LockFreeLinkedListNode, permissionsBitmask: Int): Boolean
     public fun addOneIfEmpty(node: LockFreeLinkedListNode): Boolean
+    @IgnorableReturnValue
     public open fun remove(): Boolean
 
     /**

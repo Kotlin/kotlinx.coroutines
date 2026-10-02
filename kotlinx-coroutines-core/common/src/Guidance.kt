@@ -181,6 +181,7 @@ public fun launch(
         "This pattern should be avoided. " +
         "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING)
+@IgnorableReturnValue
 public fun CoroutineScope.launch(
     context: Job,
     start: CoroutineStart = CoroutineStart.DEFAULT,

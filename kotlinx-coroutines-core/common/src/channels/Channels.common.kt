@@ -258,6 +258,7 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * }
  * ```
  */
+@IgnorableReturnValue
 public suspend fun <E, C: MutableCollection<E>> ReceiveChannel<E>.consumeTo(collection: C): C =
     consumeEach(collection::add).let { collection }
 

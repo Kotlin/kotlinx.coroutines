@@ -205,6 +205,7 @@ public interface CancellableContinuation<in T> : Continuation<T> {
      * cancelled as a result of this invocation, and `false` otherwise.
      * [cancel] might return `false` when the continuation was either [resumed][resume] or already [cancelled][cancel].
      */
+    @IgnorableReturnValue
     public fun cancel(cause: Throwable? = null): Boolean
 
     /**

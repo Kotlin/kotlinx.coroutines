@@ -2,7 +2,6 @@ package kotlinx.coroutines.reactive
 
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
 import org.reactivestreams.*
 
 /**
@@ -48,7 +47,7 @@ private class SubscriptionChannel<T>(
                 subscription.request((request - needRequested).toLong())
                 return
             }
-            // just do book-keeping
+            // just do bookkeeping
             if (_requested.compareAndSet(wasRequested, needRequested)) return
         }
     }
@@ -83,7 +82,7 @@ private class SubscriptionChannel<T>(
 
     override fun onNext(t: T) {
         _requested.decrementAndGet()
-        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
+        val _ = trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

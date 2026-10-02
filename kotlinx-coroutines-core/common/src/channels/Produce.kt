@@ -58,7 +58,7 @@ public interface ProducerScope<in E> : CoroutineScope, SendChannel<E> {
  * @throws IllegalStateException if this channel already has a [SendChannel.invokeOnClose] handler registered.
  */
 public suspend fun ProducerScope<*>.awaitClose(block: () -> Unit = {}) {
-    check(kotlin.coroutines.coroutineContext[Job] === this) { "awaitClose() can only be invoked from the producer context" }
+    check(currentCoroutineContext()[Job] === this) { "awaitClose() can only be invoked from the producer context" }
     try {
         suspendCancellableCoroutine<Unit> { cont ->
             invokeOnClose {
@@ -336,7 +336,9 @@ internal fun <E> CoroutineScope.produce(
     val channel = Channel<E>(capacity, onBufferOverflow)
     val newContext = newCoroutineContext(context)
     val coroutine = ProducerCoroutine(newContext, channel)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
+    if (onCompletion != null) {
+        val _ = coroutine.invokeOnCompletion(handler = onCompletion)
+    }
     coroutine.start(start, coroutine, block)
     return coroutine
 }

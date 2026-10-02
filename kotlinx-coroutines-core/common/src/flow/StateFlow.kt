@@ -330,7 +330,10 @@ private class StateFlowImpl<T>(
 
     public override var value: T
         get() = NULL.unbox(_state.value)
-        set(value) { updateState(null, value ?: NULL) }
+        set(value) {
+            // Always `true` on `expectedState = null`
+            val _ = updateState(null, value ?: NULL)
+        }
 
     override fun compareAndSet(expect: T, update: T): Boolean =
         updateState(expect ?: NULL, update ?: NULL)

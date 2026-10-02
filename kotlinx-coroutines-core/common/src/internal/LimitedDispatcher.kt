@@ -59,7 +59,7 @@ internal class LimitedDispatcher(
      */
     private inline fun dispatchInternal(block: Runnable, startWorker: (Worker) -> Unit) {
         // Add task to queue so running workers will be able to see that
-        queue.addLast(block)
+        val _ = queue.addLast(block)
         if (runningWorkers.value >= parallelism) return
         // allocation may fail if some workers were launched in parallel or a worker temporarily decreased
         // `runningWorkers` when they observed an empty queue.
@@ -96,9 +96,9 @@ internal class LimitedDispatcher(
         while (true) {
             when (val nextTask = queue.removeFirstOrNull()) {
                 null -> synchronized(workerAllocationLock) {
-                    runningWorkers.decrementAndGet()
+                    val _ = runningWorkers.decrementAndGet() // KT-88804
                     if (queue.size == 0) return null
-                    runningWorkers.incrementAndGet()
+                    val _ = runningWorkers.incrementAndGet() // KT-88804
                 }
                 else -> return nextTask
             }
@@ -137,7 +137,7 @@ internal class LimitedDispatcher(
             } catch (e: Throwable) {
                 // If the worker failed, we should deallocate its slot
                 synchronized(workerAllocationLock) {
-                    runningWorkers.decrementAndGet()
+                    val _ = runningWorkers.decrementAndGet() // KT-88804
                 }
                 throw e
             }

@@ -26,7 +26,7 @@ public fun <T> ObservableValue<T>.asFlow(): Flow<T> = callbackFlow<T> {
          * Do not propagate the exception to the ObservableValue, it
          * already should've been handled by the downstream
          */
-        trySend(newValue)
+        val _ = trySend(newValue)
     }
     addListener(listener)
     send(value)

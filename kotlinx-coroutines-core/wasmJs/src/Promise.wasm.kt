@@ -36,7 +36,7 @@ public fun <T> Deferred<T>.asPromise(): Promise<JsAny?> = oldAsPromiseImpl()
 
 private fun <T> Deferred<T>.oldAsPromiseImpl(): Promise<JsAny?> {
     val promise = Promise<JsAny?> { resolve, reject ->
-        invokeOnCompletion {
+        val _ = invokeOnCompletion {
             val e = getCompletionExceptionOrNull()
             if (e != null) {
                 reject(e.toJsReference())
@@ -61,7 +61,7 @@ public suspend fun <T> Promise<JsAny?>.await(): T = oldAwaitImpl()
 
 @Suppress("UNCHECKED_CAST")
 private suspend fun <T> Promise<JsAny?>.oldAwaitImpl(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-    this@oldAwaitImpl.then(
+    val _ = this@oldAwaitImpl.then(
         onFulfilled = { cont.resume(it as T); null },
         onRejected = { cont.resumeWithException(it.toThrowableOrNull() ?: error("Unexpected non-Kotlin exception $it")); null }
     )
