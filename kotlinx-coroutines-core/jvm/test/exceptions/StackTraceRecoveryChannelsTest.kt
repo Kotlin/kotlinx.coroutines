@@ -3,7 +3,8 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
+import kotlin.test.*
+import org.junit.Rule
 import org.junit.rules.*
 import kotlin.coroutines.*
 
@@ -58,24 +59,20 @@ class StackTraceRecoveryChannelsTest : TestBase() {
 
     private suspend fun channelReceive(channel: Channel<Int>) = channelOp { channel.receive() }
 
-    private suspend inline fun channelOp(block: () -> Unit) {
-        try {
-            yield()
+    private suspend inline fun channelOp(block: () -> Any?) {
+        yield()
+        val e = assertFailsWith<RecoverableTestException> {
             block()
-            expectUnreached()
-        } catch (e: RecoverableTestException) {
-            verifyStackTrace("channels/${name.methodName}", e)
         }
+        verifyStackTrace("channels/${name.methodName}", e)
     }
 
     private suspend fun channelSend(channel: Channel<Int>) {
-        try {
-            yield()
+        yield()
+        val e = assertFailsWith<Exception> {
             channel.send(1)
-            expectUnreached()
-        } catch (e: Exception) {
-            verifyStackTrace("channels/${name.methodName}", e)
         }
+        verifyStackTrace("channels/${name.methodName}", e)
     }
 
     @Test
@@ -83,34 +80,30 @@ class StackTraceRecoveryChannelsTest : TestBase() {
         val channel = Channel<Int>()
         channel.close(RecoverableTestException())
 
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             channel.sendWithContext(coroutineContext)
-        } catch (e: RecoverableTestException) {
-            verifyStackTrace("channels/${name.methodName}", e)
         }
+        verifyStackTrace("channels/${name.methodName}", e)
     }
 
     @Test
     fun testOfferWithContextWrapped() = runTest {
         val channel = Channel<Int>()
         channel.close(RecoverableTestException())
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             channel.sendWithContext(wrapperDispatcher(coroutineContext))
-        } catch (e: Exception) {
-            verifyStackTrace("channels/${name.methodName}", e)
         }
+        verifyStackTrace("channels/${name.methodName}", e)
     }
 
     @Test
     fun testOfferFromScope() = runTest {
         val channel = Channel<Int>()
         channel.close(RecoverableTestException())
-
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             channel.sendFromScope()
-        } catch (e: Exception) {
-            verifyStackTrace("channels/${name.methodName}", e)
         }
+        verifyStackTrace("channels/${name.methodName}", e)
     }
 
     // Slow path via suspending send
@@ -118,14 +111,12 @@ class StackTraceRecoveryChannelsTest : TestBase() {
     fun testSendFromScope() = runTest {
         val channel = Channel<Int>()
         val deferred = async {
-            try {
-                expect(1)
+            expect(1)
+            val e = assertFailsWith<Exception> {
                 channel.sendFromScope()
-            } catch (e: Exception) {
-                verifyStackTrace("channels/${name.methodName}", e)
             }
+            verifyStackTrace("channels/${name.methodName}", e)
         }
-
         yield()
         expect(2)
         // Cancel is an analogue of `produce` failure, just a shorthand

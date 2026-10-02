@@ -40,8 +40,8 @@ abstract class ChannelUndeliveredElementSelectOldStressTest(private val kind: Te
     private val scope = CoroutineScope(dispatcher)
 
     private val channel = kind.create<Data> { it.failedToDeliver() }
-    private val senderDone = Channel<Boolean>(1)
-    private val receiverDone = Channel<Boolean>(1)
+    private val senderDone = Channel<Unit>(1)
+    private val receiverDone = Channel<Unit>(1)
 
     @Volatile
     private var lastReceived = -1L
@@ -68,11 +68,11 @@ abstract class ChannelUndeliveredElementSelectOldStressTest(private val kind: Te
         dispatcher.close()
     }
 
-    private inline fun cancellable(done: Channel<Boolean>, block: () -> Unit) {
+    private inline fun cancellable(done: Channel<Unit>, block: () -> Unit) {
         try {
             block()
         } finally {
-            if (!done.trySend(true).isSuccess) error(IllegalStateException("failed to offer to done channel"))
+            if (!done.trySend(Unit).isSuccess) error(IllegalStateException("failed to offer to done channel"))
         }
     }
 

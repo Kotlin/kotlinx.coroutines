@@ -12,7 +12,7 @@ class ChannelMemoryLeakStressTest : TestBase()  {
         val c = Channel<Any>(1)
         repeat(nRepeat) {
             c.send(bigValue())
-            c.receive()
+            val _ = c.receive()
         }
     }
 

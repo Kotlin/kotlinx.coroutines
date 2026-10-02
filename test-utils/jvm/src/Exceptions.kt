@@ -45,6 +45,7 @@ fun captureExceptionsRun(
 }
 
 @OptIn(ExperimentalContracts::class)
+@IgnorableReturnValue
 suspend inline fun <reified E: Throwable> assertCallsExceptionHandlerWith(
     crossinline operation: suspend (CoroutineExceptionHandler) -> Unit): E {
     contract {

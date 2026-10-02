@@ -2,7 +2,6 @@
 
 package kotlinx.coroutines.lincheck
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
@@ -245,14 +244,18 @@ abstract class SequentialIntChannelBase(private val capacity: Int) {
     fun close(token: Int): Boolean {
         if (closedMessage !== null) return false
         closedMessage = "Closed($token)"
-        for (r in receivers) r.resume(closedMessage!!)
+        for (r in receivers) {
+            val _ = r.resume(closedMessage!!)
+        }
         receivers.clear()
         return true
     }
 
     fun cancel(token: Int) {
-        close(token)
-        for ((s, _) in senders) s.resume(closedMessage!!)
+        val _ = close(token)
+        for ((s, _) in senders) {
+            val _ = s.resume(closedMessage!!)
+        }
         senders.clear()
         buffer.clear()
     }

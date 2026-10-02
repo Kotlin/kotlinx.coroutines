@@ -26,11 +26,7 @@ internal actual class ScheduledMessageQueue actual constructor(private val dispa
     }
 
     actual override fun reschedule() {
-        setTimeout(processQueue, 0)
-    }
-
-    internal actual fun setTimeout(timeout: Int) {
-        setTimeout(processQueue, timeout)
+        val _ = setTimeout(processQueue, 0)
     }
 }
 
@@ -92,4 +88,3 @@ private fun clearTimeout(handle: Int): Unit =
 @Suppress("UNUSED_PARAMETER")
 private fun setTimeout(window: W3CWindow, handler: () -> Unit, timeout: Int): Int =
     js("window.setTimeout(handler, timeout)")
-

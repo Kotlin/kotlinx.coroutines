@@ -180,6 +180,7 @@ internal class WorkQueue {
         return null
     }
 
+    // Drops tasks if `globalQueue` is closed
     fun offloadAllWorkTo(globalQueue: GlobalQueue) {
         lastScheduledTask.getAndSet(null)?.let { globalQueue.addLast(it) }
         while (pollTo(globalQueue)) {
@@ -218,7 +219,7 @@ internal class WorkQueue {
 
     private fun pollTo(queue: GlobalQueue): Boolean {
         val task = pollBuffer() ?: return false
-        queue.addLast(task)
+        val _ = queue.addLast(task)
         return true
     }
 

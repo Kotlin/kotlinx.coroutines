@@ -5,9 +5,9 @@ package kotlinx.coroutines.scheduling
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import org.junit.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 abstract class SchedulerTestBase : TestBase() {
     companion object {
@@ -37,7 +37,7 @@ abstract class SchedulerTestBase : TestBase() {
 
         private fun maxSequenceNumber(): Int? {
             return Thread.getAllStackTraces().keys.asSequence().filter { it is CoroutineScheduler.Worker }
-                .map { sequenceNumber(it.name) }.maxOrNull()
+                .maxOfOrNull { sequenceNumber(it.name) }
         }
 
         private fun sequenceNumber(threadName: String): Int {
@@ -46,7 +46,6 @@ abstract class SchedulerTestBase : TestBase() {
             if (separatorIndex == -1) {
                 return suffix.toInt()
             }
-
             return suffix.substring(0, separatorIndex).toInt()
         }
 
@@ -76,20 +75,20 @@ abstract class SchedulerTestBase : TestBase() {
     }
 
     protected fun blockingDispatcher(parallelism: Int): CoroutineDispatcher {
-        val intitialize = dispatcher
+        val _ = dispatcher // initialize
         return _dispatcher!!.blocking(parallelism)
     }
 
     protected fun view(parallelism: Int): CoroutineDispatcher {
-        val intitialize = dispatcher
+        val _ = dispatcher // initialize
         return _dispatcher!!.limitedParallelism(parallelism)
     }
 
-    @After
+    @AfterTest
     fun after() {
         runBlocking {
-            withTimeout(5_000) {
-                _dispatcher?.close()
+            withTimeout(5.seconds) {
+                val _ = _dispatcher?.close()
             }
         }
     }

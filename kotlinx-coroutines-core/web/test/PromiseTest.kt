@@ -26,12 +26,10 @@ class PromiseTestWeb : TestBase() {
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
         @Suppress("CAST_NEVER_SUCCEEDS")
         promiseReject(TestException("Rejected").toJsReference() as JsPromiseError)
-        try {
+        assertFailsWith<TestException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertIs<TestException>(e)
-            assertEquals("Rejected", e.message)
+        }.apply {
+            assertEquals("Rejected", message)
         }
         null
     }
@@ -85,7 +83,7 @@ class PromiseTestWeb : TestBase() {
         lateinit var r: (JsAny) -> Unit
         val toAwait = Promise<JsAny?> { resolve, _ -> r = resolve }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            toAwait.await() // suspends
+            val _ = toAwait.await() // suspends
         }
         job.cancel() // cancel the job
         r("fail".toJsString()) // too late, the waiting job was already cancelled
@@ -120,8 +118,7 @@ class PromiseTestWeb : TestBase() {
         val throwable = async(start = CoroutineStart.UNDISPATCHED) {
             assertFails { toAwait.await() }
         }
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        r(RuntimeException("Rejected").toJsReference() as JsPromiseError)
+        r(RuntimeException("Rejected").toJsReference().unsafeCast<JsPromiseError>())
         assertIs<Exception>(throwable.await())
         assertEquals("Rejected", throwable.await().message)
         null

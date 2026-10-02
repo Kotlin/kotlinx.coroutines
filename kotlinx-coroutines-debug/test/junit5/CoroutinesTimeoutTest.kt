@@ -142,6 +142,7 @@ private fun ListAssert<Event>.testFinishedSuccessfully(testName: String): ListAs
         finishedSuccessfully()
     ))
 
+@IgnorableReturnValue
 private fun ListAssert<Event>.testTimedOut(testName: String, after: Long): ListAssert<Event> =
     haveExactly(1, event(
         test(testName),

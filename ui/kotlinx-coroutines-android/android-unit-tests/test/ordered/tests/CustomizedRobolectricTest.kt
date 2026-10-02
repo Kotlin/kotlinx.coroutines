@@ -3,18 +3,15 @@ package ordered.tests
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.*
-import org.junit.Test
 import org.junit.runner.*
 import org.robolectric.*
 import org.robolectric.annotation.*
 import org.robolectric.shadows.*
 import kotlin.test.*
 
-
 class InitMainDispatcherBeforeRobolectricTestRunner(testClass: Class<*>) : RobolectricTestRunner(testClass) {
-
     init {
-        kotlin.runCatching {
+        val _ = runCatching {
             // touch Main, watch it burn
             GlobalScope.launch(Dispatchers.Main + CoroutineExceptionHandler { _, _ -> }) {  }
         }

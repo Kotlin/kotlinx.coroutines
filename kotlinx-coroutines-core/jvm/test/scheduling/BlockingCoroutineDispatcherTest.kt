@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import org.junit.*
 import org.junit.rules.*
 import java.util.concurrent.*
+import kotlin.test.assertFailsWith
 
 class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
 
@@ -161,13 +162,13 @@ class BlockingCoroutineDispatcherTest : SchedulerTestBase() {
         finish(4)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeParallelism() {
-        blockingDispatcher(-1)
+        assertFailsWith<IllegalArgumentException> { blockingDispatcher(-1) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testZeroParallelism() {
-        blockingDispatcher(0)
+        assertFailsWith<IllegalArgumentException> { blockingDispatcher(0) }
     }
 }

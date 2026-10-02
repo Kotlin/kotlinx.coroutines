@@ -25,11 +25,7 @@ internal actual class ScheduledMessageQueue actual constructor(private val dispa
     }
 
     actual override fun reschedule() {
-        setTimeout(processQueue, 0)
-    }
-
-    internal actual fun setTimeout(timeout: Int) {
-        setTimeout(processQueue, timeout)
+        val _ = setTimeout(processQueue, 0)
     }
 }
 
@@ -52,7 +48,7 @@ internal actual class WindowMessageQueue actual constructor(private val window: 
     }
 
     actual override fun schedule() {
-        Promise.resolve(Unit).then({ process() })
+        val _ = Promise.resolve(Unit).then({ process() })
     }
 
     actual override fun reschedule() {

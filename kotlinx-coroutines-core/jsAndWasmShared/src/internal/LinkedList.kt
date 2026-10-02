@@ -1,18 +1,16 @@
-@file:Suppress("unused", "NO_EXPLICIT_RETURN_TYPE_IN_API_MODE", "NO_EXPLICIT_VISIBILITY_IN_API_MODE")
-
 package kotlinx.coroutines.internal
 
 private typealias Node = LockFreeLinkedListNode
 
 /** @suppress **This is unstable API and it is subject to change.** */
 public actual open class LockFreeLinkedListNode {
-    @PublishedApi internal var _next = this
-    @PublishedApi internal var _prev = this
+    @PublishedApi internal var _next: LockFreeLinkedListNode = this
+    @PublishedApi internal var _prev: LockFreeLinkedListNode = this
     @PublishedApi internal var _removed: Boolean = false
 
-    public actual inline val nextNode get() = _next
-    inline actual val prevNode get() = _prev
-    inline actual val isRemoved get() = _removed
+    public actual inline val nextNode: LockFreeLinkedListNode get() = _next
+    public actual inline val prevNode: LockFreeLinkedListNode get() = _prev
+    public actual inline val isRemoved: Boolean get() = _removed
 
     public actual fun addLast(node: Node, permissionsBitmask: Int): Boolean = when (val prev = this._prev) {
         is ListClosed ->
@@ -27,7 +25,7 @@ public actual open class LockFreeLinkedListNode {
     }
 
     public actual fun close(forbiddenElementsBit: Int) {
-        addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
+        val _ = addLast(ListClosed(forbiddenElementsBit), forbiddenElementsBit)
     }
 
     /*
@@ -36,6 +34,7 @@ public actual open class LockFreeLinkedListNode {
      * I.g. `LockFreeLinkedListHead` throws, while `SendElementWithUndeliveredHandler`
      * invokes handler on remove
      */
+    @IgnorableReturnValue
     public actual open fun remove(): Boolean {
         if (_removed) return false
         val prev = this._prev
@@ -48,7 +47,7 @@ public actual open class LockFreeLinkedListNode {
 
     public actual fun addOneIfEmpty(node: Node): Boolean {
         if (_next !== this) return false
-        addLast(node, Int.MIN_VALUE)
+        val _ = addLast(node, Int.MIN_VALUE)
         return true
     }
 }

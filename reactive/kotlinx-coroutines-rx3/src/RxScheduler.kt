@@ -84,7 +84,7 @@ private class DispatcherScheduler(@JvmField val dispatcher: CoroutineDispatcher)
 
         override fun schedule(block: Runnable, delay: Long, unit: TimeUnit): Disposable =
             workerScope.scheduleTask(block, unit.toMillis(delay)) { task ->
-                Runnable { blockChannel.trySend(task) }
+                Runnable { val _ = blockChannel.trySend(task) }
             }
 
         override fun isDisposed(): Boolean = !workerScope.isActive

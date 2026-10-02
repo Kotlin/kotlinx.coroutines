@@ -82,7 +82,7 @@ open class SequencePlaysScrabble : ShakespearePlaysScrabble() {
                 newValue = MutableLong()
                 accumulator[value] = newValue
             }
-            newValue.incAndSet()
+            newValue.inc()
             accumulator
         }
     }

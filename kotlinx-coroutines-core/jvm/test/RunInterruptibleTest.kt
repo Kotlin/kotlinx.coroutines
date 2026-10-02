@@ -34,24 +34,22 @@ class RunInterruptibleTest : TestBase() {
 
     @Test
     fun testInterrupt() = runTest {
-        val latch = Channel<Unit>(1)
+        val latch = Job()
         val job = launch {
             runInterruptible(Dispatchers.IO) {
                 expect(2)
-                latch.trySend(Unit)
-                try {
+                latch.complete()
+                assertFailsWith<InterruptedException> {
                     Thread.sleep(10_000L)
-                    expectUnreached()
-                } catch (e: InterruptedException) {
-                    expect(4)
-                    assertFalse { Thread.currentThread().isInterrupted }
                 }
+                expect(4)
+                assertFalse { Thread.currentThread().isInterrupted }
             }
         }
 
         launch(start = CoroutineStart.UNDISPATCHED) {
             expect(1)
-            latch.receive()
+            latch.join()
             expect(3)
             job.cancelAndJoin()
         }.join()

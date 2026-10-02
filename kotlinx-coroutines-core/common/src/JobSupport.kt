@@ -21,7 +21,7 @@ import kotlin.jvm.*
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
 @Deprecated(level = DeprecationLevel.ERROR, message = "This is internal API and may be removed in the future releases")
-public open class JobSupport constructor(active: Boolean) : Job, ChildJob, ParentJob {
+public open class JobSupport(active: Boolean) : Job, ChildJob, ParentJob {
     final override val key: CoroutineContext.Key<*> get() = Job
 
     /*
@@ -220,7 +220,9 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         // Now handle the final exception
         if (finalException != null) {
             val handled = cancelParent(finalException) || handleJobException(finalException)
-            if (handled) (finalState as CompletedExceptionally).makeHandled()
+            if (handled) {
+                val _ = (finalState as CompletedExceptionally).makeHandled()
+            }
         }
         // Process state updates for the final state before the state of the Job is actually set to the final state
         // to avoid races where outside observer may see the job in the final state, yet exception is not handled yet.
@@ -323,7 +325,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         list.close(LIST_CANCELLATION_PERMISSION)
         notifyHandlers(list, cause) { it.onCancelling }
         // then cancel parent
-        cancelParent(cause) // tentative cancellation -- does not matter if there is no parent
+        val _ = cancelParent(cause) // tentative cancellation -- does not matter if there is no parent
     }
 
     /**
@@ -560,7 +562,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     private fun promoteSingleToNodeList(state: JobNode) {
         // try to promote it to list (SINGLE+ state)
-        state.addOneIfEmpty(NodeList())
+        val _ = state.addOneIfEmpty(NodeList())
         // it must be in SINGLE+ state or state has changed (node could have need removed from state)
         val list = state.nextNode // either our NodeList or somebody else won the race, updated state
         // just attempt converting it to list if state is still the same, then we'll continue lock-free loop
@@ -569,7 +571,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
 
     public final override suspend fun join() {
         if (!joinInternal()) { // fast-path no wait
-            coroutineContext.ensureActive()
+            currentCoroutineContext().ensureActive()
             return // do not suspend
         }
         return joinSuspend() // slow-path wait
@@ -609,7 +611,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
     ) : JobNode() {
         override val onCancelling: Boolean get() = false
         override fun invoke(cause: Throwable?) {
-            select.trySelect(this@JobSupport, Unit)
+            val _ = select.trySelect(this@JobSupport, Unit)
         }
     }
 
@@ -686,10 +688,12 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
      * Makes this [Job] cancelled with a specified [cause].
      * It is used in [AbstractCoroutine]-derived classes when there is an internal failure.
      */
+    @IgnorableReturnValue
     public fun cancelCoroutine(cause: Throwable?): Boolean = cancelImpl(cause)
 
     // cause is Throwable or ParentJob when cancelChild was invoked
     // returns true is exception was handled, false otherwise
+    @IgnorableReturnValue
     internal fun cancelImpl(cause: Any?): Boolean {
         var finalState: Any? = COMPLETING_ALREADY
         if (onCancelComplete) {
@@ -845,7 +849,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
                 }
             }
         }
-    } 
+    }
 
     /**
      * Completes this job. Used by [AbstractCoroutine.resume].
@@ -1253,9 +1257,6 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
             "Finishing[cancelling=$isCancelling, completing=$isCompleting, rootCause=$rootCause, exceptions=$exceptionsHolder, list=$list]"
     }
 
-    private val Incomplete.isCancelling: Boolean
-        get() = this is Finishing && isCancelling
-
     // Used by parent that is waiting for child completion
     private class ChildCompletion(
         private val parent: JobSupport,
@@ -1359,7 +1360,7 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         while (true) {
             val state = this.state
             if (state !is Incomplete) {
-                val result = if (state is CompletedExceptionally) state else state.unboxState()
+                val result = state as? CompletedExceptionally ?: state.unboxState()
                 select.selectInRegistrationPhase(result)
                 return
             }
@@ -1381,8 +1382,8 @@ public open class JobSupport constructor(active: Boolean) : Job, ChildJob, Paren
         override val onCancelling get() = false
         override fun invoke(cause: Throwable?) {
             val state = this@JobSupport.state
-            val result = if (state is CompletedExceptionally) state else state.unboxState()
-            select.trySelect(this@JobSupport, result)
+            val result = state as? CompletedExceptionally ?: state.unboxState()
+            val _ = select.trySelect(this@JobSupport, result)
         }
     }
 }

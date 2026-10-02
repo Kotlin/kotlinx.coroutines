@@ -166,7 +166,7 @@ public fun <T> ListenableFuture<T>.asDeferred(): Deferred<T> {
     // completion handler runs before the Future is completed, the Deferred must have been
     // cancelled and should propagate its cancellation. If it runs after the Future is completed,
     // this is a no-op.
-    deferred.invokeOnCompletion {
+    val _ = deferred.invokeOnCompletion {
         cancel(false)
     }
     // Return hides the CompletableDeferred. This should prevent casting.
@@ -221,8 +221,8 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
     val listenableFuture = JobListenableFuture<T>(this)
     // This invokeOnCompletion completes the JobListenableFuture with the same result as `this` Deferred.
     // The JobListenableFuture may have completed earlier if it got cancelled! See JobListenableFuture.cancel().
-    invokeOnCompletion { throwable ->
-        if (throwable == null) {
+    val _ = invokeOnCompletion { throwable ->
+        val _ = if (throwable == null) {
             listenableFuture.complete(getCompleted())
         } else {
             listenableFuture.completeExceptionallyOrCancel(throwable)
@@ -321,7 +321,7 @@ private class ListenableFutureCoroutine<T>(
     val future = JobListenableFuture<T>(this)
 
     override fun onCompleted(value: T) {
-        future.complete(value)
+        val _ = future.complete(value)
     }
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
@@ -332,7 +332,7 @@ private class ListenableFutureCoroutine<T>(
         // This is consistent with FutureTask behaviour. A race between a Future.cancel() and
         // a FutureTask.setException() for the same Future will similarly drop the
         // cause of a failure-after-cancellation.
-        future.completeExceptionallyOrCancel(cause)
+        val _ = future.completeExceptionallyOrCancel(cause)
     }
 }
 
@@ -419,10 +419,10 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
         // cancellation contracts.
         return auxFuture.isCancelled || isDone && !auxFutureIsFailed && try {
             Uninterruptibles.getUninterruptibly(auxFuture) is Cancelled
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             // `auxFuture` got cancelled right after `auxFuture.isCancelled` returned false.
             true
-        } catch (e: ExecutionException) {
+        } catch (_: ExecutionException) {
             // `auxFutureIsFailed` hasn't been updated yet.
             auxFutureIsFailed = true
             false
@@ -498,7 +498,7 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
                     is Cancelled -> append("CANCELLED, cause=[${result.exception}]")
                     else -> append("SUCCESS, result=[$result]")
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 // `this` future was cancelled by `Future.cancel`. In this case there's no cause or message.
                 append("CANCELLED")
             } catch (e: ExecutionException) {

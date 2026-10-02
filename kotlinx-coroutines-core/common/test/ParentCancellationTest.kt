@@ -3,6 +3,7 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Systematically tests that various builders cancel parent on failure.
@@ -42,14 +43,14 @@ class ParentCancellationTest : TestBase() {
     @Test
     fun testAsyncChild() = runTest {
         testParentCancellation(runsInScopeContext = true) { fail ->
-            async { fail() }
+            val _ = async { fail() }
         }
     }
 
     @Test
     fun testProduceChild() = runTest {
         testParentCancellation(runsInScopeContext = true) { fail ->
-            produce<Unit> { fail() }
+            val _ = produce<Unit> { fail() }
         }
     }
 
@@ -57,7 +58,7 @@ class ParentCancellationTest : TestBase() {
     @Suppress("DEPRECATION_ERROR")
     fun testBroadcastChild() = runTest {
         testParentCancellation(runsInScopeContext = true) { fail ->
-            broadcast<Unit> { fail() }.openSubscription()
+            val _ = broadcast<Unit> { fail() }.openSubscription()
         }
     }
 
@@ -85,7 +86,7 @@ class ParentCancellationTest : TestBase() {
     @Test
     fun testWithTimeoutChild() = runTest {
         testParentCancellation(expectParentActive = true, expectRethrows = true, runsInScopeContext = true) { fail ->
-            withTimeout(1000) { fail() }
+            withTimeout(1.seconds) { fail() }
         }
     }
 

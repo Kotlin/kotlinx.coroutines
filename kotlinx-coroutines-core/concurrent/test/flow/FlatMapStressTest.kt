@@ -38,14 +38,14 @@ class FlatMapStressTest : TestBase() {
                 unsafeFlow {
                     repeat(4) {
                         emit(value + it)
-                        inFlightElements.incrementAndFetch()
+                        inFlightElements.increment()
                     }
                 }
             }.buffer(bufferSize).collect { value ->
                 val inFlight = inFlightElements.load()
                 assertTrue(inFlight <= bufferSize + 1,
                     "Expected less in flight elements than ${bufferSize + 1}, but had $inFlight")
-                inFlightElements.decrementAndFetch()
+                inFlightElements.decrement()
                 result += value
             }
 
@@ -89,7 +89,7 @@ class FlatMapStressTest : TestBase() {
                 val current = concurrency.incrementAndFetch()
                 assertTrue(current in 1..maxConcurrency)
                 emit(value)
-                concurrency.decrementAndFetch()
+                concurrency.decrement()
             }
         }.longSum()
 

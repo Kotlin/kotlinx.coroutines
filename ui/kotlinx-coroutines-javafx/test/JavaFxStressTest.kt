@@ -4,11 +4,12 @@ import kotlinx.coroutines.testing.*
 import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import org.junit.*
+import org.junit.Rule
+import kotlin.test.*
 
 class JavaFxStressTest : TestBase() {
 
-    @Before
+    @BeforeTest
     fun setup() {
         ignoreLostThreads("JavaFX Application Thread", "Thread-", "QuantumRenderer-", "InvokeLaterDispatcher")
     }
@@ -22,14 +23,13 @@ class JavaFxStressTest : TestBase() {
             println("Skipping JavaFxTest in headless environment")
             return@runTest // ignore test in headless environments
         }
-
         val integerProperty = SimpleIntegerProperty(0)
         val flow = integerProperty.asFlow()
         var i = 1
         val n = 1000 * stressTestMultiplier
-        repeat (n) {
+        repeat(n) {
             launch(pool) {
-                flow.first()
+                val _ = flow.first()
             }
             withContext(Dispatchers.JavaFx) {
                 integerProperty.set(i)

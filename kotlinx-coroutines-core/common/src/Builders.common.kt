@@ -197,6 +197,7 @@ import kotlin.jvm.*
  * @param start coroutine start option. The default value is [CoroutineStart.DEFAULT].
  * @param block the coroutine code which will be invoked in the child coroutine.
  **/
+@IgnorableReturnValue
 public fun CoroutineScope.launch(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -469,6 +470,7 @@ private class LazyDeferredCoroutine<T>(
  * See the corresponding section in the [coroutineScope] documentation for details,
  * as well as the [NonCancellable] documentation.
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T

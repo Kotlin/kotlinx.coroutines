@@ -129,7 +129,7 @@ class ThreadContextElementTest : TestBase() {
         newFixedThreadPoolContext(nThreads = 4, name = "withContext").use {
             withContext(it + CopyForChildCoroutineElement(MyData())) {
                 val forBlockData = MyData()
-                myThreadLocal.setForBlock(forBlockData) {
+                val _ = myThreadLocal.setForBlock(forBlockData) {
                     assertSame(myThreadLocal.get(), forBlockData)
                     launch {
                         assertSame(myThreadLocal.get(), forBlockData)
@@ -185,7 +185,7 @@ class ThreadContextElementTest : TestBase() {
      * while being executed concurrently with resume of the child coroutine [kotlinx.coroutines.DispatchedCoroutine.tryResume].
      */
     @Test
-    fun testWithContextJobAccess() = runTest {
+    fun testWithContextJobAccess() {
         val executor = Executors.newSingleThreadExecutor()
         // Emulate non-equal dispatchers
         val executor1 = object : ExecutorService by executor {}
@@ -195,8 +195,8 @@ class ThreadContextElementTest : TestBase() {
         val captor = JobCaptor()
         val manuallyCaptured = mutableListOf<String>()
 
-        fun registerUpdate(job: Job?) = manuallyCaptured.add("Update: $job")
-        fun registerRestore(job: Job?) = manuallyCaptured.add("Restore: $job")
+        fun registerUpdate(job: Job?) { manuallyCaptured.add("Update: $job") }
+        fun registerRestore(job: Job?) { manuallyCaptured.add("Restore: $job") }
 
         var rootJob: Job? = null
         runBlocking(captor + dispatcher1) {
@@ -368,10 +368,10 @@ class CopyForChildCoroutineElement(val data: MyData?) : CopyableThreadContextEle
 private inline fun <ThreadLocalT, OutputT> ThreadLocal<ThreadLocalT>.setForBlock(
     value: ThreadLocalT,
     crossinline block: () -> OutputT
-) {
+): OutputT {
     val priorValue = get()
     set(value)
-    block()
-    set(priorValue)
+    return block().also {
+        set(priorValue)
+    }
 }
-

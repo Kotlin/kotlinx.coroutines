@@ -366,5 +366,5 @@ class FlowAsAsyncIterableTest : TestBase() {
 
 /** Redispatch to the global JS queue to make sure there are no pending promises. */
 private suspend fun globalQueueRedispatch() = suspendCancellableCoroutine { cont ->
-    Promise.resolve(Unit).then { cont.resumeWith(Result.success(Unit)) }
+    val _ = Promise.resolve(Unit).then { cont.resumeWith(Result.success(Unit)) }
 }

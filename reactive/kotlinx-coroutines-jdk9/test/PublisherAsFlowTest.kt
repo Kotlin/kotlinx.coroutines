@@ -15,7 +15,7 @@ class PublisherAsFlowTest : TestBase() {
         var onError = 0
 
         val publisher = flowPublish(currentDispatcher()) {
-            coroutineContext[Job]?.invokeOnCompletion {
+            val _ = coroutineContext[Job]?.invokeOnCompletion {
                 if (it is CancellationException) ++onCancelled
             }
 

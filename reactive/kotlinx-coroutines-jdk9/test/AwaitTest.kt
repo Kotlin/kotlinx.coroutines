@@ -2,7 +2,7 @@ package kotlinx.coroutines.jdk9
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
+import kotlin.test.*
 import java.util.concurrent.Flow as JFlow
 
 class AwaitTest: TestBase() {
@@ -24,13 +24,11 @@ class AwaitTest: TestBase() {
             })
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
+            expect(2)
+            assertFailsWith<CancellationException> {
                 publisher.awaitFirst()
-            } catch (e: CancellationException) {
-                expect(6)
-                throw e
             }
+            expect(6)
         }
         expect(4)
         job.cancelAndJoin()

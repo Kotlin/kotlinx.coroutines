@@ -93,8 +93,7 @@ final fun kotlinx.coroutines.test/runTest(kotlin.coroutines/CoroutineContext = .
 final class kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting { // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting|null[0]
     constructor <init>() // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.<init>|<init>(){}[0]
 
-    final fun then(kotlin/Function1<kotlin/Unit, kotlin/Unit>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.Unit,kotlin.Unit>){}[0]
-    final fun then(kotlin/Function1<kotlin/Unit, kotlin/Unit>, kotlin/Function1<kotlin/Throwable, kotlin/Unit>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.Unit,kotlin.Unit>;kotlin.Function1<kotlin.Throwable,kotlin.Unit>){}[0]
+    final fun then(kotlin/Function1<kotlin/Unit, kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting>, kotlin/Function1<kotlin/Throwable, kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting.then|then(kotlin.Function1<kotlin.Unit,kotlinx.coroutines.test.internal.JsPromiseInterfaceForTesting>;kotlin.Function1<kotlin.Throwable,kotlinx.coroutines.test.internal.JsPromiseInterfaceForTesting>){}[0]
 }
 
 // Targets: [wasmJs]

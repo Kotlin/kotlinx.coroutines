@@ -179,15 +179,18 @@ class FirstTest : TestBase() {
     @Test
     fun testFirstThrowOnCancellation() = runTest {
         val job = launch(start = UNDISPATCHED) {
-            flow {
-                try {
-                    emit(Unit)
-                } finally {
-                    runCatching { yield() }
-                    finish(2)
-                }
-            }.first()
-            expectUnreached()
+            assertFailsWith<CancellationException> {
+                flow {
+                    try {
+                        emit(Unit)
+                    } finally {
+                        assertFailsWith<CancellationException> {
+                            yield()
+                        }
+                        finish(2)
+                    }
+                }.first()
+            }
         }
         expect(1)
         job.cancel()

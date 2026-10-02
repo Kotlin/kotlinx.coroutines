@@ -14,7 +14,7 @@ class NoParamAssertionsTest : TestBase() {
         val function: (ThreadLocal<Int>, Int) -> ThreadContextElement<Int> = ThreadLocal<Int>::asContextElement
         @Suppress("UNCHECKED_CAST")
         val unsafeCasted = function as ((ThreadLocal<Int>?, Int) -> ThreadContextElement<Int>)
-        unsafeCasted(null, 42)
+        val _ = unsafeCasted(null, 42)
     }
 
     @Test
@@ -22,6 +22,6 @@ class NoParamAssertionsTest : TestBase() {
         val function: (ThreadLocal<Any>, Any) -> ThreadContextElement<Any> = ThreadLocal<Any>::asContextElement
         @Suppress("UNCHECKED_CAST")
         val unsafeCasted = function as ((ThreadLocal<Any?>?, Any?) -> ThreadContextElement<Any>)
-        unsafeCasted(ThreadLocal.withInitial { Any() }, null)
+        val _ = unsafeCasted(ThreadLocal.withInitial { Any() }, null)
     }
 }

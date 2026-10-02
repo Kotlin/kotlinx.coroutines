@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * > Note: the behavior of this function can be different from [withTimeout] if [timeMillis] is greater than
  * `Long.MAX_VALUE / 2` milliseconds.
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -134,6 +135,7 @@ public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineSco
  * @see withTimeoutOrNull
  * @see SelectBuilder.onTimeout
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <T> withTimeout(timeout: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
@@ -227,7 +229,7 @@ private fun <U, T : U> setupTimeout(
     // schedule cancellation of this coroutine on time
     val cont = coroutine.uCont
     val context = cont.context
-    coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine, coroutine.context))
+    val _ = coroutine.disposeOnCompletion(context.delay.invokeOnTimeout(coroutine.time, coroutine, coroutine.context))
     // restart the block using a new coroutine with a new job,
     // however, start it undispatched, because we already are in the proper context
     return coroutine.startUndispatchedOrReturnIgnoreTimeout(coroutine, block)

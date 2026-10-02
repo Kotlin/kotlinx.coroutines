@@ -14,7 +14,7 @@ class RunTestStressTest {
         for (i in 0 until n) {
             runTest {
                 suspendCancellableCoroutine<Unit> { cont ->
-                    thread {
+                    val _ = thread {
                         cont.resume(Unit)
                     }
                 }

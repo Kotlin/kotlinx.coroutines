@@ -302,7 +302,7 @@ internal class CoroutineScheduler(
         if (controlState.compareAndSet(state, update)) return true
     }
 
-    private inline fun releaseCpuPermit() = controlState.addAndGet(1L shl CPU_PERMITS_SHIFT)
+    private inline fun releaseCpuPermit() { controlState.getAndAdd(1L shl CPU_PERMITS_SHIFT) }
 
     // This is used a "stop signal" for close and shutdown functions
     private val _isTerminated = atomic(false)
@@ -372,7 +372,7 @@ internal class CoroutineScheduler(
             runSafely(task)
         }
         // Shutdown current thread
-        currentWorker?.tryReleaseCpu(WorkerState.TERMINATED)
+        val _ = currentWorker?.tryReleaseCpu(WorkerState.TERMINATED)
         // check & cleanup state
         assert { availableCpuPermits == corePoolSize }
         parkedWorkersStack.value = 0L
@@ -431,13 +431,13 @@ internal class CoroutineScheduler(
         if (tryUnpark()) return
         // Use state snapshot to avoid accidental thread overprovision
         if (tryCreateWorker(stateSnapshot)) return
-        tryUnpark() // Try unpark again in case there was race between permit release and parking
+        val _ = tryUnpark() // Try unpark again in case there was race between permit release and parking
     }
 
     fun signalCpuWork() {
         if (tryUnpark()) return
         if (tryCreateWorker()) return
-        tryUnpark()
+        val _ = tryUnpark()
     }
 
     private fun tryCreateWorker(state: Long = controlState.value): Boolean {
@@ -452,7 +452,9 @@ internal class CoroutineScheduler(
             val newCpuWorkers = createNewWorker()
             // If we've created the first cpu worker and corePoolSize > 1 then create
             // one more (second) cpu worker, so that stealing between them is operational
-            if (newCpuWorkers == 1 && corePoolSize > 1) createNewWorker()
+            if (newCpuWorkers == 1 && corePoolSize > 1) {
+                val _ = createNewWorker()
+            }
             if (newCpuWorkers > 0) return true
         }
         return false
@@ -730,7 +732,7 @@ internal class CoroutineScheduler(
                         rescanned = true
                     } else {
                         rescanned = false
-                        tryReleaseCpu(WorkerState.PARKING)
+                        val _ = tryReleaseCpu(WorkerState.PARKING)
                         interrupted()
                         LockSupport.parkNanos(minDelayUntilStealableTaskNs)
                         minDelayUntilStealableTaskNs = 0L
@@ -744,7 +746,7 @@ internal class CoroutineScheduler(
                  */
                 tryPark()
             }
-            tryReleaseCpu(WorkerState.TERMINATED)
+            val _ = tryReleaseCpu(WorkerState.TERMINATED)
         }
 
         fun isIo() = state == WorkerState.BLOCKING
@@ -752,7 +754,7 @@ internal class CoroutineScheduler(
         // Counterpart to "tryUnpark"
         private fun tryPark() {
             if (!inStack()) {
-                parkedWorkersStackPush(this)
+                val _ = parkedWorkersStackPush(this)
                 return
             }
             workerCtl.value = PARKED // Update value once
@@ -770,7 +772,7 @@ internal class CoroutineScheduler(
              */
             while (inStack() && workerCtl.value == PARKED) { // Prevent spurious wakeups
                 if (isTerminated || state == WorkerState.TERMINATED) break
-                tryReleaseCpu(WorkerState.PARKING)
+                val _ = tryReleaseCpu(WorkerState.PARKING)
                 interrupted() // Cleanup interruptions
                 park()
             }

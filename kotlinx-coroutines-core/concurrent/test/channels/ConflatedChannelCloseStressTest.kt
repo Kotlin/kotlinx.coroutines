@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.testing.*
 import kotlin.concurrent.atomics.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 class ConflatedChannelCloseStressTest : TestBase() {
 
@@ -35,7 +36,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
                     while (isActive) {
                         curChannel.load().trySend(x).onSuccess {
                             x += nSenders
-                            sent.incrementAndFetch()
+                            sent.increment()
                         }
                     }
                 } finally {
@@ -48,7 +49,7 @@ class ConflatedChannelCloseStressTest : TestBase() {
             try {
                 while (isActive) {
                     flipChannel()
-                    closed.incrementAndFetch()
+                    closed.increment()
                     yield()
                 }
             } finally {
@@ -57,15 +58,15 @@ class ConflatedChannelCloseStressTest : TestBase() {
         }
         val receiver = async(pool + NonCancellable) {
             while (isActive) {
-                curChannel.load().receiveCatching().getOrElse {
+                val _ = curChannel.load().receiveCatching().getOrElse {
                     it?.let { throw it }
                 }
-                received.incrementAndFetch()
+                received.increment()
             }
         }
         // print stats while running
         repeat(testSeconds) {
-            delay(1000)
+            delay(1.seconds)
             printStats()
         }
         println("Stopping")

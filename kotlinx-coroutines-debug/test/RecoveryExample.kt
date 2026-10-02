@@ -18,7 +18,7 @@ object PublicApiImplementation : CoroutineScope by CoroutineScope(CoroutineName(
             asynchronousWork()
         }
 
-        task.await()
+        val _ = task.await()
     }
 }
 

@@ -4,7 +4,6 @@ import kotlinx.coroutines.testing.*
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.concurrent.atomics.decrementAndFetch
 import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
@@ -25,7 +24,7 @@ class MultithreadedDispatchersJvmTest: TestBase() {
                     try {
                         check(entered == 1) { "Expected only one thread to be used, observed $entered" }
                     } finally {
-                        atomicInt.decrementAndFetch()
+                        atomicInt.decrement()
                     }
                 })
             }

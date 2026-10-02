@@ -229,6 +229,7 @@ tasks.withType<KotlinCompilationTask<*>>().configureEach {
             )
             freeCompilerArgs.add("-Xklib-ir-inliner=intra-module")
         }
+        freeCompilerArgs.add("-Xreturn-value-checker=full")
         addExtraCompilerFlags(project)
     }
 }

@@ -2,8 +2,6 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.testing.CountDownLatch
-import org.junit.*
-import org.junit.Test
 import kotlin.concurrent.*
 import kotlin.jvm.internal.*
 import kotlin.test.*
@@ -20,12 +18,12 @@ class WorkQueueStressTest : TestBase() {
     @Volatile
     private var producerFinished = false
 
-    @Before
+    @BeforeTest
     fun setUp() {
         schedulerTimeSource = TestTimeSource(Long.MAX_VALUE) // always steal
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         schedulerTimeSource = NanoTimeSource
     }
@@ -54,12 +52,12 @@ class WorkQueueStressTest : TestBase() {
                 startLatch.await()
                 while (!producerFinished || producerQueue.size != 0) {
                     stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
-                    producerQueue.trySteal(ref)
+                    val _ = producerQueue.trySteal(ref)
                 }
 
                 // Drain last element which is not counted in buffer
                 stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
-                producerQueue.trySteal(ref)
+                val _ = producerQueue.trySteal(ref)
                 stolenTasks[i].addAll(myQueue.drain(ref).map { task(it) })
             }
         }
@@ -80,7 +78,7 @@ class WorkQueueStressTest : TestBase() {
                 }
 
                 // No offloading to global queue here
-                producerQueue.add(task(i.toLong()))
+                assertNull(producerQueue.add(task(i.toLong())))
             }
         }
 
@@ -115,6 +113,6 @@ class WorkQueueStressTest : TestBase() {
     }
 
     private fun GlobalQueue.addAll(tasks: Collection<Task>) {
-        tasks.forEach { addLast(it) }
+        tasks.forEach { assertTrue(addLast(it)) }
     }
 }

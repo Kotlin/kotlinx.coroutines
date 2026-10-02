@@ -7,7 +7,6 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.*
 import kotlinx.coroutines.testing.exceptions.*
-import org.junit.Test
 import org.reactivestreams.*
 import java.util.concurrent.CountDownLatch
 import kotlin.test.*
@@ -94,7 +93,7 @@ class PublishTest : TestBase() {
         val publisher = publish<Unit>(Dispatchers.Unconfined + eh) {
             try {
                 expect(3)
-                delay(10000)
+                awaitCancellation()
             } finally {
                 expect(5)
                 throw RuntimeException("FAILED") // crash after cancel
@@ -134,12 +133,11 @@ class PublishTest : TestBase() {
             assert(isClosedForSend)
             expect(4)
         }
-        try {
-            expect(2)
+        expect(2)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(5)
         }
+        expect(5)
         finish(6)
     }
 
@@ -190,14 +188,13 @@ class PublishTest : TestBase() {
     fun testOnNextErrorAfterCancellation() = runTest {
         assertCallsExceptionHandlerWith<TestException> { handler ->
             var producerScope: ProducerScope<Int>? = null
-            CompletableDeferred<Unit>()
             expect(1)
             var job: Job? = null
-            val publisher = publish<Int>(handler + Dispatchers.Unconfined) {
+            val publisher = publish(handler + Dispatchers.Unconfined) {
                 producerScope = this
                 expect(4)
                 job = launch {
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 }
             }
             expect(2)
@@ -243,13 +240,12 @@ class PublishTest : TestBase() {
                 send(it)
             }
         }
-        try {
+        assertFailsWith<TestException> {
             pub.collect {
                 throw TestException()
             }
-        } catch (e: TestException) {
-            finish(3)
         }
+        finish(3)
     }
 
     @Test
@@ -262,15 +258,16 @@ class PublishTest : TestBase() {
     fun testTrySendNotThrowing() = runTest {
         var producerScope: ProducerScope<Int>? = null
         expect(1)
-        val publisher = publish<Int>(Dispatchers.Unconfined) {
+        val publisher = publish(Dispatchers.Unconfined) {
             producerScope = this
             expect(3)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            publisher.awaitFirstOrNull()
-            expectUnreached()
+            throw assertFailsWith<CancellationException> {
+                publisher.awaitFirstOrNull()
+            }
         }
         job.cancel()
         expect(4)

@@ -20,28 +20,23 @@ class LimitingCoroutineDispatcherStressTest : SchedulerTestBase() {
     private val iterations = 25_000 * stressTestMultiplierSqrt
 
     @Test
-    fun testCpuLimitNotExtended() = runBlocking<Unit> {
-        val tasks = ArrayList<Deferred<*>>(iterations * 2)
+    fun testCpuLimitNotExtended() = runBlocking {
         repeat(iterations) {
-            tasks += task(cpuView, 3)
-            tasks += task(cpuView2, 3)
+            launchTask(cpuView2, 3)
+            launchTask(cpuView, 3)
         }
-
-        tasks.awaitAll()
     }
 
     @Test
-    fun testCpuLimitWithBlocking() = runBlocking<Unit> {
-        val tasks = ArrayList<Deferred<*>>(iterations * 2)
+    fun testCpuLimitWithBlocking() = runBlocking {
         repeat(iterations) {
-            tasks += task(cpuView, 4)
-            tasks += task(blocking, 4)
+            launchTask(cpuView, 4)
+            launchTask(blocking, 4)
         }
-
-        tasks.awaitAll()
     }
 
-    private fun task(ctx: CoroutineContext, maxLimit: Int): Deferred<Unit> = GlobalScope.async(ctx) {
+    @IgnorableReturnValue
+    private fun CoroutineScope.launchTask(ctx: CoroutineContext, maxLimit: Int) = launch(ctx) {
         try {
             val currentlyExecuting = concurrentWorkers.incrementAndGet()
             assertTrue(currentlyExecuting <= maxLimit, "Executing: $currentlyExecuting, max limit: $maxLimit")

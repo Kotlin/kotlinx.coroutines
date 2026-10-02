@@ -127,7 +127,7 @@ internal class ExecutorCoroutineDispatcherImpl(override val executor: Executor) 
      * internal scheduler queue on cancellation.
      */
     init {
-        removeFutureOnCancel(executor)
+        val _ = removeFutureOnCancel(executor)
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
