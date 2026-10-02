@@ -127,13 +127,13 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
 
 // Update module name for metadata artifact to avoid conflicts
 // see https://github.com/Kotlin/kotlinx.coroutines/issues/1797
-val compileKotlinMetadata = tasks.getByName<KotlinCompilationTask<*>>("compileKotlinMetadata") {
+val compileKotlinMetadata = tasks.named<KotlinCompilationTask<*>>("compileKotlinMetadata") {
     compilerOptions {
         freeCompilerArgs.addAll("-module-name", "kotlinx-coroutines-core-common")
     }
 }
 
-val jvmTest = tasks.getByName<Test>("jvmTest") {
+val jvmTest = tasks.named<Test>("jvmTest") {
     minHeapSize = "1g"
     maxHeapSize = "1g"
     enableAssertions = true
@@ -149,7 +149,7 @@ val jvmTest = tasks.getByName<Test>("jvmTest") {
 }
 
 // Setup manifest for kotlinx-coroutines-core-jvm.jar
-val jvmJar = tasks.getByName<Jar>("jvmJar") { setupManifest(this) }
+val jvmJar = tasks.named<Jar>("jvmJar") { setupManifest(this) }
 
 /*
  * Setup manifest for kotlinx-coroutines-core.jar
@@ -158,7 +158,7 @@ val jvmJar = tasks.getByName<Jar>("jvmJar") { setupManifest(this) }
  * kotlinx-coroutines-core-jvm, but our resolving machinery guarantees that
  * any JVM project that depends on -core artifact also depends on -core-jvm one.
  */
-val allMetadataJar = tasks.getByName<Jar>("allMetadataJar") { setupManifest(this) }
+val allMetadataJar = tasks.named<Jar>("allMetadataJar") { setupManifest(this) }
 
 fun setupManifest(jar: Jar) {
     jar.manifest {
@@ -171,13 +171,12 @@ fun setupManifest(jar: Jar) {
     }
 }
 
-val compileTestKotlinJvm = tasks.getByName<KotlinJvmCompile>("compileTestKotlinJvm")
-val jvmTestClasses = tasks.getByName("jvmTestClasses")
+val compileTestKotlinJvm = tasks.named<KotlinJvmCompile>("compileTestKotlinJvm")
 
 val jvmStressTest = tasks.register<Test>("jvmStressTest") {
     dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
+    classpath = jvmTest.get().classpath
+    testClassesDirs = jvmTest.get().testClassesDirs
     minHeapSize = "1g"
     maxHeapSize = "1g"
     include("**/*StressTest.*")
@@ -193,8 +192,8 @@ val jvmStressTest = tasks.register<Test>("jvmStressTest") {
 
 val jvmLincheckTest = tasks.register<Test>("jvmLincheckTest") {
     dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
+    classpath = jvmTest.get().classpath
+    testClassesDirs = jvmTest.get().testClassesDirs
     include("**/*LincheckTest*")
     enableAssertions = true
     testLogging.showStandardStreams = true
@@ -206,8 +205,8 @@ val jvmLincheckTest = tasks.register<Test>("jvmLincheckTest") {
 // and some are hard to detect when storing multiple requests.
 val jvmLincheckTestAdditional = tasks.register<Test>("jvmLincheckTestAdditional") {
     dependsOn(compileTestKotlinJvm)
-    classpath = jvmTest.classpath
-    testClassesDirs = jvmTest.testClassesDirs
+    classpath = jvmTest.get().classpath
+    testClassesDirs = jvmTest.get().testClassesDirs
     include("**/RendezvousChannelLincheckTest*")
     include("**/Buffered1ChannelLincheckTest*")
     include("**/Semaphore*LincheckTest*")
@@ -236,7 +235,7 @@ val moreTest = tasks.register("moreTest") {
     dependsOn(listOf(jvmStressTest, jvmLincheckTest, jvmLincheckTestAdditional))
 }
 
-val check = tasks.getByName("check") {
+val check = tasks.named("check") {
     dependsOn(moreTest)
 }
 
@@ -274,12 +273,12 @@ kover {
 }
 
 // Workaround for https://github.com/Kotlin/dokka/issues/1833: make implicit dependency explicit
-tasks.withType<DokkaBaseTask>() {
+tasks.withType<DokkaBaseTask>().configureEach {
     dependsOn(jvmJar)
 }
 
 // Specific files so nothing from core is accidentally skipped
-tasks.withType<AnimalSniffer> {
+tasks.withType<AnimalSniffer>().configureEach {
     exclude("**/future/FutureKt*")
     exclude("**/future/ContinuationHandler*")
     exclude("**/future/CompletableFutureCoroutine*")

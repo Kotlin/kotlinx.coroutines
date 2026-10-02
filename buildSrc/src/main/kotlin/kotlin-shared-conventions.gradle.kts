@@ -179,7 +179,7 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
     }
 }
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
     testLogging {
         showStandardStreams = true
         events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED)
