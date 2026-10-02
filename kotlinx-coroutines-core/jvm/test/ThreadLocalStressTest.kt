@@ -132,7 +132,6 @@ class ThreadLocalStressTest : TestBase() {
     }
 
     private suspend fun doTest() {
-        @Suppress("RETURN_VALUE_NOT_USED")
         withContext(threadLocal.asContextElement("foo")) {
             assertFailsWith<CancellationException> {
                 coroutineScope {
@@ -145,7 +144,6 @@ class ThreadLocalStressTest : TestBase() {
     }
 
     private suspend fun doTestWithContextSwitch() {
-        @Suppress("RETURN_VALUE_NOT_USED")
         withContext(threadLocal.asContextElement("foo")) {
             assertFailsWith<CancellationException> {
                 coroutineScope {

@@ -35,6 +35,7 @@ public fun <R> SelectBuilder<R>.onTimeout(duration: Duration, block: suspend () 
 /**
  * "java.time" adapter method for [kotlinx.coroutines.withTimeout].
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <T> withTimeout(duration: Duration, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

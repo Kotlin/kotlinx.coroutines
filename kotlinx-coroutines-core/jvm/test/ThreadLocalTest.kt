@@ -154,7 +154,6 @@ class ThreadLocalTest : TestBase() {
             // Mutate
             myCounterLocal.get().cnt = 71
 
-            @Suppress("RETURN_VALUE_NOT_USED")
             withContext(executor + myCounterLocal.asContextElement(Counter(-1))) {
                 assertEquals(-1, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
