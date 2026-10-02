@@ -28,48 +28,50 @@ class WithContextCancellationStressTest : TestBase() {
 
         withTimeout(timeoutAfter) {
             while (eCnt == 0 || e1Cnt == 0 || e2Cnt == 0) {
-                val barrier = CyclicBarrier(4)
-                val ctx = pool + NonCancellable
-                var e1 = false
-                var e2 = false
-                val jobWithContext = async(ctx) {
-                    withContext(wrapperDispatcher(coroutineContext)) {
-                        launch {
-                            barrier.await()
-                            e1 = true
-                            throw TestException1()
-                        }
+                supervisorScope {
+                    val barrier = CyclicBarrier(4)
+                    val ctx = pool
+                    var e1 = false
+                    var e2 = false
+                    val jobWithContext = async(ctx) {
+                        withContext(wrapperDispatcher(coroutineContext)) {
+                            launch {
+                                barrier.await()
+                                e1 = true
+                                throw TestException1()
+                            }
 
-                        launch {
-                            barrier.await()
-                            e2 = true
-                            throw TestException2()
-                        }
+                            launch {
+                                barrier.await()
+                                e2 = true
+                                throw TestException2()
+                            }
 
-                        barrier.await()
-                        throw TestException()
+                            barrier.await()
+                            throw TestException()
+                        }
                     }
-                }
 
-                barrier.await()
+                    barrier.await()
 
-                try {
-                    jobWithContext.await()
-                } catch (e: Throwable) {
-                    when (e) {
-                        is TestException -> {
-                            eCnt++
-                            e.checkSuppressed(e1 = e1, e2 = e2)
+                    try {
+                        jobWithContext.await()
+                    } catch (e: Throwable) {
+                        when (e) {
+                            is TestException -> {
+                                eCnt++
+                                e.checkSuppressed(e1 = e1, e2 = e2)
+                            }
+                            is TestException1 -> {
+                                e1Cnt++
+                                e.checkSuppressed(ex = true, e2 = e2)
+                            }
+                            is TestException2 -> {
+                                e2Cnt++
+                                e.checkSuppressed(ex = true, e1 = e1)
+                            }
+                            else -> error("Unexpected exception $e")
                         }
-                        is TestException1 -> {
-                            e1Cnt++
-                            e.checkSuppressed(ex = true, e2 = e2)
-                        }
-                        is TestException2 -> {
-                            e2Cnt++
-                            e.checkSuppressed(ex = true, e1 = e1)
-                        }
-                        else -> error("Unexpected exception $e")
                     }
                 }
             }

@@ -2,6 +2,9 @@
 
 package kotlinx.coroutines
 
+import kotlinx.coroutines.selects.SelectClause0
+import kotlin.coroutines.AbstractCoroutineContextElement
+
 /**
  * Thrown by cancellable suspending functions if the [Job] of the coroutine is cancelled while it is suspending.
  * It indicates _normal_ cancellation of a coroutine.
@@ -21,17 +24,18 @@ public actual fun CancellationException(message: String?, cause: Throwable?) : C
  * without cause, or with a cause or exception that is not [CancellationException]
  * (see [Job.getCancellationException]).
  */
-internal actual class JobCancellationException public actual constructor(
+internal actual class JobCancellationException private constructor(
+    // The order is different from the public constructor to prevent the declaration clash
+    @Transient private val job: Job?,
     message: String,
     cause: Throwable?,
-    job: Job
-) : CancellationException(message), CopyableThrowable<JobCancellationException> {
-
-    @Transient
-    private val _job: Job? = job
-
-    // The safest option for transient -- return something that meanigfully reject any attemp to interact with the job
-    internal actual val job get() = _job ?: NonCancellable
+): CancellationException(message), CopyableThrowable<JobCancellationException> {
+    /* Can only be constructed publicly with a non-`null` `Job`, the `null` appears after deserialization. */
+    public actual constructor(
+        message: String,
+        cause: Throwable?,
+        job: Job
+    ): this(job, message, cause)
 
     init {
         if (cause != null) initCause(cause)
@@ -53,7 +57,7 @@ internal actual class JobCancellationException public actual constructor(
 
     override fun createCopy(): JobCancellationException? {
         if (DEBUG) {
-            return JobCancellationException(message!!, this, job)
+            return JobCancellationException(job, message!!, this)
         }
 
         /*
@@ -69,5 +73,5 @@ internal actual class JobCancellationException public actual constructor(
             other is JobCancellationException && other.message == message && other.job == job && other.cause == cause
 
     override fun hashCode(): Int =
-        (message!!.hashCode() * 31 + job.hashCode()) * 31 + (cause?.hashCode() ?: 0)
+        (message!!.hashCode() * 31 + job.hashCode()) * 31 + cause.hashCode()
 }

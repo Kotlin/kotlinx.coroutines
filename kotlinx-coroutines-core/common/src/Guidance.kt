@@ -65,7 +65,7 @@ public fun launch(
  *
  * ```
  * scope.launch(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // this line will be reached even if the parent is cancelled
  *     }
  * }
@@ -230,13 +230,13 @@ public fun CoroutineScope.launch(
  * A pattern that prevents child cancellation even when the parent is cancelled consists of two parts:
  * - [CoroutineStart.ATOMIC] or [CoroutineStart.UNDISPATCHED] both ensure that the new coroutine is at least going
  *   to be started and run until the first suspension, even if the parent is already cancelled.
- * - Using [NonCancellable] together with [withContext] in the coroutine's body ensures that the child will
+ * - Using [nonCancellable] in the coroutine's body ensures that the child will
  *   successfully resume from suspension points even if the coroutine is cancelled.
  *
  * Example:
  * ```
  * launch(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // Actual coroutine body here
  *     }
  * }
@@ -248,6 +248,7 @@ public fun CoroutineScope.launch(
         "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
+@Suppress("DEPRECATION")
 public fun CoroutineScope.launch(
     context: NonCancellable,
     start: CoroutineStart = CoroutineStart.DEFAULT,
@@ -317,7 +318,7 @@ public fun <T> async(
  * ```
  * // Guarantees the completion, but not the delivery of the value
  * scope.async(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // The actual body of the coroutine.
  *         // This code will get executed even if the parent is cancelled.
  *     }
@@ -328,7 +329,7 @@ public fun <T> async(
  * // Guarantees the delivery of the value, but is more complex
  * val asyncResult = CompletableDeferred<T>()
  * scope.launch(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         asyncResult.completeWith(
  *             runCatching {
  *                 // compute the value
@@ -486,7 +487,7 @@ public fun <T> CoroutineScope.async(
  * Example:
  * ```
  * async(start = CoroutineStart.ATOMIC) {
- *     withContext(NonCancellable) {
+ *     nonCancellable {
  *         // Actual coroutine body here
  *     }
  * }
@@ -498,6 +499,7 @@ public fun <T> CoroutineScope.async(
         "This overload will be deprecated with an error in the future.",
     level = DeprecationLevel.WARNING,
 )
+@Suppress("DEPRECATION")
 public fun <T> CoroutineScope.async(
     context: NonCancellable,
     start: CoroutineStart = CoroutineStart.DEFAULT,

@@ -13,7 +13,7 @@ class SuppressionTests : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {
         expect(1)
-        val coroutineContext = currentCoroutineContext() + NonCancellable // workaround for KT-22984
+        val coroutineContext = currentCoroutineContext() + SupervisorJob() // workaround for KT-22984
         val coroutine = object : AbstractCoroutine<String>(coroutineContext, true, false) {
             override fun onStart() {
                 expect(3)

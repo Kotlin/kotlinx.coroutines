@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.*
 import kotlin.jvm.*
 import kotlin.reflect.*
 
-public typealias Handler<T> = suspend CoroutineScope.(T) -> Unit
+private typealias Handler<T> = suspend CoroutineScope.(T) -> Unit
 
 /*
  * Design of this builder is not yet stable, so leaving it as is.
@@ -84,7 +84,11 @@ private fun <T> CoroutineScope.launchFlow(
             }
         } finally {
             cancel() // TODO discuss
-            handlers.finally?.invoke(CoroutineScope(coroutineContext + NonCancellable), caught)
+            handlers.finally?.let {
+                nonCancellable {
+                    it(caught)
+                }
+            }
         }
     }
 }
