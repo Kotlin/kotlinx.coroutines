@@ -40,7 +40,7 @@ class ChannelFlowTest : TestBase() {
     @Test
     fun testFailureCancelsChannel() = runTest {
         val flow = channelFlow {
-            trySend(1)
+            assertTrue(trySend(1).isSuccess)
             invokeOnClose {
                 expect(2)
             }

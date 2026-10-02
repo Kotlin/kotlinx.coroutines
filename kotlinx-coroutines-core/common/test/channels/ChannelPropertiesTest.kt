@@ -46,7 +46,7 @@ class ChannelPropertiesAfterClosingTest : TestBase() {
             channel.close(exception)
             assertFalse(channel.isEmpty)
             assertFalse(channel.isClosedForReceive)
-            channel.receive()
+            assertEquals(1, channel.receive())
             assertFalse(channel.isEmpty)
             assertTrue(channel.isClosedForReceive)
         }

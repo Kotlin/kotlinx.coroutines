@@ -11,10 +11,10 @@ class StateFlowUpdateStressTest : TestBase() {
     fun testUpdate() = doTest { update { it + 1 } }
 
     @Test
-    fun testUpdateAndGet() = doTest { updateAndGet { it + 1 } }
+    fun testUpdateAndGet() = doTest { val _ = updateAndGet { it + 1 } }
 
     @Test
-    fun testGetAndUpdate() = doTest { getAndUpdate { it + 1 } }
+    fun testGetAndUpdate() = doTest { val _ = getAndUpdate { it + 1 } }
 
     private fun doTest(increment: MutableStateFlow<Int>.() -> Unit) = runTest {
         val flow = MutableStateFlow(0)

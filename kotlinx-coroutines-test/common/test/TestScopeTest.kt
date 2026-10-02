@@ -89,7 +89,7 @@ class TestScopeTest {
         val scope = TestScope()
         var result = false
         scope.launch {
-            delay(5)
+            delay(5.milliseconds)
             result = true
         }
         assertFalse(result)
@@ -103,9 +103,9 @@ class TestScopeTest {
     fun testActiveJobsThrowing() {
         val scope = TestScope()
         var result = false
-        val deferred = CompletableDeferred<String>()
+        val latch = Job()
         scope.launch {
-            deferred.await()
+            latch.join()
             result = true
         }
         assertFalse(result)
@@ -119,9 +119,9 @@ class TestScopeTest {
     fun testCancelledDelaysThrowing() {
         val scope = TestScope()
         var result = false
-        val deferred = CompletableDeferred<String>()
+        val latch = Job()
         val job = scope.launch {
-            deferred.await()
+            latch.join()
             result = true
         }
         job.cancel()
@@ -403,11 +403,8 @@ class TestScopeTest {
      */
     @Test
     fun testUnconfinedBackgroundWorkNotPreventingTimeout(): TestResult = testResultMap({
-        try {
+        assertFailsWith<UncompletedCoroutinesError> {
             it()
-            fail("unreached")
-        } catch (_: UncompletedCoroutinesError) {
-
         }
     }) {
         runTest(UnconfinedTestDispatcher(), timeout = 100.milliseconds) {
@@ -436,22 +433,21 @@ class TestScopeTest {
      */
     @Test
     fun testAsyncFailureInBackgroundReported() = testResultMap({
-        try {
+        assertFailsWith<TestException> {
             it()
-            fail("unreached")
-        } catch (e: TestException) {
-            assertEquals("z", e.message)
-            assertEquals(setOf("x", "y"), e.suppressedExceptions.map { it.message }.toSet())
+        }.apply {
+            assertEquals("z", message)
+            assertEquals(setOf("x", "y"), suppressedExceptions.map { it.message }.toSet())
         }
     }) {
         runTest {
-            backgroundScope.async {
+            val _ = backgroundScope.async {
                 throw TestException("x")
             }
-            backgroundScope.produce<Unit> {
+            val _ = backgroundScope.produce<Unit> {
                 throw TestException("y")
             }
-            delay(1)
+            delay(1.milliseconds)
             throw TestException("z")
         }
     }
@@ -474,7 +470,7 @@ class TestScopeTest {
             backgroundScope.launch {
                 throw TestException("x")
             }
-            delay(1)
+            delay(1.milliseconds)
             throw TestException("y")
         }
     }
@@ -485,7 +481,7 @@ class TestScopeTest {
     @Test
     fun testTimingOutWithVirtualTimeMessage() = runTest {
         try {
-            withTimeout(1_000_000) {
+            withTimeout(1_000_000.milliseconds) {
                 Channel<Unit>().receive()
             }
         } catch (e: TimeoutCancellationException) {
@@ -505,9 +501,9 @@ class TestScopeTest {
      */
     @Test
     @Ignore
-    fun testReportingStrayUncaughtExceptionsBetweenTests() {
+    fun testReportingStrayUncaughtExceptionsBetweenTests(): TestResult {
         val thrown = TestException("x")
-        testResultChain({
+        return testResultChain({
             // register a handler for uncaught exceptions
             runTest { }
         }, {

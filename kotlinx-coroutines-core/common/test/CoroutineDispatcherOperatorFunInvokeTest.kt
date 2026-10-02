@@ -14,15 +14,13 @@ class CoroutineDispatcherOperatorFunInvokeTest : TestBase() {
     @Test
     fun testThrowException() = runTest {
         expect(1)
-        try {
+        assertFailsWith<AssertionError> {
             (wrappedCurrentDispatcher()) {
                 expect(2)
                 throw AssertionError()
             }
-        } catch (e: AssertionError) {
-            expect(3)
         }
-
+        expect(3)
         yield()
         finish(4)
     }
@@ -34,7 +32,7 @@ class CoroutineDispatcherOperatorFunInvokeTest : TestBase() {
     @Test
     fun testWithContextChildWaitSameContext() = runTest {
         expect(1)
-        (wrappedCurrentDispatcher()) {
+        val result = (wrappedCurrentDispatcher()) {
             expect(2)
             launch {
                 // ^^^ schedules to main thread
@@ -43,6 +41,7 @@ class CoroutineDispatcherOperatorFunInvokeTest : TestBase() {
             expect(3)
             "OK".wrap()
         }.unwrap()
+        assertEquals("OK", result)
         finish(5)
     }
 

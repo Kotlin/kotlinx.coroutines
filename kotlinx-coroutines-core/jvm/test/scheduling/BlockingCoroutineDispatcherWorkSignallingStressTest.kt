@@ -1,12 +1,10 @@
-@file:Suppress("DeferredResultUnused")
-
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.Test
 import java.util.concurrent.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.milliseconds
 
 class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() {
 
@@ -21,11 +19,11 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
             val blockingBarrier = CyclicBarrier(CORES_COUNT * 3 + 1)
             val cpuBarrier = CyclicBarrier(CORES_COUNT + 1)
 
-            val cpuTasks = CopyOnWriteArrayList<Deferred<*>>()
-            val blockingTasks = CopyOnWriteArrayList<Deferred<*>>()
+            val cpuTasks = CopyOnWriteArrayList<Job>()
+            val blockingTasks = CopyOnWriteArrayList<Job>()
 
             repeat(CORES_COUNT) {
-                async(dispatcher) {
+                launch(dispatcher) {
                     // These two will be stolen first
                     blockingTasks += blockingAwait(blockingDispatcher, blockingBarrier)
                     blockingTasks += blockingAwait(blockingDispatcher, blockingBarrier)
@@ -38,10 +36,10 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
 
             cpuTasks.forEach { require(it.isActive) }
             cpuBarrier.await()
-            cpuTasks.awaitAll()
+            cpuTasks.joinAll()
             blockingTasks.forEach { require(it.isActive) }
             blockingBarrier.await()
-            blockingTasks.awaitAll()
+            blockingTasks.joinAll()
             dispatcher.close()
         }
     }
@@ -49,13 +47,13 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
     private fun CoroutineScope.blockingAwait(
         blockingDispatcher: CoroutineDispatcher,
         blockingBarrier: CyclicBarrier
-    ) = async(blockingDispatcher) { blockingBarrier.await() }
+    ) = launch(blockingDispatcher) { blockingBarrier.await() }
 
 
     private fun CoroutineScope.cpuAwait(
         blockingDispatcher: CoroutineDispatcher,
         blockingBarrier: CyclicBarrier
-    ) = async(blockingDispatcher) { blockingBarrier.await() }
+    ) = launch(blockingDispatcher) { blockingBarrier.await() }
 
     @Test
     fun testBlockingTasksStarvation() = runBlocking {
@@ -82,7 +80,7 @@ class BlockingCoroutineDispatcherWorkSignallingStressTest : SchedulerTestBase() 
 
         repeat(iterations) {
             // Overwhelm global queue with external CPU tasks
-            val cpuTasks = (1..CORES_COUNT).map { async(dispatcher) { while (true) delay(1) } }
+            val cpuTasks = (1..CORES_COUNT).map { async(dispatcher) { while (true) delay(1.milliseconds) } }
             val barrier = CyclicBarrier(blockingLimit + 1)
             // Should eat all limit * 3 cpu without any starvation
             val tasks = (1..blockingLimit).map { async(blocking) { barrier.await() } }

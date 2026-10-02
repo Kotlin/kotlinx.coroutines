@@ -38,7 +38,7 @@ class JoinStressTest : TestBase() {
 
             barrier.await()
             exceptionalJob.cancel()
-            ++results[awaiterJob.await()]
+            results[awaiterJob.await()]++
         }
 
         // Check that concurrent cancellation of job which throws TestException without suspends doesn't suppress TestException
@@ -78,7 +78,7 @@ class JoinStressTest : TestBase() {
             barrier.await()
             val awaiterResult = awaiterJob.await()
             canceller.await()
-            ++results[awaiterResult]
+            results[awaiterResult]++
         }
 
         assertTrue(results[0] > 0, results.toList().toString())

@@ -22,95 +22,95 @@ class CancellableResumeOldTest : TestBase() {
     }
 
     @Test
-    fun testResumeImmediateAfterCancel() = runTest(
-        expected = { it is TestException }
-    ) {
+    fun testResumeImmediateAfterCancel() = runTest {
         expect(1)
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation { expect(3) }
-            cont.cancel(TestException("FAIL"))
-            expect(4)
-            cont.resume("OK") { cause ->
-                expect(5)
-                assertIs<TestException>(cause)
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine { cont ->
+                expect(2)
+                cont.invokeOnCancellation { expect(3) }
+                cont.cancel(TestException("FAIL"))
+                expect(4)
+                cont.resume("OK") { cause ->
+                    expect(5)
+                    assertIs<TestException>(cause)
+                }
+                finish(6)
             }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
     fun testResumeImmediateAfterCancelWithHandlerFailure() = runTest(
-        expected = { it is TestException },
         unhandled = listOf(
             { it is CompletionHandlerException && it.cause is TestException2 },
             { it is CompletionHandlerException && it.cause is TestException3 }
         )
     ) {
         expect(1)
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation {
-                expect(3)
-                throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+        assertFailsWith<TestException> {
+            suspendCancellableCoroutine { cont ->
+                expect(2)
+                cont.invokeOnCancellation {
+                    expect(3)
+                    throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+                }
+                cont.cancel(TestException("FAIL"))
+                expect(4)
+                cont.resume("OK") { cause ->
+                    expect(5)
+                    assertIs<TestException>(cause)
+                    throw TestException3("FAIL") // onCancellation block fails with exception
+                }
+                finish(6)
             }
-            cont.cancel(TestException("FAIL"))
-            expect(4)
-            cont.resume("OK") { cause ->
-                expect(5)
-                assertIs<TestException>(cause)
-                throw TestException3("FAIL") // onCancellation block fails with exception
-            }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
-    fun testResumeImmediateAfterIndirectCancel() = runTest(
-        expected = { it is CancellationException }
-    ) {
+    fun testResumeImmediateAfterIndirectCancel() = runTest {
         expect(1)
-        val ctx = coroutineContext
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation { expect(3) }
-            ctx.cancel()
-            expect(4)
-            cont.resume("OK") {
-                expect(5)
+        launch {
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine { cont ->
+                    expect(2)
+                    cont.invokeOnCancellation { expect(3) }
+                    this@launch.cancel()
+                    expect(4)
+                    cont.resume("OK") {
+                        expect(5)
+                    }
+                    finish(6)
+                }
             }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
     fun testResumeImmediateAfterIndirectCancelWithHandlerFailure() = runTest(
-        expected = { it is CancellationException },
         unhandled = listOf(
             { it is CompletionHandlerException && it.cause is TestException2 },
             { it is CompletionHandlerException && it.cause is TestException3 }
         )
     ) {
         expect(1)
-        val ctx = coroutineContext
-        suspendCancellableCoroutine { cont ->
-            expect(2)
-            cont.invokeOnCancellation {
-                expect(3)
-                throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+        launch {
+            assertFailsWith<CancellationException> {
+                suspendCancellableCoroutine { cont ->
+                    expect(2)
+                    cont.invokeOnCancellation {
+                        expect(3)
+                        throw TestException2("FAIL") // invokeOnCancellation handler fails with exception
+                    }
+                    this@launch.cancel()
+                    expect(4)
+                    cont.resume("OK") {
+                        expect(5)
+                        throw TestException3("FAIL") // onCancellation block fails with exception
+                    }
+                    finish(6)
+                }
             }
-            ctx.cancel()
-            expect(4)
-            cont.resume("OK") {
-                expect(5)
-                throw TestException3("FAIL") // onCancellation block fails with exception
-            }
-            finish(6)
         }
-        expectUnreached()
     }
 
     @Test
@@ -138,16 +138,14 @@ class CancellableResumeOldTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation { expect(5) }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                finish(9)
             }
+            finish(9)
         }
         expect(4)
         job.cancel(TestCancellationException())
@@ -170,7 +168,7 @@ class CancellableResumeOldTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     cont.invokeOnCancellation {
@@ -179,10 +177,8 @@ class CancellableResumeOldTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                finish(9)
             }
+            finish(9)
         }
         expect(4)
         job.cancel(TestCancellationException())
@@ -201,7 +197,7 @@ class CancellableResumeOldTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
@@ -212,10 +208,8 @@ class CancellableResumeOldTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                expect(9)
             }
+            expect(9)
         }
         expect(4)
         cc.resume("OK") { cause ->
@@ -241,7 +235,7 @@ class CancellableResumeOldTest : TestBase() {
         lateinit var cc: CancellableContinuation<String>
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            try {
+            assertFailsWith<CancellationException> {
                 suspendCancellableCoroutine { cont ->
                     expect(3)
                     // resumed first, dispatched, then cancelled, but still got invokeOnCancellation call
@@ -253,10 +247,8 @@ class CancellableResumeOldTest : TestBase() {
                     }
                     cc = cont
                 }
-                expectUnreached()
-            } catch (_: CancellationException) {
-                expect(9)
             }
+            expect(9)
         }
         expect(4)
         cc.resume("OK") { cause ->

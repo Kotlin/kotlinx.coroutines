@@ -23,12 +23,10 @@ class PromiseTest : TestBase() {
         val deferred = promise.asDeferred()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
         promiseReject(TestException("Rejected"))
-        try {
+        assertFailsWith<TestException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: Throwable) {
-            assertIs<TestException>(e)
-            assertEquals("Rejected", e.message)
+        }.apply {
+            assertEquals("Rejected", message)
         }
     }
 
@@ -57,7 +55,9 @@ class PromiseTest : TestBase() {
         lateinit var r: (String) -> Unit
         val toAwait = Promise<String> { resolve, _ -> r = resolve }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            toAwait.await() // suspends
+            assertFailsWith<CancellationException> {
+                toAwait.await() // suspends
+            }
         }
         job.cancel() // cancel the job
         r("fail") // too late, the waiting job was already cancelled

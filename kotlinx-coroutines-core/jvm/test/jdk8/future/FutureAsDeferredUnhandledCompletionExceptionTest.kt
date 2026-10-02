@@ -28,7 +28,7 @@ class FutureAsDeferredUnhandledCompletionExceptionTest : TestBase() {
     fun testLostException() = runTest {
         val future = CompletableFuture<Int>()
         val deferred = future.asDeferred()
-        deferred.invokeOnCompletion { throw TestException() }
+        val _ = deferred.invokeOnCompletion { throw TestException() }
         future.complete(1)
         assertTrue { caughtException is CompletionHandlerException && caughtException.cause is TestException }
     }

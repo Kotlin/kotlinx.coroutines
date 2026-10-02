@@ -1,8 +1,6 @@
 package kotlinx.coroutines.debug
 
-import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.Test
 import kotlin.test.*
 
 class LazyCoroutineTest : DebugTestBase() {
@@ -10,7 +8,7 @@ class LazyCoroutineTest : DebugTestBase() {
     @Test
     fun testLazyCompletedCoroutine() = runTest {
         val job = launch(start = CoroutineStart.LAZY) {}
-        job.invokeOnCompletion { expect(2) }
+        val _ = job.invokeOnCompletion { expect(2) }
         expect(1)
         job.cancelAndJoin()
         expect(3)

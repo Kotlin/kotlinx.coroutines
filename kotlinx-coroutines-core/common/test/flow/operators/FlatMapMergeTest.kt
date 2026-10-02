@@ -36,7 +36,7 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
 
     @Test
     fun testAtomicStart() = runTest {
-        try {
+        assertFailsWith<CancellationException> {
             coroutineScope {
                 val job = coroutineContext[Job]!!
                 val flow = flow {
@@ -59,9 +59,8 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
                     job.cancel()
                 }
             }
-        } catch (e: CancellationException) {
-            finish(7)
         }
+        finish(7)
     }
 
     @Test

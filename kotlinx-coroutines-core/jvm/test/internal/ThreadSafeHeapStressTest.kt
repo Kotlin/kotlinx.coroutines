@@ -22,7 +22,7 @@ class ThreadSafeHeapStressTest : TestBase() {
                 launch {
                     heap.addLast(node)
                     barrier.await()
-                    heap.remove(node)
+                    val _ = heap.remove(node)
                 }
                 launch {
                     barrier.await()

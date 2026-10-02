@@ -26,6 +26,7 @@ class ToStringTest : DebugTestBase() {
         }
     }
 
+    @IgnorableReturnValue
     private fun CoroutineScope.launchDelayed(): Job {
         return launch {
             delay(Long.MAX_VALUE)
@@ -96,12 +97,12 @@ class ToStringTest : DebugTestBase() {
     private fun CoroutineScope.launchHierarchy(isCompleting: Boolean): Job {
         return launch {
             expect(1)
-            async(CoroutineName("foo")) {
+            val _ = async(CoroutineName("foo")) {
                 expect(2)
                 delay(Long.MAX_VALUE)
             }
 
-            actor<Int> {
+            val _ = actor<Int> {
                 expect(3)
                 val job = launch {
                     expect(4)

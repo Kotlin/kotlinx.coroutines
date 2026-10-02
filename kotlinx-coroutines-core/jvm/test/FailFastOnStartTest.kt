@@ -5,10 +5,8 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import org.junit.*
-import org.junit.Test
+import org.junit.Rule
 import org.junit.rules.*
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.EmptyCoroutineContext
@@ -22,70 +20,106 @@ class FailFastOnStartTest : TestBase() {
     val timeout: Timeout = Timeout.seconds(5)
 
     @Test
-    fun testLaunch() = runTest(expected = ::mainException) {
-        launch(Dispatchers.Main) {}
-    }
-
-    @Test
-    fun testLaunchLazy() = runTest(expected = ::mainException) {
-        val job = launch(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-        job.join()
-    }
-
-    @Test
-    fun testLaunchUndispatched() = runTest(expected = ::mainException) {
-        launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
-            yield()
-            fail()
+    fun testLaunch() = runTest {
+        assertFailsWithMainException {
+            launch(Dispatchers.Main) {}
         }
     }
 
     @Test
-    fun testAsync() = runTest(expected = ::mainException) {
-        async(Dispatchers.Main) {}
-    }
-
-    @Test
-    fun testAsyncLazy() = runTest(expected = ::mainException) {
-        val job = async(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-        job.await()
-    }
-
-    @Test
-    fun testWithContext() = runTest(expected = ::mainException) {
-        withContext(Dispatchers.Main) {
-            fail()
+    fun testLaunchLazy() = runTest {
+        assertFailsWithMainException {
+            val job = launch(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+            job.join()
         }
     }
 
     @Test
-    fun testProduce() = runTest(expected = ::mainException) {
-        produce<Int>(Dispatchers.Main) { fail() }
+    fun testLaunchUndispatched() = runTest {
+        assertFailsWithMainException {
+            launch(Dispatchers.Main, start = CoroutineStart.UNDISPATCHED) {
+                yield()
+                fail()
+            }
+        }
     }
 
     @Test
-    fun testActor() = runTest(expected = ::mainException) {
-        actor<Int>(Dispatchers.Main) { fail() }
+    fun testAsync() = runTest {
+        assertFailsWithMainException {
+            async(Dispatchers.Main) {}
+        }
     }
 
     @Test
-    fun testActorLazy() = runTest(expected = ::mainException) {
-        val actor = actor<Int>(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
-        actor.send(1)
+    fun testAsyncLazy() = runTest {
+        assertFailsWithMainException {
+            val job = async(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+            job.await()
+        }
+    }
+
+    @Test
+    fun testWithContext() = runTest {
+        assertFailsWithMainException {
+            withContext(Dispatchers.Main) {
+                fail()
+            }
+        }
+    }
+
+    @Test
+    fun testProduce() = runTest {
+        assertFailsWithMainException {
+            produce<Int>(Dispatchers.Main) { fail() }
+        }
+    }
+
+    @Test
+    fun testActor() = runTest {
+        assertFailsWithMainException {
+            actor<Int>(Dispatchers.Main) { fail() }
+        }
+    }
+
+    @Test
+    fun testActorLazy() = runTest {
+        assertFailsWithMainException {
+            val actor = actor<Int>(Dispatchers.Main, start = CoroutineStart.LAZY) { fail() }
+            actor.send(1)
+        }
     }
 
     private fun mainException(e: Throwable): Boolean {
         return e is IllegalStateException && e.message?.contains("Module with the Main dispatcher is missing") ?: false
     }
 
-    @Test
-    fun testProduceNonChild() = runTest(expected = ::mainException) {
-        produce<Int>(Job() + Dispatchers.Main) { fail() }
+    private suspend fun assertFailsWithMainException(block: suspend CoroutineScope.() -> Any?) {
+        // Whatever failures happen in coroutines due to a missing dispatcher, they should get propagated to the parent.
+        // `async` is the parent, and `supervisorScope` ensures that's where the propagation stops.
+        supervisorScope {
+            val result = async {
+                block()
+            }
+            val e = assertFailsWith<IllegalStateException> {
+                result.await()
+            }
+            assertTrue(mainException(e), "$e")
+        }
     }
 
     @Test
-    fun testAsyncNonChild() = runTest(expected = ::mainException) {
-        async<Int>(Job() + Dispatchers.Main) { fail() }
+    fun testProduceNonChild() = runTest {
+        assertFailsWithMainException {
+            produce<Int>(Job() + Dispatchers.Main) { fail() }
+        }
+    }
+
+    @Test
+    fun testAsyncNonChild() = runTest {
+        assertFailsWithMainException {
+            async<Int>(Job() + Dispatchers.Main) { fail() }
+        }
     }
 
     @Test

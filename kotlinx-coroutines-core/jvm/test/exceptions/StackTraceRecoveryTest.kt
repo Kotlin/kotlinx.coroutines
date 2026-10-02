@@ -71,12 +71,10 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     private suspend fun oneMoreNestedMethod(deferred: Deferred<*>, vararg traces: String) {
-        try {
+        val e = assertFailsWith<ExecutionException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: ExecutionException) {
-            verifyStackTrace(e, *traces)
         }
+        verifyStackTrace(e, *traces)
     }
 
     @Test
@@ -109,12 +107,10 @@ class StackTraceRecoveryTest : TestBase() {
     }
 
     private suspend fun innerMethod(deferred: Deferred<*>, vararg traces: String) {
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             deferred.await()
-            expectUnreached()
-        } catch (e: RecoverableTestException) {
-            verifyStackTrace(e, *traces)
         }
+        verifyStackTrace(e, *traces)
     }
 
     @Test
@@ -177,21 +173,17 @@ class StackTraceRecoveryTest : TestBase() {
 
     @Test
     fun testSelfSuppression() {
-        try {
+        val e = assertFailsWith<RecoverableTestException> {
             runBlocking {
                 val job = launch {
                     coroutineScope {
                         throw RecoverableTestException()
                     }
                 }
-
                 job.join()
-                expectUnreached()
             }
-            expectUnreached()
-        } catch (e: RecoverableTestException) {
-            checkCycles(e)
         }
+        checkCycles(e)
     }
 
 
@@ -213,6 +205,7 @@ class StackTraceRecoveryTest : TestBase() {
         val barrier = CyclicBarrier(2)
         var exception: Throwable? = null
 
+        @Suppress("RETURN_VALUE_NOT_USED")
         thread {
             await.startCoroutineUnintercepted(Continuation(EmptyCoroutineContext) {
                 exception = it.exceptionOrNull()
@@ -257,7 +250,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     private suspend fun awaitCallback(channel: Channel<Callback>) {
         suspendCancellableCoroutine<Unit> { cont ->
-            channel.trySend(Callback(cont))
+            val _ = channel.trySend(Callback(cont))
         }
         yield() // nop to make sure it is not a tail call
     }

@@ -1,10 +1,9 @@
+@file:OptIn(ExperimentalAtomicApi::class)
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
-import org.junit.Test
-import java.util.concurrent.atomic.*
+import kotlin.concurrent.atomics.*
 import kotlin.test.*
 
 /**
@@ -12,9 +11,9 @@ import kotlin.test.*
  * designed to stress its particular implementation details.
  */
 class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
-    private val concurrentWorkers = AtomicInteger(0)
+    private val concurrentWorkers = AtomicInt(0)
 
-    @Before
+    @BeforeTest
     fun setUp() {
         // In case of starvation test will hang
         idleWorkerKeepAliveNs = Long.MAX_VALUE
@@ -26,17 +25,18 @@ class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
         val iterations = 25_000 * stressTestMultiplier
         // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
         for (i in 1..iterations) {
-            val tasks = (1..2).map {
-                async(limitingDispatcher) {
-                    try {
-                        val currentlyExecuting = concurrentWorkers.incrementAndGet()
-                        assertEquals(1, currentlyExecuting)
-                    } finally {
-                        concurrentWorkers.decrementAndGet()
+            coroutineScope {
+                (1..2).forEach {
+                    launch(limitingDispatcher) {
+                        try {
+                            val currentlyExecuting = concurrentWorkers.incrementAndFetch()
+                            assertEquals(1, currentlyExecuting)
+                        } finally {
+                            concurrentWorkers.decrement()
+                        }
                     }
                 }
             }
-            tasks.forEach { it.await() }
         }
     }
 
@@ -44,18 +44,19 @@ class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
     fun testPingPongThreadsCount() = runBlocking {
         corePoolSize = CORES_COUNT
         val iterations = 100_000 * stressTestMultiplier
-        val completed = AtomicInteger(0)
+        val completed = AtomicInt(0)
         for (i in 1..iterations) {
-            val tasks = (1..2).map {
-                async(dispatcher) {
-                    // Useless work
-                    concurrentWorkers.incrementAndGet()
-                    concurrentWorkers.decrementAndGet()
-                    completed.incrementAndGet()
+            coroutineScope {
+                (1..2).forEach {
+                    launch(dispatcher) {
+                        // Useless work
+                        concurrentWorkers.increment()
+                        concurrentWorkers.decrement()
+                        completed.increment()
+                    }
                 }
             }
-            tasks.forEach { it.await() }
         }
-        assertEquals(2 * iterations, completed.get())
+        assertEquals(2 * iterations, completed.load())
     }
 }

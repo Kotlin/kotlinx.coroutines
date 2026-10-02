@@ -77,7 +77,7 @@ class AtomicCancellationCommonTest : TestBase() {
         job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
             try {
-                deferred.await() // suspends
+                val _ = deferred.await() // suspends
                 expectUnreached() // will not execute -- cancelled while dispatched
             } finally {
                 finish(7) // but will execute finally blocks
@@ -138,7 +138,7 @@ class AtomicCancellationCommonTest : TestBase() {
         val mutex = Mutex(true) // locked mutex
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            select { // suspends
+            val _ = select { // suspends
                 mutex.onLock {
                     expect(4)
                     "OK"

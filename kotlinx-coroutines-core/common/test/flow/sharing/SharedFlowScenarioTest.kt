@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlin.coroutines.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * This test suit for [SharedFlow] has a dense framework that allows to test complex
@@ -15,7 +16,7 @@ import kotlin.test.*
 class SharedFlowScenarioTest : TestBase() {
     @Test
     fun testReplay1Extra2() =
-        testSharedFlow(MutableSharedFlow<Int>(1, 2)) {
+        testSharedFlow(MutableSharedFlow(1, 2)) {
             // total buffer size == 3
             expectReplayOf()
             emitRightNow(1); expectReplayOf(1)
@@ -95,7 +96,7 @@ class SharedFlowScenarioTest : TestBase() {
 
     @Test
     fun testReplay1() =
-        testSharedFlow(MutableSharedFlow<Int>(1)) {
+        testSharedFlow(MutableSharedFlow(1)) {
             emitRightNow(0); expectReplayOf(0)
             emitRightNow(1); expectReplayOf(1)
             emitRightNow(2); expectReplayOf(2)
@@ -142,7 +143,7 @@ class SharedFlowScenarioTest : TestBase() {
 
     @Test
     fun testReplay2Extra2DropOldest() =
-        testSharedFlow<Int>(MutableSharedFlow(2, 2, BufferOverflow.DROP_OLDEST)) {
+        testSharedFlow(MutableSharedFlow(2, 2, BufferOverflow.DROP_OLDEST)) {
             emitRightNow(0); expectReplayOf(0)
             emitRightNow(1); expectReplayOf(0, 1)
             emitRightNow(2); expectReplayOf(1, 2)
@@ -175,7 +176,7 @@ class SharedFlowScenarioTest : TestBase() {
 
     @Test // https://github.com/Kotlin/kotlinx.coroutines/issues/2320
     fun testResumeFastSubscriberOnResumedEmitter() =
-        testSharedFlow<Int>(MutableSharedFlow(1)) {
+        testSharedFlow(MutableSharedFlow(1)) {
             // create two subscribers and start collecting
             val s1 = subscribe("s1"); resumeCollecting(s1)
             val s2 = subscribe("s2"); resumeCollecting(s2)
@@ -200,8 +201,8 @@ class SharedFlowScenarioTest : TestBase() {
 
     @Test
     fun testSuspendedConcurrentEmitAndCancelSubscriberReplay1() =
-        testSharedFlow<Int>(MutableSharedFlow(1)) {
-            val a = subscribe("a");
+        testSharedFlow(MutableSharedFlow(1)) {
+            val a = subscribe("a")
             emitRightNow(0); expectReplayOf(0)
             collect(a, 0)
             emitRightNow(1); expectReplayOf(1)
@@ -220,8 +221,8 @@ class SharedFlowScenarioTest : TestBase() {
 
     @Test
     fun testSuspendedConcurrentEmitAndCancelSubscriberReplay1ExtraBuffer1() =
-        testSharedFlow<Int>(MutableSharedFlow( replay = 1, extraBufferCapacity = 1)) {
-            val a = subscribe("a");
+        testSharedFlow(MutableSharedFlow( replay = 1, extraBufferCapacity = 1)) {
+            val a = subscribe("a")
             emitRightNow(0); expectReplayOf(0)
             collect(a, 0)
             emitRightNow(1); expectReplayOf(1)
@@ -247,7 +248,7 @@ class SharedFlowScenarioTest : TestBase() {
         var dsl: ScenarioDsl<T>? = null
         try {
             coroutineScope {
-                dsl = ScenarioDsl<T>(sharedFlow, coroutineContext)
+                dsl = ScenarioDsl(sharedFlow, coroutineContext)
                 dsl.scenario()
                 dsl.stop()
             }
@@ -272,7 +273,7 @@ class SharedFlowScenarioTest : TestBase() {
         coroutineContext: CoroutineContext
     ) {
         private val log = ArrayList<String>()
-        private val timeout = 10000L
+        private val timeout = 10.seconds
         private val scope = CoroutineScope(coroutineContext + Job())
         private val actions = HashSet<Action>()
         private val actionWaiters = ArrayDeque<Continuation<Unit>>()
@@ -293,10 +294,11 @@ class SharedFlowScenarioTest : TestBase() {
             wakeupWaiters()
         }
 
+        @Suppress("RETURN_VALUE_NOT_USED")
         private suspend fun awaitAction(action: Action) {
             withTimeoutOrNull(timeout) {
                 while (!actions.remove(action)) {
-                    suspendCancellableCoroutine<Unit> { actionWaiters.add(it) }
+                    suspendCancellableCoroutine { actionWaiters.add(it) }
                 }
             } ?: error("Timed out waiting for action: $action")
             wakeupWaiters()
@@ -311,7 +313,7 @@ class SharedFlowScenarioTest : TestBase() {
                     sharedFlow.emit(a)
                     log("$name resumes")
                     addAction(EmitResumes(job))
-                } catch(e: CancellationException) {
+                } catch(_: CancellationException) {
                     log("$name cancelled")
                     addAction(Cancelled(job))
                 }
@@ -359,8 +361,7 @@ class SharedFlowScenarioTest : TestBase() {
                         awaitAction(ResumeCollecting(job))
                         log("$name -> $value resumes")
                     }
-                    error("$name completed")
-                } catch(e: CancellationException) {
+                } catch(_: CancellationException) {
                     log("$name cancelled")
                     addAction(Cancelled(job))
                 }
@@ -377,7 +378,7 @@ class SharedFlowScenarioTest : TestBase() {
             }
         }
 
-        suspend fun resumeCollecting(job: TestJob) {
+        fun resumeCollecting(job: TestJob) {
             addAction(ResumeCollecting(job))
         }
 

@@ -2,8 +2,6 @@ package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.testing.CountDownLatch
-import org.junit.Test
-import java.lang.Runnable
 import kotlin.coroutines.*
 import kotlin.test.*
 
@@ -15,7 +13,7 @@ class CoroutineSchedulerTest : TestBase() {
         CoroutineScheduler(1, 1).use {
             for (context in contexts) {
                 val latch = CountDownLatch(1)
-                it.dispatch(Runnable {
+                it.dispatch({
                     latch.countDown()
                 }, context)
 
@@ -28,9 +26,9 @@ class CoroutineSchedulerTest : TestBase() {
     fun testModesInternalSubmission() { // Smoke
         CoroutineScheduler(2, 2).use {
             val latch = CountDownLatch(contexts.size)
-            it.dispatch(Runnable {
+            it.dispatch({
                 for (context in contexts) {
-                    it.dispatch(Runnable {
+                    it.dispatch({
                         latch.countDown()
                     }, context)
                 }
@@ -46,13 +44,13 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(Runnable {
-                it.dispatch(Runnable {
+            it.dispatch({
+                it.dispatch({
                     expect(2)
                     finishLatch.countDown()
                 })
 
-                it.dispatch(Runnable {
+                it.dispatch({
                     expect(1)
                     finishLatch.countDown()
                 })
@@ -70,13 +68,13 @@ class CoroutineSchedulerTest : TestBase() {
             val startLatch = CountDownLatch(1)
             val finishLatch = CountDownLatch(2)
 
-            it.dispatch(Runnable {
-                it.dispatch(Runnable {
+            it.dispatch({
+                it.dispatch({
                     expect(1)
                     finishLatch.countDown()
                 })
 
-                it.dispatch(Runnable {
+                it.dispatch({
                     expect(2)
                     finishLatch.countDown()
                 }, fair = true)
@@ -100,28 +98,28 @@ class CoroutineSchedulerTest : TestBase() {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeCorePoolSize() {
-        SchedulerCoroutineDispatcher(-1, 4)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(-1, 4) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testNegativeMaxPoolSize() {
-        SchedulerCoroutineDispatcher(1, -4)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(1, -4) }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testCorePoolSizeGreaterThanMaxPoolSize() {
-        SchedulerCoroutineDispatcher(4, 1)
+        assertFailsWith<IllegalArgumentException> { SchedulerCoroutineDispatcher(4, 1) }
     }
 
     @Test
     fun testSelfClose() {
         val dispatcher = SchedulerCoroutineDispatcher(1, 1)
         val latch = CountDownLatch(1)
-        dispatcher.dispatch(EmptyCoroutineContext, Runnable {
+        dispatcher.dispatch(EmptyCoroutineContext) {
             dispatcher.close(); latch.countDown()
-        })
+        }
         latch.await()
     }
 
@@ -152,7 +150,7 @@ class CoroutineSchedulerTest : TestBase() {
         val result = IntArray(bound)
         val iterations = 10_000_000
         repeat(iterations) {
-            ++result[worker.nextInt(bound)]
+            result[worker.nextInt(bound)]++
         }
 
         val bucketSize = iterations / bound

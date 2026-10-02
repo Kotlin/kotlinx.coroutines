@@ -15,8 +15,9 @@ class DebugLeaksTest : DebugTestBase() {
     @Test
     fun testIteratorLeak() {
         val captured = Captured()
-        iterator { yield(captured) }
+        val iterator = iterator { yield(captured) }
         assertNoCapturedReference()
+        val _ = iterator.hasNext()
     }
 
     @Test

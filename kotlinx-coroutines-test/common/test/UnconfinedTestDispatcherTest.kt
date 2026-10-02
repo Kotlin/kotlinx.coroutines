@@ -33,7 +33,7 @@ class UnconfinedTestDispatcherTest {
             callbackFlow {
                 val listener = { value: T ->
                     if (!isClosedForSend) {
-                        trySend(value)
+                        val _ = trySend(value)
                     }
                 }
                 addListener(listener)

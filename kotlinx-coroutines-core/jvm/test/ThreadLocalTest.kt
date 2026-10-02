@@ -1,9 +1,6 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
-import org.junit.Test
-import java.lang.IllegalStateException
 import kotlin.test.*
 
 @Suppress("RedundantAsync")
@@ -12,7 +9,7 @@ class ThreadLocalTest : TestBase() {
     private val intThreadLocal = ThreadLocal<Int?>()
     private val executor = newFixedThreadPoolContext(1, "threadLocalTest")
 
-    @After
+    @AfterTest
     fun tearDown() {
         executor.close()
     }
@@ -157,17 +154,18 @@ class ThreadLocalTest : TestBase() {
             // Mutate
             myCounterLocal.get().cnt = 71
 
+            @Suppress("RETURN_VALUE_NOT_USED")
             withContext(executor + myCounterLocal.asContextElement(Counter(-1))) {
                 assertEquals(-1, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
             }
 
-            val deferred = async(myCounterLocal.asContextElement(Counter(31))) {
+            val deferred = launch(myCounterLocal.asContextElement(Counter(31))) {
                 assertEquals(31, myCounterLocal.get().cnt)
                 ++myCounterLocal.get().cnt
             }
 
-            deferred.await()
+            deferred.join()
             assertEquals(71, myCounterLocal.get().cnt)
         }
 

@@ -89,11 +89,9 @@ class CompletableJobTest : TestBase() {
         finish(5)
     }
 
-    private fun parametrized(block: suspend CoroutineScope.(CompletableJob) -> Unit) {
-        runTest {
-            block(Job())
-            reset()
-            block(SupervisorJob())
-        }
+    private fun parametrized(block: suspend CoroutineScope.(CompletableJob) -> Unit): TestResult = runTest {
+        block(Job())
+        reset()
+        block(SupervisorJob())
     }
 }

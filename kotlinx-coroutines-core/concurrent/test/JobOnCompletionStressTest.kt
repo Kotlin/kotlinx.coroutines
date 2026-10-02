@@ -150,7 +150,7 @@ class JobOnCompletionStressTest : TestBase() {
                         encounteredException.store(exception)
                         completionHandlerSeesCompletedParent.store(parent.isCompleted)
                         completionHandlerSeesCancelledParent.store(parent.isCancelled)
-                        entered.trySend(Unit)
+                        assertTrue(entered.trySend(Unit).isSuccess)
                     }
                 }
             }
@@ -184,7 +184,7 @@ fun createCompletableDeferredForTesting(iteration: Int): CompletableDeferred<Uni
        to test the scenarios where a child is placed into an empty list, a single-element list,
        or a list with multiple elements. */
     if (iteration.mod(2) == 0) {
-        parent.invokeOnCompletion { }
+        val _ = parent.invokeOnCompletion { }
     }
     if (iteration.mod(3) == 0) {
         CoroutineScope(parent).launch { }

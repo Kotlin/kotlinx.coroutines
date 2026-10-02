@@ -88,11 +88,10 @@ class ActorTest(private val capacity: Int) : TestBase() {
             val element = channel.receive()
             expect(2)
             require(element == 42)
-            try {
+            assertFailsWith<IOException> {
                 channel.receive()
-            } catch (e: IOException) {
-                expect(3)
             }
+            expect(3)
         }
 
         expect(1)
@@ -108,8 +107,9 @@ class ActorTest(private val capacity: Int) : TestBase() {
         val job = async {
             actor<Int>(capacity = capacity) {
                 expect(1)
-                channel.receive()
-                expectUnreached()
+                throw assertFailsWith<CancellationException> {
+                    channel.receive()
+                }
             }
         }
 
@@ -120,12 +120,10 @@ class ActorTest(private val capacity: Int) : TestBase() {
         yield()
         job.cancel()
 
-        try {
+        val e = assertFailsWith<CancellationException> {
             job.await()
-            expectUnreached()
-        } catch (e: CancellationException) {
-            assertTrue(e.message?.contains("DeferredCoroutine was cancelled") ?: false)
         }
+        assertTrue(e.message?.contains("DeferredCoroutine was cancelled") ?: false)
 
         finish(3)
     }
@@ -149,10 +147,10 @@ class ActorTest(private val capacity: Int) : TestBase() {
     @Test
     fun testChildJob() = runTest {
         val parent = Job()
-        actor<Int>(parent) {
+        val _ = actor<Int>(parent) {
             launch {
                 try {
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 } finally {
                     expect(1)
                 }
@@ -168,7 +166,7 @@ class ActorTest(private val capacity: Int) : TestBase() {
 
     @Test
     fun testCloseFreshActor() = runTest {
-        for (start in CoroutineStart.values()) {
+        for (start in CoroutineStart.entries) {
             val job = launch {
                 val actor = actor<Int>(start = start) {
                     for (i in channel) {
@@ -182,12 +180,14 @@ class ActorTest(private val capacity: Int) : TestBase() {
     }
 
     @Test
-    fun testCancelledParent() = runTest({ it is CancellationException }) {
-        cancel()
+    fun testCancelledParent() = runTest {
         expect(1)
-        actor<Int> {
-            expectUnreached()
+        launch {
+            this@launch.cancel()
+            val _ = actor<Int> {
+                expectUnreached()
+            }
+            finish(2)
         }
-        finish(2)
     }
 }

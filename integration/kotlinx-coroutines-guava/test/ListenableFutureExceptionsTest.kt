@@ -59,11 +59,10 @@ class ListenableFutureExceptionsTest : TestBase() {
                 Futures.transform(future, Function(transformer), MoreExecutors.directExecutor())
             }
             future.setException(exception)
-            try {
+            val e = assertFailsWith<Throwable> {
                 chained.await()
-            } catch (e: Throwable) {
-                assertTrue(expected(e))
             }
+            assertTrue(expected(e))
         }
 
         // Slow path
@@ -78,11 +77,10 @@ class ListenableFutureExceptionsTest : TestBase() {
                 future.setException(exception)
             }
 
-            try {
+            val e = assertFailsWith<Throwable> {
                 chained.await()
-            } catch (e: Throwable) {
-                assertTrue(expected(e))
             }
+            assertTrue(expected(e))
         }
     }
 }
