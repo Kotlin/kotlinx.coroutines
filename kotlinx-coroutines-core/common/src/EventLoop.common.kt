@@ -339,8 +339,8 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
             when (queue) {
                 null -> if (_queue.compareAndSet(null, CLOSED_EMPTY)) return
                 is Queue<*> -> {
-                    queue.close()
-                    return
+                    if (queue.close()) return
+                    _queue.compareAndSet(queue, queue.next())
                 }
                 else -> when {
                     queue === CLOSED_EMPTY -> return
