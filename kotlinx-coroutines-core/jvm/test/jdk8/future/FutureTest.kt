@@ -566,7 +566,6 @@ class FutureTest : TestBase() {
     @Test
     fun testCancelledParent() = runTest {
         var entered = 0
-        @Suppress("RETURN_VALUE_NOT_USED_COERCION")
         coroutineScope {
             launch {
                 this@launch.cancel()

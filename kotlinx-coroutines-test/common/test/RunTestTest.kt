@@ -327,7 +327,6 @@ class RunTestTest {
         assertEquals("z", suppressed[2].message)
     }) {
         runTest {
-            @Suppress("RETURN_VALUE_NOT_USED_COERCION")
             supervisorScope {
                 launch { throw TestException("x") }
                 launch { throw TestException("y") }

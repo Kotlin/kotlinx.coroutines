@@ -470,6 +470,7 @@ private class LazyDeferredCoroutine<T>(
  * See the corresponding section in the [coroutineScope] documentation for details,
  * as well as the [NonCancellable] documentation.
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T
