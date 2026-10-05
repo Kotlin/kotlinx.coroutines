@@ -39,9 +39,6 @@ internal actual class SafeCollector<T> actual constructor(
 
     override fun getStackTraceElement(): StackTraceElement? = null
 
-    @JvmField // Note, it is non-capturing lambda, so no extra allocation during init of SafeCollector
-    internal actual val collectContextSize = collectContext.fold(0) { count, _ -> count + 1 }
-
     // Either context of the last emission or wrapper 'DownstreamExceptionContext'
     private var lastEmissionContext: CoroutineContext? = null
     // Completion if we are currently suspended or within completion_ body or null otherwise
