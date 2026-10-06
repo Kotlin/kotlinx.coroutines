@@ -1364,18 +1364,6 @@ public final class kotlinx/coroutines/internal/MainDispatcherFactory$DefaultImpl
 	public static fun hintOnError (Lkotlinx/coroutines/internal/MainDispatcherFactory;)Ljava/lang/String;
 }
 
-public final class kotlinx/coroutines/internal/MainDispatchersKt {
-	public static final fun isMissing (Lkotlinx/coroutines/MainCoroutineDispatcher;)Z
-	public static final fun tryCreateDispatcher (Lkotlinx/coroutines/internal/MainDispatcherFactory;Ljava/util/List;)Lkotlinx/coroutines/MainCoroutineDispatcher;
-}
-
-public final class kotlinx/coroutines/internal/MissingMainCoroutineDispatcherFactory : kotlinx/coroutines/internal/MainDispatcherFactory {
-	public static final field INSTANCE Lkotlinx/coroutines/internal/MissingMainCoroutineDispatcherFactory;
-	public fun createDispatcher (Ljava/util/List;)Lkotlinx/coroutines/MainCoroutineDispatcher;
-	public fun getLoadPriority ()I
-	public fun hintOnError ()Ljava/lang/String;
-}
-
 public final class kotlinx/coroutines/internal/StackTraceRecoveryKt {
 	public static final fun unwrap (Ljava/lang/Throwable;)Ljava/lang/Throwable;
 	public static final fun unwrapImpl (Ljava/lang/Throwable;)Ljava/lang/Throwable;

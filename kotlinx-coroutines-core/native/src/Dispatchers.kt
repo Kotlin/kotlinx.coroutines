@@ -1,16 +1,19 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 
 public actual object Dispatchers {
     public actual val Default: CoroutineDispatcher = createDefaultDispatcher()
+
     public actual val Main: MainCoroutineDispatcher
-        get() = injectedMainDispatcher ?: mainDispatcher
+        get() = injectedMainDispatcher
+            ?: mainDispatcherOrNull
+            ?: error("Dispatchers.Main is not supported on this platform")
+
     public actual val Unconfined: CoroutineDispatcher get() = kotlinx.coroutines.Unconfined // Avoid freezing
 
-    private val mainDispatcher = createMainDispatcher(Default)
+    private val mainDispatcherOrNull = createMainDispatcherOrNull()
 
     private var injectedMainDispatcher: MainCoroutineDispatcher? = null
 
@@ -18,6 +21,10 @@ public actual object Dispatchers {
     internal fun injectMain(dispatcher: MainCoroutineDispatcher) {
         injectedMainDispatcher = dispatcher
     }
+
+    @PublishedApi
+    internal fun mainDispatcherOrNull(): MainCoroutineDispatcher? =
+        injectedMainDispatcher ?: mainDispatcherOrNull
 
     internal val IO: CoroutineDispatcher = DefaultIoScheduler
 }
@@ -48,4 +55,4 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
 
-internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher
+internal expect fun createMainDispatcherOrNull(): MainCoroutineDispatcher?

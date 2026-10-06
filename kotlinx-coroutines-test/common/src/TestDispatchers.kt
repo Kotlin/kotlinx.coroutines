@@ -18,7 +18,7 @@ import kotlin.jvm.*
 @ExperimentalCoroutinesApi
 public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
     require(dispatcher !is TestMainDispatcher) { "Dispatchers.setMain(Dispatchers.Main) is prohibited, probably Dispatchers.resetMain() should be used instead" }
-    getTestMainDispatcher().setDispatcher(dispatcher)
+    getOrInstallTestMainDispatcher().setDispatcher(dispatcher)
 }
 
 /**
@@ -31,5 +31,5 @@ public fun Dispatchers.setMain(dispatcher: CoroutineDispatcher) {
  */
 @ExperimentalCoroutinesApi
 public fun Dispatchers.resetMain() {
-    getTestMainDispatcher().resetDispatcher()
+    getOrInstallTestMainDispatcher().resetDispatcher()
 }
