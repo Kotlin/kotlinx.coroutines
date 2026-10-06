@@ -55,38 +55,40 @@ class ConflatedChannelCloseStressTest : TestBase() {
                 closerJob.cancel()
             }
         }
-        val receiver = async(pool + NonCancellable) {
-            while (isActive) {
-                curChannel.load().receiveCatching().getOrElse {
-                    it?.let { throw it }
+        supervisorScope {
+            val receiver = async(pool) {
+                while (isActive) {
+                    curChannel.load().receiveCatching().getOrElse {
+                        it?.let { throw it }
+                    }
+                    received.incrementAndFetch()
                 }
-                received.incrementAndFetch()
             }
-        }
-        // print stats while running
-        repeat(testSeconds) {
-            delay(1000)
-            printStats()
-        }
-        println("Stopping")
-        senders.forEach { it.cancel() }
-        closer.cancel()
-        // wait them to complete
-        println("waiting for senders...")
-        senderJobs.joinAll()
-        println("waiting for closer...")
-        closerJob.join()
-        // close cur channel
-        println("Closing channel and signalling receiver...")
-        flipChannel()
-        curChannel.load().close(StopException())
-        /// wait for receiver do complete
-        println("Waiting for receiver...")
-        try {
-            receiver.await()
-            error("Receiver should not complete normally")
-        } catch (_: StopException) {
-            // ok
+            // print stats while running
+            repeat(testSeconds) {
+                delay(1000)
+                printStats()
+            }
+            println("Stopping")
+            senders.forEach { it.cancel() }
+            closer.cancel()
+            // wait them to complete
+            println("waiting for senders...")
+            senderJobs.joinAll()
+            println("waiting for closer...")
+            closerJob.join()
+            // close cur channel
+            println("Closing channel and signalling receiver...")
+            flipChannel()
+            curChannel.load().close(StopException())
+            /// wait for receiver do complete
+            println("Waiting for receiver...")
+            try {
+                receiver.await()
+                error("Receiver should not complete normally")
+            } catch (_: StopException) {
+                // ok
+            }
         }
         // print stats
         println("--- done")
