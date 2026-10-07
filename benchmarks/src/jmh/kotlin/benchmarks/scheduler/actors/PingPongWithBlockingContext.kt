@@ -55,6 +55,6 @@ open class PingPongWithBlockingContext {
         val ping = CoroutineScope(pingContext).pingActorCoroutine(pong)
         ping.send(PingPongActorBenchmark.Letter(Start(), me))
 
-        me.receive()
+        val _ = me.receive()
     }
 }

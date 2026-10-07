@@ -154,6 +154,7 @@ import kotlin.jvm.JvmName
  */
 @OptIn(ExperimentalContracts::class)
 @JvmName("runBlockingK")
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T
 ): T {

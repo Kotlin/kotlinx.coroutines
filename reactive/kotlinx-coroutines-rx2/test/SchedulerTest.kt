@@ -31,7 +31,7 @@ class SchedulerTest : TestBase() {
             val t1 = Thread.currentThread()
             assertNotSame(t1, mainThread)
             expect(2)
-            delay(100)
+            delay(100.milliseconds)
             val t2 = Thread.currentThread()
             assertNotSame(t2, mainThread)
             expect(3)
@@ -166,7 +166,7 @@ class SchedulerTest : TestBase() {
                     cdl1.countDown()
                     try {
                         cdl2.await()
-                    } catch (e: InterruptedException) {
+                    } catch (_: InterruptedException) {
                         // this is the expected outcome
                         cdl3.countDown()
                     }
@@ -251,11 +251,11 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableWithNoDelay(block: RxSchedulerBlockNoDelay) {
         expect(1)
-        suspendCancellableCoroutine<Unit> {
-            block(Runnable {
+        suspendCancellableCoroutine {
+            val _ = block {
                 expect(2)
                 it.resume(Unit)
-            })
+            }
         }
         yield()
         finish(3)
@@ -287,8 +287,8 @@ class SchedulerTest : TestBase() {
 
     private suspend fun testRunnableWithDelay(block: RxSchedulerBlockWithDelay, delayMillis: Long = 0) {
         expect(1)
-        suspendCancellableCoroutine<Unit> {
-            block({
+        suspendCancellableCoroutine {
+            val _ = block({
                 expect(2)
                 it.resume(Unit)
             }, delayMillis, TimeUnit.MILLISECONDS)
@@ -360,11 +360,11 @@ class SchedulerTest : TestBase() {
     private suspend fun testRunnableExpectRxPluginsCall(block: RxSchedulerBlockNoDelay) {
         expect(1)
         setScheduler(2, 4)
-        suspendCancellableCoroutine<Unit> {
-            block(Runnable {
+        suspendCancellableCoroutine {
+            val _ = block {
                 expect(5)
                 it.resume(Unit)
-            })
+            }
             expect(3)
         }
         RxJavaPlugins.setScheduleHandler(null)
@@ -389,8 +389,8 @@ class SchedulerTest : TestBase() {
     private suspend fun testRunnableExpectRxPluginsCallDelay(block: RxSchedulerBlockWithDelay) {
         expect(1)
         setScheduler(2, 4)
-        suspendCancellableCoroutine<Unit> {
-            block({
+        suspendCancellableCoroutine {
+            val _ = block({
                 expect(5)
                 it.resume(Unit)
             }, 10, TimeUnit.MILLISECONDS)
@@ -424,7 +424,7 @@ class SchedulerTest : TestBase() {
                 expect(2 + i)
             }
         }
-        suspendCoroutine<Unit> {
+        suspendCancellableCoroutine {
             worker.schedule {
                 it.resume(Unit)
             }
@@ -451,11 +451,11 @@ class SchedulerTest : TestBase() {
     private suspend fun testRunnableRespectsDelays(block: RxSchedulerBlockWithDelay) {
         expect(1)
         val semaphore = Semaphore(2, 2)
-        block({
+        val _ = block({
             expect(3)
             semaphore.release()
         }, 100, TimeUnit.MILLISECONDS)
-        block({
+        val _ = block({
             expect(2)
             semaphore.release()
         }, 1, TimeUnit.MILLISECONDS)

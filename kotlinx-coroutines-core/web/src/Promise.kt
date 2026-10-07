@@ -44,7 +44,7 @@ public fun <T: JsAny?> CoroutineScope.promise(
 @OptIn(ExperimentalWasmJsInterop::class)
 public fun <T: JsAny?> Deferred<T>.asPromise(): Promise<T> {
     val promise = Promise<T> { resolve, reject ->
-        invokeOnCompletion {
+        val _ = invokeOnCompletion {
             val e = getCompletionExceptionOrNull()
             if (e != null) {
                 reject(e.toJsPromiseError())
@@ -86,7 +86,7 @@ public fun <T: JsAny?> Promise<T>.asDeferred(): Deferred<T> {
  */
 @OptIn(ExperimentalWasmJsInterop::class)
 public suspend fun <T: JsAny?> Promise<T>.await(): T = suspendCancellableCoroutine { cont: CancellableContinuation<T> ->
-    this@await.then(
+    val _ = this@await.then(
         onFulfilled = { cont.resume(it); null },
         onRejected = {
             // KT-86697 prevents us from handling `undefined` as the rejection value on Wasm/JS, but on JS, this works:

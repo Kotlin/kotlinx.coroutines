@@ -37,7 +37,7 @@ class Barrier(private val parties: Int) {
         while (true) {
             val waiter = waiters.loadAt(myIndex)
             when {
-                waiter === null -> waiters.compareAndSetAt(myIndex, waiter, currentThread)
+                waiter === null -> { val _ = waiters.compareAndSetAt(myIndex, waiter, currentThread) }
                 waiter is ParkingHandle -> ParkingSupport.park(Duration.INFINITE)
                 waiter === FINISHED -> return
                 else -> error("Unreachable")

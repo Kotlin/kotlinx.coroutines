@@ -103,11 +103,8 @@ open class TakeBenchmark {
         downstream: FlowCollector<T>
     ) : FlowCollector<T>, Continuation<Unit> {
         private var consumed = 0
-        // Workaround for KT-30991
-        private val emitFun = run {
-            val suspendFun: suspend (T) -> Unit = { downstream.emit(it) }
-            suspendFun as Function2<T, Continuation<Unit>, Any?>
-        }
+        @Suppress("UNCHECKED_CAST")
+        private val emitFun = downstream::emit as Function2<T, Continuation<Unit>, Any?>
 
         private var caller: Continuation<Unit>? = null // lateinit
 

@@ -99,6 +99,7 @@ private fun ScopeCoroutine<*>.notOwnTimeout(cause: Throwable): Boolean {
 }
 
 private fun ScopeCoroutine<*>.dispatchExceptionAndMakeCompleting(e: DispatchException): Nothing {
-    makeCompleting(CompletedExceptionally(e.cause))
+    // Always succeeds, as it can't have been completed yet
+    val _ = makeCompleting(CompletedExceptionally(e.cause))
     throw recoverStackTrace(e.cause, uCont)
 }

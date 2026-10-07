@@ -114,7 +114,9 @@ public fun <E> CoroutineScope.actor(
     val coroutine = if (start.isLazy)
         LazyActorCoroutine(newContext, channel, block) else
         ActorCoroutine(newContext, channel, active = true)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
+    if (onCompletion != null) {
+        val _ = coroutine.invokeOnCompletion(handler = onCompletion)
+    }
     coroutine.start(start, coroutine, block)
     return coroutine
 }

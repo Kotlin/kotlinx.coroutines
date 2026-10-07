@@ -3,13 +3,13 @@ package kotlinx.coroutines.debug
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import org.junit.*
 import reactor.blockhound.*
+import kotlin.test.*
 
-@Suppress("UnusedEquals", "DeferredResultUnused", "BlockingMethodInNonBlockingContext")
+@Suppress("BlockingMethodInNonBlockingContext")
 class BlockHoundTest : TestBase() {
 
-    @Before
+    @BeforeTest
     fun init() {
         BlockHound.install()
     }
@@ -41,16 +41,16 @@ class BlockHoundTest : TestBase() {
     fun testReusingThreads() = runTest {
         val n = 100
         repeat(n) {
-            async(Dispatchers.IO) {
+            val _ = async(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }
         repeat(n) {
-            async(Dispatchers.Default) {
+            val _ = async(Dispatchers.Default) {
             }
         }
         repeat(n) {
-            async(Dispatchers.IO) {
+            val _ = async(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }
@@ -71,8 +71,8 @@ class BlockHoundTest : TestBase() {
                 q.send(2)
             }
             val receiver = launch {
-                s.receive() == 1
-                s.receive() == 2
+                assertEquals(1, s.receive())
+                assertEquals(2, s.receive())
                 s.cancel()
             }
             sender.join()
@@ -91,7 +91,7 @@ class BlockHoundTest : TestBase() {
                 q.send(1)
             }
             val receiver = launch {
-                q.receive() == 1
+                assertEquals(1, q.receive())
             }
             sender.join()
             receiver.join()
@@ -102,15 +102,15 @@ class BlockHoundTest : TestBase() {
     fun testReusingThreadsFailure() = runTest {
         val n = 100
         repeat(n) {
-            async(Dispatchers.IO) {
+            launch(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }
-        async(Dispatchers.Default) {
+        launch(Dispatchers.Default) {
             Thread.sleep(1)
         }
         repeat(n) {
-            async(Dispatchers.IO) {
+            launch(Dispatchers.IO) {
                 Thread.sleep(1)
             }
         }

@@ -16,17 +16,17 @@ class StackTraceRecoveryNestedTest : TestBase() {
             expect(1)
 
             // Just a noise for unwrapping
-            async {
+            val _ = async {
                 expect(2)
-                delay(Long.MAX_VALUE)
+                awaitCancellation()
             }
 
             // Do not catch, fail on cancellation
             async {
                 expect(3)
-                async {
+                val _ = async {
                     expect(4)
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 }
 
                 async {
@@ -62,12 +62,12 @@ class StackTraceRecoveryNestedTest : TestBase() {
     }
 
     private suspend fun Deferred<*>.awaitRootLevel() {
-        await()
+        val _ = await()
         assertTrue(true)
     }
 
     private suspend fun Deferred<*>.awaitNested() {
-        await()
+        val _ = await()
         assertTrue(true)
     }
 

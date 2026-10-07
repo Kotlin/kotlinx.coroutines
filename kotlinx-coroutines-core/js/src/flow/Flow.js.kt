@@ -220,7 +220,7 @@ private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
                     try {
                         // Prevent coroutine cancellation from making us exit before the cleanup is done
                         withContext(NonCancellable) {
-                            iterator.`return`().await()
+                            val _ = iterator.`return`().await()
                         }
                     } catch (returnException: dynamic) {
                         if (e is CancellationException) throw returnException

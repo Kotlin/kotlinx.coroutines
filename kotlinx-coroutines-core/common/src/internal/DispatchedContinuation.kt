@@ -192,7 +192,7 @@ internal class DispatchedContinuation<in T>(
             resumeMode = MODE_ATOMIC
             dispatcher.safeDispatch(context, this)
         } else {
-            executeUnconfined(state, MODE_ATOMIC) {
+            val _ = executeUnconfined(state, MODE_ATOMIC) {
                 withCoroutineContext(context, countOrElement) {
                     continuation.resumeWith(result)
                 }
@@ -210,7 +210,7 @@ internal class DispatchedContinuation<in T>(
             resumeMode = MODE_CANCELLABLE
             dispatcher.safeDispatch(context, this)
         } else {
-            executeUnconfined(state, MODE_CANCELLABLE) {
+            val _ = executeUnconfined(state, MODE_CANCELLABLE) {
                 if (!resumeCancelled(state)) {
                     resumeUndispatchedWith(result)
                 }

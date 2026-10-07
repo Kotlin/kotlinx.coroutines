@@ -77,12 +77,14 @@ class ActorLazyTest : TestBase() {
     }
 
     @Test
-    fun testCancelledParent() = runTest({ it is CancellationException }) {
-        cancel()
+    fun testCancelledParent() = runTest {
         expect(1)
-        actor<Int>(start = CoroutineStart.LAZY) {
-            expectUnreached()
+        launch {
+            this@launch.cancel()
+            val _ = actor<Int>(start = CoroutineStart.LAZY) {
+                expectUnreached()
+            }
+            finish(2)
         }
-        finish(2)
     }
 }

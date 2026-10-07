@@ -98,9 +98,11 @@ class IntegrationTest(
     @Test
     fun testCancelWithoutValue() = runTest {
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            rxObservable<String> {
-                awaitCancellation()
-            }.awaitFirst()
+            assertFailsWith<CancellationException> {
+                rxObservable<String> {
+                    awaitCancellation()
+                }.awaitFirst()
+            }
         }
         job.cancel()
     }
@@ -124,13 +126,11 @@ class IntegrationTest(
             expect(2)
             withTimeout(1) { delay(100) }
         }
-        try {
-            expect(1)
+        expect(1)
+        assertFailsWith<CancellationException> {
             observable.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(3)
         }
-        finish(4)
+        finish(3)
     }
 
     private suspend fun checkNumbers(n: Int, observable: Observable<Int>) {

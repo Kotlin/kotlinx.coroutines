@@ -49,12 +49,10 @@ class CoroutineScopeTest : TestBase() {
             }
         }
 
-        try {
+        assertFailsWith<TestException2> {
             callJobScoped()
-            expectUnreached()
-        } catch (_: TestException2) {
-            expect(4)
         }
+        expect(4)
         yield() // Check we're not cancelled
         finish(5)
     }
@@ -115,17 +113,15 @@ class CoroutineScopeTest : TestBase() {
         supervisorScope {
             val outerJob = launch {
                 expect(1)
-                try {
+                val e = assertFailsWith<JobCancellationException> {
                     callJobScoped()
-                    expectUnreached()
-                } catch (e: JobCancellationException) {
-                    expect(5)
-                    if (RECOVER_STACK_TRACES) {
-                        val cause = e.cause as JobCancellationException // shall be recovered JCE
-                        assertNull(cause.cause)
-                    } else {
-                        assertNull(e.cause)
-                    }
+                }
+                expect(5)
+                if (RECOVER_STACK_TRACES) {
+                    val cause = e.cause as JobCancellationException // shall be recovered JCE
+                    assertNull(cause.cause)
+                } else {
+                    assertNull(e.cause)
                 }
             }
             repeat(3) { yield() } // let everything start properly
@@ -136,13 +132,11 @@ class CoroutineScopeTest : TestBase() {
 
     @Test
     fun testAsyncCancellationFirst() = runTest {
-        try {
+        assertFailsWith<TestException1> {
             expect(1)
             failedConcurrentSumFirst()
-            expectUnreached()
-        } catch (_: TestException1) {
-            finish(6)
         }
+        finish(6)
     }
 
     // First async child fails -> second is cancelled
@@ -166,13 +160,11 @@ class CoroutineScopeTest : TestBase() {
 
     @Test
     fun testAsyncCancellationSecond() = runTest {
-        try {
+        assertFailsWith<TestException1> {
             expect(1)
             failedConcurrentSumSecond()
-            expectUnreached()
-        } catch (_: TestException1) {
-            finish(6)
         }
+        finish(6)
     }
 
     // Second async child fails -> fist is cancelled
@@ -259,7 +251,7 @@ class CoroutineScopeTest : TestBase() {
         lateinit var scopeJob: Job
         coroutineScope {
             scopeJob = coroutineContext[Job]!!
-            scopeJob.invokeOnCompletion { }
+            val _ = scopeJob.invokeOnCompletion { }
         }
 
         scopeJob.join()

@@ -41,7 +41,7 @@ class BasicOperationsTest : TestBase() {
             }
         }
         expect(1)
-        channel.trySend(42)
+        val _ = channel.trySend(42)
         expect(2)
         channel.close(AssertionError())
         finish(4)
@@ -175,7 +175,7 @@ class BasicOperationsTest : TestBase() {
         val channel = kind.create<Int>()
         // Make it full
         repeat(11) {
-            channel.trySend(42)
+            val _ = channel.trySend(42)
         }
         channel.trySend(1)
             .onSuccess { expectUnreached() }

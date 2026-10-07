@@ -23,7 +23,7 @@ class FailingCoroutinesMachineryTest(
         override fun toString(): String = name
 
         fun reset() {
-            runCatching { (_value as? ExecutorCoroutineDispatcher)?.close() }
+            val _ = runCatching { (_value as? ExecutorCoroutineDispatcher)?.close() }
             _value = null
         }
     }
@@ -113,7 +113,7 @@ class FailingCoroutinesMachineryTest(
     @Test
     fun testElement() = runTest {
         // Top-level throwing dispatcher may rethrow an exception right here
-        runCatching {
+        val _ = runCatching {
             launch(NonCancellable + dispatcher.value + exceptionHandler + element) {}
         }
         checkException()
@@ -122,7 +122,7 @@ class FailingCoroutinesMachineryTest(
     @Test
     fun testNestedElement() = runTest {
         // Top-level throwing dispatcher may rethrow an exception right here
-        runCatching {
+        val _ = runCatching {
             launch(NonCancellable + dispatcher.value + exceptionHandler) {
                 launch(element) { }
             }

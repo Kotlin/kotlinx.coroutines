@@ -137,7 +137,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
         flow {
             assertNotSame(originalData, threadLocalData.get())
             assertEquals(originalData, threadLocalData.get())
-            emit(1)
+            emit(Unit)
         }
             .flowOn(root)
             .single()
@@ -150,7 +150,7 @@ class ThreadContextMutableCopiesTest : TestBase() {
         flow {
             assertNotSame(originalData, threadLocalData.get())
             assertEquals(originalData, threadLocalData.get())
-            emit(1)
+            emit(Unit)
         }
             .flowOn(root + Dispatchers.Default)
             .single()

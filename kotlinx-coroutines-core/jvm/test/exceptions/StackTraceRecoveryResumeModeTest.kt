@@ -69,7 +69,7 @@ class StackTraceRecoveryResumeModeTest : TestBase() {
 
     private suspend fun withContext(context: CoroutineContext, channel: Channel<Int>) {
         withContext(context) {
-            channel.receive()
+            val _ = channel.receive()
             yield()
         }
     }
@@ -116,8 +116,8 @@ class StackTraceRecoveryResumeModeTest : TestBase() {
     private suspend fun testResumeModeSuspending(context: CoroutineContext) {
         try {
             val channel = Channel<Int>()
-            val latch = Channel<Int>()
-            GlobalScope.launch(coroutineContext) {
+            val latch = Channel<Unit>()
+            CoroutineScope(currentCoroutineContext()).launch {
                 latch.receive()
                 expect(3)
                 channel.close(RecoverableTestException())
@@ -129,17 +129,17 @@ class StackTraceRecoveryResumeModeTest : TestBase() {
         }
     }
 
-    private suspend fun doSuspendingPath(context: CoroutineContext, channel: Channel<Int>, latch: Channel<Int>) {
+    private suspend fun doSuspendingPath(context: CoroutineContext, channel: Channel<Int>, latch: Channel<Unit>) {
         yield()
         withContext(context, channel, latch)
     }
 
-    private suspend fun withContext(context: CoroutineContext, channel: Channel<Int>, latch: Channel<Int>) {
+    private suspend fun withContext(context: CoroutineContext, channel: Channel<Int>, latch: Channel<Unit>) {
         withContext(context) {
             expect(1)
-            latch.send(1)
+            latch.send(Unit)
             expect(2)
-            channel.receive()
+            val _ = channel.receive()
             yield()
         }
     }

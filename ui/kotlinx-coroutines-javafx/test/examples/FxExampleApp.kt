@@ -52,8 +52,13 @@ class FxTestApp : Application(), CoroutineScope {
 
     private fun animation(node: Node, block: suspend CoroutineScope.() -> Unit) {
         root.children += node
-        launch(block = block).also {
-            it.invokeOnCompletion { root.children -= node }
+        launch(start = CoroutineStart.ATOMIC) {
+            try {
+                yield()
+                block()
+            } finally {
+                root.children -= node
+            }
         }
     }
 
@@ -69,12 +74,12 @@ class FxTestApp : Application(), CoroutineScope {
             var vy = speed
             var counter = 0
             while (true) {
-                awaitPulse()
+                val _ = awaitPulse()
                 node.x += vx
                 node.y += vy
                 val xRange = 0.0 .. scene.width - node.width
                 val yRange = 0.0 .. scene.height - node.height
-                if (node.x !in xRange ) {
+                if (node.x !in xRange) {
                     node.x = node.x.coerceIn(xRange)
                     vx = -vx
                 }
@@ -106,7 +111,7 @@ class FxTestApp : Application(), CoroutineScope {
             var sx = random.nextDouble() * maxSpeed
             var sy = random.nextDouble() * maxSpeed
             while (true) {
-                awaitPulse()
+                val _ = awaitPulse()
                 val dx = root.width / 2 - node.translateX
                 val dy = root.height / 2 - node.translateY
                 val dn = Math.sqrt(dx * dx + dy * dy)

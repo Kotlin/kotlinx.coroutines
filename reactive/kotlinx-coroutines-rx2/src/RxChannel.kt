@@ -4,8 +4,6 @@ import io.reactivex.*
 import io.reactivex.disposables.*
 import kotlinx.atomicfu.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.reactive.*
 
 /**
  * Subscribes to this [MaybeSource] and performs the specified action for each received element.
@@ -56,12 +54,12 @@ private class SubscriptionChannel<T> :
     }
 
     override fun onSuccess(t: T & Any) {
-        trySend(t)
+        val _ = trySend(t)
         close(cause = null)
     }
 
     override fun onNext(t: T & Any) {
-        trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
+        val _ = trySend(t) // Safe to ignore return value here, expectedly racing with cancellation
     }
 
     override fun onComplete() {

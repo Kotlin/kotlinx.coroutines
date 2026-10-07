@@ -110,7 +110,9 @@ private class CompletableFutureCoroutine<T>(
 public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
     val future = CompletableFuture<T>()
     setupCancellation(future)
-    invokeOnCompletion {
+    /* There's never a reason to remove this callback: either the future still active,
+    or it's cancelled and will in turn cancel the job. */
+    val _ = invokeOnCompletion {
         try {
             future.complete(getCompleted())
         } catch (t: Throwable) {
@@ -127,7 +129,9 @@ public fun <T> Deferred<T>.asCompletableFuture(): CompletableFuture<T> {
 public fun Job.asCompletableFuture(): CompletableFuture<Unit> {
     val future = CompletableFuture<Unit>()
     setupCancellation(future)
-    invokeOnCompletion { cause ->
+    /* There's never a reason to remove this callback: either the future still active,
+    or it's cancelled and will in turn cancel the job. */
+    val _ = invokeOnCompletion { cause ->
         if (cause === null) future.complete(Unit)
         else future.completeExceptionally(cause)
     }
@@ -178,7 +182,7 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
             handleCoroutineException(EmptyCoroutineContext, e)
         }
     }
-    result.invokeOnCompletion(handler = CancelFutureOnCompletion(future))
+    val _ = result.invokeOnCompletion(handler = CancelFutureOnCompletion(future))
     return result
 }
 

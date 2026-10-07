@@ -839,6 +839,7 @@ public object GlobalScope : CoroutineScope {
  * that the UI element was already disposed of, accessing the UI during the acquisition of a resource or
  * before the first suspension point in [use] is not allowed and may lead to crashes.
  */
+@IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

@@ -52,7 +52,7 @@ open class PingPongActorBenchmark : ParametrizedDispatcherBase() {
         }
 
         repeat(count) {
-            me.receive()
+            val _ = me.receive()
         }
     }
 }

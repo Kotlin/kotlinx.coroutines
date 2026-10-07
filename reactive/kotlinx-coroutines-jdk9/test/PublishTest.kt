@@ -90,7 +90,7 @@ class PublishTest : TestBase() {
         val publisher = flowPublish<Unit>(Dispatchers.Unconfined + eh) {
             try {
                 expect(3)
-                delay(10000)
+                awaitCancellation()
             } finally {
                 expect(5)
                 throw RuntimeException("FAILED") // crash after cancel
@@ -130,12 +130,11 @@ class PublishTest : TestBase() {
             assert(isClosedForSend)
             expect(4)
         }
-        try {
-            expect(2)
+        expect(2)
+        assertFailsWith<CancellationException> {
             publisher.awaitFirstOrNull()
-        } catch (e: CancellationException) {
-            expect(5)
         }
+        expect(5)
         finish(6)
     }
 
@@ -186,14 +185,13 @@ class PublishTest : TestBase() {
     fun testOnNextErrorAfterCancellation() = runTest {
         assertCallsExceptionHandlerWith<TestException> { handler ->
             var producerScope: ProducerScope<Int>? = null
-            CompletableDeferred<Unit>()
             expect(1)
             var job: Job? = null
-            val publisher = flowPublish<Int>(handler + Dispatchers.Unconfined) {
+            val publisher = flowPublish(handler + Dispatchers.Unconfined) {
                 producerScope = this
                 expect(4)
                 job = launch {
-                    delay(Long.MAX_VALUE)
+                    awaitCancellation()
                 }
             }
             expect(2)
@@ -243,7 +241,7 @@ class PublishTest : TestBase() {
             pub.collect {
                 throw TestException()
             }
-        } catch (e: TestException) {
+        } catch (_: TestException) {
             finish(3)
         }
     }
@@ -258,15 +256,16 @@ class PublishTest : TestBase() {
     fun testTrySendNotThrowing() = runTest {
         var producerScope: ProducerScope<Int>? = null
         expect(1)
-        val publisher = flowPublish<Int>(Dispatchers.Unconfined) {
+        val publisher = flowPublish(Dispatchers.Unconfined) {
             producerScope = this
             expect(3)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            publisher.awaitFirstOrNull()
-            expectUnreached()
+            throw assertFailsWith<CancellationException> {
+                publisher.awaitFirstOrNull()
+            }
         }
         job.cancel()
         expect(4)

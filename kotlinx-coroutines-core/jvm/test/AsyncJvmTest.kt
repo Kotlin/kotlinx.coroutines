@@ -33,13 +33,10 @@ class AsyncJvmTest : TestBase() {
         check(!d.isActive && !d.isCompleted && d.isCancelled)
         check(!d.isActive && !d.isCompleted && d.isCancelled)
         expect(5)
-        try {
+        assertFailsWith<CancellationException> {
             d.await() // awaits
-            expectUnreached() // does not complete normally
-        } catch (e: Throwable) {
-            expect(7)
-            check(e is CancellationException)
         }
+        expect(7)
         check(!d.isActive && d.isCompleted && d.isCancelled)
         finish(8)
     }

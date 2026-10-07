@@ -82,8 +82,8 @@ public fun <T: Any> ObservableSource<T>.asFlow(): Flow<T> = callbackFlow {
              * also was handled by the same downstream
              */
             try {
-                trySendBlocking(t)
-            } catch (e: InterruptedException) {
+                val _ = trySendBlocking(t)
+            } catch (_: InterruptedException) {
                 // RxJava interrupts the source
             }
         }

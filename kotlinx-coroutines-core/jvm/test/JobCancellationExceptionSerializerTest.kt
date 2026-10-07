@@ -1,8 +1,8 @@
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
-import org.junit.*
 import java.io.*
+import kotlin.test.*
 
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -10,7 +10,7 @@ class JobCancellationExceptionSerializerTest : TestBase() {
 
     @Test
     fun testSerialization() = runTest {
-        try {
+        val e = assertFailsWith<Throwable> {
             coroutineScope {
                 expect(1)
 
@@ -28,13 +28,12 @@ class JobCancellationExceptionSerializerTest : TestBase() {
                     throw RuntimeException("RE1")
                 }
             }
-        } catch (e: Throwable) {
-            // Should not fail
-            ObjectOutputStream(ByteArrayOutputStream()).use {
-                it.writeObject(e)
-            }
-            finish(4)
         }
+        // Should not fail
+        ObjectOutputStream(ByteArrayOutputStream()).use {
+            it.writeObject(e)
+        }
+        finish(4)
     }
 
     @Test

@@ -119,7 +119,7 @@ class ThreadLocalStressTest : TestBase() {
     private fun doTestWithPreparation(testBody: suspend () -> Unit, setup: () -> Unit, isValid: () -> Boolean) {
         setup()
         val latch = CountDownLatch(1)
-        testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
+        val _ = testBody.startCoroutineUninterceptedOrReturn(Continuation(EmptyCoroutineContext) {
             if (!isValid()) {
                 Thread.currentThread().uncaughtExceptionHandler.uncaughtException(
                     Thread.currentThread(),
@@ -133,29 +133,25 @@ class ThreadLocalStressTest : TestBase() {
 
     private suspend fun doTest() {
         withContext(threadLocal.asContextElement("foo")) {
-            try {
+            assertFailsWith<CancellationException> {
                 coroutineScope {
                     val semaphore = Semaphore(1, 1)
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
-                // Ignore cancellation
             }
         }
     }
 
     private suspend fun doTestWithContextSwitch() {
         withContext(threadLocal.asContextElement("foo")) {
-            try {
+            assertFailsWith<CancellationException> {
                 coroutineScope {
                     val semaphore = Semaphore(1, 1)
                     GlobalScope.launch { }.join()
                     cancel()
                     semaphore.acquire()
                 }
-            } catch (e: CancellationException) {
-                // Ignore cancellation
             }
         }
     }

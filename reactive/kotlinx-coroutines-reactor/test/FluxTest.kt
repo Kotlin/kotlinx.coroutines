@@ -75,11 +75,10 @@ class FluxTest : TestBase() {
             flux(currentDispatcher()) {
                 expect(5)
                 send("OK")
-                try {
-                    delay(Long.MAX_VALUE)
-                } catch (e: CancellationException) {
-                    expect(11)
+                assertFailsWith<CancellationException> {
+                    awaitCancellation()
                 }
+                expect(11)
             }
             .doOnNext {
                 expect(6)
@@ -114,13 +113,12 @@ class FluxTest : TestBase() {
                 send(it)
             }
         }
-        try {
+        assertFailsWith<TestException> {
             pub.collect {
                 throw TestException()
             }
-        } catch (e: TestException) {
-            finish(3)
         }
+        finish(3)
     }
 
     @Test
@@ -133,7 +131,7 @@ class FluxTest : TestBase() {
         // Test exception is not reported to global handler
         val flow = flux<Unit> { throw TestException() }.asFlow()
         repeat(2000) {
-            combine(flow, flow) { _, _ -> Unit }
+            combine(flow, flow) { _, _ -> }
                 .catch {}
                 .collect { }
         }
@@ -144,15 +142,16 @@ class FluxTest : TestBase() {
     fun testTrySendNotThrowing() = runTest {
         var producerScope: ProducerScope<Int>? = null
         expect(1)
-        val flux = flux<Int>(Dispatchers.Unconfined) {
+        val flux = flux(Dispatchers.Unconfined) {
             producerScope = this
             expect(3)
-            delay(Long.MAX_VALUE)
+            awaitCancellation()
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            flux.awaitFirstOrNull()
-            expectUnreached()
+            throw assertFailsWith<CancellationException> {
+                flux.awaitFirstOrNull()
+            }
         }
         job.cancel()
         expect(4)

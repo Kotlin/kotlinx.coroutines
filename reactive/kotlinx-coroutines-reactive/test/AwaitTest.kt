@@ -2,8 +2,8 @@ package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.*
 import org.reactivestreams.*
+import kotlin.test.*
 
 class AwaitTest: TestBase() {
 
@@ -24,13 +24,11 @@ class AwaitTest: TestBase() {
             })
         }
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
-            try {
-                expect(2)
+            expect(2)
+            assertFailsWith<CancellationException> {
                 publisher.awaitFirst()
-            } catch (e: CancellationException) {
-                expect(6)
-                throw e
             }
+            expect(6)
         }
         expect(4)
         job.cancelAndJoin()

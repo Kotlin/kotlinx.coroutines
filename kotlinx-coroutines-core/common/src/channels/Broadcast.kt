@@ -46,7 +46,9 @@ public fun <E> CoroutineScope.broadcast(
     val coroutine = if (start.isLazy)
         LazyBroadcastCoroutine(newContext, channel, block) else
         BroadcastCoroutine(newContext, channel, active = true)
-    if (onCompletion != null) coroutine.invokeOnCompletion(handler = onCompletion)
+    if (onCompletion != null) {
+        val _ = coroutine.invokeOnCompletion(handler = onCompletion)
+    }
     coroutine.start(start, coroutine, block)
     return coroutine
 }

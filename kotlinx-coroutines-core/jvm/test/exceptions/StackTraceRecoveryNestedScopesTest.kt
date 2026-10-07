@@ -3,7 +3,7 @@ package kotlinx.coroutines.exceptions
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
 import org.junit.*
-import kotlin.coroutines.*
+import kotlin.time.Duration
 
 class StackTraceRecoveryNestedScopesTest : TestBase() {
 
@@ -29,13 +29,13 @@ class StackTraceRecoveryNestedScopesTest : TestBase() {
         failure()
     }
 
-    private suspend fun callWithContext(doYield: Boolean) = withContext(wrapperDispatcher(coroutineContext)) {
+    private suspend fun callWithContext(doYield: Boolean) = withContext(wrapperDispatcher(currentCoroutineContext())) {
         if (doYield) yield()
-        createFailingAsync().await()
+        val _ = createFailingAsync().await()
         yield()
     }
 
-    private suspend fun callWithTimeout(doYield: Boolean) = withTimeout(Long.MAX_VALUE) {
+    private suspend fun callWithTimeout(doYield: Boolean) = withTimeout(Duration.INFINITE) {
         if (doYield) yield()
         callWithContext(doYield)
         yield()

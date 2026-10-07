@@ -24,7 +24,7 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testLastScheduledComesFirst() {
         val queue = WorkQueue()
-        (1L..4L).forEach { queue.add(task(it)) }
+        (1L..4L).forEach { assertNull(queue.add(task(it))) }
         assertEquals(listOf(4L, 1L, 2L, 3L), queue.drain(ObjectRef()))
     }
 
@@ -33,7 +33,7 @@ class WorkQueueTest : TestBase() {
         val queue = WorkQueue()
         val size = 130L
         val offload = GlobalQueue()
-        (0 until size).forEach { queue.add(task(it))?.let { t -> offload.addLast(t) } }
+        (0 until size).forEach { queue.add(task(it))?.let { t -> assertTrue(offload.addLast(t)) } }
 
         val expectedResult = listOf(129L) + (0L..126L).toList()
         val actualResult = queue.drain(ObjectRef())
@@ -53,8 +53,8 @@ class WorkQueueTest : TestBase() {
     @Test
     fun testStealingFromHead() {
         val victim = WorkQueue()
-        victim.add(task(1L))
-        victim.add(task(2L))
+        assertNull(victim.add(task(1L)))
+        assertNull(victim.add(task(2L)))
         timeSource.step()
         timeSource.step(3)
 
@@ -72,8 +72,8 @@ class WorkQueueTest : TestBase() {
         val queue = WorkQueue()
         assertNull(queue.pollBlocking())
         val blockingTask = blockingTask(1L)
-        queue.add(blockingTask)
-        queue.add(task(1L))
+        assertNull(queue.add(blockingTask))
+        assertNull(queue.add(task(1L)))
         assertSame(blockingTask, queue.pollBlocking())
     }
 }
