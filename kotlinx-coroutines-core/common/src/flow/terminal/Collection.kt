@@ -7,19 +7,19 @@ import kotlin.jvm.*
 /**
  * Collects given flow into a [destination]
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend fun <T> Flow<T>.toList(destination: MutableList<T> = ArrayList()): List<T> = toCollection(destination)
 
 /**
  * Collects given flow into a [destination]
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend fun <T> Flow<T>.toSet(destination: MutableSet<T> = LinkedHashSet()): Set<T> = toCollection(destination)
 
 /**
  * Collects given flow into a [destination]
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend fun <T, C : MutableCollection<in T>> Flow<T>.toCollection(destination: C): C {
     collect { value ->
         destination.add(value)
@@ -126,7 +126,7 @@ public suspend inline fun <T, K, V> Flow<T>.associateBy(
  * println(byLastName) // {Hopper=Grace Hopper, Bernoulli=Johann Bernoulli}
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateByTo(
     destination: M, crossinline keySelector: suspend (T) -> K
 ): M {
@@ -160,7 +160,7 @@ public suspend inline fun <T, K, M : MutableMap<in K, in T>> Flow<T>.associateBy
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateByTo(
     destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
 ): M {
@@ -194,7 +194,7 @@ public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associat
  * println(byLastName) // {Hopper=Grace, Bernoulli=Johann}
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <T, K, V, M : MutableMap<in K, in V>> Flow<T>.associateTo(
     destination: M, crossinline transform: suspend (T) -> Pair<K, V>
 ): M {
@@ -249,7 +249,7 @@ public suspend inline fun <K, V> Flow<K>.associateWith(crossinline valueSelector
  * println(withLengthOfNames) // {Grace Hopper=11, Jacob Bernoulli=14}
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <K, V, M : MutableMap<in K, in V>> Flow<K>.associateWithTo(
     destination: M, crossinline valueSelector: suspend (K) -> V
 ): M {
@@ -328,7 +328,7 @@ public suspend inline fun <T, K, V> Flow<T>.groupBy(
  * println("mutableByLength == byLength is ${mutableByLength == byLength}") // true
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.groupByTo(
     destination: M, crossinline keySelector: suspend (T) -> K
 ): M {
@@ -359,7 +359,7 @@ public suspend inline fun <T, K, M : MutableMap<in K, MutableList<T>>> Flow<T>.g
  * println("mutableNamesByTeam == namesByTeam is ${mutableNamesByTeam == namesByTeam}") // true
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend inline fun <T, K, V, M : MutableMap<in K, MutableList<V>>> Flow<T>.groupByTo(
     destination: M, crossinline keySelector: suspend (T) -> K, crossinline valueTransform: suspend (T) -> V
 ): M {

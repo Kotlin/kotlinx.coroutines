@@ -303,7 +303,7 @@ public fun <E> ReceiveChannel<E>.takeWhile(
     }
 
 @PublishedApi
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 internal suspend fun <E, C : SendChannel<E>> ReceiveChannel<E>.toChannel(destination: C): C {
     consumeEach {
         destination.send(it)

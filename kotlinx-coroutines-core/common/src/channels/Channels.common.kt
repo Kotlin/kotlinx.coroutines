@@ -258,7 +258,7 @@ public suspend fun <E> ReceiveChannel<E>.toList(): List<E> = buildList {
  * }
  * ```
  */
-@IgnorableReturnValue
+@IgnorableReturnValue // TODO: replace with the `returnsParameter` contract after upgrading to Kotlin 2.5
 public suspend fun <E, C: MutableCollection<E>> ReceiveChannel<E>.consumeTo(collection: C): C =
     consumeEach(collection::add).let { collection }
 
