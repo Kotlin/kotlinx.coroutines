@@ -8,13 +8,13 @@ import kotlin.test.*
 
 class ReusableCancellableContinuationTest : TestBase() {
     @Test
-    @Suppress("RETURN_VALUE_NOT_USED_COERCION") // TODO: a compiler bug; check on newer versions
+    @Suppress("RETURN_VALUE_NOT_USED_COERCION") // Workaround for KT-90056
     fun testReusable() = runTest {
         testContinuationsCount(10, 1, ::suspendCancellableCoroutineReusable)
     }
 
     @Test
-    @Suppress("RETURN_VALUE_NOT_USED_COERCION") // TODO: a compiler bug; check on newer versions
+    @Suppress("RETURN_VALUE_NOT_USED_COERCION") // Workaround for KT-90056
     fun testRegular() = runTest {
         testContinuationsCount(10, 10, ::suspendCancellableCoroutine)
     }
