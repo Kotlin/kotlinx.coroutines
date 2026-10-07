@@ -26,7 +26,7 @@ class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
         // Stress test for specific case (race #2 from LimitingDispatcher). Shouldn't hang.
         for (i in 1..iterations) {
             coroutineScope {
-                (1..2).forEach {
+                repeat(2) {
                     launch(limitingDispatcher) {
                         try {
                             val currentlyExecuting = concurrentWorkers.incrementAndFetch()
@@ -47,7 +47,7 @@ class BlockingCoroutineDispatcherLivenessStressTest : SchedulerTestBase() {
         val completed = AtomicInt(0)
         for (i in 1..iterations) {
             coroutineScope {
-                (1..2).forEach {
+                repeat(2) {
                     launch(dispatcher) {
                         // Useless work
                         concurrentWorkers.increment()
