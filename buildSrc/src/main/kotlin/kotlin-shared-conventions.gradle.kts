@@ -1,10 +1,12 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.abi.ExperimentalAbiValidation
+import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -109,7 +111,44 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         }
         js {
             outputModuleName = project.name
-            nodejs()
+
+            // The part for testing with the latest JS target supported
+            val mainCompilation = compilations.getByName("main")
+            val testCompilation = compilations.getByName("test")
+
+            val latestJsCompilation = compilations.create("latestJsTest") {
+                associateWith(mainCompilation)
+                // Sources are configured in the `sourceSets` block below (see `jsLatestJsTest`).
+                // Don't `dependsOn(jsTest)` here: that would make `jsTest` a shared (non-leaf) source set
+                // and break its dependency resolution (e.g., kotlin.test) in the IDE.
+                binaries.executable(this)
+                binaries.configureEach {
+                    linkTask.configure {
+                        compilerOptions {
+                            target.set("es2015")
+                            moduleKind.set(JsModuleKind.MODULE_COMMONJS) // Mocha adapter doesn't support ES modules yet
+                            freeCompilerArgs.add("-Xes-long-as-bigint")
+                        }
+                    }
+                }
+            }
+
+            nodejs {
+                val latestTargetRun = testRuns.create("latestTarget") {
+                    setExecutionSourceFrom(latestJsCompilation)
+                    executionTask.configure {
+                        val devBinary = latestJsCompilation.binaries
+                            .matching { it.mode == KotlinJsBinaryMode.DEVELOPMENT }
+                            .single()
+
+                        inputFileProperty.set(devBinary.mainFileSyncPath)
+                    }
+                }
+
+                testTask {
+                    dependsOn(latestTargetRun.executionTask)
+                }
+            }
         }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmJs {
@@ -144,6 +183,11 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
                 implementation("junit:junit:${version("junit")}")
             }
             groupSourceSets("jsAndWasmShared", listOf("web", "wasmWasi"), listOf("common"))
+
+            named("jsLatestJsTest") {
+                dependsOn(commonTest.get())
+                kotlin.srcDirs(jsTest.get().kotlin.srcDirs)
+            }
         }
 
         compilerOptions {
