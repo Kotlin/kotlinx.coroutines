@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.kotlin.dsl.invoke
+import org.gradle.kotlin.dsl.named
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.abi.AbiValidationExtension
@@ -117,7 +118,9 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
 
             val latestJsCompilation = compilations.create("latestJsTest") {
                 associateWith(mainCompilation)
-                defaultSourceSet.dependsOn(testCompilation.defaultSourceSet)
+                // Sources are configured in the `sourceSets` block below (see `jsLatestJsTest`).
+                // Don't `dependsOn(jsTest)` here: that would make `jsTest` a shared (non-leaf) source set
+                // and break its dependency resolution (e.g., kotlin.test) in the IDE.
                 binaries.executable(this)
                 binaries.configureEach {
                     linkTask.configure {
@@ -180,6 +183,11 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
                 implementation("junit:junit:${version("junit")}")
             }
             groupSourceSets("jsAndWasmShared", listOf("web", "wasmWasi"), listOf("common"))
+
+            named("jsLatestJsTest") {
+                dependsOn(commonTest.get())
+                kotlin.srcDirs(jsTest.get().kotlin.srcDirs)
+            }
         }
 
         compilerOptions {
