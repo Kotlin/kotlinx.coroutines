@@ -74,7 +74,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
 
         // Fire barrier to start execution
         broadcastChannel.send(1)
-        jobs.forEach { it.await() }
+        jobs.forEach { val _ = it.await() }
     }
 
     @Benchmark
@@ -89,7 +89,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
 
         // Fire barrier to start execution
         broadcastChannel.send(1)
-        jobs.forEach { it.await() }
+        jobs.forEach { val _ = it.await() }
     }
 
     private fun launchJob(
@@ -100,7 +100,7 @@ open class StatefulAsyncBenchmark : ParametrizedDispatcherBase() {
         async {
             val subscription = channel.openSubscription()
             subscriptionChannel.send(Unit)
-            subscription.receive()
+            val _ = subscription.receive()
 
             var sum = 0L
             repeat(jobSuspensions) {
