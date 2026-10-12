@@ -186,7 +186,7 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
 
             named("jsLatestJsTest") {
                 dependsOn(commonTest.get())
-                kotlin.srcDirs(jsTest.get().kotlin.srcDirs)
+                kotlin.source(jsTest.get().kotlin)
             }
         }
 
