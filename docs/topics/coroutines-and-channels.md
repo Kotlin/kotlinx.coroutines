@@ -19,7 +19,7 @@ You'll learn:
 * How to send requests concurrently using coroutines.
 * How to share information between different coroutines using channels.
 
-For network requests, you'll need the [Retrofit](https://square.github.io/retrofit/) library, but the approach shown in
+For network requests, you'll need the [Retrofit](https://lysine.dev/retrofit/) library, but the approach shown in
 this tutorial works similarly for any other libraries that support coroutines.
 
 > You can find solutions for all of the tasks on the `solutions` branch of the [project's repository](http://github.com/kotlin-hands-on/intro-coroutines).
@@ -74,7 +74,7 @@ or [callbacks](#callbacks). You'll compare these solutions with one that uses [c
 
 ## Blocking requests
 
-You will use the [Retrofit](https://square.github.io/retrofit/) library to perform HTTP requests to GitHub. It allows
+You will use the [Retrofit](https://lysine.dev/retrofit/) library to perform HTTP requests to GitHub. It allows
 requesting the list of repositories under the given organization and the list of contributors for each repository:
 
 ```kotlin
