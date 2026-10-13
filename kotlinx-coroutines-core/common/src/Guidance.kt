@@ -482,7 +482,7 @@ public fun <T> CoroutineScope.async(
  * A pattern that prevents child cancellation even when the parent is cancelled consists of two parts:
  * - [CoroutineStart.ATOMIC] or [CoroutineStart.UNDISPATCHED] both ensure that the new coroutine is at least going
  *   to be started and run until the first suspension, even if the parent is already cancelled.
- * - Using [NonCancellable] together with [withContext] in the coroutine's body ensures that the child will
+ * - Using [nonCancellable] in the coroutine's body ensures that the child will
  *   successfully resume from suspension points even if the coroutine is cancelled.
  *
  * Example:

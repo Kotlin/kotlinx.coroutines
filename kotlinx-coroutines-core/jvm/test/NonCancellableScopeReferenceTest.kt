@@ -17,7 +17,25 @@ class NonCancellableScopeReferenceTest: TestBase() {
             val coroutine = CoroutineScope(ctx).async(start = CoroutineStart.UNDISPATCHED) {
                 nonCancellable {
                     suspendCancellableCoroutine<Unit> {}
-                    token
+                    val _ = token
+                }
+            }
+            FieldWalker.assertReachableCount(1, coroutine) { it === token }
+        }
+    }
+
+    /** Tests that the calling coroutine keeps a strong reference on the coroutine in [nonCancellable]
+     * even when the [nonCancellable] coroutine is completed. */
+    @Test
+    fun testNonCancellableReferenceInChildCoroutine() {
+        /** Duplicates [testNonCancellableReference] */
+        newSingleThreadContext("NonCancellable").use { ctx ->
+            val coroutine = CoroutineScope(ctx).async(start = CoroutineStart.UNDISPATCHED) {
+                nonCancellable {
+                    launch {
+                        suspendCancellableCoroutine<Unit> {}
+                        val _ = token
+                    }
                 }
             }
             FieldWalker.assertReachableCount(1, coroutine) { it === token }

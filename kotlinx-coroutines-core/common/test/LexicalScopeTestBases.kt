@@ -69,7 +69,7 @@ abstract class LexicalScopeTestBase: TestBase() {
                         try {
                             awaitCancellation()
                         } finally {
-                            childrenCompleted.fetchAndIncrement()
+                            childrenCompleted.increment()
                         }
                     }
                 }

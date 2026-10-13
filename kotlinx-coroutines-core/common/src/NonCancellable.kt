@@ -381,23 +381,32 @@ public suspend fun <T> nonCancellable(
     val callerJob = currentCoroutineContext()[Job]
     @Suppress("DEPRECATION")
     return withContext(NonCancellable) {
-        coroutineScope {
-            val currentJob = currentCoroutineContext().job
-            /** Obtain a strong reference to the current coroutine on the caller. See #1061.
-             * `onCancelling = false` ensures there is no way the caller can invoke this handler before we exit
-             * the `coroutineScope`. */
-            val disposable = callerJob?.invokeOnCompletion(
-                onCancelling = false,
-                invokeImmediately = false,
-            ) {
-                // No-op, but preserves a reference
-                val _ = currentJob.isActive
-            }
-            try {
+        var disposable: DisposableHandle? = null 
+        try {
+            coroutineScope {
+                val currentJob = currentCoroutineContext().job
+                /** Obtain a strong reference to the current coroutine on the caller. See #1061.
+                 * `onCancelling = false` ensures there is no way the caller can invoke this handler before we exit
+                 * the `coroutineScope`. */
+                disposable = callerJob?.invokeOnCompletion(
+                    invokeImmediately = false,
+                    StrongReferenceJobNode(currentJob),
+                )
                 block()
-            } finally {
-                disposable?.dispose()
             }
+        } finally {
+            disposable?.dispose()
         }
     }
+}
+
+/**
+ * A [JobNode] that does nothing but stays in the parent [Job] until the latter is completed
+ * and keeps a strong [reference] to whatever object is passed to it. */
+private class StrongReferenceJobNode(val reference: Any?): JobNode() {
+    override val onCancelling get() = false
+
+    override fun invoke(cause: Throwable?) { /* intentionally empty */ }
+
+    override fun toString(): String = "StrongReferenceJobNode($reference)"
 }
