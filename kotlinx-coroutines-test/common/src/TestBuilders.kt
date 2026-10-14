@@ -334,10 +334,15 @@ public fun TestScope.runTest(
                 }
             }
         }
-        try {
-            withTimeout(timeout) {
-                val _ = coroutineContext.job.invokeOnCompletion(onCancelling = true) { exception ->
-                    if (exception is TimeoutCancellationException) {
+        val terminationSuccess = testCancellingDispatcher().use {
+            /** The order of nesting is important: we'd like [withTimeoutOrNull] not to use the default executor,
+             * to minimize interference with the tests. */
+            withContext(it) {
+                withTimeoutOrNull(timeout) {
+                    try {
+                        scope.join()
+                        workRunner.cancelAndJoin()
+                    } catch (_: TimeoutCancellationException) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
                         val message = "After waiting for $timeout, " + when {
@@ -355,22 +360,20 @@ public fun TestScope.runTest(
                         (scope as Job).cancel(cancellationException)
                     }
                 }
-                scope.join()
-                workRunner.cancelAndJoin()
             }
-        } catch (_: TimeoutCancellationException) {
+        }
+        if (terminationSuccess == null) {
             scope.join()
             val completion = scope.getCompletionExceptionOrNull()
             if (completion != null && completion !== cancellationException) {
                 timeoutError!!.addSuppressed(completion)
             }
             workRunner.cancelAndJoin()
-        } finally {
-            backgroundScope.cancel()
-            testScheduler.advanceUntilIdleOr { false }
-            val uncaughtExceptions = scope.leave()
-            throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
         }
+        backgroundScope.cancel()
+        testScheduler.advanceUntilIdleOr { false }
+        val uncaughtExceptions = scope.leave()
+        throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
     }
 }
 
@@ -608,3 +611,12 @@ private class AtomicBoolean(initial: Boolean) {
         get() = container.value
         set(value) { container.value = value }
 }
+
+/**
+ * A [CoroutineDispatcher] with the highest chance not to be starving because of the test not releasing the thread.
+ *
+ * On single-threaded environments, there is nothing that can be reasonably done--if the test is stuck, we need an
+ * intervention from outside the runtime.
+ * On the JVM and Native, we create a separate thread and also implement [Delay].
+ */
+internal expect fun testCancellingDispatcher(): CloseableCoroutineDispatcher

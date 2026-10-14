@@ -13,3 +13,13 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
     runTestCoroutine(EmptyCoroutineContext, testProcedure)
 
 internal actual fun dumpCoroutines() { }
+
+internal actual fun testCancellingDispatcher(): CloseableCoroutineDispatcher = closeableDefaultDispatcherWrapper
+
+private val closeableDefaultDispatcherWrapper = object: CloseableCoroutineDispatcher() {
+    override fun close() { }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        Dispatchers.Default.dispatch(context, block)
+    }
+}
