@@ -37,7 +37,7 @@ class FlowInvariantsTest : TestBase() {
     @Test
     fun testWithContextContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
-            withContext(NonCancellable) {
+            nonCancellable {
                 emit(1)
             }
         }.collect {
