@@ -52,8 +52,7 @@ class EventLoopsTest : TestBase() {
     @Test
     fun testEventLoopInDefaultExecutor() = runTest {
         expect(1)
-        withContext(Dispatchers.Unconfined) {
-            delay(1)
+        withContext(DefaultExecutor) {
             assertTrue(Thread.currentThread().name.startsWith(DefaultExecutor.THREAD_NAME))
             expect(2)
             // now runBlocking inside default executor thread --> should use outer event loop
