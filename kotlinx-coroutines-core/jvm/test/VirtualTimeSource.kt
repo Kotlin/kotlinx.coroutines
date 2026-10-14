@@ -138,7 +138,7 @@ internal class VirtualTimeSource(
     }
 
     private fun minParkedTill(): Long =
-        threads.values.map { if (it.permit) NOT_PARKED else it.parkedTill }.minOrNull() ?: NOT_PARKED
+        threads.values.minOfOrNull { if (it.permit) NOT_PARKED else it.parkedTill } ?: NOT_PARKED
 
     @Synchronized
     fun shutdown() {
