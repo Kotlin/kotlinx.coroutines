@@ -232,18 +232,24 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
 }
 
 /**
- * Awaits completion of `this` [ListenableFuture] without blocking a thread.
+ * Await the result of this [ListenableFuture] without blocking the thread or cancel it if the result is not needed.
  *
- * This suspend function is cancellable.
+ * If the future completes, this function either returns its result [T] or throws the exception thrown by the task,
+ * depending on whether the future was successful.
+ * However, if the call to [consume] is cancelled before the future completes,
+ * the future also gets cancelled.
  *
- * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
- * stops waiting for the future and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
+ * This method is most suitable for cases where only one consumer is expected for the given [ListenableFuture]:
+ * this way, there is no need to explicitly cancel the future to avoid wasting resources.
+ * If cancelling the given future is undesired, use [Futures.nonCancellationPropagating]
+ * or convert the future to a [Deferred] using [asDeferred] and await that.
  *
- * This method is intended to be used with one-shot Futures, so on coroutine cancellation, the Future is cancelled as well.
- * If cancelling the given future is undesired, use [Futures.nonCancellationPropagating] or
- * [kotlinx.coroutines.NonCancellable].
+ * This suspending function is cancellable: if the [Job] of the current coroutine is cancelled while this
+ * suspending function is waiting, this function immediately resumes with [CancellationException].
+ * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
+ * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
-public suspend fun <T> ListenableFuture<T>.await(): T {
+public suspend fun <T> ListenableFuture<T>.consume(): T {
     try {
         if (isDone) return Uninterruptibles.getUninterruptibly(this)
     } catch (e: ExecutionException) {
@@ -522,3 +528,24 @@ private class JobListenableFuture<T>(private val jobToCancel: Job): ListenableFu
  * class and pass it into [SettableFuture.complete]. See implementation of [JobListenableFuture].
  */
 private class Cancelled(@JvmField val exception: CancellationException)
+
+/**
+ * Deprecated synonym for [consume].
+ *
+ * This function is deprecated because it's inconsistent with how in `kotlinx.coroutines`,
+ * on its own cancellation, `await()` typically does not cancel the computation that's being awaited,
+ * whereas this function does.
+ *
+ * [consume] is the new name for this operation.
+ * If the computation has several consumers, [asDeferred] is recommended:
+ * the resulting [Deferred] can be awaited by multiple coroutines whose cancellation will not affect the computation.
+ */
+@Deprecated("The name is misleading: instead of just awaiting this value, " +
+    "the function also cancels the computation if the caller is cancelled. " +
+    "Either use this.consume() to preserve this single-shot semantics " +
+    "or call this.asDeferred().await() to avoid cancellation",
+    ReplaceWith("this.consume()"),
+    DeprecationLevel.WARNING
+)
+// WARNING in 1.12, ERROR in 1.14, HIDDEN in 1.16
+public suspend fun <T> ListenableFuture<T>.await(): T = consume()
