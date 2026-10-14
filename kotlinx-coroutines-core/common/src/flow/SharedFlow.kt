@@ -560,7 +560,7 @@ internal open class SharedFlowImpl<T>(
             queueSize // that's how many waiting emitters we have (at most)
         }
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
-        val newQueueEndIndex = newBufferEndIndex + queueSize
+        var newQueueEndIndex = newBufferEndIndex + queueSize
         if (maxResumeCount > 0) { // collect emitters to resume if we have them
             resumes = arrayOfNulls(maxResumeCount)
             var resumeCount = 0
@@ -575,6 +575,13 @@ internal open class SharedFlowImpl<T>(
                     newBufferEndIndex++
                     if (resumeCount >= maxResumeCount) break // enough resumed, done
                 }
+            }
+            while (
+                newQueueEndIndex > maxOf(newBufferEndIndex, newMinCollectorIndex)
+                && buffer.getBufferAt(newQueueEndIndex - 1) === NO_VALUE
+            ) {
+                newQueueEndIndex--
+                buffer.setBufferAt(newQueueEndIndex, null)
             }
         }
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
