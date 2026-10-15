@@ -3,9 +3,9 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import kotlin.concurrent.atomics.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.time.*
@@ -203,6 +203,7 @@ public fun runTest(
 /**
  * Performs [runTest] on an existing [TestScope]. See the documentation for [runTest] for details.
  */
+@OptIn(ExperimentalAtomicApi::class)
 public fun TestScope.runTest(
     timeout: Duration = DEFAULT_TIMEOUT.getOrThrow(),
     testBody: suspend TestScope.() -> Unit
@@ -218,7 +219,7 @@ public fun TestScope.runTest(
             try {
                 testBody()
             } finally {
-                testBodyFinished.value = true
+                testBodyFinished.store(true)
             }
         }
         var timeoutError: Throwable? = null
@@ -249,11 +250,11 @@ public fun TestScope.runTest(
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
                         val message = "After waiting for $timeout, " + when {
-                            testBodyFinished.value && activeChildren.isNotEmpty() ->
+                            testBodyFinished.load() && activeChildren.isNotEmpty() ->
                                 "there were active child jobs: $activeChildren. " +
                                     "Use `TestScope.backgroundScope` " +
                                     "to launch the coroutines that need to be cancelled when the test body finishes"
-                            testBodyFinished.value ->
+                            testBodyFinished.load() ->
                                 "the test completed, but only after the timeout"
                             else ->
                                 "the test body did not run to completion"
@@ -500,14 +501,6 @@ public fun TestScope.runTestLegacy(
     marker: Int,
     unused2: Any?,
 ): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
-
-// Remove after https://youtrack.jetbrains.com/issue/KT-62423/
-private class AtomicBoolean(initial: Boolean) {
-    private val container = atomic(initial)
-    var value: Boolean
-        get() = container.value
-        set(value) { container.value = value }
-}
 
 /**
  * A [CoroutineDispatcher] with the highest chance not to be starving because of the test not releasing the thread.
