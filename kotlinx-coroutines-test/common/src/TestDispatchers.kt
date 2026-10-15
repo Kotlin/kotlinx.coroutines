@@ -10,8 +10,11 @@ import kotlin.jvm.*
  * Sets the given [dispatcher] as an underlying dispatcher of [Dispatchers.Main].
  * All subsequent usages of [Dispatchers.Main] will use the given [dispatcher] under the hood.
  *
- * Using [TestDispatcher] as an argument has special behavior: subsequently-called [runTest], as well as
+ * Using [TestDispatcher] as an argument has special behavior: subsequently called [runTest], as well as
  * [TestScope] and test dispatcher constructors, will use the [TestCoroutineScheduler] of the provided dispatcher.
+ *
+ * Note that to run tasks sent to a [TestDispatcher], it is typically required to use [runTest],
+ * which processes the tasks from the [TestCoroutineScheduler].
  *
  * It is unsafe to call this method if alive coroutines launched in [Dispatchers.Main] exist.
  */
