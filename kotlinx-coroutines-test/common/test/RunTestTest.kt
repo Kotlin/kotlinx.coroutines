@@ -486,6 +486,26 @@ class RunTestTest {
             deferred.await()
         }
 
+        /** Tests that [TestScope.backgroundScope] gets completed before [runTest] exits,
+         * even if it involves an external dispatch. */
+        @Test
+        fun testRunTestWaitsForExternalDispatchesInBackgroundTasks() = testResultMap({
+            assertFailsWith<TestException> { it() }
+        }) {
+            runTest {
+                /** [Dispatchers.Default] for a real-world delay,
+                 * [CoroutineStart.UNDISPATCHED] to avoid a race between the coroutine starting
+                 * and [backgroundScope] being cancelled. */
+                backgroundScope.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                    withContext(NonCancellable) {
+                        // A delay large enough to make sure it finishes after the main test coroutine
+                        delay(50.milliseconds)
+                    }
+                    throw TestException()
+                }
+            }
+        }
+
         /** Tests that real delays can be accounted for with a large enough dispatch timeout. */
         @Test
         @Suppress("DEPRECATION_ERROR")

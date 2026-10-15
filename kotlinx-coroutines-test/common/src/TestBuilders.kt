@@ -3,9 +3,9 @@
 
 package kotlinx.coroutines.test
 
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.*
+import kotlin.concurrent.atomics.*
 import kotlin.coroutines.*
 import kotlin.jvm.*
 import kotlin.time.*
@@ -32,8 +32,9 @@ public expect class TestResult
 /**
  * Executes [testBody] as a test in a new coroutine, returning [TestResult].
  *
- * On JVM and Native, this function behaves similarly to `runBlocking`, with the difference that the code that it runs
- * will skip delays. This allows to use [delay] in tests without causing them to take more time than necessary.
+ * On JVM and Native, this function behaves similarly to `runBlocking`; the main difference is that the code
+ * that it runs will skip delays.
+ * This allows to use [delay] in tests without causing them to take more time than necessary.
  * On JS, this function creates a `Promise` that executes the test body with the delay-skipping behavior.
  *
  * ```
@@ -54,10 +55,12 @@ public expect class TestResult
  * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
  * [TestResult] for details on this.
  *
- * The test is run on a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
+ * The test is run on a single thread, unless other [CoroutineDispatcher] instances are used for child coroutines.
  * Because of this, child coroutines are not executed in parallel to the test body.
- * In order for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
- * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
+ * In order for the spawned-off asynchronous code to actually be executed,
+ * one must suspend the test body some other way,
+ * rely on structured concurrency to wait for children to finish,
+ * or use commands that control scheduling (see [TestCoroutineScheduler]).
  *
  * ```
  * @Test
@@ -67,19 +70,21 @@ public expect class TestResult
  *         // 3
  *     }
  *     // 2
- *     job.join() // the main test coroutine suspends here, so the child is executed
+ *     job.join() // the main test coroutine suspends here until the child is executed
  *     // 4
  * }
  *
  * @Test
  * fun exampleWaitingForAsyncTasks2() = runTest {
  *     // 1
- *     launch {
+ *     coroutineScope {
+ *         // 2
+ *         launch {
+ *             // 4
+ *         }
  *         // 3
- *     }
- *     // 2
- *     testScheduler.advanceUntilIdle() // runs the tasks until their queue is empty
- *     // 4
+ *     } // will wait for its child `launch` to complete before proceeding
+ *     // 5
  * }
  * ```
  *
@@ -108,6 +113,10 @@ public expect class TestResult
  *     println(elapsed) // about five seconds
  * }
  * ```
+ *
+ * On the JVM and Native targets, [runTest] is itself implemented via `runBlocking`.
+ * It is incorrect to nest `runBlocking` calls, and therefore, using `runBlocking` inside [runTest] is incorrect, too.
+ * Doing so can easily lead to a deadlock or a hard-to-predict order of execution.
  *
  * ### Failures
  *
@@ -138,14 +147,17 @@ public expect class TestResult
  * Unhandled exceptions will be thrown at the end of the test.
  * If uncaught exceptions happen after the test finishes, they are propagated in a platform-specific manner:
  * see [handleCoroutineException] for details.
+ * Future invocations of [runTest] recognize the exceptions from preceding runs and themselves fail,
+ * to make sure the exceptions do not go unnoticed.
+ *
  * If the test coroutine completes with an exception, the unhandled exceptions are suppressed by it.
  *
- * #### Uncompleted coroutines
+ * ### Uncompleted coroutines
  *
- * Otherwise, the test will hang until all the coroutines launched inside [testBody] complete.
+ * After the [testBody] itself finishes, the test will hang until all child coroutines of [testBody] also complete.
  * This may be an issue when there are some coroutines that are not supposed to complete, like infinite loops that
  * perform some background work and are supposed to outlive the test.
- * In that case, [TestScope.backgroundScope] can be used to launch such coroutines.
+ * [TestScope.backgroundScope] can be used to launch such coroutines.
  * They will be cancelled automatically when the test finishes.
  *
  * ### Configuration
@@ -168,117 +180,7 @@ public fun runTest(
 }
 
 /**
- * Executes [testBody] as a test in a new coroutine, returning [TestResult].
- *
- * On JVM and Native, this function behaves similarly to `runBlocking`, with the difference that the code that it runs
- * will skip delays. This allows to use [delay] in without causing the tests to take more time than necessary.
- * On JS, this function creates a `Promise` that executes the test body with the delay-skipping behavior.
- *
- * ```
- * @Test
- * fun exampleTest() = runTest {
- *     val deferred = async {
- *         delay(1.seconds)
- *         async {
- *             delay(1.seconds)
- *         }.await()
- *     }
- *
- *     deferred.await() // result available immediately
- * }
- * ```
- *
- * The platform difference entails that, in order to use this function correctly in common code, one must always
- * immediately return the produced [TestResult] from the test method, without doing anything else afterward. See
- * [TestResult] for details on this.
- *
- * The test is run in a single thread, unless other [CoroutineDispatcher] are used for child coroutines.
- * Because of this, child coroutines are not executed in parallel to the test body.
- * In order for the spawned-off asynchronous code to actually be executed, one must either [yield] or suspend the
- * test body some other way, or use commands that control scheduling (see [TestCoroutineScheduler]).
- *
- * ```
- * @Test
- * fun exampleWaitingForAsyncTasks1() = runTest {
- *     // 1
- *     val job = launch {
- *         // 3
- *     }
- *     // 2
- *     job.join() // the main test coroutine suspends here, so the child is executed
- *     // 4
- * }
- *
- * @Test
- * fun exampleWaitingForAsyncTasks2() = runTest {
- *     // 1
- *     launch {
- *         // 3
- *     }
- *     // 2
- *     advanceUntilIdle() // runs the tasks until their queue is empty
- *     // 4
- * }
- * ```
- *
- * ### Task scheduling
- *
- * Delay-skipping is achieved by using virtual time.
- * If [Dispatchers.Main] is set to a [TestDispatcher] via [Dispatchers.setMain] before the test,
- * then its [TestCoroutineScheduler] is used;
- * otherwise, a new one is automatically created (or taken from [context] in some way) and can be used to control
- * the virtual time, advancing it, running the tasks scheduled at a specific time, etc.
- * Some convenience methods are available on [TestScope] to control the scheduler.
- *
- * Delays in code that runs inside dispatchers that don't use a [TestCoroutineScheduler] don't get skipped:
- * ```
- * @Test
- * fun exampleTest() = runTest {
- *     val elapsed = TimeSource.Monotonic.measureTime {
- *         val deferred = async {
- *             delay(1.seconds) // will be skipped
- *             withContext(Dispatchers.Default) {
- *                 delay(5.seconds) // Dispatchers.Default doesn't know about TestCoroutineScheduler
- *             }
- *         }
- *         deferred.await()
- *     }
- *     println(elapsed) // about five seconds
- * }
- * ```
- *
- * ### Failures
- *
- * #### Test body failures
- *
- * If the created coroutine completes with an exception, then this exception will be thrown at the end of the test.
- *
- * #### Reported exceptions
- *
- * Unhandled exceptions will be thrown at the end of the test.
- * If the uncaught exceptions happen after the test finishes, the error is propagated in a platform-specific manner.
- * If the test coroutine completes with an exception, the unhandled exceptions are suppressed by it.
- *
- * #### Uncompleted coroutines
- *
- * This method requires that, after the test coroutine has completed, all the other coroutines launched inside
- * [testBody] also complete, or are cancelled.
- * Otherwise, the test will be failed (which, on JVM and Native, means that [runTest] itself will throw
- * [AssertionError], whereas on JS, the `Promise` will fail with it).
- *
- * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
- * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeoutMs] from the moment when [TestCoroutineScheduler] becomes
- * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
- * task during that time, the timer gets reset.
- *
- * ### Configuration
- *
- * [context] can be used to affect the environment of the code under test. Besides just being passed to the coroutine
- * scope created for the test, [context] also can be used to change how the test is executed.
- * See the [TestScope] constructor function documentation for details.
- *
- * @throws IllegalArgumentException if the [context] is invalid. See the [TestScope] constructor docs for details.
+ * @suppress
  */
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
@@ -301,6 +203,7 @@ public fun runTest(
 /**
  * Performs [runTest] on an existing [TestScope]. See the documentation for [runTest] for details.
  */
+@OptIn(ExperimentalAtomicApi::class)
 public fun TestScope.runTest(
     timeout: Duration = DEFAULT_TIMEOUT.getOrThrow(),
     testBody: suspend TestScope.() -> Unit
@@ -316,14 +219,14 @@ public fun TestScope.runTest(
             try {
                 testBody()
             } finally {
-                testBodyFinished.value = true
+                testBodyFinished.store(true)
             }
         }
         var timeoutError: Throwable? = null
         var cancellationException: CancellationException? = null
         val workRunner = launch(CoroutineName("kotlinx.coroutines.test runner")) {
             while (true) {
-                val executedSomething = testScheduler.tryRunNextTaskUnless { !isActive }
+                val executedSomething = testScheduler.tryRunNextTask()
                 if (executedSomething) {
                     /** yield to check for cancellation. On JS, we can't use [ensureActive] here, as the cancellation
                      * procedure needs a chance to run concurrently. */
@@ -334,18 +237,24 @@ public fun TestScope.runTest(
                 }
             }
         }
-        try {
-            withTimeout(timeout) {
-                val _ = coroutineContext.job.invokeOnCompletion(onCancelling = true) { exception ->
-                    if (exception is TimeoutCancellationException) {
+        val terminationSuccess = testCancellingDispatcher().use {
+            /** The order of nesting is important: we'd like [withTimeoutOrNull] not to use the default executor,
+             * to minimize interference with the tests. */
+            withContext(it) {
+                withTimeoutOrNull(timeout) {
+                    try {
+                        scope.join()
+                        backgroundScope.coroutineContext.job.cancelAndJoin()
+                        workRunner.cancelAndJoin()
+                    } catch (_: TimeoutCancellationException) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
                         val message = "After waiting for $timeout, " + when {
-                            testBodyFinished.value && activeChildren.isNotEmpty() ->
+                            testBodyFinished.load() && activeChildren.isNotEmpty() ->
                                 "there were active child jobs: $activeChildren. " +
                                     "Use `TestScope.backgroundScope` " +
                                     "to launch the coroutines that need to be cancelled when the test body finishes"
-                            testBodyFinished.value ->
+                            testBodyFinished.load() ->
                                 "the test completed, but only after the timeout"
                             else ->
                                 "the test body did not run to completion"
@@ -355,33 +264,25 @@ public fun TestScope.runTest(
                         (scope as Job).cancel(cancellationException)
                     }
                 }
-                scope.join()
-                workRunner.cancelAndJoin()
             }
-        } catch (_: TimeoutCancellationException) {
+        }
+        if (terminationSuccess == null) {
             scope.join()
             val completion = scope.getCompletionExceptionOrNull()
             if (completion != null && completion !== cancellationException) {
                 timeoutError!!.addSuppressed(completion)
             }
+            backgroundScope.coroutineContext.job.cancelAndJoin()
             workRunner.cancelAndJoin()
-        } finally {
-            backgroundScope.cancel()
-            testScheduler.advanceUntilIdleOr { false }
-            val uncaughtExceptions = scope.leave()
-            throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
         }
+        testScheduler.advanceUntilIdleOr { false }
+        val uncaughtExceptions = scope.leave()
+        throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
     }
 }
 
 /**
- * Performs [runTest] on an existing [TestScope].
- *
- * In the general case, if there are active jobs, it's impossible to detect if they are going to complete eventually due
- * to the asynchronous nature of coroutines. In order to prevent tests hanging in this scenario, [runTest] will wait
- * for [dispatchTimeoutMs] from the moment when [TestCoroutineScheduler] becomes
- * idle before throwing [AssertionError]. If some dispatcher linked to [TestCoroutineScheduler] receives a
- * task during that time, the timer gets reset.
+ * @suppress
  */
 @Deprecated(
     "Define a total timeout for the whole test instead of using dispatchTimeoutMs. " +
@@ -487,7 +388,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
         // in case progress depends on some background work, we need to keep spinning it.
         val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
             while (true) {
-                val executedSomething = scheduler.tryRunNextTaskUnless { !isActive }
+                val executedSomething = scheduler.tryRunNextTask()
                 if (executedSomething) {
                     // yield so that the `select` below has a chance to finish successfully or time out
                     yield()
@@ -601,10 +502,11 @@ public fun TestScope.runTestLegacy(
     unused2: Any?,
 ): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
 
-// Remove after https://youtrack.jetbrains.com/issue/KT-62423/
-private class AtomicBoolean(initial: Boolean) {
-    private val container = atomic(initial)
-    var value: Boolean
-        get() = container.value
-        set(value) { container.value = value }
-}
+/**
+ * A [CoroutineDispatcher] with the highest chance not to be starving because of the test not releasing the thread.
+ *
+ * On single-threaded environments, there is nothing that can be reasonably done--if the test is stuck, we need an
+ * intervention from outside the runtime.
+ * On the JVM and Native, we create a separate thread and also implement [Delay].
+ */
+internal expect fun testCancellingDispatcher(): CloseableCoroutineDispatcher

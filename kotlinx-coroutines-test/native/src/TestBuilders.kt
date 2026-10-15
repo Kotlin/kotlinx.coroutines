@@ -12,3 +12,7 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
 internal actual fun systemPropertyImpl(name: String): String? = null
 
 internal actual fun dumpCoroutines() { }
+
+internal actual fun testCancellingDispatcher(): CloseableCoroutineDispatcher = newSingleThreadContext(
+    "kotlinx.coroutines.test timeout handler"
+)
