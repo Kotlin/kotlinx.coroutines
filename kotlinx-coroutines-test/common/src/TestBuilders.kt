@@ -341,6 +341,7 @@ public fun TestScope.runTest(
                 withTimeoutOrNull(timeout) {
                     try {
                         scope.join()
+                        backgroundScope.coroutineContext.job.cancelAndJoin()
                         workRunner.cancelAndJoin()
                     } catch (_: TimeoutCancellationException) {
                         dumpCoroutines()
@@ -368,9 +369,9 @@ public fun TestScope.runTest(
             if (completion != null && completion !== cancellationException) {
                 timeoutError!!.addSuppressed(completion)
             }
+            backgroundScope.coroutineContext.job.cancelAndJoin()
             workRunner.cancelAndJoin()
         }
-        backgroundScope.cancel()
         testScheduler.advanceUntilIdleOr { false }
         val uncaughtExceptions = scope.leave()
         throwAll(timeoutError ?: scope.getCompletionExceptionOrNull(), uncaughtExceptions)
