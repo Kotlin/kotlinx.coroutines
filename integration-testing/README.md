@@ -9,6 +9,7 @@ The tests are the following:
 * `debugAgentTest` checks that the coroutine debugger can be run as a Java agent.
 * `debugDynamicAgentTest` checks that `kotlinx-coroutines-debug` agent can self-attach dynamically to JVM as a standalone dependency.
 * `debugDynamicAgentJpmsTest` checks that `kotlinx-coroutines-debug` agent can self-attach dynamically to JVM as a standalone dependency  (with JPMS)
+* `externalStaticDebugProbesTest` checks that a `ExternalStaticDebugProbes` is picked up by the kotlin stdlib
 * `smokeTest` builds the multiplatform test project that depends on coroutines.
 * `java8Test` checks that some APIs built with Java 9+ can be used with Java 8.
 
