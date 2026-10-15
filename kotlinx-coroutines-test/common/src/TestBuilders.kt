@@ -323,7 +323,7 @@ public fun TestScope.runTest(
         var cancellationException: CancellationException? = null
         val workRunner = launch(CoroutineName("kotlinx.coroutines.test runner")) {
             while (true) {
-                val executedSomething = testScheduler.tryRunNextTaskUnless { !isActive }
+                val executedSomething = testScheduler.tryRunNextTask()
                 if (executedSomething) {
                     /** yield to check for cancellation. On JS, we can't use [ensureActive] here, as the cancellation
                      * procedure needs a chance to run concurrently. */
@@ -490,7 +490,7 @@ internal suspend fun <T : AbstractCoroutine<Unit>> CoroutineScope.runTestCorouti
         // in case progress depends on some background work, we need to keep spinning it.
         val backgroundWorkRunner = launch(CoroutineName("background work runner")) {
             while (true) {
-                val executedSomething = scheduler.tryRunNextTaskUnless { !isActive }
+                val executedSomething = scheduler.tryRunNextTask()
                 if (executedSomething) {
                     // yield so that the `select` below has a chance to finish successfully or time out
                     yield()
