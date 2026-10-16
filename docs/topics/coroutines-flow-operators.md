@@ -567,29 +567,19 @@ class RightClickEvent: UiEvent
 
 suspend fun main() {
     withContext(Dispatchers.Default) {
-
-        val clickFlow = MutableSharedFlow<ClickEvent>()
-        val rightClickFlow = MutableSharedFlow<RightClickEvent>()
-
-        coroutineScope {
-            // Uses UNDISPATCHED to subscribe before the first update happens
-            val collectJob = launch(start = CoroutineStart.UNDISPATCHED) {
-
-                // Collects both upstream flows concurrently and emits their values downstream
-                merge(clickFlow, rightClickFlow).collect {
-                    println("Observed an event: $it")
-                }
-            }
-            clickFlow.emit(ClickEvent())
+        val clickFlow = flow {
+            emit(ClickEvent())
             delay(100.milliseconds)
-            
-            clickFlow.emit(ClickEvent())
-            delay(100.milliseconds)
-            
-            rightClickFlow.emit(RightClickEvent())
-            delay(100.milliseconds)
-            
-            collectJob.cancel()
+            emit(ClickEvent())
+        }
+
+        val rightClickFlow = flow {
+            delay(200.milliseconds)
+            emit(RightClickEvent())
+        }
+
+        merge(clickFlow, rightClickFlow).collect {
+            println("Observed an event: $it")
         }
     }
 }
