@@ -125,12 +125,12 @@ public enum class CoroutineStart {
      *     println("1. About to lazily start a new coroutine.")
      *     // Create a job to execute on `Dispatchers.Unconfined` later.
      *     val lazyJob = launch(Dispatchers.Unconfined, start = CoroutineStart.LAZY) {
-     *         println("3. The coroutine starts on the thread that called `join`.")
+     *         println("3. The coroutine starts on the thread that called `start`.")
      *     }
      *     // We start the job on another thread for illustrative purposes
      *     launch(Dispatchers.Default) {
      *         println("2. We start the lazyJob.")
-     *         job.start() // runs lazyJob's code in-place
+     *         lazyJob.start() // runs lazyJob's code in-place
      *         println("4. Only now does the `start` call return.")
      *     }
      * }
