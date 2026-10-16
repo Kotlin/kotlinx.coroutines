@@ -556,44 +556,29 @@ If you want to collect values from multiple flows concurrently and emit their va
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TimeSource
 
-//sampleStart
 interface UiEvent
-
 class ClickEvent: UiEvent
-
 class RightClickEvent: UiEvent
 
 suspend fun main() {
-    withContext(Dispatchers.Default) {
-
-        val clickFlow = MutableSharedFlow<ClickEvent>()
-        val rightClickFlow = MutableSharedFlow<RightClickEvent>()
-
-        coroutineScope {
-            // Uses UNDISPATCHED to subscribe before the first update happens
-            val collectJob = launch(start = CoroutineStart.UNDISPATCHED) {
-
-                // Collects both upstream flows concurrently and emits their values downstream
-                merge(clickFlow, rightClickFlow).collect {
-                    println("Observed an event: $it")
-                }
-            }
-            clickFlow.emit(ClickEvent())
-            delay(100.milliseconds)
-            
-            clickFlow.emit(ClickEvent())
-            delay(100.milliseconds)
-            
-            rightClickFlow.emit(RightClickEvent())
-            delay(100.milliseconds)
-            
-            collectJob.cancel()
-        }
+//sampleStart
+    val clickFlow = flow {
+        emit(ClickEvent())
+        delay(200.milliseconds)
+        emit(ClickEvent())
     }
-}
+
+    val rightClickFlow = flow {
+        delay(100.milliseconds)
+        emit(RightClickEvent())
+    }
+
+    merge(clickFlow, rightClickFlow).collect {
+        println("Observed an event: $it")
+    }
 //sampleEnd
+}
 ```
 {kotlin-runnable="true"}
 
