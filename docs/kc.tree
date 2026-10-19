@@ -4,13 +4,22 @@
 	<snippet id="coroutines">
 		<toc-element topic="coroutines-guide.md"/>
 		<toc-element accepts-web-file-names="basics.html,coroutines-basic-jvm.html" topic="coroutines-basics.md"/>
-		<toc-element accepts-web-file-names="cancellation-and-timeouts.html" topic="coroutines-cancellation.md" toc-title="Cancellation"/>
+        <toc-element toc-title="Coroutines and flows — tutorial" progress-tracking="true">
+            <toc-element topic="coroutines-and-flows-tutorial.md" toc-title="Overview"/>
+            <toc-element topic="coroutines-tutorial-blocking-requests.md" toc-title="Replace blocking calls"/>
+            <toc-element topic="coroutines-tutorial-concurrent-loading.md" toc-title="Load articles concurrently"/>
+            <toc-element topic="coroutines-tutorial-cancel-coroutines.md" toc-title="Cancel concurrent loading"/>
+            <toc-element topic="coroutines-tutorial-loading-progress-with-flow.md" toc-title="Show loading progress with a flow"/>
+            <toc-element topic="coroutines-tutorial-channelflow.md" toc-title="Emit concurrent results"/>
+            <toc-element topic="coroutines-tutorial-exceptions.md" toc-title="Handle exceptions"/>
+        </toc-element>
+        <toc-element accepts-web-file-names="cancellation-and-timeouts.html" topic="coroutines-cancellation.md" toc-title="Cancellation"/>
         <toc-element toc-title="Flows">
             <toc-element accepts-web-file-names="flow.html" toc-title="Overview" topic="coroutines-flow.md"/>
             <toc-element topic="coroutines-flow-operators.md"/>
         </toc-element>
-        <toc-element topic="coroutines-and-channels.md"/>
 		<toc-element topic="composing-suspending-functions.md"/>
+        <toc-element topic="coroutines-and-channels.md"/>
 		<toc-element topic="coroutine-context-and-dispatchers.md"/>
 		<toc-element topic="channels.md"/>
 		<toc-element topic="exception-handling.md"/>
