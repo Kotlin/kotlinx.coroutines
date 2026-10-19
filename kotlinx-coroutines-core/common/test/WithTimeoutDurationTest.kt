@@ -67,12 +67,12 @@ class WithTimeoutDurationTest : TestBase() {
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
     @Test
-    fun testYieldBlockingWithTimeout() = runTest(
-        expected = { it is TimeoutCancellationException }
-    ) {
-        withTimeout(100.milliseconds) {
-            while (true) {
-                yield()
+    fun testYieldBlockingWithTimeout() = runTest {
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeout(100.milliseconds) {
+                while (true) {
+                    yield()
+                }
             }
         }
     }
