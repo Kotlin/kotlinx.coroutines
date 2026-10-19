@@ -67,7 +67,7 @@ class WithTimeoutTest : TestBase() {
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest(
-        expected = { it is CancellationException }
+        expected = { it is TimeoutCancellationException }
     ) {
         withTimeout(100) {
             while (true) {
@@ -106,7 +106,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testExceptionOnTimeout() = runTest {
         expect(1)
-        val e = assertFailsWith<CancellationException> {
+        val e = assertFailsWith<TimeoutCancellationException> {
             withTimeout(100) {
                 expect(2)
                 delay(1000)
@@ -120,10 +120,10 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
-        assertFailsWith<CancellationException> {
+        assertFailsWith<TimeoutCancellationException> {
             withTimeout(100) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
                     delay(1000)
                 }
                 finish(3)
@@ -138,7 +138,7 @@ class WithTimeoutTest : TestBase() {
         assertFailsWith<TestException> {
             withTimeout(100) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
                     delay(1000)
                 }
                 expect(3)

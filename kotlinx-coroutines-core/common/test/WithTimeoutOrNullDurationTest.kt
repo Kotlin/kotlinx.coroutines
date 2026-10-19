@@ -168,7 +168,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expect(2)
             try {
                 delay(1000.milliseconds)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
             "OK"
@@ -183,7 +183,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
         assertFailsWith<TestException> {
             withTimeoutOrNull<String>(100.milliseconds) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
                     delay(1000.milliseconds)
                 }
                 expect(3)

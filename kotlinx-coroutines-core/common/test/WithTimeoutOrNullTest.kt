@@ -167,7 +167,7 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             try {
                 delay(1000)
-            } catch (_: CancellationException) {
+            } catch (_: TimeoutCancellationException) {
                 expect(3)
             }
             "OK"
@@ -182,7 +182,7 @@ class WithTimeoutOrNullTest : TestBase() {
         assertFailsWith<TestException> {
             withTimeoutOrNull<String>(100) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
                     delay(1000)
                 }
                 expect(3)
