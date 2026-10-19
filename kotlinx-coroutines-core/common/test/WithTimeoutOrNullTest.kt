@@ -189,7 +189,6 @@ class WithTimeoutOrNullTest : TestBase() {
                 throw TestException()
             }
         }
-        // catches TestException
         finish(4)
     }
 
@@ -210,15 +209,13 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         expect(1)
-        try {
+        assertFailsWith<TestException> {
             expect(2)
-            withTimeoutOrNull(1000) {
+            withTimeoutOrNull<Unit>(1000) {
                 expect(3)
                 throw TestException()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
         }
+        finish(4)
     }
 }

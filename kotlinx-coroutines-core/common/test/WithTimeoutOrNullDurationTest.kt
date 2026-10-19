@@ -103,8 +103,8 @@ class WithTimeoutOrNullDurationTest : TestBase() {
                 withTimeout(10.milliseconds) {
                     awaitCancellation()
                 }
-                expectUnreached()
             }
+            expectUnreached()
         }
         finish(1)
     }
@@ -146,12 +146,6 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             bad
         }
         assertSame(bad, result)
-    }
-
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("Should not be called")
-        override fun hashCode(): Int = error("Should not be called")
-        override fun toString(): String = error("Should not be called")
     }
 
     @Test
@@ -206,7 +200,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
             expectUnreached()
         }
         assertNull(result)
-        result = withTimeoutOrNull(0.milliseconds) {
+        result = withTimeoutOrNull(Duration.ZERO) {
             expectUnreached()
         }
         assertNull(result)

@@ -119,21 +119,24 @@ class WithTimeoutTest : TestBase() {
 
     @Test
     fun testSuppressExceptionWithResult() = runTest {
+        expect(1)
         assertFailsWith<CancellationException> {
             withTimeout(100) {
+                expect(2)
                 assertFailsWith<CancellationException> {
                     delay(1000)
                 }
+                finish(3)
                 "OK"
             }
         }
     }
 
     @Test
-    fun testSuppressExceptionWithAnotherException() = runTest{
+    fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         assertFailsWith<TestException> {
-            withTimeout<Nothing>(100) {
+            withTimeout(100) {
                 expect(2)
                 assertFailsWith<CancellationException> {
                     delay(1000)
