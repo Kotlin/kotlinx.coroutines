@@ -13,7 +13,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
+        val result = withTimeout(1.milliseconds) {
             expect(2)
             "OK"
         }
@@ -98,7 +98,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100.milliseconds) {
+        val result = withTimeout(1.milliseconds) {
             bad
         }
         assertSame(bad, result)
