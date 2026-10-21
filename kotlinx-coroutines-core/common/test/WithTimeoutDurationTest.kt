@@ -154,8 +154,14 @@ class WithTimeoutDurationTest : TestBase() {
 
     @Test
     fun testNegativeTimeout() = runTest {
-        val e = assertFailsWith<TimeoutCancellationException> {
+        var e = assertFailsWith<TimeoutCancellationException> {
             withTimeout((-1).milliseconds) {
+                expectUnreached()
+            }
+        }
+        assertEquals("Timed out immediately", e.message)
+        e = assertFailsWith<TimeoutCancellationException> {
+            withTimeout(0.milliseconds) {
                 expectUnreached()
             }
         }
