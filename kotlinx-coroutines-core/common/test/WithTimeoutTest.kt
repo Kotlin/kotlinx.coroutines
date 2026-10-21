@@ -170,7 +170,7 @@ class WithTimeoutTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         assertFailsWith<TestException> {
-            withTimeout(1000) {
+            withTimeout(1) {
                 throw TestException()
             }
         }

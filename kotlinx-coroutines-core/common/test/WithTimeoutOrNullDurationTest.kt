@@ -185,7 +185,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
         assertFailsWith<TestException> {
-            withTimeoutOrNull(1000.milliseconds) {
+            withTimeoutOrNull(1.milliseconds) {
                 throw TestException()
             }
         }
