@@ -163,17 +163,20 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
+        // Assert that withTimeoutOrNull returns null
+        // even if the block catches the cancellation and returns a result.
         val result = withTimeoutOrNull(100) {
             expect(2)
-            try {
-                delay(1000)
-            } catch (_: TimeoutCancellationException) {
+            assertFailsWith<TimeoutCancellationException> {
                 expect(3)
+                delay(1000)
+                expectUnreached()
             }
+            expect(4)
             "OK"
         }
         assertNull(result)
-        finish(4)
+        finish(5)
     }
 
     @Test
