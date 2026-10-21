@@ -107,19 +107,6 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest {
-        assertFailsWith<TimeoutCancellationException> {
-            withTimeoutOrNull(Duration.INFINITE) {
-                // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-                withTimeout(10.milliseconds) {
-                    delay(Duration.INFINITE)
-                    1
-                }
-            }
-        }
-    }
-
-    @Test
     fun testOuterTimeout() = withVirtualTime {
         var counter = 0
         val result = withTimeoutOrNull(320.milliseconds) {

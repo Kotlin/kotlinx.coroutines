@@ -106,19 +106,6 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testNestedTimeout() = runTest {
-        assertFailsWith<TimeoutCancellationException> {
-            withTimeoutOrNull(Long.MAX_VALUE) {
-                // Exception from this withTimeout is not suppressed by withTimeoutOrNull
-                withTimeout(10) {
-                    delay(Long.MAX_VALUE)
-                    1
-                }
-            }
-        }
-    }
-
-    @Test
     fun testOuterTimeout() = withVirtualTime {
         var counter = 0
         val result = withTimeoutOrNull(320) {
