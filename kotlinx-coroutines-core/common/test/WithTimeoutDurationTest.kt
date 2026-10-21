@@ -62,7 +62,6 @@ class WithTimeoutDurationTest : TestBase() {
         finish(8)
     }
 
-
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
