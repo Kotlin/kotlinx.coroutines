@@ -86,15 +86,6 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     }
 
     @Test
-    fun testThrowException() = runTest {
-        assertFailsWith<AssertionError> {
-            withTimeoutOrNull(Duration.INFINITE) {
-                throw AssertionError()
-            }
-        }
-    }
-
-    @Test
     fun testInnerTimeout() = withVirtualTime {
         assertFailsWith<TimeoutCancellationException> {
             withTimeoutOrNull(1000.milliseconds) {

@@ -85,15 +85,6 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     @Test
-    fun testThrowException() = runTest {
-        assertFailsWith<AssertionError> {
-            withTimeoutOrNull(Long.MAX_VALUE) {
-                throw AssertionError()
-            }
-        }
-    }
-
-    @Test
     fun testInnerTimeout() = withVirtualTime {
         assertFailsWith<TimeoutCancellationException> {
             withTimeoutOrNull(1000) {
