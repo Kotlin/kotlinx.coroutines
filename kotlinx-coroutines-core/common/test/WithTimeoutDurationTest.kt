@@ -121,13 +121,17 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
+        // Assert that withTimeout fails
+        // even if the block catches the cancellation and returns a result.
         assertFailsWith<TimeoutCancellationException> {
             withTimeout(100.milliseconds) {
                 expect(2)
                 assertFailsWith<TimeoutCancellationException> {
+                    expect(3)
                     delay(1000.milliseconds)
+                    expectUnreached()
                 }
-                finish(3)
+                finish(4)
                 "OK"
             }
         }
