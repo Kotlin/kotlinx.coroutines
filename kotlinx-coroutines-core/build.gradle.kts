@@ -98,12 +98,14 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         kotlin.srcDir("benchmarks/main/kotlin")
     }
 
-    targets.matching {
+    val benchmarkTargets = targets.matching {
         it.name != "metadata"
             // Doesn't work, don't want to figure it out for now
             && !it.name.contains("wasm")
             && !it.name.contains("js")
-    }.all {
+    }
+
+    benchmarkTargets.all {
         compilations.create("benchmark") {
             associateWith(this@all.compilations.getByName("main"))
             defaultSourceSet {
@@ -120,7 +122,7 @@ private fun KotlinMultiplatformExtension.setupBenchmarkSourceSets(ss: NamedDomai
         kotlin.srcDir("benchmarks/jvm/kotlin")
     }
 
-    targets.matching { it.name != "metadata" }.all {
+    benchmarkTargets.all {
         benchmark.targets.register("${name}Benchmark")
     }
 }
