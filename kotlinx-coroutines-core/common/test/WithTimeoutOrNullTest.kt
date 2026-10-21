@@ -38,7 +38,7 @@ class WithTimeoutOrNullTest : TestBase() {
     }
 
     /**
-     * Tests property dispatching of `withTimeoutOrNull` blocks
+     * Tests proper dispatching of `withTimeoutOrNull` blocks
      */
     @Test
     fun testDispatch() = runTest {
