@@ -89,7 +89,7 @@ class WithTimeoutOrNullTest : TestBase() {
     @Test
     fun testThrowException() = runTest {
         assertFailsWith<AssertionError> {
-            withTimeoutOrNull<Unit>(Long.MAX_VALUE) {
+            withTimeoutOrNull(Long.MAX_VALUE) {
                 throw AssertionError()
             }
         }
@@ -181,7 +181,7 @@ class WithTimeoutOrNullTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         assertFailsWith<TestException> {
-            withTimeoutOrNull<String>(100) {
+            withTimeoutOrNull(100) {
                 expect(2)
                 assertFailsWith<TimeoutCancellationException> {
                     delay(1000)
@@ -212,7 +212,7 @@ class WithTimeoutOrNullTest : TestBase() {
         expect(1)
         assertFailsWith<TestException> {
             expect(2)
-            withTimeoutOrNull<Unit>(1000) {
+            withTimeoutOrNull(1000) {
                 expect(3)
                 throw TestException()
             }

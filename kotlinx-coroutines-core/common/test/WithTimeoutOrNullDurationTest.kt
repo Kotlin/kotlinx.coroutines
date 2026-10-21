@@ -90,7 +90,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     @Test
     fun testThrowException() = runTest {
         assertFailsWith<AssertionError> {
-            withTimeoutOrNull<Unit>(Duration.INFINITE) {
+            withTimeoutOrNull(Duration.INFINITE) {
                 throw AssertionError()
             }
         }
@@ -182,7 +182,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         assertFailsWith<TestException> {
-            withTimeoutOrNull<String>(100.milliseconds) {
+            withTimeoutOrNull(100.milliseconds) {
                 expect(2)
                 assertFailsWith<TimeoutCancellationException> {
                     delay(1000.milliseconds)
@@ -213,7 +213,7 @@ class WithTimeoutOrNullDurationTest : TestBase() {
         expect(1)
         assertFailsWith<TestException> {
             expect(2)
-            withTimeoutOrNull<Unit>(1000.milliseconds) {
+            withTimeoutOrNull(1000.milliseconds) {
                 expect(3)
                 throw TestException()
             }
