@@ -103,7 +103,6 @@ class WithTimeoutOrNullTest : TestBase() {
                     awaitCancellation()
                 }
             }
-            expectUnreached()
         }
         finish(1)
     }
@@ -154,7 +153,6 @@ class WithTimeoutOrNullTest : TestBase() {
             expect(2)
             delay(1000)
             expectUnreached()
-            "OK"
         }
         assertNull(result)
         finish(3)
