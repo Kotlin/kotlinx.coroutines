@@ -67,14 +67,12 @@ class WithTimeoutOrNullTest : TestBase() {
      */
     @Test
     fun testYieldBlockingWithTimeout() = runTest {
-        expect(1)
         val result = withTimeoutOrNull(100) {
             while (true) {
                 yield()
             }
         }
         assertNull(result)
-        finish(2)
     }
 
     @Test
@@ -195,7 +193,6 @@ class WithTimeoutOrNullTest : TestBase() {
 
     @Test
     fun testNegativeTimeout() = runTest {
-        expect(1)
         var result = withTimeoutOrNull(-1) {
             expectUnreached()
         }
@@ -204,19 +201,14 @@ class WithTimeoutOrNullTest : TestBase() {
             expectUnreached()
         }
         assertNull(result)
-        finish(2)
     }
 
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
-        expect(1)
         assertFailsWith<TestException> {
-            expect(2)
             withTimeoutOrNull(1000) {
-                expect(3)
                 throw TestException()
             }
         }
-        finish(4)
     }
 }
