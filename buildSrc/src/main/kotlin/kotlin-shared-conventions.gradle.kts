@@ -177,7 +177,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
                 implementation("junit:junit:${version("junit")}")
             }
             groupSourceSets("jsAndWasmShared", listOf("web", "wasmWasi"), listOf("common"))
-
             named("jsLatestJsTest") {
                 dependsOn(commonTest.get())
                 kotlin.source(jsTest.get().kotlin)
