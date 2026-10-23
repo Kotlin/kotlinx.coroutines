@@ -111,11 +111,8 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         }
         js {
             outputModuleName = project.name
-
             // The part for testing with the latest JS target supported
             val mainCompilation = compilations.getByName("main")
-            val testCompilation = compilations.getByName("test")
-
             val latestJsCompilation = compilations.create("latestJsTest") {
                 associateWith(mainCompilation)
                 // Sources are configured in the `sourceSets` block below (see `jsLatestJsTest`).
@@ -132,7 +129,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
                     }
                 }
             }
-
             nodejs {
                 val latestTargetRun = testRuns.create("latestTarget") {
                     setExecutionSourceFrom(latestJsCompilation)
@@ -140,11 +136,9 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
                         val devBinary = latestJsCompilation.binaries
                             .matching { it.mode == KotlinJsBinaryMode.DEVELOPMENT }
                             .single()
-
                         inputFileProperty.set(devBinary.mainFileSyncPath)
                     }
                 }
-
                 testTask {
                     dependsOn(latestTargetRun.executionTask)
                 }
