@@ -281,7 +281,7 @@ class FlowAsAsyncIterableTest : TestBase() {
                 var i = 0
                 while (true) emit(i++)
             } finally {
-                withContext(NonCancellable) {
+                nonCancellable {
                     mayCleanup.join()
                     cleanupDone = true
                 }

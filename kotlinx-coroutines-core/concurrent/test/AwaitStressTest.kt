@@ -10,24 +10,25 @@ class AwaitStressTest : TestBase() {
     @Test
     fun testMultipleExceptions() = runTest {
         newFixedThreadPoolContext(4, "test").use { pool ->
-            val ctx = pool + NonCancellable
             repeat(iterations) {
-                val barrier = Barrier(4)
-                val d1 = async(ctx) {
+                supervisorScope {
+                    val barrier = Barrier(4)
+                    val d1 = async(pool) {
+                        barrier.await()
+                        throw TestException()
+                    }
+                    val d2 = async(pool) {
+                        barrier.await()
+                        throw TestException()
+                    }
+                    val d3 = async(pool) {
+                        barrier.await()
+                        1L
+                    }
                     barrier.await()
-                    throw TestException()
-                }
-                val d2 = async(ctx) {
-                    barrier.await()
-                    throw TestException()
-                }
-                val d3 = async(ctx) {
-                    barrier.await()
-                    1L
-                }
-                barrier.await()
-                assertFailsWith<TestException> {
-                    awaitAll(d1, d2, d3)
+                    assertFailsWith<TestException> {
+                        awaitAll(d1, d2, d3)
+                    }
                 }
             }
         }
