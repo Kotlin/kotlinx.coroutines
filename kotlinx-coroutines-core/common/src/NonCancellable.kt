@@ -372,6 +372,7 @@ public object NonCancellable : AbstractCoroutineContextElement(Job), Job {
  * }
  * ```
  */
+@IgnorableReturnValue
 public suspend fun <T> nonCancellable(
     block: suspend CoroutineScope.() -> T
 ): T {
@@ -403,7 +404,7 @@ public suspend fun <T> nonCancellable(
 /**
  * A [JobNode] that does nothing but stays in the parent [Job] until the latter is completed
  * and keeps a strong [reference] to whatever object is passed to it. */
-private class StrongReferenceJobNode(val reference: Any?): JobNode() {
+private class StrongReferenceJobNode(private val reference: Any?): JobNode() {
     override val onCancelling get() = false
 
     override fun invoke(cause: Throwable?) { /* intentionally empty */ }

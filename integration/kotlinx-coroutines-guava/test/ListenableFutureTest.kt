@@ -617,6 +617,7 @@ class ListenableFutureTest : TestBase() {
                 val bar = async<Int> { throw TestException() }
                 foo.await() + bar.await()
             }
+            future.checkFutureException<TestException>()
         }
     }
 

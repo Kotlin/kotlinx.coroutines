@@ -37,6 +37,17 @@ class FlowInvariantsTest : TestBase() {
     @Test
     fun testWithContextContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
         flow {
+            withContext(Job()) {
+                emit(1)
+            }
+        }.collect {
+            expectUnreached()
+        }
+    }
+
+    @Test
+    fun testNonCancellableContract() = runParametrizedTest<Int>(IllegalStateException::class) { flow ->
+        flow {
             nonCancellable {
                 emit(1)
             }
