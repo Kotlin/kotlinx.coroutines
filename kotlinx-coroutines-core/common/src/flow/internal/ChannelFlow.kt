@@ -2,7 +2,6 @@ package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
-import kotlinx.coroutines.intrinsics.startUndispatchedOrReturn
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
@@ -219,8 +218,7 @@ internal suspend fun <T, V> withContextUndispatched(
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
 ): T = suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
-    val coroutine = UndispatchedCoroutine(newContext, uCont)
-    withCoroutineContext(coroutine.context, countOrElement) {
-        return@sc coroutine.startUndispatchedOrReturn(value, block)
+    withCoroutineContext(newContext, countOrElement) {
+        block.startCoroutineUninterceptedOrReturn(value, UndispatchedContinuation(uCont, newContext))
     }
 }
