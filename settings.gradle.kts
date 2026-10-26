@@ -5,15 +5,12 @@ pluginManagement {
     plugins {
         id("org.openjfx.javafxplugin") version javafxPluginVersion
         id("me.champeau.jmh") version "0.7.3"
+        id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.2"
     }
 
     repositories {
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
     }
-}
-
-plugins {
-    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.2"
 }
 
 rootProject.name = "kotlinx.coroutines"

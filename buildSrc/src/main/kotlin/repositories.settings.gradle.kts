@@ -51,7 +51,7 @@ dependencyResolutionManagement {
     val kotlinVersion = providers.gradleProperty("kotlin_version").orNull
 
     repositories {
-        val build_snapshot_train: String? by settings
+        val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
 
         if (!kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()) {
             exclusiveContent {
@@ -72,7 +72,7 @@ dependencyResolutionManagement {
             }
         }
 
-        mavenLocal(build_snapshot_train?.toBoolean() == true)
+        mavenLocal(buildSnapshotTrain)
         mavenCentralWithCacheRedirect()
 
         configureJsRepositories()
@@ -80,7 +80,7 @@ dependencyResolutionManagement {
 
     pluginManagement {
         repositories {
-            val build_snapshot_train: String? by settings
+            val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
 
             if (!kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()) {
                 exclusiveContent {
@@ -93,7 +93,7 @@ dependencyResolutionManagement {
                 }
             }
 
-            mavenLocal(build_snapshot_train?.toBoolean() == true)
+            mavenLocal(buildSnapshotTrain)
             gradlePortalWithCacheRedirect()
             mavenCentralWithCacheRedirect()
         }
