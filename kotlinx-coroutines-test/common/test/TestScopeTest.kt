@@ -528,17 +528,39 @@ class TestScopeTest {
     }
 
     /**
-     * Tests that the uncaught exceptions that happen during the test are reported.
+     * Tests that the uncaught exceptions that happen during the test are reported
+     * through the [CoroutineExceptionHandler] in the coroutine context.
+     */
+    @Test
+    fun testReportingStrayUncaughtExceptionsThroughHandlerDuringTest(): TestResult {
+        val thrown = TestException("x")
+        return testResultChain({ _ ->
+            runTest {
+                supervisorScope {
+                    launch(Dispatchers.Default) {
+                        throw thrown
+                    }
+                }
+            }
+        }, {
+            runTest {
+                assertEquals(thrown, it.exceptionOrNull())
+            }
+        })
+    }
+
+    /**
+     * Tests that the uncaught exceptions that happen during the test are reported
+     * even if they occur in coroutine hierarchies entirely unrelated to the [TestScope].
      */
     @Test
     fun testReportingStrayUncaughtExceptionsDuringTest(): TestResult {
         val thrown = TestException("x")
         return testResultChain({ _ ->
             runTest {
-                val job = launch(Dispatchers.Default + NonCancellable) {
+                GlobalScope.launch(Dispatchers.Default) {
                     throw thrown
-                }
-                job.join()
+                }.join()
             }
         }, {
             runTest {

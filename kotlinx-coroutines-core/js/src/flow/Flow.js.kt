@@ -86,7 +86,7 @@ public actual interface Flow<out T> {
                         /* Collecting flow values until we receive a request to stop. */
                         collectWhile { element ->
                             currentRequest.resolve(JsIteratorResult(value = element, done = false))
-                            currentRequest = withContext(NonCancellable) {
+                            currentRequest = nonCancellable {
                                 /** Using [NonCancellable] to ignore asynchronous upstream cancellation.
                                  * We are not allowed to make any progress until the next command arrives from JS,
                                  * so even when the upstream is making progress, we refuse to acknowledge it. */
@@ -219,7 +219,7 @@ private fun <T> createFlowFromAsyncSource(asyncSource: dynamic): Flow<T> {
                     // We do this to not lose the exception thrown by `emit`/`next`
                     try {
                         // Prevent coroutine cancellation from making us exit before the cleanup is done
-                        withContext(NonCancellable) {
+                        nonCancellable {
                             val _ = iterator.`return`().await()
                         }
                     } catch (returnException: dynamic) {
