@@ -236,7 +236,7 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
  *
  * If the future completes, this function either returns its result [T] or throws the exception thrown by the task,
  * depending on whether the future was successful.
- * However, if the call to [consume] is cancelled before the future completes,
+ * However, if the coroutine calling [consume] is cancelled before the future completes,
  * the future also gets cancelled.
  *
  * This method is most suitable for cases where only one consumer is expected for the given [ListenableFuture]:
@@ -532,8 +532,10 @@ private class Cancelled(@JvmField val exception: CancellationException)
 /**
  * Deprecated synonym for [consume].
  *
- * This function is deprecated because it's inconsistent with how in `kotlinx.coroutines`,
- * on its own cancellation, `await()` typically does not cancel the computation that's being awaited,
+ * This function is deprecated because it's inconsistent with the behavior of the more common `await()` overloads
+ * in `kotlinx.coroutines`.
+ * Whenever a coroutine calling `await()` gets cancelled,
+ * `await()` typically does not cancel the computation that's being awaited,
  * whereas this function does.
  *
  * [consume] is the new name for this operation.
