@@ -3,9 +3,6 @@ import org.gradle.api.*
 import org.gradle.api.artifacts.dsl.*
 import org.gradle.api.artifacts.repositories.*
 import org.gradle.api.initialization.dsl.*
-import org.gradle.kotlin.dsl.*
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
-import org.jetbrains.kotlin.gradle.targets.js.yarn.*
 import java.net.*
 
 /**
@@ -115,13 +112,4 @@ object CacheRedirector {
     fun configure(project: Project) {
         project.checkRedirect(project.repositories, project.displayName)
     }
-
-    @JvmStatic
-    fun maybeRedirect(url: String): String {
-        if (!cacheRedirectorEnabled) return url
-        return URI(url).maybeRedirect()?.toString() ?: url
-    }
-
-    @JvmStatic
-    val isEnabled get() = cacheRedirectorEnabled
 }

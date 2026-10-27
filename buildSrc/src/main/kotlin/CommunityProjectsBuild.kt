@@ -57,48 +57,6 @@ fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
 }
 
 /**
- * Should be used for running against of non-released Kotlin compiler on a system test level
- * Kotlin compiler artifacts are expected to be downloaded from maven central by default.
- * In case of compiling with not-published into the MC kotlin compiler artifacts, a kotlin_repo_url gradle parameter should be specified.
- * To reproduce a build locally, a kotlin/dev repo should be passed
- *
- * @return an url for a kotlin compiler repository parametrized from command line nor gradle.properties, empty string otherwise
- */
-fun getKotlinDevRepositoryUrl(project: Project): String? {
-    val url: String? = project.providers.gradleProperty("kotlin_repo_url").orNull
-    if (url != null) {
-        LOGGER.info("""Configured Kotlin Compiler repository url: '$url' for project ${project.name}""")
-        return url
-    }
-    return null
-}
-
-/**
- * Adds a kotlin-dev space repository with dev versions of Kotlin if Kotlin aggregate build is enabled
- */
-fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
-    val devRepoUrl = getKotlinDevRepositoryUrl(project) ?: return
-    val version = getKotlinDevVersion(project) ?: return
-    rh.exclusiveContent {
-        forRepository {
-            rh.maven(devRepoUrl)
-        }
-        filter {
-            includeVersionByRegex("org.jetbrains.kotlin", ".*", version)
-        }
-    }
-}
-
-fun getKotlinDevVersion(project: Project): String? {
-    val version = project.providers.gradleProperty("kotlin_version").orNull
-    if (version != null) {
-        LOGGER.info("""Configured Kotlin Compiler version: '$version' for project ${project.name}""")
-        return version
-    }
-    return null
-}
-
-/**
  * Changes the build config when 'build_snapshot_train' is enabled:
  * Disables flaky and Kotlin-specific tests, prints the real version of Kotlin applied (to be sure overridden version of Kotlin is properly picked).
  */

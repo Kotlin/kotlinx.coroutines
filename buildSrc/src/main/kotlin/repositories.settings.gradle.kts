@@ -1,8 +1,11 @@
+private val LOGGER: java.util.logging.Logger = java.util.logging.Logger.getLogger("Kotlin settings logger")
+
+private val cacheRedirectorEnabled: Boolean = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
+
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.PREFER_SETTINGS
 
     fun RepositoryHandler.gradlePortalWithCacheRedirect() {
-        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
             maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
         } else {
@@ -11,7 +14,6 @@ dependencyResolutionManagement {
     }
 
     fun RepositoryHandler.mavenCentralWithCacheRedirect() {
-        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
             maven("https://cache-redirector.jetbrains.com/maven-central")
         } else {
@@ -23,7 +25,6 @@ dependencyResolutionManagement {
         gradleProperty("idea.snapshots.enable").orNull?.toBoolean() == true
 
     fun RepositoryHandler.configureJsRepositories() {
-        val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         val cacheRedirectorDomainPrefix = if (cacheRedirectorEnabled) "cache-redirector.jetbrains.com/" else ""
         ivy("https://${cacheRedirectorDomainPrefix}nodejs.org/dist/") {
             name = "Node Distributions at $url"
@@ -41,9 +42,14 @@ dependencyResolutionManagement {
 
     val kotlinDevUrl = providers.gradleProperty("kotlin_repo_url").orNull
     val kotlinVersion = providers.gradleProperty("kotlin_version").orNull
+    val configureDevRepo = !kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()
+
+    if (configureDevRepo) {
+        LOGGER.info("Configured Kotlin Compiler version $kotlinVersion and repository URL $kotlinDevUrl")
+    }
 
     repositories {
-        if (!kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()) {
+        if (configureDevRepo) {
             exclusiveContent {
                 forRepository {
                     maven(kotlinDevUrl)
@@ -73,7 +79,7 @@ dependencyResolutionManagement {
 
     pluginManagement {
         repositories {
-            if (!kotlinDevUrl.isNullOrEmpty() && !kotlinVersion.isNullOrEmpty()) {
+            if (configureDevRepo) {
                 exclusiveContent {
                     forRepository {
                         maven(kotlinDevUrl)
