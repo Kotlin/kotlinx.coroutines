@@ -31,7 +31,3 @@ internal actual fun dumpCoroutines() {
         }
     }
 }
-
-internal actual fun testCancellingDispatcher(): CloseableCoroutineDispatcher = newSingleThreadContext(
-    "kotlinx.coroutines.test timeout handler"
-)

@@ -237,16 +237,18 @@ public fun TestScope.runTest(
                 }
             }
         }
-        val terminationSuccess = testCancellingDispatcher().use {
-            /** The order of nesting is important: we'd like [withTimeoutOrNull] not to use the default executor,
-             * to minimize interference with the tests. */
-            withContext(it) {
-                withTimeoutOrNull(timeout) {
-                    try {
-                        scope.join()
-                        backgroundScope.coroutineContext.job.cancelAndJoin()
-                        workRunner.cancelAndJoin()
-                    } catch (_: TimeoutCancellationException) {
+        val isSuccess = coroutineScope {
+            val collectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                nonCancellable {
+                    scope.join()
+                    backgroundScope.coroutineContext.job.cancelAndJoin()
+                    workRunner.cancelAndJoin()
+                }
+            }
+            withContext(Dispatchers.Unconfined) { // use the default dispatcher and not the `runBlocking` event loop
+                select {
+                    collectJob.onJoin { true }
+                    onTimeout(timeout) {
                         dumpCoroutines()
                         val activeChildren = scope.children.filter(Job::isActive).toList()
                         val message = "After waiting for $timeout, " + when {
@@ -254,26 +256,26 @@ public fun TestScope.runTest(
                                 "there were active child jobs: $activeChildren. " +
                                     "Use `TestScope.backgroundScope` " +
                                     "to launch the coroutines that need to be cancelled when the test body finishes"
+
                             testBodyFinished.load() ->
                                 "the test completed, but only after the timeout"
+
                             else ->
                                 "the test body did not run to completion"
                         }
                         timeoutError = UncompletedCoroutinesError(message)
                         cancellationException = CancellationException("The test timed out")
-                        (scope as Job).cancel(cancellationException)
+                        scope.cancel(cancellationException)
+                        false
                     }
                 }
             }
         }
-        if (terminationSuccess == null) {
-            scope.join()
+        if (!isSuccess) {
             val completion = scope.getCompletionExceptionOrNull()
             if (completion != null && completion !== cancellationException) {
-                timeoutError!!.addSuppressed(completion)
+                timeoutError?.addSuppressed(completion)
             }
-            backgroundScope.coroutineContext.job.cancelAndJoin()
-            workRunner.cancelAndJoin()
         }
         testScheduler.advanceUntilIdleOr { false }
         val uncaughtExceptions = scope.leave()
@@ -501,12 +503,3 @@ public fun TestScope.runTestLegacy(
     marker: Int,
     unused2: Any?,
 ): TestResult = runTest(dispatchTimeoutMs = if (marker and 1 != 0) dispatchTimeoutMs else 60_000L, testBody)
-
-/**
- * A [CoroutineDispatcher] with the highest chance not to be starving because of the test not releasing the thread.
- *
- * On single-threaded environments, there is nothing that can be reasonably done--if the test is stuck, we need an
- * intervention from outside the runtime.
- * On the JVM and Native, we create a separate thread and also implement [Delay].
- */
-internal expect fun testCancellingDispatcher(): CloseableCoroutineDispatcher
