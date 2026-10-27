@@ -1,18 +1,22 @@
-apply(from = "./buildSrc/src/main/kotlin/repositories.settings.gradle.kts")
-
 pluginManagement {
+    // pluginManagement block evaluates before plugins and plugins evaluates before the top-level apply.
+    // To make sure repositories are already configured when we're applying a settings plugin,
+    // repositories.settings.gradle.kts's application is triggered from here.
+    apply(from = "./buildSrc/src/main/kotlin/repositories.settings.gradle.kts")
+
     val javafxPluginVersion = providers.gradleProperty("javafx_plugin_version").get()
     plugins {
         id("org.openjfx.javafxplugin") version javafxPluginVersion
         id("me.champeau.jmh") version "0.7.3"
-        id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.2"
     }
 
     repositories {
         maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
     }
 }
-
+plugins {
+    id("org.jetbrains.kotlinx.artifacts-validator-plugin") version "0.0.2"
+}
 rootProject.name = "kotlinx.coroutines"
 
 fun module(path: String) {

@@ -10,6 +10,5 @@ pluginManagement {
         id("ru.vyarus.gradle-animalsniffer-plugin") version("animalsniffer") apply false
         id("org.jetbrains.kotlinx.atomicfu") version("atomicfu") apply false
         id("org.jetbrains.kotlinx.kover") version("kover") apply false
-        //id("org.jetbrains.kotlinx.artifacts-validator-plugin") version("0.0.2") apply false
     }
 }
