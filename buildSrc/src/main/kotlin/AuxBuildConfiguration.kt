@@ -14,8 +14,6 @@ object AuxBuildConfiguration {
             CacheRedirector.configure(this)
         }
 
-        CacheRedirector.configureRootJsPackageManagers(rootProject)
-
         // Sigh, there is no BuildScanExtension in classpath when there is no --scan
         rootProject.extensions.findByName("buildScan")?.withGroovyBuilder {
             setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")

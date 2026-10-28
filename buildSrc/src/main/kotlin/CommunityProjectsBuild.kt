@@ -57,31 +57,6 @@ fun getOverriddenKotlinLanguageVersion(project: Project): KotlinVersion? {
 }
 
 /**
- * Should be used for running against of non-released Kotlin compiler on a system test level
- * Kotlin compiler artifacts are expected to be downloaded from maven central by default.
- * In case of compiling with not-published into the MC kotlin compiler artifacts, a kotlin_repo_url gradle parameter should be specified.
- * To reproduce a build locally, a kotlin/dev repo should be passed
- *
- * @return an url for a kotlin compiler repository parametrized from command line nor gradle.properties, empty string otherwise
- */
-fun getKotlinDevRepositoryUrl(project: Project): String? {
-    val url: String? = project.providers.gradleProperty("kotlin_repo_url").orNull
-    if (url != null) {
-        LOGGER.info("""Configured Kotlin Compiler repository url: '$url' for project ${project.name}""")
-        return url
-    }
-    return null
-}
-
-/**
- * Adds a kotlin-dev space repository with dev versions of Kotlin if Kotlin aggregate build is enabled
- */
-fun addDevRepositoryIfEnabled(rh: RepositoryHandler, project: Project) {
-    val devRepoUrl = getKotlinDevRepositoryUrl(project) ?: return
-    rh.maven(devRepoUrl)
-}
-
-/**
  * Changes the build config when 'build_snapshot_train' is enabled:
  * Disables flaky and Kotlin-specific tests, prints the real version of Kotlin applied (to be sure overridden version of Kotlin is properly picked).
  */
@@ -134,30 +109,6 @@ fun getOverriddenKotlinVersion(project: Project): String? =
 fun isSnapshotTrainEnabled(project: Project): Boolean {
     val buildSnapshotTrain = project.providers.gradleProperty("build_snapshot_train").orNull
     return !buildSnapshotTrain.isNullOrBlank()
-}
-
-/**
- * The list of projects snapshot versions of which we may want to use with `kotlinx.coroutines`.
- *
- * In `gradle.properties`, these properties are defined as `<name>_version`, e.g. `kotlin_version`.
- */
-val firstPartyDependencies = listOf(
-    "kotlin",
-    "atomicfu",
-)
-
-fun shouldUseLocalMaven(project: Project): Boolean {
-    val hasSnapshotDependency = firstPartyDependencies.any { dependencyName ->
-        val key = "${dependencyName}_version"
-        val value = project.providers.gradleProperty(key).orNull
-        if (value != null && value.endsWith("-SNAPSHOT")) {
-            LOGGER.info("NOTE: USING SNAPSHOT VERSION: $key=$value")
-            true
-        } else {
-            false
-        }
-    }
-    return hasSnapshotDependency || isSnapshotTrainEnabled(project)
 }
 
 /**

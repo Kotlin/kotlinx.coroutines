@@ -4,25 +4,6 @@ plugins {
     `kotlin-dsl`
 }
 
-val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
-val buildSnapshotTrain = providers.gradleProperty("build_snapshot_train").orNull?.toBoolean() == true
-val kotlinDevUrl = project.providers.gradleProperty("kotlin_repo_url").orNull
-
-repositories {
-    mavenCentral()
-    if (cacheRedirectorEnabled) {
-        maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
-    } else {
-        maven("https://plugins.gradle.org/m2")
-    }
-    if (!kotlinDevUrl.isNullOrEmpty()) {
-        maven(kotlinDevUrl)
-    }
-    if (buildSnapshotTrain) {
-        mavenLocal()
-    }
-}
-
 val gradleProperties = Properties().apply {
     file("../gradle.properties").inputStream().use { load(it) }
 }
@@ -35,7 +16,7 @@ fun version(target: String): String {
     }
     val version = "${target}_version"
     // Read from CLI first, used in aggregate builds
-    return providers.gradleProperty(version).orNull?.let{"$it"} ?: gradleProperties.getProperty(version)
+    return providers.gradleProperty(version).orNull?.let { "$it" } ?: gradleProperties.getProperty(version)
 }
 
 kotlin {
