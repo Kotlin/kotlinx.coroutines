@@ -133,6 +133,8 @@ import kotlin.coroutines.*
  */
 @OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
+@Suppress("EXPOSED_NOT_EXPORTED_SUPER_INTERFACE_WARNING")
+@JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public interface StateFlow<out T> : SharedFlow<T> {
     /**
      * The current value of this state flow.
@@ -156,6 +158,8 @@ public interface StateFlow<out T> : SharedFlow<T> {
  */
 @OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
+@Suppress("EXPOSED_NOT_EXPORTED_SUPER_INTERFACE_WARNING")
+@JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public interface MutableStateFlow<T> : StateFlow<T>, MutableSharedFlow<T> {
     /**
      * The current value of this state flow.
