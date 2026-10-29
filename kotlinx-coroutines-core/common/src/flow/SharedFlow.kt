@@ -457,6 +457,7 @@ internal open class SharedFlowImpl<T>(
     }
 
     private fun dropOldestLocked() {
+        dropStacktrace(this, head)
         buffer!!.setBufferAt(head, null)
         bufferSize--
         val newHead = head + 1
@@ -481,6 +482,7 @@ internal open class SharedFlowImpl<T>(
             null -> growBuffer(null, 0, 2)
             else -> if (curSize >= curBuffer.size) growBuffer(curBuffer, curSize,curBuffer.size * 2) else curBuffer
         }
+        collectStacktrace(this, head + curSize)
         buffer.setBufferAt(head + curSize, item)
     }
 
@@ -506,6 +508,7 @@ internal open class SharedFlowImpl<T>(
             }
             // add suspended emitter to the buffer
             Emitter(this, head + totalSize, value, cont).also {
+                collectStacktrace(this, head + totalSize)
                 enqueueLocked(it)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
@@ -607,7 +610,10 @@ internal open class SharedFlowImpl<T>(
         val newHead = minOf(newMinCollectorIndex, newReplayIndex)
         assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head is about to move)
-        for (index in head until newHead) buffer!!.setBufferAt(index, null)
+        for (index in head until newHead) {
+            dropStacktrace(this, index)
+            buffer!!.setBufferAt(index, null)
+        }
         // update all state variables to newly computed values
         replayIndex = newReplayIndex
         minCollectorIndex = newMinCollectorIndex
@@ -641,6 +647,7 @@ internal open class SharedFlowImpl<T>(
             } else {
                 val oldIndex = slot.index
                 val newValue = getPeekedValueLockedAt(index)
+                matchStacktrace(this, index)
                 slot.index = index + 1 // points to the next index after peeked one
                 resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
