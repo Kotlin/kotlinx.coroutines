@@ -507,6 +507,16 @@ internal expect class UndispatchedCoroutine<in T>(
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>
 
+// Continuation that links the caller with uCont with walkable CoroutineStackFrame
+internal expect class UndispatchedContinuation<in T>(
+    uCont: Continuation<T>, context: CoroutineContext
+) : Continuation<T>, CoroutineStackFrame {
+    override fun resumeWith(result: Result<T>): Unit
+    override val context: CoroutineContext
+    override val callerFrame: CoroutineStackFrame?
+    override fun getStackTraceElement(): StackTraceElement?
+}
+
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
 private const val RESUMED = 2

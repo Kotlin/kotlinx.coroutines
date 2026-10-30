@@ -237,48 +237,74 @@ class ThreadContextElementTest : TestBase() {
 
     @Test
     fun testThreadLocalFlowOn() = runTest {
-        val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> =
-            listOf(EmptyCoroutineContext, Dispatchers.Default, Dispatchers.Unconfined).flatMap { dispatcher ->
+        val dispatchers = listOf(EmptyCoroutineContext, Dispatchers.Default, Dispatchers.Unconfined)
+        val exceptions: List<AssertionError?> = dispatchers.flatMap { outerDispatcher ->
+            dispatchers.flatMap { dispatcher ->
                 listOf(true, false).flatMap { doYield ->
-                    listOf(true, false).map { useThreadLocalInOuterContext ->
-                        Triple(dispatcher, doYield, useThreadLocalInOuterContext)
+                    listOf(true, false).mapNotNull { useThreadLocalInOuterContext ->
+                        try {
+                            testThreadLocalFlowOn(outerDispatcher, dispatcher, doYield, useThreadLocalInOuterContext)
+                            null
+                        } catch (e: Throwable) {
+                            AssertionError(
+                                "Failed with parameters: " +
+                                    "outerDispatcher: $outerDispatcher, " +
+                                    "dispatcher=$dispatcher, " +
+                                    "doYield=$doYield, " +
+                                    "useThreadLocalInOuterContext=$useThreadLocalInOuterContext", e
+                            )
+                        }
                     }
                 }
             }
-        for ((dispatcher, doYield, useThreadLocalInOuterContext) in parameters) {
-            try {
-                testThreadLocalFlowOn(dispatcher, doYield, useThreadLocalInOuterContext)
-            } catch (e: Throwable) {
-                throw AssertionError("Failed with parameters: dispatcher=$dispatcher, " +
-                    "doYield=$doYield, " +
-                    "useThreadLocalInOuterContext=$useThreadLocalInOuterContext", e)
-            }
+        }
+        exceptions.firstOrNull()?.let { toThrow ->
+            exceptions.drop(1).forEach { toThrow.addSuppressed(it) }
+            throw toThrow
         }
     }
 
-    private fun testThreadLocalFlowOn(
-        extraFlowOnContext: CoroutineContext, doYield: Boolean, useThreadLocalInOuterContext: Boolean
-    ) = runTest {
+    private suspend fun testThreadLocalFlowOn(
+        extraOuterContext: CoroutineContext,
+        extraFlowOnContext: CoroutineContext,
+        doYield: Boolean,
+        useThreadLocalInOuterContext: Boolean
+    ) = coroutineScope {
         try {
             val myData1 = MyData()
             val myData2 = MyData()
             myThreadLocal.set(myData1)
-            withContext(if (useThreadLocalInOuterContext) myThreadLocal.asContextElement() else EmptyCoroutineContext) {
-                assertEquals(myData1, myThreadLocal.get())
+            val outerContext = if (useThreadLocalInOuterContext) {
+                myThreadLocal.asContextElement() + extraOuterContext
+            } else {
+                extraOuterContext
+            }
+            withContext(outerContext) {
+                if (useThreadLocalInOuterContext) {
+                    assertEquals(myData1, myThreadLocal.get())
+                }
                 flow {
                     repeat(5) {
                         assertEquals(myData2, myThreadLocal.get())
                         emit(1)
-                        if (doYield) yield()
+                        assertEquals(myData2, myThreadLocal.get())
+                        if (doYield) {
+                            yield()
+                            assertEquals(myData2, myThreadLocal.get())
+                        }
                     }
                 }
                     .flowOn(myThreadLocal.asContextElement(myData2) + extraFlowOnContext)
                     .collect {
                         if (useThreadLocalInOuterContext) {
                             assertEquals(myData1, myThreadLocal.get())
+                            yield()
+                            assertEquals(myData1, myThreadLocal.get())
                         }
                     }
-                assertEquals(myData1, myThreadLocal.get())
+                if (useThreadLocalInOuterContext) {
+                    assertEquals(myData1, myThreadLocal.get())
+                }
             }
             assertEquals(myData1, myThreadLocal.get())
         } finally {
