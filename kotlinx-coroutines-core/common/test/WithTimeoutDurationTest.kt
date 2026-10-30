@@ -13,7 +13,7 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBasicNoSuspend() = runTest {
         expect(1)
-        val result = withTimeout(10.seconds) {
+        val result = withTimeout(1.milliseconds) {
             expect(2)
             "OK"
         }
@@ -62,17 +62,16 @@ class WithTimeoutDurationTest : TestBase() {
         finish(8)
     }
 
-
     /**
      * Tests that a 100% CPU-consuming loop will react on timeout if it has yields.
      */
     @Test
-    fun testYieldBlockingWithTimeout() = runTest(
-            expected = { it is CancellationException }
-    ) {
-        withTimeout(100.milliseconds) {
-            while (true) {
-                yield()
+    fun testYieldBlockingWithTimeout() = runTest {
+        assertFailsWith<TimeoutCancellationException> {
+            withTimeout(100.milliseconds) {
+                while (true) {
+                    yield()
+                }
             }
         }
     }
@@ -98,23 +97,17 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testBadClass() = runTest {
         val bad = BadClass()
-        val result = withTimeout(100.milliseconds) {
+        val result = withTimeout(1.milliseconds) {
             bad
         }
         assertSame(bad, result)
     }
 
-    class BadClass {
-        override fun equals(other: Any?): Boolean = error("Should not be called")
-        override fun hashCode(): Int = error("Should not be called")
-        override fun toString(): String = error("Should not be called")
-    }
-
     @Test
     fun testExceptionOnTimeout() = runTest {
         expect(1)
-        val e = assertFailsWith<CancellationException> {
-            withTimeout<String>(100.milliseconds) {
+        val e = assertFailsWith<TimeoutCancellationException> {
+            withTimeout(100.milliseconds) {
                 expect(2)
                 delay(1000.milliseconds)
                 expectUnreached()
@@ -127,13 +120,17 @@ class WithTimeoutDurationTest : TestBase() {
     @Test
     fun testSuppressExceptionWithResult() = runTest {
         expect(1)
-        assertFailsWith<CancellationException> {
+        // Assert that withTimeout fails
+        // even if the block catches the cancellation and returns a result.
+        assertFailsWith<TimeoutCancellationException> {
             withTimeout(100.milliseconds) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
+                    expect(3)
                     delay(1000.milliseconds)
+                    expectUnreached()
                 }
-                finish(3)
+                finish(4)
                 "OK"
             }
         }
@@ -143,9 +140,9 @@ class WithTimeoutDurationTest : TestBase() {
     fun testSuppressExceptionWithAnotherException() = runTest {
         expect(1)
         assertFailsWith<TestException> {
-            withTimeout<String>(100.milliseconds) {
+            withTimeout(100.milliseconds) {
                 expect(2)
-                assertFailsWith<CancellationException> {
+                assertFailsWith<TimeoutCancellationException> {
                     delay(1000.milliseconds)
                 }
                 expect(3)
@@ -157,8 +154,14 @@ class WithTimeoutDurationTest : TestBase() {
 
     @Test
     fun testNegativeTimeout() = runTest {
-        val e = assertFailsWith<TimeoutCancellationException> {
-            withTimeout<String>((-1).milliseconds) {
+        var e = assertFailsWith<TimeoutCancellationException> {
+            withTimeout((-1).milliseconds) {
+                expectUnreached()
+            }
+        }
+        assertEquals("Timed out immediately", e.message)
+        e = assertFailsWith<TimeoutCancellationException> {
+            withTimeout(0.milliseconds) {
                 expectUnreached()
             }
         }
@@ -167,17 +170,10 @@ class WithTimeoutDurationTest : TestBase() {
 
     @Test
     fun testExceptionFromWithinTimeout() = runTest {
-        expect(1)
-        @Suppress("UNREACHABLE_CODE")
-        try {
-            expect(2)
-            withTimeout(1.seconds) {
-                expect(3)
+        assertFailsWith<TestException> {
+            withTimeout(1.milliseconds) {
                 throw TestException()
             }
-            expectUnreached()
-        } catch (_: TestException) {
-            finish(4)
         }
     }
 
@@ -194,5 +190,18 @@ class WithTimeoutDurationTest : TestBase() {
         assertTrue(timeoutJob.isCompleted)
         assertFalse(timeoutJob.isActive)
         assertFalse(timeoutJob.isCancelled)
+    }
+
+    @Test
+    fun testTimeoutCancellationExceptionIncludesCoroutineName() = runTest {
+        val exception = assertFailsWith<TimeoutCancellationException> {
+            withContext(CoroutineName("waiting for x")) {
+                withTimeout(1.milliseconds) {
+                    awaitCancellation()
+                }
+            }
+        }
+        assertTrue(exception.message!!.contains("waiting for x"))
+        assertTrue(exception.message!!.contains("Timed out waiting", ignoreCase = true))
     }
 }
