@@ -3,6 +3,16 @@
 There are two main ways to contribute to the project &mdash; submitting issues and submitting 
 fixes/changes/improvements via pull requests.
 
+## LLM policy
+
+Sending us LLM output is only allowed for automating the routine in trivial cases,
+when there is only a single obvious way to do something.
+This is not limited to code: any discussions, such as pull request descriptions or issue comments,
+are subject to the same restriction.
+
+Using an LLM to translate a comment from another language into English is permitted,
+as long as the original message is attached.
+
 ## Submitting issues
 
 Both bug reports and feature requests are welcome.
@@ -44,12 +54,11 @@ so do familiarize yourself with the following guidelines.
     The tests will not pass otherwise.
   * If you plan extensive rewrites/additions to the docs, then please [contact the maintainers](#contacting-maintainers)
     to coordinate the work in advance.
-* If you make any code changes:
-  * Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/reference/coding-conventions.html). 
-    Use 4 spaces for indentation.
-    Do not add extra newlines in function bodies: if you feel that blocks of code should be logically separated,
-    then separate them with a comment instead.
+* If you make any code changes, follow the [code style](#code-style).
   * [Build the project](#building) to make sure everything works and passes the tests.
+* If you intend to make a non-trivial change (that is, if there is more than one way to do it):
+  * Do not use an LLM to author the code.
+  * Make sure there is an open issue about it.
 * If you fix a bug:
   * Note that what is a bug for some can be a feature for others.
     Are you truly fixing a problem? Is there an open issue about it?
@@ -58,15 +67,44 @@ so do familiarize yourself with the following guidelines.
     corresponding test is too hard or otherwise impractical.
   * Follow the style of writing tests that is used in this project: 
     name test functions as `testXxx`. Don't use backticks in test names.
-* If you introduce any new public APIs:
+* If you implement a feature:
   * Before setting out to work on a problem, comment on the existing issue or create one,
     proposing a solution and gathering feedback first before implementing it.
-    PRs that add new API without the corresponding issue with positive feedback about the proposed implementation are
-    very unlikely to be approved or reviewed.
+    PRs that introduce non-trivial changes without the corresponding issue with positive feedback
+    about the proposed implementation are very unlikely to be approved or reviewed.
   * All new APIs must come with documentation and tests.
   * All new APIs are initially released with the `@ExperimentalCoroutinesApi` annotation and graduate later.
   * [Update the public API dumps](#updating-the-public-api-dump) and commit the resulting changes as well. 
     It will not pass the tests otherwise.
+
+## Code style
+
+Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/reference/coding-conventions.html).
+
+Use 4 spaces for indentation.
+Do not add extra newlines in function bodies: if you feel that blocks of code should be logically separated,
+then separate them with a comment instead.
+
+Use compiler warning and error suppressions sparingly.
+Only suppress a problem if there is no obvious alternative or all alternatives are demonstrably inferior,
+prefer scoping the suppression narrowly, and explain the necessity to trick the compiler in a comment.
+The unconditionally allowed common patterns of benign error suppressions:
+
+- `@Suppress("DEPRECATION")` or `@Suppress("DEPRECATION_ERROR")` for testing or preserving compatibility with
+  a deprecated API, both internal to the library and coming from other libraries.
+- `@Suppress("INVISIBLE_REFERENCE")` for either exposing internal Kotlin APIs that we need
+  (`InlineOnly`, `LowPriorityInOverloadResolution`),
+  or for accessing the internal `kotlinx-coroutines-core` APIs from other modules.
+  Tracking issue for the latter: [KT-62688](https://youtrack.jetbrains.com/issue/KT-62688).
+- `@Suppress("UNCHECKED_CAST")` in performance-sensitive code where the internal state of a data structure is
+  represented as `Any?`.
+- `@Suppress("UNUSED_PARAMETER")` in functions implementing a given callback type without using all their parameters.
+- `@Suppress("NOTHING_TO_INLINE")` in performance-sensitive code where a small snippet is extracted into a function
+  for reusability and readability but shouldn't go through a function call.
+- `@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")`
+  when specifying an `InvocationKind.EXACTLY_ONCE` contract in coroutine builders.
+- `@Suppress("unused")` on a reference that is intentionally preserved to avoid it being removed from a weak map.
+- `@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")` on the JVM for accessing `Object.wait` and `Object.notifyAll`.
 
 ## Building
 
