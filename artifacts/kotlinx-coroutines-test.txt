@@ -1,7 +1,3 @@
-org.jetbrains.kotlinx:kotlinx-coroutines-test-androidnativearm32/.klib,.module,.pom,javadoc.jar,sources.jar
-org.jetbrains.kotlinx:kotlinx-coroutines-test-androidnativearm64/.klib,.module,.pom,javadoc.jar,sources.jar
-org.jetbrains.kotlinx:kotlinx-coroutines-test-androidnativex64/.klib,.module,.pom,javadoc.jar,sources.jar
-org.jetbrains.kotlinx:kotlinx-coroutines-test-androidnativex86/.klib,.module,.pom,javadoc.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-iosarm64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-iossimulatorarm64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar
 org.jetbrains.kotlinx:kotlinx-coroutines-test-iosx64/.klib,.module,.pom,javadoc.jar,metadata.jar,sources.jar

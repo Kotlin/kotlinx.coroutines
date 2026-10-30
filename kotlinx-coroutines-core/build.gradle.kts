@@ -40,14 +40,13 @@ apply(plugin = "pub-conventions")
                                         |
      linux         \                    |
      mingw         | --> nativeOther ---+
-     androidNative /
  ========================================================================== */
 
 kotlin {
     sourceSets {
         // using the source set names from <https://kotlinlang.org/docs/multiplatform-hierarchy.html#see-the-full-hierarchy-template>
         groupSourceSets("concurrent", listOf("jvm", "native"), listOf("common"))
-        groupSourceSets("nativeOther", listOf("linux", "mingw", "androidNative"), listOf("native"))
+        groupSourceSets("nativeOther", listOf("linux", "mingw"), listOf("native"))
         jvmMain {
             dependencies {
                 compileOnly("com.google.android:annotations:4.1.1.4")
