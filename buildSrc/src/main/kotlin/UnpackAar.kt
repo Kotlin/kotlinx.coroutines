@@ -41,7 +41,6 @@ fun DependencyHandlerScope.configureAarUnpacking() {
     }
 }
 
-@Suppress("UnstableApiUsage")
 abstract class UnpackAar : TransformAction<TransformParameters.None> {
     @get:InputArtifact
     abstract val inputArtifact: Provider<FileSystemLocation>

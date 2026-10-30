@@ -1,5 +1,3 @@
-@file:Suppress("UNREACHABLE_CODE")
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
@@ -60,16 +58,14 @@ class CoroutineScopeTest : TestBase() {
     @Test
     fun testExceptionFromWithin() = runTest {
         expect(1)
-        try {
+        assertFailsWith<TestException1> {
             expect(2)
             coroutineScope {
                 expect(3)
                 throw TestException1()
             }
-            expectUnreached()
-        } catch (_: TestException1) {
-            finish(4)
         }
+        finish(4)
     }
 
     @Test

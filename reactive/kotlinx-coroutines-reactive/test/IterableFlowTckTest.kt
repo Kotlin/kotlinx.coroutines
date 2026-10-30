@@ -1,5 +1,3 @@
-@file:Suppress("UNCHECKED_CAST")
-
 package kotlinx.coroutines.reactive
 
 import kotlinx.coroutines.flow.*
@@ -21,8 +19,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
         return generate(elements).asIterable().asFlow().asPublisher()
     }
 
-    @Suppress("SubscriberImplementation")
-    override fun createFailedPublisher(): Publisher<Long>? {
+    override fun createFailedPublisher(): Publisher<Long> {
         /*
          * This is a hack for our adapter structure:
          * Tests assume that calling "collect" is enough for publisher to fail and it is not
@@ -78,8 +75,8 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
     fun testConcurrentRequest() {
         val latch = CountDownLatch(1)
         val collected = ArrayList<Long>()
-        val n = 50000L
-        val array = generate(n)
+        val n = 50000
+        val array = generate(n.toLong())
         val publisher = array.asIterable().asFlow().asPublisher()
 
         publisher.subscribe(object : Subscriber<Long> {
@@ -87,7 +84,7 @@ class IterableFlowTckTest : PublisherVerification<Long>(TestEnvironment()) {
 
             override fun onSubscribe(s: Subscription) {
                 this.s = s
-                for (i in 0..n) {
+                repeat(n + 1) {
                     commonPool().execute { s.request(1) }
                 }
             }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.*
 import kotlin.test.*
 
+@Suppress("DEPRECATION")
 class SelectMutexStressTest : TestBase() {
     @Test
     fun testSelectCancelledResourceRelease() = runTest {
@@ -14,7 +15,7 @@ class SelectMutexStressTest : TestBase() {
         repeat(n) { i ->
             val job = launch(kotlin.coroutines.coroutineContext) {
                 expect(i + 2)
-                select<Unit> {
+                select {
                     mutex.onLock {
                         expectUnreached() // never able to lock
                     }

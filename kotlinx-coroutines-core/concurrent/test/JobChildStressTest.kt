@@ -31,7 +31,6 @@ class JobChildStressTest : TestBase() {
      *   which immediately cancels the child.
      */
     @Test
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testChildAttachmentRacingWithCancellation() = runTest {
         val barrier = TwoPhaseBarrier(3)
         repeat(N_ITERATIONS) {

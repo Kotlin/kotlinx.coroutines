@@ -249,15 +249,14 @@ private suspend fun <T> ObservableSource<T & Any>.awaitOne(
             }
         }
 
-        @Suppress("UNCHECKED_CAST")
         override fun onComplete() {
             if (seenValue) {
-                if (cont.isActive) cont.resume(value as T)
+                if (cont.isActive) cont.resume(value)
                 return
             }
             when {
                 mode == Mode.FIRST_OR_DEFAULT -> {
-                    cont.resume(default as T)
+                    cont.resume(default)
                 }
                 cont.isActive -> {
                     cont.resumeWithException(NoSuchElementException("No value received via onNext for $mode"))
@@ -270,4 +269,3 @@ private suspend fun <T> ObservableSource<T & Any>.awaitOne(
         }
     })
 }
-

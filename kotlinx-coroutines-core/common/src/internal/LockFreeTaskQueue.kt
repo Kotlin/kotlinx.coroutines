@@ -190,7 +190,6 @@ internal class LockFreeTaskQueueCore<E : Any>(
                 // Single-consumer queue goes to slow-path for remove in case of interference
                 var cur = this
                 while (true) {
-                    @Suppress("UNUSED_VALUE")
                     cur = cur.removeSlowPath(head, newHead) ?: return element
                 }
             }
@@ -269,7 +268,6 @@ internal class LockFreeTaskQueueCore<E : Any>(
     // Internal because of inlining
     internal class Placeholder(@JvmField val index: Int)
 
-    @Suppress("PrivatePropertyName", "MemberVisibilityCanBePrivate")
     internal companion object {
         const val INITIAL_CAPACITY = 8
 

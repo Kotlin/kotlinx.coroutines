@@ -22,20 +22,20 @@ class AtomicCancellationTest : TestBase() {
         finish(4)
     }
 
-    @Suppress("UNUSED_VARIABLE")
     @Test
     fun testSelectSendCancellable() = runBlocking {
         expect(1)
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            val result = select<String> { // suspends
-                channel.onSend(42) {
-                    expect(4)
-                    "OK"
+            throw assertFailsWith<CancellationException> {
+                select { // suspends
+                    channel.onSend(42) {
+                        expect(4)
+                        "OK"
+                    }
                 }
             }
-            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         assertEquals(42, channel.receive()) // will schedule sender for further execution
@@ -50,8 +50,9 @@ class AtomicCancellationTest : TestBase() {
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            assertEquals(42, channel.receive()) // suspends
-            expectUnreached() // should NOT execute because of cancellation
+            throw assertFailsWith<CancellationException> {
+                assertEquals(42, channel.receive()) // suspends
+            }
         }
         expect(3)
         channel.send(42) // will schedule receiver for further execution
@@ -66,14 +67,15 @@ class AtomicCancellationTest : TestBase() {
         val channel = Channel<Int>()
         val job = launch(start = CoroutineStart.UNDISPATCHED) {
             expect(2)
-            val result = select<String> { // suspends
-                channel.onReceive {
-                    assertEquals(42, it)
-                    expect(4)
-                    "OK"
+            throw assertFailsWith<CancellationException> {
+                select { // suspends
+                    channel.onReceive {
+                        assertEquals(42, it)
+                        expect(4)
+                        "OK"
+                    }
                 }
             }
-            expectUnreached() // should NOT execute because of cancellation
         }
         expect(3)
         channel.send(42) // will schedule receiver for further execution

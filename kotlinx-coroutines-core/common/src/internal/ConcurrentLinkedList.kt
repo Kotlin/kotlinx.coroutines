@@ -37,7 +37,7 @@ internal fun <S : Segment<S>> S.findSegmentInternal(
 /**
  * Returns `false` if the segment `to` is logically removed, `true` on a successful update.
  */
-@Suppress("NOTHING_TO_INLINE", "RedundantNullableReturnType") // Must be inline because it is an AtomicRef extension
+@Suppress("NOTHING_TO_INLINE") // Must be inline because it is an AtomicRef extension
 internal inline fun <S : Segment<S>> AtomicRef<S>.moveForward(to: S): Boolean = loop { cur ->
     if (cur.id >= to.id) return true
     if (!to.tryIncPointers()) return false

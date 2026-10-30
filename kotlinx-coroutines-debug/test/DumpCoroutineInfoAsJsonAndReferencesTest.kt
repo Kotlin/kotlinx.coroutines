@@ -1,4 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 package kotlinx.coroutines.debug
 
 import com.google.gson.*
@@ -31,8 +30,9 @@ class DumpCoroutineInfoAsJsonAndReferencesTest : DebugTestBase() {
 
     @Test
     fun testDumpWithNoCoroutines() {
+        @Suppress("INVISIBLE_REFERENCE")
         val dumpResult = DebugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences()
-        assertEquals(dumpResult.size, 4)
+        assertEquals(4, dumpResult.size)
         assertIsEmptyArray(dumpResult[1])
         assertIsEmptyArray(dumpResult[2])
         assertIsEmptyArray(dumpResult[3])
@@ -56,10 +56,11 @@ class DumpCoroutineInfoAsJsonAndReferencesTest : DebugTestBase() {
         delay(Long.MAX_VALUE)
     }
 
+    @Suppress("INVISIBLE_REFERENCE")
     private fun verifyDump() {
         val dumpResult = DebugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences()
 
-        assertEquals(dumpResult.size, 4)
+        assertEquals(4, dumpResult.size)
 
         val coroutinesInfoAsJsonString = dumpResult[0]
         val lastObservedThreads = dumpResult[1]

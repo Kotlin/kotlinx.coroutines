@@ -88,7 +88,6 @@ internal class DispatchedContinuation<in T>(
      * Claims the continuation for [suspendCancellableCoroutineReusable] block,
      * so all cancellations will be postponed.
      */
-    @Suppress("UNCHECKED_CAST")
     internal fun claimReusableCancellableContinuation(): CancellableContinuationImpl<T>? {
         /*
          * Transitions:
@@ -108,6 +107,7 @@ internal class DispatchedContinuation<in T>(
                 // potentially competing with cancel
                 state is CancellableContinuationImpl<*> -> {
                     if (_reusableCancellableContinuation.compareAndSet(state, REUSABLE_CLAIMED)) {
+                        @Suppress("UNCHECKED_CAST")
                         return state as CancellableContinuationImpl<T>
                     }
                 }

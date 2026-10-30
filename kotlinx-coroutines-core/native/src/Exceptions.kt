@@ -8,7 +8,7 @@ package kotlinx.coroutines
  */
 public actual typealias CancellationException = kotlin.coroutines.cancellation.CancellationException
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 @kotlin.internal.LowPriorityInOverloadResolution
 public actual fun CancellationException(message: String?, cause: Throwable?): CancellationException =
     CancellationException(message, cause)

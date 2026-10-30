@@ -1,6 +1,5 @@
 @file:JvmMultifileClass
 @file:JvmName("ChannelsKt")
-@file:Suppress("unused")
 
 package kotlinx.coroutines.channels
 
@@ -66,7 +65,6 @@ public suspend fun <E> ReceiveChannel<E>.elementAt(index: Int): E = consume {
         throw IndexOutOfBoundsException("ReceiveChannel doesn't contain element at index $index.")
     var count = 0
     for (element in this) {
-        @Suppress("UNUSED_CHANGED_VALUE") // KT-47628
         if (index == count++)
             return element
     }
@@ -191,7 +189,7 @@ public fun <E> ReceiveChannel<E>.drop(n: Int, context: CoroutineContext = Dispat
         require(n >= 0) { "Requested element count $n is less than zero." }
         var remaining: Int = n
         if (remaining > 0)
-            for (e in this@drop) {
+            for (_ in this@drop) {
                 remaining--
                 if (remaining == 0)
                     break

@@ -1,5 +1,3 @@
-@file:Suppress("UNUSED")
-
 package kotlinx.coroutines.debug.internal
 
 import java.io.Serializable

@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalContracts::class)
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -97,6 +96,7 @@ public fun SupervisorJob0(parent: Job? = null) : Job = SupervisorJob(parent)
  * See the corresponding section in the [coroutineScope] documentation for details.
  */
 @IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
+@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 public suspend fun <R> supervisorScope(block: suspend CoroutineScope.() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

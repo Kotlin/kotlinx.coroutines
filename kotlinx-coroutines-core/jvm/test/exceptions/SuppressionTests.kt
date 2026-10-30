@@ -2,13 +2,11 @@ package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.testing.exceptions.*
 import java.io.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
 class SuppressionTests : TestBase() {
     @Test
     fun testNotificationsWithException() = runTest {

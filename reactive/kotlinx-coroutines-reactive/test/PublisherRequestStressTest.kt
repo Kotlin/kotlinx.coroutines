@@ -24,7 +24,6 @@ import kotlin.random.*
  * the flow and a single requesting thread works on the subscriber's side to periodically request more
  * values when the number of items requested drops below the threshold.
  */
-@Suppress("ReactiveStreamsSubscriberImplementation")
 class PublisherRequestStressTest : TestBase() {
 
     private val testDurationSec = 3 * stressTestMultiplier
@@ -66,7 +65,7 @@ class PublisherRequestStressTest : TestBase() {
 
         val publisher = mtFlow().asPublisher()
         var error = false
-        
+
         publisher.subscribe(object : Subscriber<Long> {
             private var demand = 0L // only updated from reqPool
 
@@ -133,8 +132,8 @@ class PublisherRequestStressTest : TestBase() {
     }
 
     private suspend fun aWait(): Long = suspendCancellableCoroutine { cont ->
-        emitPool.execute(Runnable {
+        emitPool.execute {
             cont.resume(nextValue.getAndIncrement())
-        })
+        }
     }
 }

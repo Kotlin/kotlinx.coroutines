@@ -12,7 +12,6 @@ import kotlin.time.*
  * @param timeMillis timeout time in milliseconds.
  */
 @ExperimentalCoroutinesApi
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public fun <R> SelectBuilder<R>.onTimeout(timeMillis: Long, block: suspend () -> R): Unit =
     OnTimeout(timeMillis).selectClause.invoke(block)
 

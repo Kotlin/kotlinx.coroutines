@@ -53,7 +53,6 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * The context of this coroutine that includes this coroutine as a [Job].
      */
-    @Suppress("LeakingThis")
     public final override val context: CoroutineContext = parentContext + this
 
     /**
@@ -75,7 +74,7 @@ public abstract class AbstractCoroutine<in T>(
      *
      * **Note:** the state of the coroutine might not be final yet in this function and should not be queried.
      * You can use [completionCause] and [completionCauseHandled] to recover parameters that we passed
-     * to this `onCancelled` invocation only when [isCompleted] returns `true`.
+     * to this `onCancelled` invocation only when [Job.isCompleted] returns `true`.
      *
      * @param cause The cancellation (failure) cause
      * @param handled `true` if the exception was handled by parent (always `true` when it is a [CancellationException])
@@ -84,11 +83,11 @@ public abstract class AbstractCoroutine<in T>(
 
     override fun cancellationExceptionMessage(): String = "$classSimpleName was cancelled"
 
-    @Suppress("UNCHECKED_CAST")
     protected final override fun onCompletionInternal(state: Any?) {
         if (state is CompletedExceptionally)
             onCancelled(state.cause, state.handled)
         else
+            @Suppress("UNCHECKED_CAST")
             onCompleted(state as T)
     }
 
@@ -124,7 +123,7 @@ public abstract class AbstractCoroutine<in T>(
     /**
      * Starts this coroutine with the given code [block] and [start] strategy.
      * This function shall be invoked at most once on this coroutine.
-     * 
+     *
      * - [DEFAULT] uses [startCoroutineCancellable].
      * - [ATOMIC] uses [startCoroutine].
      * - [UNDISPATCHED] uses [startCoroutineUndispatched].

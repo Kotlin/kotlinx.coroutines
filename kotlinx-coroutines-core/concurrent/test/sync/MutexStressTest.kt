@@ -34,7 +34,6 @@ class MutexStressTest : TestBase() {
         }
     }
 
-    @Suppress("SuspendFunctionOnCoroutineScope")
     private suspend fun CoroutineScope.testBody(dispatcher: CoroutineDispatcher) {
         val k = 100
         var shared = 0
@@ -82,7 +81,7 @@ class MutexStressTest : TestBase() {
         }
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION") // onLock
     @Test
     fun stressUnlockCancelRaceWithSelect() = runTest {
         val n = 10_000 * stressTestMultiplier

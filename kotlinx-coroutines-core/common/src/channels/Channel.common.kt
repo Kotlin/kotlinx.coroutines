@@ -761,7 +761,7 @@ public expect interface ReceiveChannel<out E> {
      *
      * @suppress **Deprecated**
      */
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_REFERENCE")
     @LowPriorityInOverloadResolution
     @Deprecated(
         message = "Deprecated in favor of 'receiveCatching'. " +

@@ -19,7 +19,6 @@ class CancellableContinuationResumeCloseStressTest : TestBase() {
     private var returnedOk = false
 
     @Test
-    @Suppress("BlockingMethodInNonBlockingContext")
     fun testStress() = runTest {
         repeat(nRepeats) {
             closed.value = false
@@ -44,6 +43,7 @@ class CancellableContinuationResumeCloseStressTest : TestBase() {
         returnedOk = true
     }
 
+    @Suppress("BlockingMethodInNonBlockingContext") // TODO: report
     private suspend fun resumeClose() = suspendCancellableCoroutine<String> { cont ->
         dispatcher.executor.execute {
             startBarrier.await() // (2) resume at the same time

@@ -1,11 +1,7 @@
-// Need InlineOnly for efficient bytecode on Android
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.internal.*
 import java.util.concurrent.atomic.*
-import kotlin.internal.InlineOnly
 
 /**
  * Name of the property that controls coroutine debugging.
@@ -86,7 +82,9 @@ internal fun resetCoroutineId() {
     COROUTINE_ID.set(0)
 }
 
-@InlineOnly
+// Need InlineOnly for efficient bytecode on Android
+@Suppress("INVISIBLE_REFERENCE")
+@kotlin.internal.InlineOnly
 internal actual inline fun assert(value: () -> Boolean) {
     if (ASSERTIONS_ENABLED && !value()) throw AssertionError()
 }

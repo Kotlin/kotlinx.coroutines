@@ -10,7 +10,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 @Deprecated("'launch' can not be called without the corresponding coroutine scope. " +
     "Consider wrapping 'launch' in 'coroutineScope { }', using 'runBlocking { }', " +
     "or using some other 'CoroutineScope'", level = DeprecationLevel.ERROR)
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 @kotlin.internal.LowPriorityInOverloadResolution
 public fun launch(
     context: CoroutineContext = EmptyCoroutineContext,
@@ -263,7 +263,7 @@ public fun CoroutineScope.launch(
 @Deprecated("'async' can not be called without the corresponding coroutine scope. " +
     "Consider wrapping 'async' in 'coroutineScope { }', using 'runBlocking { }', " +
     "or using some other 'CoroutineScope'", level = DeprecationLevel.ERROR)
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 @kotlin.internal.LowPriorityInOverloadResolution
 public fun <T> async(
     context: CoroutineContext = EmptyCoroutineContext,

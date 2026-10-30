@@ -31,11 +31,10 @@ public class LaunchFlowBuilder<T> {
         onEach = action
     }
 
-    public inline fun <reified T : Throwable> catch(noinline action: suspend CoroutineScope.(T) -> Unit) {
+    public fun catch(action: suspend CoroutineScope.(Throwable) -> Unit) {
         check(onEach != null) { "onEach block should be registered first" }
         check(finally == null) { "exceptionHandlers block should be registered before finally block" }
-        @Suppress("UNCHECKED_CAST")
-        exceptionHandlers[T::class] = action as Handler<Throwable>
+        exceptionHandlers[Throwable::class] = action
     }
 
     public fun finally(action: suspend CoroutineScope.(cause: Throwable?) -> Unit) {

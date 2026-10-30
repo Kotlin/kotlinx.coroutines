@@ -20,7 +20,7 @@ internal fun <T> Publisher<T>.toChannel(request: Int = 1): ReceiveChannel<T> {
     return channel
 }
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "SubscriberImplementation")
+@Suppress("INVISIBLE_REFERENCE")
 private class SubscriptionChannel<T>(
     private val request: Int
 ) : BufferedChannel<T>(capacity = Channel.UNLIMITED), Subscriber<T> {
@@ -35,7 +35,6 @@ private class SubscriptionChannel<T>(
     private val _requested = atomic(0)
 
     // --------------------- BufferedChannel overrides -------------------------------
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveEnqueued() {
         _requested.loop { wasRequested ->
             val subscription = _subscription.value
@@ -52,12 +51,10 @@ private class SubscriptionChannel<T>(
         }
     }
 
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onReceiveDequeued() {
         _requested.incrementAndGet()
     }
 
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.cancel() // cancel exactly once
     }

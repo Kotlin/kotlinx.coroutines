@@ -9,7 +9,7 @@ class CoreAgentTest {
     @Test
     fun testAgentDumpsCoroutines() = runBlocking {
         val baos = ByteArrayOutputStream()
-        @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+        @Suppress("INVISIBLE_REFERENCE")
         DebugProbesImpl.dumpCoroutines(PrintStream(baos))
         // if the agent works, then dumps should contain something,
         // at least the fact that this test is running.

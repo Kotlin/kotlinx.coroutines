@@ -11,7 +11,6 @@ import java.security.*
  * This class is loaded if and only if kotlinx-coroutines-core was used as -javaagent argument,
  * but Android complains anyway (java.lang.instrument.*), so we suppress all lint checks here
  */
-@Suppress("unused")
 @SuppressLint("all")
 @IgnoreJRERequirement // Never touched on Android
 internal object AgentPremain {
@@ -22,7 +21,6 @@ internal object AgentPremain {
     }
 
     @JvmStatic
-    @Suppress("UNUSED_PARAMETER")
     fun premain(args: String?, instrumentation: Instrumentation) {
         AgentInstallationType.isInstalledStatically = true
         instrumentation.addTransformer(DebugProbesTransformer)
@@ -50,7 +48,9 @@ internal object AgentPremain {
              * You can verify its content either by using javap on it or looking at out integration test module.
              */
             AgentInstallationType.isInstalledStatically = true
-            return loader.getResourceAsStream("DebugProbesKt.bin").readBytes()
+            val debugProbesResource = loader.getResourceAsStream("DebugProbesKt.bin")
+                ?: error("Could not find DebugProbesKt.bin in the jar resources")
+            return debugProbesResource.readBytes()
         }
     }
 
@@ -65,7 +65,7 @@ internal object AgentPremain {
                     println("Cannot perform coroutines dump, debug probes are disabled")
                 }
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             // Do nothing, signal cannot be installed, e.g. because we are on Windows
         }
     }

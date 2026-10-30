@@ -3,7 +3,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-@Suppress("RedundantAsync")
 class ThreadLocalTest : TestBase() {
     private val stringThreadLocal = ThreadLocal<String?>()
     private val intThreadLocal = ThreadLocal<Int?>()

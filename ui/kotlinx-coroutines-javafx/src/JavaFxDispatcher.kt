@@ -14,7 +14,6 @@ import kotlin.coroutines.*
 /**
  * Dispatches execution onto JavaFx application thread and provides native [delay] support.
  */
-@Suppress("unused")
 public val Dispatchers.JavaFx: JavaFxDispatcher
     get() = kotlinx.coroutines.javafx.JavaFx
 

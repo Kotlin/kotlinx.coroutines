@@ -57,7 +57,6 @@ internal actual fun threadContextElements(context: CoroutineContext): Any = cont
 // countOrElement is pre-cached in dispatched continuation
 // returns NO_THREAD_ELEMENTS if the contest does not have any ThreadContextElements
 internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?): Any? {
-    @Suppress("NAME_SHADOWING")
     val countOrElement = countOrElement ?: threadContextElements(context)
     @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
     return when {

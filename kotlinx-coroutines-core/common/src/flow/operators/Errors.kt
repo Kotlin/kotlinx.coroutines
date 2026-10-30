@@ -143,7 +143,6 @@ public fun <T> Flow<T>.retryWhen(predicate: suspend FlowCollector<T>.(cause: Thr
     }
 
 // Return exception from upstream or null
-@Suppress("NAME_SHADOWING")
 internal suspend fun <T> Flow<T>.catchImpl(
     collector: FlowCollector<T>
 ): Throwable? {

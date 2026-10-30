@@ -39,7 +39,7 @@ public actual interface ReceiveChannel<out E> {
         throw recoverStackTrace(result.exceptionOrNull() ?: return null)
     }
 
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_REFERENCE")
     @LowPriorityInOverloadResolution
     @Deprecated(
         message = "Deprecated in favor of 'receiveCatching'. " +

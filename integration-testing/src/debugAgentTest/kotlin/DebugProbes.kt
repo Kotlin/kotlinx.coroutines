@@ -1,4 +1,4 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:Suppress("INVISIBLE_REFERENCE")
 package kotlin.coroutines.jvm.internal
 
 import kotlinx.coroutines.debug.internal.*

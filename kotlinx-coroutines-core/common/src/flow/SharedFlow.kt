@@ -274,7 +274,6 @@ public interface MutableSharedFlow<T> : SharedFlow<T>, FlowCollector<T> {
  *   the new value.** In the absence of subscribers only the most recent [replay] values are stored and
  *   the buffer overflow behavior is never triggered and has no effect.
  */
-@Suppress("FunctionName", "UNCHECKED_CAST")
 public fun <T> MutableSharedFlow(
     replay: Int = 0,
     extraBufferCapacity: Int = 0,
@@ -421,7 +420,6 @@ internal open class SharedFlowImpl<T>(
         emitSuspend(value)
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun tryEmitLocked(value: T): Boolean {
         // Fast path without collectors -> no buffering
         if (nCollectors == 0) return tryEmitNoCollectorsLocked(value) // always returns true

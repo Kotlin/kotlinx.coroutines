@@ -1,6 +1,5 @@
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 
@@ -68,7 +67,7 @@ internal inline fun <T, R> Flow<T>.unsafeTransform(
 public fun <T> Flow<T>.onStart(
     action: suspend FlowCollector<T>.() -> Unit
 ): Flow<T> = unsafeFlow { // Note: unsafe flow is used here, but safe collector is used to invoke start action
-    val safeCollector = SafeCollector<T>(this, currentCoroutineContext())
+    val safeCollector = SafeCollector(this, currentCoroutineContext())
     try {
         safeCollector.action()
     } finally {

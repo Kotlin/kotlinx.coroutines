@@ -92,8 +92,7 @@ actual open class TestBase(
             checkFinishCall()
         }
         lastTestPromise = result
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        return result as MyPromise
+        return result.unsafeCast<MyPromise>()
     }
 }
 

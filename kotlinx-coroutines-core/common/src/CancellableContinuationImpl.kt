@@ -358,7 +358,11 @@ internal open class CancellableContinuationImpl<in T>(
     override fun resumeWith(result: Result<T>) =
         resumeImpl(result.toState(this), resumeMode)
 
-    @Suppress("OVERRIDE_DEPRECATION")
+    @Deprecated(
+        "Use the overload that also accepts the `value` and the coroutine context in lambda",
+        level = DeprecationLevel.WARNING,
+        replaceWith = ReplaceWith("resume(value) { cause, _, _ -> onCancellation(cause) }")
+    )
     override fun resume(value: T, onCancellation: ((cause: Throwable) -> Unit)?) =
         resumeImpl(value, resumeMode, onCancellation?.let { { cause, _, _ -> onCancellation(cause) } })
 

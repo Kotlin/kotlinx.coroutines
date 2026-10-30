@@ -89,8 +89,7 @@ private class UnconfinedTestDispatcherImpl(
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
 
-    // do not remove the INVISIBLE_REFERENCE and INVISIBLE_SETTER suppressions: required in K2
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "INVISIBLE_SETTER")
+    @Suppress("INVISIBLE_REFERENCE")
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         checkSchedulerInContext(scheduler, context)
         scheduler.sendDispatchEvent(context)

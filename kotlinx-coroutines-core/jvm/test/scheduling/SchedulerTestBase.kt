@@ -1,5 +1,3 @@
-@file:Suppress("UNUSED_VARIABLE")
-
 package kotlinx.coroutines.scheduling
 
 import kotlinx.coroutines.testing.*

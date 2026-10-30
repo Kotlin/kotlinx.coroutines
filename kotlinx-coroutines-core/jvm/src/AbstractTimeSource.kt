@@ -1,5 +1,5 @@
 // Need InlineOnly for efficient bytecode on Android
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "NOTHING_TO_INLINE")
+@file:Suppress("INVISIBLE_REFERENCE", "NOTHING_TO_INLINE")
 
 package kotlinx.coroutines
 

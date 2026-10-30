@@ -1,5 +1,3 @@
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
-
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
@@ -19,6 +17,7 @@ internal expect inline fun <T> synchronizedImpl(lock: SynchronizedObject, block:
  */
 @OptIn(ExperimentalContracts::class)
 @InternalCoroutinesApi
+@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 public inline fun <T> synchronized(lock: SynchronizedObject, block: () -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

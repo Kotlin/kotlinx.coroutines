@@ -1,10 +1,7 @@
-@file:Suppress("DeferredResultUnused")
-
 package kotlinx.coroutines.exceptions
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
-import org.junit.Test
 import kotlin.test.*
 
 class StackTraceRecoveryNestedTest : TestBase() {
@@ -42,9 +39,9 @@ class StackTraceRecoveryNestedTest : TestBase() {
                     } catch (e: RecoverableTestException) {
                         expect(7)
                         e.verifyException(
-                            "await\$suspendImpl",
+                            $$"await$suspendImpl",
                             "awaitNested",
-                            "\$testNestedAsync\$1\$rootAsync\$1\$2\$2.invokeSuspend"
+                            $$"$testNestedAsync$1$rootAsync$1$2$2.invokeSuspend"
                         )
                         // Just rethrow it
                         throw e

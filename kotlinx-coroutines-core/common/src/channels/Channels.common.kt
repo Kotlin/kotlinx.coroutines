@@ -33,9 +33,9 @@ internal const val DEFAULT_CLOSE_MESSAGE = "Channel was closed"
     ReplaceWith("receiveCatching().getOrNull()"),
     DeprecationLevel.HIDDEN
 ) // Warning since 1.5.0, ERROR in 1.6.0, HIDDEN in 1.7.0
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER", "DEPRECATION_ERROR")
+@Suppress("DEPRECATION_ERROR")
 public suspend fun <E : Any> ReceiveChannel<E>.receiveOrNull(): E? {
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @Suppress("INVISIBLE_REFERENCE")
     return (this as ReceiveChannel<E?>).receiveOrNull()
 }
 

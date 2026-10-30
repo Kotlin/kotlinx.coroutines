@@ -6,9 +6,7 @@ import kotlinx.coroutines.internal.ScopeCoroutine
 import java.io.*
 import java.lang.StackTraceElement
 import java.text.*
-import java.util.concurrent.locks.*
 import kotlin.collections.ArrayList
-import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.coroutines.jvm.internal.CoroutineStackFrame
 import kotlin.synchronized
@@ -34,7 +32,7 @@ internal object DebugProbesImpl {
      */
     val isInstalled: Boolean
         // IDEA depended on "internal val isInstalled", thus the mangling. Public + JvmName in order to make this getter part of the ABI
-        @JvmName("isInstalled\$kotlinx_coroutines_debug")
+        @JvmName($$"isInstalled$kotlinx_coroutines_debug")
         get() = installations.value > 0
 
     // To sort coroutines by creation order, used as a unique id
@@ -317,7 +315,6 @@ internal object DebugProbesImpl {
      * Internal (JVM-public) method used by IDEA debugger as of 1.4-M3, must be kept binary-compatible. See KTIJ-24102.
      * It is similar to [enhanceStackTraceWithThreadDumpImpl], but uses debugger-facing [DebugCoroutineInfo] type.
      */
-    @Suppress("unused")
     fun enhanceStackTraceWithThreadDump(
         info: DebugCoroutineInfo,
         coroutineTrace: List<StackTraceElement>
@@ -489,7 +486,7 @@ internal object DebugProbesImpl {
     private fun Continuation<*>.owner(): CoroutineOwner<*>? = (this as? CoroutineStackFrame)?.owner()
 
     private tailrec fun CoroutineStackFrame.owner(): CoroutineOwner<*>? =
-        if (this is CoroutineOwner<*>) this else callerFrame?.owner()
+        this as? CoroutineOwner<*> ?: callerFrame?.owner()
 
     // Not guarded by the lock at all, does not really affect consistency
     internal fun <T> probeCoroutineCreated(completion: Continuation<T>): Continuation<T> {

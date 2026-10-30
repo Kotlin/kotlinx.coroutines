@@ -30,7 +30,7 @@ class PublisherAsFlowTest : TestBase() {
                 ++onNext
                 throw RuntimeException()
             }
-            catch<Throwable> {
+            catch {
                 ++onError
             }
         }.join()

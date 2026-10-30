@@ -25,7 +25,6 @@ internal expect class WorkaroundAtomicReference<V>(value: V) {
     public fun compareAndSet(expected: V, value: V): Boolean
 }
 
-@Suppress("UNUSED_PARAMETER", "EXTENSION_SHADOWED_BY_MEMBER")
 internal var <T> WorkaroundAtomicReference<T>.value: T
     get() = this.get()
     set(value) = this.set(value)

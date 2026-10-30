@@ -1,10 +1,8 @@
-@file:Suppress("DEPRECATION", "DEPRECATION_ERROR")
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines.channels
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel.Factory.CONFLATED
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.intrinsics.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
@@ -69,14 +67,14 @@ private open class BroadcastCoroutine<E>(
     override val channel: SendChannel<E>
         get() = this
 
-    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
+    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING")
     @Deprecated(level = DeprecationLevel.HIDDEN, message = "Since 1.2.0, binary compatibility with versions <= 1.1.x")
     final override fun cancel(cause: Throwable?): Boolean {
         cancelInternal(cause ?: defaultCancellationException())
         return true
     }
 
-    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING") // do not remove the MULTIPLE_DEFAULTS suppression: required in K2
+    @Suppress("MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_DEPRECATION_WARNING")
     final override fun cancel(cause: CancellationException?) {
         cancelInternal(cause ?: defaultCancellationException())
     }

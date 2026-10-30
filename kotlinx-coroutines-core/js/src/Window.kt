@@ -6,7 +6,6 @@ import org.w3c.dom.Window
  * Converts an instance of [Window] to an implementation of [CoroutineDispatcher].
  */
 public fun Window.asCoroutineDispatcher(): CoroutineDispatcher =
-    @Suppress("UnsafeCastFromDynamic")
     asDynamic().coroutineDispatcher ?: WindowDispatcher(this).also {
         asDynamic().coroutineDispatcher = it
     }
@@ -22,7 +21,6 @@ public suspend fun Window.awaitAnimationFrame(): Double = suspendCancellableCoro
 }
 
 private fun Window.asWindowAnimationQueue(): WindowAnimationQueue =
-    @Suppress("UnsafeCastFromDynamic")
     asDynamic().coroutineAnimationQueue ?: WindowAnimationQueue(this).also {
         asDynamic().coroutineAnimationQueue = it
     }

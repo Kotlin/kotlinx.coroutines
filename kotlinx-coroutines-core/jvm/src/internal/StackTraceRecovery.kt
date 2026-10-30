@@ -1,5 +1,3 @@
-@file:Suppress("UNCHECKED_CAST")
-
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.*
@@ -120,6 +118,7 @@ private fun <E : Throwable> createFinalException(cause: E, result: E, resultStac
  * Find initial cause of the exception without restored stacktrace.
  * Returns intermediate stacktrace as well in order to avoid excess cloning of array as an optimization.
  */
+@Suppress("UNCHECKED_CAST")
 private fun <E : Throwable> E.causeAndStacktrace(): Pair<E, Array<StackTraceElement>> {
     val cause = cause
     return if (cause != null && cause.javaClass == javaClass) {
@@ -202,7 +201,6 @@ internal actual typealias CoroutineStackFrame = kotlin.coroutines.jvm.internal.C
 
 internal actual typealias StackTraceElement = java.lang.StackTraceElement
 
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal actual fun Throwable.initCause(cause: Throwable) {
     // Resolved to member, verified by test
     initCause(cause)

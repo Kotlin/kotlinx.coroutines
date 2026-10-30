@@ -1,6 +1,5 @@
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("UNCHECKED_CAST")
 
 package kotlinx.coroutines.flow
 
@@ -34,12 +33,13 @@ public inline fun <reified R> Flow<*>.filterIsInstance(): Flow<R> = filter { it 
 /**
  * Returns a flow containing only values that are instances of the given [klass].
  */
+@Suppress("UNCHECKED_CAST")
 public fun <R : Any> Flow<*>.filterIsInstance(klass: KClass<R>): Flow<R> = filter { klass.isInstance(it) } as Flow<R>
 
 /**
  * Returns a flow containing only values of the original flow that are not null.
  */
-public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform<T?, T> { value ->
+public fun <T: Any> Flow<T?>.filterNotNull(): Flow<T> = transform { value ->
     if (value != null) return@transform emit(value)
 }
 
@@ -124,6 +124,7 @@ public fun <T> Flow<T>.runningReduce(operation: suspend (accumulator: T, value: 
         accumulator = if (accumulator === NULL) {
             value
         } else {
+            @Suppress("UNCHECKED_CAST")
             operation(accumulator as T, value)
         }
         emit(accumulator)

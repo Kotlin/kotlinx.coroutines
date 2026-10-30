@@ -1,5 +1,3 @@
-@file:Suppress("UNCHECKED_CAST")
-
 package kotlinx.coroutines.internal
 
 import kotlinx.coroutines.assert
@@ -11,6 +9,7 @@ import kotlin.jvm.*
  * Cannot be parametrized with `List<*>`.
  */
 @JvmInline
+@Suppress("UNCHECKED_CAST")
 internal value class InlineList<E>(private val holder: Any? = null) {
     operator fun plus(element: E): InlineList<E>  {
         assert { element !is List<*> } // Lists are prohibited

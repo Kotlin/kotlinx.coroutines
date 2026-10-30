@@ -67,7 +67,6 @@ private class DistinctFlowImpl<T>(
         var previousKey: Any? = NULL
         upstream.collect { value ->
             val key = keySelector(value)
-            @Suppress("UNCHECKED_CAST")
             if (previousKey === NULL || !areEquivalent(previousKey, key)) {
                 previousKey = key
                 collector.emit(value)

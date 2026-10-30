@@ -272,13 +272,13 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun enqueueImpl(task: Runnable): Boolean {
         _queue.loop { queue ->
             if (isCompleted) return false // fail fast if already completed, may still add, but queues will close
             when (queue) {
                 null -> if (_queue.compareAndSet(null, task)) return true
                 is Queue<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     when ((queue as Queue<Runnable>).addLast(task)) {
                         Queue.ADD_SUCCESS -> return true
                         Queue.ADD_CLOSED -> return false
@@ -299,13 +299,12 @@ internal abstract class EventLoopImplBase: EventLoopImplPlatform(), Delay {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun dequeue(): Runnable? {
         _queue.loop { queue ->
             when (queue) {
                 null -> return null
                 is Queue<*> -> {
-                    val result = (queue as Queue<Runnable>).removeFirstOrNull()
+                    val result = queue.removeFirstOrNull()
                     if (result !== Queue.REMOVE_FROZEN) return result as Runnable?
                     _queue.compareAndSet(queue, queue.next())
                 }

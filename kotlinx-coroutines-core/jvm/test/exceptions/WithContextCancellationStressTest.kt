@@ -20,7 +20,6 @@ class WithContextCancellationStressTest : TestBase() {
     }
 
     @Test
-    @Suppress("DEPRECATION")
     fun testConcurrentFailure() = runBlocking {
         var eCnt = 0
         var e1Cnt = 0

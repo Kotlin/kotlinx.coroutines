@@ -8,7 +8,6 @@ import org.junit.*
  * This is fast but fragile version of [DebugLeaksStressTest] that check reachability of a captured object
  * in [DebugProbesImpl] via [FieldWalker].
  */
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 class DebugLeaksTest : DebugTestBase() {
     private class Captured
 
@@ -49,6 +48,7 @@ class DebugLeaksTest : DebugTestBase() {
 
     private suspend fun suspendForever() = suspendCancellableCoroutine<Unit> {  }
 
+    @Suppress("INVISIBLE_REFERENCE")
     private fun assertNoCapturedReference() {
         FieldWalker.assertReachableCount(0, DebugProbesImpl, rootStatics = true) { it is Captured }
     }

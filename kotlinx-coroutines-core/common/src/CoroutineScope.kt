@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalContracts::class)
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -557,7 +556,6 @@ public fun MainScope(): CoroutineScope = ContextScope(SupervisorJob() + Dispatch
  *
  * @see CoroutineScope.ensureActive for a function that throws an exception instead of returning a boolean value.
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public val CoroutineScope.isActive: Boolean
     get() = coroutineContext[Job]?.isActive ?: true
 
@@ -839,6 +837,7 @@ public object GlobalScope : CoroutineScope {
  * before the first suspension point in [use] is not allowed and may lead to crashes.
  */
 @IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
+@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 public suspend fun <R> coroutineScope(block: suspend CoroutineScope.() -> R): R {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

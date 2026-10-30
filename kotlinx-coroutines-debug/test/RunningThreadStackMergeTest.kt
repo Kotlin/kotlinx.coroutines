@@ -166,7 +166,7 @@ class RunningThreadStackMergeTest : DebugTestBase() {
     }
 
     @Test // IDEA-specific debugger API test
-    @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+    @Suppress("INVISIBLE_REFERENCE")
     fun testActiveThread() = runBlocking<Unit> {
         launchCoroutine()
         awaitCoroutineStarted()

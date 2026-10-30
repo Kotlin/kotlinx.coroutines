@@ -12,7 +12,7 @@ private typealias Ctor = (Throwable) -> Throwable?
 private val ctorCache = try {
     if (ANDROID_DETECTED) WeakMapCtorCache
     else ClassValueCtorCache
-} catch (e: Throwable) {
+} catch (_: Throwable) {
     // Fallback on Java 6 or exotic setups
     WeakMapCtorCache
 }
@@ -125,7 +125,7 @@ private object WeakMapCtorCache : CtorCache() {
 @IgnoreJreRequirement
 private object ClassValueCtorCache : CtorCache() {
     private val cache = object : ClassValue<Ctor>() {
-        override fun computeValue(type: Class<*>?): Ctor {
+        override fun computeValue(type: Class<*>): Ctor {
             @Suppress("UNCHECKED_CAST")
             return createConstructor(type as Class<out Throwable>)
         }

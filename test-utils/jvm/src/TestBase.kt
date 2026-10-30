@@ -223,12 +223,12 @@ private object PrintlnStrategy {
     }
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 fun initPoolsBeforeTest() {
     DefaultScheduler.usePrivateScheduler()
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 fun shutdownPoolsAfterTest() {
     DefaultScheduler.shutdown(SHUTDOWN_TIMEOUT)
     DefaultExecutor.shutdownForTests(SHUTDOWN_TIMEOUT)

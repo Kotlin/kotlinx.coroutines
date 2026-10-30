@@ -152,7 +152,6 @@ private fun Job.setupCancellation(future: CompletableFuture<*>) {
  * The [CompletableFuture] that corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
  * is cancelled when the resulting deferred is cancelled.
  */
-@Suppress("DeferredIsResult")
 public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
     val future = toCompletableFuture() // retrieve the future
     // Fast path if already completed
@@ -202,8 +201,8 @@ public suspend fun <T> CompletionStage<T>.await(): T {
     // fast path when CompletableFuture is already done (does not suspend)
     if (future.isDone) {
         try {
-            @Suppress("UNCHECKED_CAST", "BlockingMethodInNonBlockingContext")
-            return future.get() as T
+            @Suppress("BlockingMethodInNonBlockingContext")
+            return future.get()
         } catch (e: ExecutionException) {
             throw e.cause ?: e // unwrap original cause from ExecutionException
         }

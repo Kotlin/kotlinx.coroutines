@@ -3,7 +3,6 @@ package kotlinx.coroutines
 import kotlinx.coroutines.testing.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION")
 class NonCancellableScopeTest : TestBase() {
     /** Tests that [nonCancellable] does not react to the caller coroutine having been cancelled. */
     @Test

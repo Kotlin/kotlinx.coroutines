@@ -1,4 +1,3 @@
-@file:Suppress("PrivatePropertyName")
 
 package kotlinx.coroutines.channels
 
@@ -97,7 +96,6 @@ internal open class BufferedChannel<E>(
     private val bufferEndSegment: AtomicRef<ChannelSegment<E>>
 
     init {
-        @Suppress("LeakingThis")
         val firstSegment = ChannelSegment(id = 0, prev = null, channel = this, pointers = 3)
         sendSegment = atomic(firstSegment)
         receiveSegment = atomic(firstSegment)
@@ -1398,8 +1396,7 @@ internal open class BufferedChannel<E>(
             // If so, this thread should wait in a spin-loop
             // until the flag is unset.
             if (it.ebPauseExpandBuffers) {
-                @Suppress("ControlFlowWithEmptyBody")
-                while (completedExpandBuffersAndPauseFlag.value.ebPauseExpandBuffers) {}
+                while (completedExpandBuffersAndPauseFlag.value.ebPauseExpandBuffers) { /* empty */ }
             }
         }
     }
@@ -1419,8 +1416,7 @@ internal open class BufferedChannel<E>(
         if (isRendezvousOrUnlimited) return
         // Wait in an infinite loop until the number of started
         // buffer expansion calls become not lower than the cell index.
-        @Suppress("ControlFlowWithEmptyBody")
-        while (bufferEndCounter <= globalIndex) {}
+        while (bufferEndCounter <= globalIndex) { /* empty */ }
         // Now it is guaranteed that the `expandBuffer()` call that
         // should process the required cell has been started.
         // Wait in a fixed-size spin-loop until the numbers of
@@ -1501,8 +1497,8 @@ internal open class BufferedChannel<E>(
         select.selectInRegistrationPhase(CHANNEL_CLOSED)
     }
 
-    @Suppress("UNUSED_PARAMETER", "RedundantNullableReturnType")
-    private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any? =
+    @Suppress("UNUSED_PARAMETER")
+    private fun processResultSelectSend(ignoredParam: Any?, selectResult: Any?): Any =
         if (selectResult === CHANNEL_CLOSED) throw sendException
         else this
 
@@ -2857,7 +2853,7 @@ internal class ChannelSegment<E>(id: Long, prev: ChannelSegment<E>?, channel: Bu
         // an additional marker, adding `SEGMENT_SIZE` to the value.
         val isSender = index >= SEGMENT_SIZE
         // Unwrap the index.
-        @Suppress("NAME_SHADOWING") val index = if (isSender) index - SEGMENT_SIZE else index
+        val index = if (isSender) index - SEGMENT_SIZE else index
         // Read the element, which may be needed further to call `onUndeliveredElement`.
         val element = getElement(index)
         // Update the cell state.

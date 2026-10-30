@@ -1,6 +1,6 @@
 @file:JvmMultifileClass
 @file:JvmName("JobKt")
-@file:Suppress("DEPRECATION_ERROR", "RedundantUnitReturnType")
+@file:Suppress("DEPRECATION_ERROR")
 
 package kotlinx.coroutines
 
@@ -115,7 +115,6 @@ import kotlin.jvm.*
  * All functions on this interface and on all interfaces derived from it are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
-@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface Job : CoroutineContext.Element {
     /**
@@ -582,6 +581,7 @@ public fun CoroutineContext.cancel(): Unit = cancel(null)
  * }
  * ```
  */
+@Suppress("RedundantUnitReturnType")
 public fun Job.ensureActive(): Unit {
     if (!isActive) throw getCancellationException()
 }

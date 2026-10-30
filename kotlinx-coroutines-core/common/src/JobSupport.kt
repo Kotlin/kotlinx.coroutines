@@ -1011,7 +1011,6 @@ public open class JobSupport(active: Boolean) : Job, ChildJob, ParentJob {
         }
     }
 
-    @Suppress("OverridingDeprecatedMember")
     public final override fun attachChild(child: ChildJob): ChildHandle {
         /*
          * Note: This function attaches a special ChildHandleNode node object. This node object

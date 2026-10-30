@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.reactor
 
 import kotlinx.coroutines.*
@@ -40,6 +38,7 @@ public fun <T> mono(
  * function immediately cancels its [Subscription] and resumes with [CancellationException].
  */
 public suspend fun <T> Mono<T>.awaitSingleOrNull(): T? = suspendCancellableCoroutine { cont ->
+    @Suppress("INVISIBLE_REFERENCE")
     injectCoroutineContext(cont.context).subscribe(object : Subscriber<T> {
         private var value: T? = null
 
@@ -101,6 +100,7 @@ private class MonoCoroutine<in T>(
 
     override fun onCancelled(cause: Throwable, handled: Boolean) {
         /** Cancellation exceptions that were caused by [dispose], that is, came from downstream, are not errors. */
+        @Suppress("INVISIBLE_REFERENCE")
         val unwrappedCause = unwrap(cause)
         if (getCancellationException() !== unwrappedCause || !disposed) {
             try {

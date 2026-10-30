@@ -91,7 +91,7 @@ public actual interface ReceiveChannel<out E> {
     }
 
     @JsExport.Ignore
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_REFERENCE")
     @kotlin.internal.LowPriorityInOverloadResolution
     @Deprecated(
         message = "Deprecated in favor of 'receiveCatching'. " +

@@ -5,11 +5,11 @@ import kotlinx.coroutines.*
 import kotlin.test.*
 
 // Copied from StackTraceRecoveryCustomExceptionsTest
-@Suppress("UNREACHABLE_CODE", "UNUSED", "UNUSED_PARAMETER")
 class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
 
     internal class Copyable(val customData: Int) : Throwable(), StackTraceRecoverableWithNoTypeBounds {
         // Bait
+        @Suppress("UNUSED")
         constructor(cause: Throwable) : this(42)
 
         override fun copyForStackTraceRecovery(): Throwable {
@@ -21,14 +21,13 @@ class StackTraceRecoveryStdlibInterfaceTest : TestBase() {
 
     @Test
     fun testStackTraceRecovered() = runTest {
-        try {
+        assertFailsWith<Copyable> {
             withContext(wrapperDispatcher(coroutineContext)) {
                 throw Copyable(239)
             }
-            expectUnreached()
-        } catch (e: Copyable) {
-            assertEquals(239, e.customData)
-            val cause = e.cause
+        }.apply {
+            assertEquals(239, customData)
+            val cause = cause
             assertIs<Copyable>(cause)
             assertEquals(239, cause.customData)
         }

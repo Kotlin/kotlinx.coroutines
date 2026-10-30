@@ -25,7 +25,6 @@ private typealias Node = LockFreeLinkedListNode
  *
  * @suppress **This is unstable API and it is subject to change.**
  */
-@Suppress("LeakingThis")
 @InternalCoroutinesApi
 public actual open class LockFreeLinkedListNode {
     private val _next = atomic<Any>(this) // Node | Removed | OpDescriptor

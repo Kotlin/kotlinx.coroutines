@@ -364,7 +364,6 @@ class ListenableFutureTest : TestBase() {
     fun testNoFutureCancellation() = runTest {
         val future = awaitFutureWithCancel(false)
         assertFalse(future.isCancelled)
-        @Suppress("BlockingMethodInNonBlockingContext")
         assertEquals(42, future.get())
         finish(4)
     }
@@ -454,7 +453,6 @@ class ListenableFutureTest : TestBase() {
     fun testFutureCompletedWithNullFastPathAsDeferred() = runTest {
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())
         val future = executor.submit(Callable<Int> { null }).also {
-            @Suppress("BlockingMethodInNonBlockingContext")
             it.get()
         }
         assertNull(future.asDeferred().await())
@@ -706,7 +704,6 @@ class ListenableFutureTest : TestBase() {
         assertIs<T>(cause)
     }
 
-    @Suppress("SuspendFunctionOnCoroutineScope")
     private suspend fun CoroutineScope.awaitFutureWithCancel(cancellable: Boolean): ListenableFuture<Int> {
         val latch = CountDownLatch(1)
         val executor = MoreExecutors.listeningDecorator(ForkJoinPool.commonPool())

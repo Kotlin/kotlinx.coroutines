@@ -51,13 +51,12 @@ public suspend inline fun <T> MaybeSource<T & Any>.collect(action: (T) -> Unit):
  */
 public suspend inline fun <T> ObservableSource<T & Any>.collect(action: (T) -> Unit): Unit = openSubscription().consumeEach(action)
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_REFERENCE")
 private class SubscriptionChannel<T> :
     BufferedChannel<T>(capacity = Channel.UNLIMITED), Observer<T & Any>, MaybeObserver<T & Any>
 {
     private val _subscription = atomic<Disposable?>(null)
 
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }

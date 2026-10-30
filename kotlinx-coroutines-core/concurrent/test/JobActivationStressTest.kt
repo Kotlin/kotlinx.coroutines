@@ -10,7 +10,6 @@ class JobActivationStressTest : TestBase() {
      * Perform concurrent start and cancel of a job with prior installed completion handlers
      */
     @Test
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
     fun testActivation() = runTest {
         val barrier = TwoPhaseBarrier(3)
         newFixedThreadPoolContext(3, "JobActivationStressTest").use { pool ->

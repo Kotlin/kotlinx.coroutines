@@ -9,7 +9,6 @@ import kotlin.coroutines.jvm.internal.*
  * so we keep both for maximal flexibility for now.
  * **DO NOT MAKE BINARY-INCOMPATIBLE CHANGES TO THIS CLASS**.
  */
-@Suppress("unused")
 @PublishedApi
 internal class DebugCoroutineInfo internal constructor(
     source: DebugCoroutineInfoImpl,

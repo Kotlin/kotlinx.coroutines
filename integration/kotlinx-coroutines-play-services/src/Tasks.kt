@@ -1,5 +1,3 @@
-@file:Suppress("RedundantVisibilityModifier")
-
 package kotlinx.coroutines.tasks
 
 import com.google.android.gms.tasks.*

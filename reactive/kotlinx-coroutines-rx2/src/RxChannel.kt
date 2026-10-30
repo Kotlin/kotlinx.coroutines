@@ -37,13 +37,12 @@ internal fun <T> ObservableSource<T>.toChannel(): ReceiveChannel<T> {
     return channel
 }
 
-@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@Suppress("INVISIBLE_REFERENCE")
 private class SubscriptionChannel<T> :
     BufferedChannel<T>(capacity = Channel.UNLIMITED), Observer<T>, MaybeObserver<T>
 {
     private val _subscription = atomic<Disposable?>(null)
 
-    @Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER")
     override fun onClosedIdempotent() {
         _subscription.getAndSet(null)?.dispose() // dispose exactly once
     }

@@ -59,7 +59,6 @@ private const val SIGNALLED = -2L  // already signalled subscriber onCompleted/o
 private val DEFAULT_HANDLER: (Throwable, CoroutineContext) -> Unit = { t, ctx -> if (t !is CancellationException) handleCoroutineException(ctx, t) }
 
 /** @suppress */
-@Suppress("CONFLICTING_JVM_DECLARATIONS", "RETURN_TYPE_MISMATCH_ON_INHERITANCE")
 @InternalCoroutinesApi
 public class PublisherCoroutine<in T>(
     parentContext: CoroutineContext,
@@ -81,14 +80,14 @@ public class PublisherCoroutine<in T>(
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex: Mutex = Mutex(locked = true)
 
-    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_REFERENCE")
     override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = PublisherCoroutine<*>::registerSelectForSend as RegistrationFunction,
         processResFunc = PublisherCoroutine<*>::processResultSelectSend as ProcessResultFunction
     )
 
-    @Suppress("UNCHECKED_CAST", "UNUSED_PARAMETER")
+    @Suppress("UNUSED_PARAMETER")
     private fun registerSelectForSend(select: SelectInstance<*>, element: Any?) {
         // Try to acquire the mutex and complete in the registration phase.
         if (mutex.tryLock()) {
@@ -108,8 +107,8 @@ public class PublisherCoroutine<in T>(
         }
     }
 
-    @Suppress("RedundantNullableReturnType", "UNUSED_PARAMETER", "UNCHECKED_CAST")
-    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any? {
+    @Suppress("UNUSED_PARAMETER", "UNCHECKED_CAST")
+    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any {
         doLockedNext(element as T)?.let { throw it }
         return this@PublisherCoroutine
     }

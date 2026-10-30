@@ -3,7 +3,6 @@ package kotlinx.coroutines.channels
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.recoverStackTrace
 import kotlinx.coroutines.selects.*
-import kotlin.internal.*
 
 public actual interface ReceiveChannel<out E> {
     @DelicateCoroutinesApi
@@ -37,8 +36,8 @@ public actual interface ReceiveChannel<out E> {
         throw recoverStackTrace(result.exceptionOrNull() ?: return null)
     }
 
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-    @LowPriorityInOverloadResolution
+    @Suppress("INVISIBLE_REFERENCE")
+    @kotlin.internal.LowPriorityInOverloadResolution
     @Deprecated(
         message = "Deprecated in favor of 'receiveCatching'. " +
             "Please note that the provided replacement does not rethrow channel's close cause as 'receiveOrNull' did, " +

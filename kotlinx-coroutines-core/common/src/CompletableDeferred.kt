@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION_ERROR")
-
 package kotlinx.coroutines
 
 import kotlinx.coroutines.selects.*
@@ -16,7 +14,6 @@ import kotlinx.coroutines.selects.*
  * All functions on this interface are **thread-safe** and can
  * be safely invoked from concurrent coroutines without external synchronization.
  */
-@OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(InternalForInheritanceCoroutinesApi::class)
 public interface CompletableDeferred<T> : Deferred<T> {
     /**
@@ -105,7 +102,7 @@ private class ReadonlyDeferred<T>(
  * Concrete implementation of [CompletableDeferred].
  */
 @OptIn(InternalForInheritanceCoroutinesApi::class)
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "DEPRECATION_ERROR")
 private class CompletableDeferredImpl<T>(
     parent: Job?
 ) : JobSupport(true), CompletableDeferred<T> {

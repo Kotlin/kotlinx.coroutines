@@ -1,4 +1,3 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNUSED")
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
@@ -10,6 +9,7 @@ import kotlin.coroutines.jvm.internal.*
  * Class describing coroutine info such as its context, state and stacktrace.
  */
 @ExperimentalCoroutinesApi
+@Suppress("INVISIBLE_REFERENCE")
 public class CoroutineInfo internal constructor(delegate: DebugCoroutineInfo) {
     /**
      * [Coroutine context][coroutineContext] of the coroutine

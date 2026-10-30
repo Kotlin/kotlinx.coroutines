@@ -15,7 +15,7 @@ import kotlin.coroutines.*
  * @suppress
  */
 @Throws(InterruptedException::class)
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 @kotlin.internal.LowPriorityInOverloadResolution
 public fun <T> runBlocking(
     context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> T

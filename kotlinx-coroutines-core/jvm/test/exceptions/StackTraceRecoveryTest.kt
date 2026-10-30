@@ -136,7 +136,7 @@ class StackTraceRecoveryTest : TestBase() {
 
     class TrickyException() : Throwable() {
         // To be sure ctor is never invoked
-        @Suppress("UNUSED", "UNUSED_PARAMETER")
+        @Suppress("UNUSED")
         private constructor(message: String, cause: Throwable): this() {
             error("Should never be called")
         }

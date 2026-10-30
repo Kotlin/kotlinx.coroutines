@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.scheduling.*
@@ -22,8 +20,11 @@ public class CoroutinesBlockHoundIntegration : BlockHoundIntegration {
         allowBlockingCallsInside("kotlinx.coroutines.internal.ExceptionsConstructorKt", "tryCopyException")
         /* The predicates that define that BlockHound should only report blocking calls from threads that are part of
         the coroutine thread pool and currently execute a CPU-bound coroutine computation. */
-        addDynamicThreadPredicate { isSchedulerWorker(it) }
-        nonBlockingThreadPredicate { p -> p.or { mayNotBlock(it) } }
+        @Suppress("INVISIBLE_REFERENCE")
+        run {
+            addDynamicThreadPredicate { isSchedulerWorker(it) }
+            nonBlockingThreadPredicate { p -> p.or { mayNotBlock(it) } }
+        }
     }
 
     /**

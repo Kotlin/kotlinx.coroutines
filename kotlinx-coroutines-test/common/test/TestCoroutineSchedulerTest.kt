@@ -323,7 +323,6 @@ class TestCoroutineSchedulerTest {
     }
 
     private fun forTestDispatchers(block: (TestDispatcher) -> Unit): Unit =
-        @Suppress("DEPRECATION")
         listOf(
             StandardTestDispatcher(),
             UnconfinedTestDispatcher()

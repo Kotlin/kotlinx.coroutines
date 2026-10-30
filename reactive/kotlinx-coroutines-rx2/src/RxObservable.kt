@@ -66,7 +66,7 @@ private class RxObservableCoroutine<T : Any>(
     // Mutex is locked when either nRequested == 0 or while subscriber.onXXX is being invoked
     private val mutex: Mutex = Mutex()
 
-    @Suppress("UNCHECKED_CAST", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+    @Suppress("UNCHECKED_CAST", "INVISIBLE_REFERENCE")
     override val onSend: SelectClause2<T, SendChannel<T>> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = RxObservableCoroutine<*>::registerSelectForSend as RegistrationFunction,
@@ -93,8 +93,8 @@ private class RxObservableCoroutine<T : Any>(
         }
     }
 
-    @Suppress("RedundantNullableReturnType", "UNUSED_PARAMETER", "UNCHECKED_CAST")
-    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any? {
+    @Suppress("UNUSED_PARAMETER", "UNCHECKED_CAST")
+    private fun processResultSelectSend(element: Any?, selectResult: Any?): Any {
         doLockedNext(element as T)?.let { throw it }
         return this@RxObservableCoroutine
     }
@@ -161,7 +161,7 @@ private class RxObservableCoroutine<T : Any>(
             if (_signal.value == SIGNALLED)
                 return
             _signal.value = SIGNALLED // we'll signal onError/onCompleted (that the final state -- no CAS needed)
-            @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+            @Suppress("INVISIBLE_REFERENCE")
             val unwrappedCause = cause?.let { unwrap(it) }
             if (unwrappedCause == null) {
                 try {

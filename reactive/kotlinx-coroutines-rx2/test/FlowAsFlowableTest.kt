@@ -8,7 +8,6 @@ import org.reactivestreams.*
 import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
-@Suppress("ReactiveStreamsSubscriberImplementation")
 class FlowAsFlowableTest : TestBase() {
     @Test
     fun testUnconfinedDefaultContext() {

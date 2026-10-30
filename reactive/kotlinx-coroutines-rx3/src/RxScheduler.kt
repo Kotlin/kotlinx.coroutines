@@ -140,10 +140,7 @@ private fun CoroutineScope.scheduleTask(
         toSchedule.run()
         return Disposable.empty().also { disposableRef.store(it) }
     } else {
-        @Suppress(
-            "INVISIBLE_MEMBER",
-            "INVISIBLE_REFERENCE"
-        ) // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+        @Suppress("INVISIBLE_REFERENCE")
         run {
             val timeoutHandle = ctx.delay.invokeOnTimeout(delayMillis, toSchedule, ctx)
             // If the worker is cancelled, all outstanding work must be cancelled, too.

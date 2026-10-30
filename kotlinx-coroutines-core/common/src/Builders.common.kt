@@ -1,7 +1,6 @@
 @file:JvmMultifileClass
 @file:JvmName("BuildersKt")
 @file:OptIn(ExperimentalContracts::class)
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -290,7 +289,7 @@ public fun <T> CoroutineScope.async(
     val newContext = newCoroutineContext(context)
     val coroutine = if (start.isLazy)
         LazyDeferredCoroutine(newContext, block) else
-        DeferredCoroutine<T>(newContext, active = true)
+        DeferredCoroutine(newContext, active = true)
     coroutine.start(start, coroutine, block)
     return coroutine
 }
@@ -433,6 +432,7 @@ private class LazyDeferredCoroutine<T>(
  * as well as the [nonCancellable] documentation.
  */
 @IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
+@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 public suspend fun <T> withContext(
     context: CoroutineContext,
     block: suspend CoroutineScope.() -> T
@@ -541,7 +541,7 @@ internal class DispatchedCoroutine<in T>(
     }
 
     override fun afterCompletion(state: Any?) {
-        // Call afterResume from afterCompletion and not vice-versa, because stack-size is more
+        // Call afterResume from afterCompletion and not vice versa, because stack-size is more
         // important for afterResume implementation
         afterResume(state)
     }

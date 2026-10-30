@@ -101,7 +101,7 @@ public sealed interface SelectBuilder<in R> {
      * @param timeMillis timeout time in milliseconds.
      */
     @ExperimentalCoroutinesApi
-    @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+    @Suppress("INVISIBLE_REFERENCE")
     @LowPriorityInOverloadResolution
     @Deprecated(
         message = "Replaced with the same extension function",

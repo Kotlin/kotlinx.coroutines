@@ -24,7 +24,7 @@ class MutexLincheckTest : AbstractLincheckTest() {
     // onLock may suspend in case of clause re-registration.
     @Suppress("DEPRECATION")
     @Operation(allowExtraSuspension = true, promptCancellation = true)
-    suspend fun onLock() = select<Unit> { mutex.onLock(null) {} }
+    suspend fun onLock() = select { mutex.onLock(null) {} }
 
     @Operation(handleExceptionsAsResult = [IllegalStateException::class])
     fun unlock(@Param(name = "owner") owner: Int) = mutex.unlock(owner.asOwnerOrNull)

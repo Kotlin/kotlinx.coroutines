@@ -287,7 +287,6 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
         return EMPTY_RESUMES // nothing more to do
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun makePending() {
         _state.loop { state ->
             when {
@@ -299,6 +298,7 @@ private class StateFlowSlot : AbstractSharedFlowSlot<StateFlowImpl<*>>() {
                 else -> { // must be a suspend continuation state
                     // we must still use CAS here since continuation may get cancelled and free the slot at any time
                     if (_state.compareAndSet(state, NONE)) {
+                        @Suppress("UNCHECKED_CAST")
                         (state as CancellableContinuationImpl<Unit>).resume(Unit)
                         return
                     }
@@ -393,7 +393,6 @@ private class StateFlowImpl<T>(
         this.value = value
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun resetReplayCache() {
         throw UnsupportedOperationException("MutableStateFlow.resetReplayCache is not supported")
     }

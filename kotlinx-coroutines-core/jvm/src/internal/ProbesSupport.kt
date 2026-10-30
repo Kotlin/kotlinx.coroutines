@@ -1,4 +1,4 @@
-@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+@file:Suppress("NOTHING_TO_INLINE", "INVISIBLE_REFERENCE")
 
 package kotlinx.coroutines.internal
 

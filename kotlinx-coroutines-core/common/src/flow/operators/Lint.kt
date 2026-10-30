@@ -1,10 +1,7 @@
-@file:Suppress("unused", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "UNUSED_PARAMETER")
-
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
 import kotlin.coroutines.*
-import kotlin.internal.InlineOnly
 
 /**
  * Applying [cancellable][Flow.cancellable] to a [SharedFlow] has no effect.
@@ -100,7 +97,7 @@ public val FlowCollector<*>.coroutineContext: CoroutineContext
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this")
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public inline fun <T> SharedFlow<T>.catch(noinline action: suspend FlowCollector<T>.(cause: Throwable) -> Unit): Flow<T> =
     (this as Flow<T>).catch(action)
 
@@ -112,7 +109,7 @@ public inline fun <T> SharedFlow<T>.catch(noinline action: suspend FlowCollector
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this")
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public inline fun <T> SharedFlow<T>.retry(
     retries: Long = Long.MAX_VALUE,
     noinline predicate: suspend (cause: Throwable) -> Boolean = { true }
@@ -127,7 +124,7 @@ public inline fun <T> SharedFlow<T>.retry(
     level = DeprecationLevel.WARNING,
     replaceWith = ReplaceWith("this")
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCollector<T>.(cause: Throwable, attempt: Long) -> Boolean): Flow<T> =
     (this as Flow<T>).retryWhen(predicate)
 
@@ -138,7 +135,7 @@ public inline fun <T> SharedFlow<T>.retryWhen(noinline predicate: suspend FlowCo
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
     (this as Flow<T>).toList()
 
@@ -146,7 +143,7 @@ public suspend inline fun <T> SharedFlow<T>.toList(): List<T> =
  * A specialized version of [Flow.toList] that returns [Nothing]
  * to indicate that [SharedFlow] collection never completes.
  */
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T>): Nothing {
     (this as Flow<T>).toList(destination)
     throw IllegalStateException("this code is supposed to be unreachable")
@@ -159,7 +156,7 @@ public suspend inline fun <T> SharedFlow<T>.toList(destination: MutableList<T>):
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
     (this as Flow<T>).toSet()
 
@@ -167,7 +164,7 @@ public suspend inline fun <T> SharedFlow<T>.toSet(): Set<T> =
  * A specialized version of [Flow.toSet] that returns [Nothing]
  * to indicate that [SharedFlow] collection never completes.
  */
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): Nothing {
     (this as Flow<T>).toSet(destination)
     throw IllegalStateException("this code is supposed to be unreachable")
@@ -180,7 +177,7 @@ public suspend inline fun <T> SharedFlow<T>.toSet(destination: MutableSet<T>): N
     message = "SharedFlow never completes, so this terminal operation never completes.",
     level = DeprecationLevel.WARNING
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.count(): Int =
     (this as Flow<T>).count()
 
@@ -192,6 +189,6 @@ public suspend inline fun <T> SharedFlow<T>.count(): Int =
         "If you are using last() to imitate a subscriber, use collect() instead.",
     level = DeprecationLevel.WARNING,
 )
-@InlineOnly
+@Suppress("INVISIBLE_REFERENCE") @kotlin.internal.InlineOnly
 public suspend inline fun <T> SharedFlow<T>.last(): T =
     (this as Flow<T>).last()

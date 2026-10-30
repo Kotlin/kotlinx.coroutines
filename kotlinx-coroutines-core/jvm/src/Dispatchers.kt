@@ -98,6 +98,5 @@ public actual object Dispatchers {
  * to `Dispatchers.IO` should be resolved to the corresponding member of [Dispatchers] object.
  * @suppress
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 @Deprecated(message = "Should not be used directly", level = DeprecationLevel.HIDDEN)
 public actual val Dispatchers.IO: CoroutineDispatcher get() = Dispatchers.IO

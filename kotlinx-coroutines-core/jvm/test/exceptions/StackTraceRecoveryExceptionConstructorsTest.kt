@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.produce
 import kotlin.test.*
 
 class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
+    @Suppress("UNUSED")
     internal class NonCopyable(val customData: Int) : Throwable() {
         // Bait
         constructor(cause: Throwable) : this(42)
@@ -14,12 +15,12 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
     @Test
     fun testStackTraceNotRecovered() = runTest {
         val exception = NonCopyable(239)
-        try {
+        assertFailsWith<NonCopyable> {
             withContext(wrapperDispatcher(coroutineContext)) {
                 throw exception
             }
-        } catch (e: NonCopyable) {
-            assertSame(exception, e)
+        }.apply {
+            assertSame(exception, this)
         }
     }
 
@@ -27,13 +28,13 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
 
     @Test
     fun testStackTraceRecoveredWithCustomMessage() = runTest {
-        try {
+        assertFailsWith<WithDefault> {
             withContext(wrapperDispatcher(coroutineContext)) {
                 throw WithDefault("custom")
             }
-        } catch (e: WithDefault) {
-            assertEquals("custom", e.message)
-            val cause = e.cause
+        }.apply {
+            assertEquals("custom", message)
+            val cause = cause
             assertIs<WithDefault>(cause)
             assertEquals("custom", cause.message)
         }
@@ -69,6 +70,7 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
         assertEquals("ERROR", originalCause.message)
     }
 
+    @Suppress("UNUSED")
     class NestedException : RuntimeException {
         constructor(cause: Throwable) : super(cause)
         constructor() : super()
@@ -80,7 +82,7 @@ class StackTraceRecoveryExceptionConstructorsTest: TestBase() {
             throw WrongMessageException("OK")
         }
         val ex = runCatching {
-            @Suppress("ControlFlowWithEmptyBody")
+            @Suppress("ControlFlowWithEmptyBody", "UNUSED")
             for (unit in result) {
                 // Iterator has a special code path
             }

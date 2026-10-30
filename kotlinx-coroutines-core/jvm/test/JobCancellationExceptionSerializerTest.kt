@@ -5,7 +5,6 @@ import java.io.*
 import kotlin.test.*
 
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class JobCancellationExceptionSerializerTest : TestBase() {
 
     @Test

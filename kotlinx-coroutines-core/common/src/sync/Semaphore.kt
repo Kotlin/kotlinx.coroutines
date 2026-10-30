@@ -88,7 +88,6 @@ public suspend inline fun <T> Semaphore.withPermit(action: () -> T): T {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
 internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPermits: Int) {
     /*
        The queue of waiting acquirers is essentially an infinite array based on the list of segments
@@ -181,7 +180,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         acquireSlowPath()
     }
 
-    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable<Unit> sc@ { cont ->
+    private suspend fun acquireSlowPath() = suspendCancellableCoroutineReusable sc@ { cont ->
         // Try to suspend.
         if (addAcquireToQueue(cont)) return@sc
         // The suspension has been failed
@@ -297,6 +296,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
             /// This continuation is not yet published, but still can be cancelled via outer job
             when (waiter) {
                 is CancellableContinuation<*> -> {
+                    @Suppress("UNCHECKED_CAST")
                     waiter as CancellableContinuation<Unit>
                     waiter.resume(Unit, onCancellationRelease)
                 }
@@ -311,7 +311,6 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
         return false // broken cell, need to retry on a different cell
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun tryResumeNextFromQueue(): Boolean {
         val curHead = this.head.value
         val deqIdx = deqIdx.getAndIncrement()
@@ -340,6 +339,7 @@ internal open class SemaphoreAndMutexImpl(private val permits: Int, acquiredPerm
 
     private fun Any.tryResumeAcquire(): Boolean = when(this) {
         is CancellableContinuation<*> -> {
+            @Suppress("UNCHECKED_CAST")
             this as CancellableContinuation<Unit>
             val token = tryResume(Unit, null, onCancellationRelease)
             if (token != null) {

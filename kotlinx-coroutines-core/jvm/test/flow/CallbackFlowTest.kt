@@ -58,7 +58,7 @@ class CallbackFlowTest : TestBase() {
                     }
                     throw RuntimeException()
                 }
-                catch<Throwable> { exception = it }
+                catch { exception = it }
                 finally { isDone = true }
             }
         job.join()
@@ -93,7 +93,7 @@ class CallbackFlowTest : TestBase() {
         var exception: Throwable? = null
         val job = flow.launchIn(this) {
             onEach { ++received }
-            catch<Throwable> { exception = it }
+            catch { exception = it }
             finally { isDone = true }
         }
 

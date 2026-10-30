@@ -1,6 +1,5 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 
@@ -45,7 +44,6 @@ internal object DefaultIoScheduler : CoroutineDispatcher() {
 }
 
 
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public actual val Dispatchers.IO: CoroutineDispatcher get() = IO
 
 internal expect fun createMainDispatcher(default: CoroutineDispatcher): MainCoroutineDispatcher

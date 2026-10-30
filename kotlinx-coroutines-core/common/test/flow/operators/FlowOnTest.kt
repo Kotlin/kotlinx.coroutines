@@ -125,7 +125,7 @@ class FlowOnTest : TestBase() {
                 expect(3)
                 throw TestException()
             }
-            catch<Throwable> { expect(5) }
+            catch { expect(5) }
         }.join()
 
         ensureActive()

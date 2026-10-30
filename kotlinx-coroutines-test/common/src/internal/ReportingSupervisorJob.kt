@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 /**
  * A variant of [SupervisorJob] that additionally notifies about child failures via a callback.
  */
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@Suppress("INVISIBLE_REFERENCE")
 internal class ReportingSupervisorJob(
     parent: Job? = null,
     val onChildCancellation: (Throwable) -> Unit

@@ -6,9 +6,9 @@ import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.coroutines.jvm.internal.*
 
-@Suppress("UNCHECKED_CAST")
-private val emitFun =
-    FlowCollector<Any?>::emit as Function3<FlowCollector<Any?>, Any?, Continuation<Unit>, Any?>
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+private inline fun <T> FlowCollector<T>.emitFun(value: T, continuation: Continuation<Unit>): Any? =
+    (FlowCollector<T>::emit as Function3<FlowCollector<T>, T, Continuation<Unit>, Any?>)(value, continuation)
 
 /**
  * A safe collector is an instance of [FlowCollector] that ensures that neither context preservation
@@ -29,7 +29,7 @@ private val emitFun =
  *
  * See a comment to [emit] for the explanation of what and how is being optimized.
  */
-@Suppress("CANNOT_OVERRIDE_INVISIBLE_MEMBER", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "UNCHECKED_CAST")
+@Suppress("INVISIBLE_REFERENCE")
 internal actual class SafeCollector<T> actual constructor(
     @JvmField internal actual val collector: FlowCollector<T>,
     @JvmField internal actual val collectContext: CoroutineContext
@@ -54,6 +54,7 @@ internal actual class SafeCollector<T> actual constructor(
 
     override fun invokeSuspend(result: Result<Any?>): Any {
         result.onFailure { lastEmissionContext = DownstreamExceptionContext(it, context) }
+        @Suppress("UNCHECKED_CAST")
         completion_?.resumeWith(result as Result<Unit>)
         return COROUTINE_SUSPENDED
     }
@@ -107,7 +108,7 @@ internal actual class SafeCollector<T> actual constructor(
             lastEmissionContext = currentContext
         }
         completion_ = uCont
-        val result = emitFun(collector as FlowCollector<Any?>, value, this as Continuation<Unit>)
+        val result = collector.emitFun(value, this as Continuation<Unit>)
         /*
          * If the callee hasn't suspended, that means that it won't (it's forbidden) call 'resumeWith` (-> `invokeSuspend`)
          * and we don't have to retain a strong reference to it to avoid memory leaks.

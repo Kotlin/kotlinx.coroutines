@@ -1,5 +1,3 @@
-@file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-
 package kotlinx.coroutines.rx2
 
 import io.reactivex.*
@@ -7,7 +5,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.reactive.*
 import kotlin.coroutines.*
-import kotlin.internal.*
 
 /**
  * Creates cold [flowable][Flowable] that will run a given [block] in a coroutine.
@@ -42,7 +39,8 @@ public fun <T: Any> rxFlowable(
     level = DeprecationLevel.HIDDEN,
     replaceWith = ReplaceWith("rxFlowable(context, block)")
 ) // Since 1.3.0, will be error in 1.3.1 and hidden in 1.4.0
-@LowPriorityInOverloadResolution
+@Suppress("INVISIBLE_REFERENCE")
+@kotlin.internal.LowPriorityInOverloadResolution
 public fun <T: Any> CoroutineScope.rxFlowable(
     context: CoroutineContext = EmptyCoroutineContext,
     block: suspend ProducerScope<T>.() -> Unit

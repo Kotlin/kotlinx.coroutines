@@ -16,7 +16,6 @@ internal expect fun <E: Throwable> recoverStackTrace(exception: E, continuation:
 /**
  * initCause on JVM, nop on other platforms
  */
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 internal expect fun Throwable.initCause(cause: Throwable)
 
 /**
@@ -29,7 +28,6 @@ internal expect fun Throwable.initCause(cause: Throwable)
 internal expect fun <E: Throwable> recoverStackTrace(exception: E): E
 
 // Name conflict with recoverStackTrace
-@Suppress("NOTHING_TO_INLINE")
 internal expect suspend inline fun recoverAndThrow(exception: Throwable): Nothing
 
 /**

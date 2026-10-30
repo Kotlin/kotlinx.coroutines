@@ -11,7 +11,6 @@ import reactor.util.context.Context
 import java.util.concurrent.CountDownLatch
 import kotlin.test.*
 
-@Suppress("ReactiveStreamsSubscriberImplementation")
 class FlowAsFluxTest : TestBase() {
     @Test
     fun testFlowAsFluxContextPropagation() {
@@ -33,7 +32,7 @@ class FlowAsFluxTest : TestBase() {
     @Test
     fun testFluxAsFlowContextPropagationWithFlowOn() = runTest {
         expect(1)
-        Flux.create<String> {
+        Flux.create {
             it.next("OK")
             it.complete()
         }
@@ -55,7 +54,7 @@ class FlowAsFluxTest : TestBase() {
     fun testFluxAsFlowContextPropagationFromScope() = runTest {
         expect(1)
         withContext(ReactorContext(Context.of(1, "CTX"))) {
-            Flux.create<String> {
+            Flux.create {
                     it.next("OK")
                     it.complete()
                 }

@@ -167,7 +167,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
         lockSuspend(owner)
     }
 
-    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable<Unit> { cont ->
+    private suspend fun lockSuspend(owner: Any?) = suspendCancellableCoroutineReusable { cont ->
         val contWithOwner = CancellableContinuationWithOwner(cont, owner)
         acquire(contWithOwner)
     }
@@ -219,7 +219,11 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
         }
     }
 
-    @Suppress("UNCHECKED_CAST", "OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
+    @Deprecated(
+        "Mutex.onLock deprecated without replacement. For additional details please refer to #2794",
+        level = DeprecationLevel.WARNING
+    )
+    @Suppress("UNCHECKED_CAST")
     override val onLock: SelectClause2<Any?, Mutex> get() = SelectClause2Impl(
         clauseObject = this,
         regFunc = MutexImpl::onLockRegFunction as RegistrationFunction,
@@ -273,7 +277,7 @@ internal open class MutexImpl(locked: Boolean) : SemaphoreAndMutexImpl(1, if (lo
         ) {
             assert { this@MutexImpl.owner.value === NO_OWNER }
             this@MutexImpl.owner.value = owner
-            cont.resume(value) { unlock(owner) }
+            cont.resume(value) { _, _, _ -> unlock(owner) }
         }
     }
 

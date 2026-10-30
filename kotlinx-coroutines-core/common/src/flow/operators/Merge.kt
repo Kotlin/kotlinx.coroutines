@@ -1,11 +1,9 @@
 @file:JvmMultifileClass
 @file:JvmName("FlowKt")
-@file:Suppress("unused")
 
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.jvm.*

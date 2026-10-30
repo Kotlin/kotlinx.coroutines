@@ -2,6 +2,7 @@ package kotlinx.coroutines.rx3
 
 import io.reactivex.rxjava3.core.*
 import io.reactivex.rxjava3.plugins.*
+import kotlin.test.assertFailsWith
 
 fun <T : Any> checkSingleValue(
     observable: Observable<T>,
@@ -48,17 +49,13 @@ fun <T> checkMaybeValue(
     checker(maybeValue)
 }
 
-@Suppress("UNCHECKED_CAST")
 fun checkErroneous(
     maybe: Maybe<*>,
     checker: (Throwable) -> Unit
 ) {
-    try {
-        (maybe as Maybe<Any>).blockingGet()
-        error("Should have failed")
-    } catch (e: Throwable) {
-        checker(e)
-    }
+    assertFailsWith<Throwable> {
+        maybe.blockingGet()
+    }.let { checker(it) }
 }
 
 inline fun withExceptionHandler(noinline handler: (Throwable) -> Unit, block: () -> Unit) {

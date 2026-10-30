@@ -82,7 +82,6 @@ internal class ConcurrentWeakMap<K : Any, V: Any>(
     }
 
     @OptIn(ExperimentalAtomicApi::class)
-    @Suppress("UNCHECKED_CAST")
     private inner class Core(private val allocated: Int) {
         private val shift = allocated.countLeadingZeroBits() + 1
         private val threshold = 2 * allocated / 3 // max fill factor at 66% to ensure speedy lookups

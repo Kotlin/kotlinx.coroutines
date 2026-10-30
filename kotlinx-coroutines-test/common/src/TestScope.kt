@@ -198,7 +198,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
 
 
     fun registerExceptionCollectorLocked() {
-        @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+        @Suppress("INVISIBLE_REFERENCE")
         run { ensurePlatformExceptionHandlerLoaded(ExceptionCollector) }
         if (catchNonTestRelatedExceptions) {
             ExceptionCollector.addOnExceptionCallback(lock, this::reportException)
@@ -276,7 +276,7 @@ internal class TestScopeImpl(context: CoroutineContext) :
             if (finished) {
                 throw throwable
             } else {
-                @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+                @Suppress("INVISIBLE_REFERENCE")
                 for (existingThrowable in uncaughtExceptions) {
                     // avoid reporting exceptions that already were reported.
                     if (unwrap(throwable) == unwrap(existingThrowable))

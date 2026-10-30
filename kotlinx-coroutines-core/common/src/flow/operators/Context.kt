@@ -117,7 +117,6 @@ import kotlin.jvm.*
  *   [SUSPEND][BufferOverflow.SUSPEND], supported only when `capacity >= 0` or `capacity == Channel.BUFFERED`,
  *   implicitly creates a channel with at least one buffered element).
  */
-@Suppress("NAME_SHADOWING")
 public fun <T> Flow<T>.buffer(capacity: Int = BUFFERED, onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND): Flow<T> {
     require(capacity >= 0 || capacity == BUFFERED || capacity == CONFLATED) {
         "Buffer size should be non-negative, BUFFERED, or CONFLATED, but was $capacity"

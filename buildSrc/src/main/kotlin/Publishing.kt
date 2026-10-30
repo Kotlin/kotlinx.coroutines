@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 import groovy.util.Node
 import groovy.util.NodeList
 import groovy.xml.XmlParser
@@ -197,4 +195,3 @@ public fun Project.registerEmptyJavadocArtifact(): TaskProvider<Jar> {
         // contents are deliberately left empty
     }
 }
-

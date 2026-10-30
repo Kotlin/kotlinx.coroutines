@@ -10,11 +10,11 @@ internal fun <T> Result<T>.toState(): Any? = getOrElse { CompletedExceptionally(
 internal fun <T> Result<T>.toState(caller: CancellableContinuation<*>): Any? =
     getOrElse { CompletedExceptionally(recoverStackTrace(it, caller)) }
 
-@Suppress("RESULT_CLASS_IN_RETURN_TYPE", "UNCHECKED_CAST")
 internal fun <T> recoverResult(state: Any?, uCont: Continuation<T>): Result<T> =
     if (state is CompletedExceptionally)
         Result.failure(recoverStackTrace(state.cause, uCont))
     else
+        @Suppress("UNCHECKED_CAST")
         Result.success(state as T)
 
 /**

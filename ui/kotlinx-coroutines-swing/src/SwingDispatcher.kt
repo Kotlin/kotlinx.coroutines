@@ -9,7 +9,6 @@ import kotlin.coroutines.*
 /**
  * Dispatches execution onto Swing event dispatching thread and provides native [delay] support.
  */
-@Suppress("unused")
 public val Dispatchers.Swing : SwingDispatcher
     get() = kotlinx.coroutines.swing.Swing
 

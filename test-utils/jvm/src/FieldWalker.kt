@@ -99,8 +99,7 @@ object FieldWalker {
         when {
             // Special code for arrays
             type.isArray && !type.componentType.isPrimitive -> {
-                @Suppress("UNCHECKED_CAST")
-                val array = element as Array<Any?>
+                val array = element as Array<*>
                 array.forEachIndexed { index, value ->
                     push(value, visited, stack) { Ref.ArrayRef(element, index) }
                 }

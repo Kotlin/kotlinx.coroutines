@@ -1,5 +1,3 @@
-@file:Suppress("UNCHECKED_CAST") // KT-32203
-
 package kotlinx.coroutines.flow.internal
 
 import kotlinx.coroutines.*
@@ -68,6 +66,7 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
         }
 
         // Process batch result if there is enough data
+        @Suppress("UNCHECKED_CAST")
         if (remainingAbsentValues == 0) {
             /*
              * If arrayFactory returns null, then we can avoid array copy because
@@ -87,9 +86,9 @@ internal suspend fun <R, T> FlowCollector<R>.combineInternal(
 internal fun <T1, T2, R> zipImpl(flow: Flow<T1>, flow2: Flow<T2>, transform: suspend (T1, T2) -> R): Flow<R> =
     unsafeFlow {
         coroutineScope {
-            val second = produce<Any> {
+            val second = produce {
                 flow2.collect { value ->
-                    return@collect channel.send(value ?: NULL)
+                    return@collect send(value ?: NULL)
                 }
             }
 

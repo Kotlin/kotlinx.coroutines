@@ -4,7 +4,6 @@ import kotlin.concurrent.*
 import kotlin.coroutines.*
 import kotlin.test.*
 
-@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 class MultithreadingTest {
 
     @Test
@@ -38,7 +37,7 @@ class MultithreadingTest {
     /** Tests that resuming the coroutine of [runTest] asynchronously in reasonable time succeeds. */
     @Test
     fun testResumingFromAnotherThread() = runTest {
-        suspendCancellableCoroutine<Unit> { cont ->
+        suspendCancellableCoroutine { cont ->
             val _ = thread {
                 Thread.sleep(10)
                 cont.resume(Unit)

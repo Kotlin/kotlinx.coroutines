@@ -92,9 +92,8 @@ internal class TestMainDispatcher(createInnerMain: () -> CoroutineDispatcher):
     }
 }
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
+@Suppress("INVISIBLE_REFERENCE")
 private val defaultDelay
     inline get() = DefaultDelay
 
-@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE") // do not remove the INVISIBLE_REFERENCE suppression: required in K2
 internal expect fun Dispatchers.getTestMainDispatcher(): TestMainDispatcher

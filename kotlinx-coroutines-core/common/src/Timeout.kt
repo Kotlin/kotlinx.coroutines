@@ -1,5 +1,4 @@
 @file:OptIn(ExperimentalContracts::class)
-@file:Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 
 package kotlinx.coroutines
 
@@ -21,6 +20,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * `Long.MAX_VALUE / 2` milliseconds.
  */
 @IgnorableReturnValue // TODO: replace with the `returnsResultOf` contract after upgrading to Kotlin 2.4
+@Suppress("LEAKED_IN_PLACE_LAMBDA", "WRONG_INVOCATION_KIND")
 public suspend fun <T> withTimeout(timeMillis: Long, block: suspend CoroutineScope.() -> T): T {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)

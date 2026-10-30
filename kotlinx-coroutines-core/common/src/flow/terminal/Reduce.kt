@@ -5,7 +5,6 @@
 package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.flow.internal.*
-import kotlinx.coroutines.internal.Symbol
 import kotlin.jvm.*
 
 /**
@@ -17,7 +16,6 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
 
     collect { value ->
         accumulator = if (accumulator !== NULL) {
-            @Suppress("UNCHECKED_CAST")
             operation(accumulator as S, value)
         } else {
             value
@@ -25,7 +23,6 @@ public suspend fun <S, T : S> Flow<T>.reduce(operation: suspend (accumulator: S,
     }
 
     if (accumulator === NULL) throw NoSuchElementException("Empty flow can't be reduced")
-    @Suppress("UNCHECKED_CAST")
     return accumulator as S
 }
 

@@ -24,8 +24,7 @@ class PromiseTestWeb : TestBase() {
         }
         val deferred = promise.asDeferred()
         // reject after converting to deferred to avoid "Unhandled promise rejection" warnings
-        @Suppress("CAST_NEVER_SUCCEEDS")
-        promiseReject(TestException("Rejected").toJsReference() as JsPromiseError)
+        promiseReject(TestException("Rejected").toJsReference().unsafeCast<JsPromiseError>())
         assertFailsWith<TestException> {
             deferred.await()
         }.apply {

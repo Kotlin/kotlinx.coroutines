@@ -34,7 +34,7 @@ class ObservableAsFlowTest : TestBase() {
                 ++onNext
                 throw RuntimeException()
             }
-            catch<Throwable> {
+            catch {
                 ++onError
             }
         }.join()

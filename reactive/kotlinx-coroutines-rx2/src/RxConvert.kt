@@ -149,7 +149,6 @@ public fun <T : Any> ReceiveChannel<T>.asObservable(context: CoroutineContext): 
 }
 
 /** @suppress **/
-@Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "") // Since 1.4, was experimental prior to that
@@ -157,7 +156,6 @@ public fun <T: Any> Flow<T>._asFlowable(context: CoroutineContext = EmptyCorouti
     asFlowable(context)
 
 /** @suppress **/
-@Suppress("UNUSED") // KT-42513
 @JvmOverloads // binary compatibility
 @JvmName("from")
 @Deprecated(level = DeprecationLevel.HIDDEN, message = "") // Since 1.4, was experimental prior to that

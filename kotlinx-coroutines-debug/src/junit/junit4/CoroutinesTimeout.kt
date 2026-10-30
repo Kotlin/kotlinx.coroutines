@@ -37,7 +37,6 @@ public class CoroutinesTimeout(
     private val enableCoroutineCreationStackTraces: Boolean = false
 ) : TestRule {
 
-    @Suppress("UNUSED") // Binary compatibility
     public constructor(testTimeoutMs: Long, cancelOnTimeout: Boolean = false) : this(
         testTimeoutMs,
         cancelOnTimeout,

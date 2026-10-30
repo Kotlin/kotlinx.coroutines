@@ -2,7 +2,6 @@ package kotlinx.coroutines
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.exceptions.*
-import kotlinx.coroutines.internal.*
 import kotlin.test.*
 
 class ConcurrentExceptionsStressTest : TestBase() {
@@ -29,7 +28,6 @@ class ConcurrentExceptionsStressTest : TestBase() {
         }
     }
 
-    @Suppress("SuspendFunctionOnCoroutineScope") // workaround native inline fun stacktraces
     private suspend fun testOnce() {
         val deferred = supervisorScope {
             async {

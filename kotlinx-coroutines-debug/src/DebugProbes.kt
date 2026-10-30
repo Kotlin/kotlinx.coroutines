@@ -1,5 +1,3 @@
-@file:Suppress("UNUSED", "INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package kotlinx.coroutines.debug
 
 import kotlinx.coroutines.*
@@ -47,6 +45,7 @@ import kotlin.coroutines.*
  * coroutines and `suspend` functions have to be loaded by the classloader in which `kotlinx-coroutines-core` classes are available.
  */
 @ExperimentalCoroutinesApi
+@Suppress("INVISIBLE_REFERENCE")
 public object DebugProbes {
 
     /**
@@ -58,7 +57,6 @@ public object DebugProbes {
      */
     public var sanitizeStackTraces: Boolean
         get() = DebugProbesImpl.sanitizeStackTraces
-        @Suppress("INVISIBLE_SETTER") // do not remove the INVISIBLE_SETTER suppression: required in k2
         set(value) {
             DebugProbesImpl.sanitizeStackTraces = value
         }
@@ -73,7 +71,6 @@ public object DebugProbes {
      */
     public var enableCreationStackTraces: Boolean
         get() = DebugProbesImpl.enableCreationStackTraces
-        @Suppress("INVISIBLE_SETTER") // do not remove the INVISIBLE_SETTER suppression: required in k2
         set(value) {
             DebugProbesImpl.enableCreationStackTraces = value
         }
@@ -90,7 +87,6 @@ public object DebugProbes {
      */
     public var ignoreCoroutinesWithEmptyContext: Boolean
         get() = DebugProbesImpl.ignoreCoroutinesWithEmptyContext
-        @Suppress("INVISIBLE_SETTER") // do not remove the INVISIBLE_SETTER suppression: required in k2
         set(value) {
             DebugProbesImpl.ignoreCoroutinesWithEmptyContext = value
         }

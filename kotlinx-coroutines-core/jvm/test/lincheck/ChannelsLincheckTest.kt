@@ -1,4 +1,4 @@
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("unused")
 
 package kotlinx.coroutines.lincheck
 
@@ -263,10 +263,8 @@ abstract class SequentialIntChannelBase(private val capacity: Int) {
     fun isClosedForSend(): Boolean = closedMessage !== null
     fun isClosedForReceive(): Boolean = isClosedForSend() && buffer.isEmpty() && senders.isEmpty()
 
-    fun isEmpty(): Boolean {
-        if (closedMessage !== null) return false
-        return buffer.isEmpty() && senders.isEmpty()
-    }
+    fun isEmpty(): Boolean =
+        closedMessage === null && buffer.isEmpty() && senders.isEmpty()
 }
 
 private fun <T> CancellableContinuation<T>.resume(res: T): Boolean {
