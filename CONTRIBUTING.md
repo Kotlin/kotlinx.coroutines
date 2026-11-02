@@ -10,6 +10,13 @@ when there is only a single obvious way to do something.
 This is not limited to code: any discussions, such as pull request descriptions or issue comments,
 are subject to the same restriction.
 
+Some examples of trivial cases:
+
+- Implementing obvious refactorings, like replacing `import org.junit.Test` with `import kotlin.test.Test`.
+- Generating test cases for function overloads after having written a test suite for one overload manually.
+- Listing differences between large arrays of difficult-to-parse data.
+- When filing an issue, minifying a reproducer, a memory dump or a stack trace.
+
 Using an LLM to translate a comment from another language into English is permitted,
 as long as the original message is attached.
 
