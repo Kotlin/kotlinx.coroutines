@@ -26,6 +26,12 @@ internal fun <R, T> (suspend (R) -> T).startCoroutineCancellable(
     createCoroutineUnintercepted(receiver, completion).intercepted().resumeCancellableWithInternal(Result.success(Unit))
 }
 
+internal fun <R, T> (suspend (R) -> T).startCoroutineAtomic(
+    receiver: R, completion: Continuation<T>,
+) = runSafely(completion) {
+    createCoroutineUnintercepted(receiver, completion).intercepted().resume(Unit)
+}
+
 /**
  * Similar to [startCoroutineCancellable], but for already created coroutine.
  * [fatalCompletion] is used only when interception machinery throws an exception
