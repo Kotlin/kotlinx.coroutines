@@ -18,7 +18,7 @@ class AsFutureTest : TestBase() {
         }
         expect(3)
         val future = deferred.asCompletableFuture()
-        assertEquals("OK", future.await())
+        assertEquals("OK", future.consume())
         finish(4)
     }
 
@@ -26,7 +26,7 @@ class AsFutureTest : TestBase() {
     fun testCompletedJobAsCompletableFuture() = runTest {
         val job = Job().apply { complete() }
         val future = job.asCompletableFuture()
-        assertEquals(Unit, future.await())
+        assertEquals(Unit, future.consume())
     }
 
     @Test
@@ -38,7 +38,7 @@ class AsFutureTest : TestBase() {
         }
         expect(2)
         val future = deferred.asCompletableFuture()
-        assertEquals("OK", future.await()) // await yields main thread to deferred coroutine
+        assertEquals("OK", future.consume()) // await yields main thread to deferred coroutine
         finish(4)
     }
 
@@ -49,7 +49,7 @@ class AsFutureTest : TestBase() {
         assertTrue(job.isActive)
         job.complete()
         assertFalse(job.isActive)
-        assertEquals(Unit, future.await())
+        assertEquals(Unit, future.consume())
     }
 
     @Test
@@ -92,7 +92,7 @@ class AsFutureTest : TestBase() {
             expect(1)
             future.get()
             expectUnreached()
-        } catch (e: CancellationException) {
+        } catch (_: CancellationException) {
             assertTrue(future.isCompletedExceptionally)
             finish(2)
         }
