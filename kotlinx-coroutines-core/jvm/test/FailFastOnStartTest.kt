@@ -60,6 +60,28 @@ class FailFastOnStartTest : TestBase() {
     }
 
     @Test
+    fun testAsyncAtomic() = runTest {
+        assertFailsWithMainException {
+            async(Dispatchers.Main, start = CoroutineStart.ATOMIC) { expectUnreached() }
+        }
+    }
+
+    @Test
+    fun testAsyncAtomicCancellation() = runTest {
+        val parent = Job()
+        assertFailsWithMainException {
+            async(
+                Dispatchers.Main + parent,
+                start = CoroutineStart.ATOMIC
+            ) { expectUnreached() }
+        }
+        assertFalse(parent.isActive)
+        assertTrue(parent.isCancelled)
+        assertTrue(parent.isCompleted)
+        assertTrue(parent.children.toList().isEmpty())
+    }
+
+    @Test
     fun testWithContext() = runTest {
         assertFailsWithMainException {
             withContext(Dispatchers.Main) {
@@ -116,29 +138,9 @@ class FailFastOnStartTest : TestBase() {
     }
 
     @Test
-    fun testAsyncNonChild() = runTest {
+    fun testFlowOnCompletes() = runTest {
         assertFailsWithMainException {
-            async<Int>(Job() + Dispatchers.Main) { fail() }
+            emptyFlow<Int>().flowOn(Dispatchers.Main).collect { fail() }
         }
-    }
-
-    @Test
-    fun testFlowOn() {
-        // See #4142, this test ensures that `coroutineScope { produce(failingDispatcher, ATOMIC) }`
-        // rethrows an exception. It does not help with the completion of such a coroutine though.
-        // `suspend {}` + start coroutine with custom `completion` to avoid waiting for test completion
-        expect(1)
-        val caller = suspend {
-            try {
-                emptyFlow<Int>().flowOn(Dispatchers.Main).collect { fail() }
-            } catch (e: Throwable) {
-                assertTrue(mainException(e))
-                expect(2)
-            }
-        }
-
-        caller.startCoroutine(Continuation(EmptyCoroutineContext) {
-            finish(3)
-        })
     }
 }
