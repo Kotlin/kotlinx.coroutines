@@ -7,7 +7,6 @@ import android.view.*
 import androidx.annotation.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.*
-import java.lang.reflect.*
 import kotlin.coroutines.*
 
 /**
@@ -77,27 +76,16 @@ public fun Handler.asCoroutineDispatcher(name: String? = null): HandlerDispatche
 private const val MAX_DELAY = Long.MAX_VALUE / 2 // cannot delay for too long on Android
 
 @VisibleForTesting
-internal fun Looper.asHandler(async: Boolean): Handler {
+internal fun Looper.asHandler(async: Boolean): Handler = when {
     // Async support was added in API 16.
-    if (!async || Build.VERSION.SDK_INT < 16) {
-        return Handler(this)
-    }
-
-    if (Build.VERSION.SDK_INT >= 28) {
-        // TODO compile against API 28 so this can be invoked without reflection.
-        val factoryMethod = Handler::class.java.getDeclaredMethod("createAsync", Looper::class.java)
-        return factoryMethod.invoke(null, this) as Handler
-    }
-
-    val constructor: Constructor<Handler>
-    try {
-        constructor = Handler::class.java.getDeclaredConstructor(Looper::class.java,
-            Handler.Callback::class.java, Boolean::class.javaPrimitiveType)
-    } catch (ignored: NoSuchMethodException) {
+    !async || Build.VERSION.SDK_INT < 16 -> Handler(this)
+    Build.VERSION.SDK_INT >= 28 -> Handler.createAsync(this)
+    else -> try {
+        Handler(this, null, true)
+    } catch (ignored: NoSuchMethodError) {
         // Hidden constructor absent. Fall back to non-async constructor.
-        return Handler(this)
+        Handler(this)
     }
-    return constructor.newInstance(this, null, true)
 }
 
 @JvmField
