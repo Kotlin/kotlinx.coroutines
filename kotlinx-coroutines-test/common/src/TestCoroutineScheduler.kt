@@ -83,10 +83,15 @@ public class TestCoroutineScheduler : AbstractCoroutineContextElement(TestCorout
     }
 
     /**
+     * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening.
+     */
+    internal fun tryRunNextTask(): Boolean = tryRunNextTaskUnless { false }
+
+    /**
      * Runs the next enqueued task, advancing the virtual time to the time of its scheduled awakening,
      * unless [condition] holds.
      */
-    internal fun tryRunNextTaskUnless(condition: () -> Boolean): Boolean {
+    private fun tryRunNextTaskUnless(condition: () -> Boolean): Boolean {
         val event = synchronized(lock) {
             if (condition()) return false
             val event = events.removeFirstOrNull() ?: return false
