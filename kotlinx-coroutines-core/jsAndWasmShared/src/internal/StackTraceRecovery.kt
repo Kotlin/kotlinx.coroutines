@@ -9,7 +9,6 @@ internal actual suspend inline fun recoverAndThrow(exception: Throwable): Nothin
 @PublishedApi
 internal actual fun <E : Throwable> unwrap(exception: E): E = exception
 
-@Suppress("UNUSED")
 internal actual interface CoroutineStackFrame {
     public actual val callerFrame: CoroutineStackFrame?
     public actual fun getStackTraceElement(): StackTraceElement?
