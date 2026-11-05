@@ -12,7 +12,7 @@ class CommonThreadLocalTest: TestBase() {
      */
     @Test
     fun testThreadLocalBeingThreadLocal() = runTest {
-        val threadLocal = commonThreadLocal<Int>(Symbol("Test1"))
+        val threadLocal = commonThreadLocal<Int>()
         newSingleThreadContext("").use {
             threadLocal.set(10)
             assertEquals(10, threadLocal.get())
@@ -34,7 +34,7 @@ class CommonThreadLocalTest: TestBase() {
      */
     @Test
     fun testThreadLocalWithNullableType() = runTest {
-        val threadLocal = commonThreadLocal<Int?>(Symbol("Test2"))
+        val threadLocal = commonThreadLocal<Int?>()
         newSingleThreadContext("").use {
             assertNull(threadLocal.get())
             threadLocal.set(10)
@@ -58,12 +58,12 @@ class CommonThreadLocalTest: TestBase() {
     }
 
     /**
-     * Tests that several instances of [commonThreadLocal] with different names don't affect each other.
+     * Tests that several instances of [commonThreadLocal] don't affect each other.
      */
     @Test
     fun testThreadLocalsWithDifferentNamesNotInterfering() {
-        val value1 = commonThreadLocal<Int>(Symbol("Test3a"))
-        val value2 = commonThreadLocal<Int>(Symbol("Test3b"))
+        val value1 = commonThreadLocal<Int>()
+        val value2 = commonThreadLocal<Int>()
         value1.set(5)
         value2.set(6)
         assertEquals(5, value1.get())
