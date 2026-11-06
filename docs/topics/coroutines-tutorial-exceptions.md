@@ -7,12 +7,65 @@ The loading functions you've implemented so far assume that every HTTP request s
 In this part of the tutorial, you'll request comments from an unstable network and handle exceptions caused by unsuccessful responses.
 You'll explore how exceptions propagate through a coroutine hierarchy and how to keep separate loading attempts independent.
 
-## Exception propagation in coroutine hierarchies
+## Handle exceptions in coroutines
+
+To handle exceptions in coroutines, use `try` and `catch` blocks.
+Place the code that might throw an exception in a `try` block and handle the exception in a `catch` block.
+
+Here's an example using the application's custom `NetworkException`:
+
+```kotlin
+loadingScope.launch {
+    val startTime = System.currentTimeMillis()
+    try {
+        val articles = observeArticlesUnstable(service)
+        updateResultsWithProgress(articles, startTime)
+    } catch (e: NetworkException) {
+        e.printStackTrace()
+    }
+}
+```
+
+In this example, `updateResultsWithProgress()` collects the flow returned by `observeArticlesUnstable()`.
+If the flow throws a `NetworkException` during collection, the `catch` block handles it by printing its stack trace.
+
+### Exception propagation in coroutine hierarchies
 
 With structured concurrency, coroutines form a hierarchy of parent and child coroutines.
 
-If a child coroutine fails with an exception other than `CancellationException`, it cancels its parent with that exception.
-The parent then cancels its other child coroutines.
+If a child coroutine doesn't handle an exception, the exception propagates to its parent by default, unless it's a `CancellationException`.
+This cancels the parent, which then cancels its other child coroutines.
+
+Here's an example of exception propagation using nested `.launch()` calls:
+
+```kotlin
+loadingScope.launch { // Parent coroutine
+    launch { // Child coroutine
+        // The exception propagates to the parent coroutine and cancels it
+        throw NetworkException("Loading articles was unsuccessful.")
+    }
+}
+```
+
+In this example, there is no `catch` block to handle the `NetworkException` thrown inside the child coroutine.
+The exception propagates to the parent coroutine and cancels it.
+
+Here's the same example with the exception handled inside the child coroutine:
+
+```kotlin
+loadingScope.launch { // Parent coroutine
+    launch { // Child coroutine
+        try {
+            throw NetworkException("Loading articles was unsuccessful.")
+        } catch (e: NetworkException) {
+            // The exception doesn't propagate to the parent coroutine.
+            e.printStackTrace()
+        }
+    }
+}
+```
+
+In this example, the `catch` block handles the exception, so it doesn't propagate and the parent coroutine isn't canceled.
 
 ### Isolate failures with `SupervisorJob`
 
@@ -55,7 +108,7 @@ The exception from the loading coroutine propagates to this `Job` and cancels it
 
 If you click **Load comments** again, the application can't run another loading attempt because the `Job` is already canceled.
 
-### Task — Implement independent loading attempts
+### Task – Implement independent loading attempts
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/ui/ArticlesViewModel.kt` file and find the `loadingScope` property:
 
@@ -125,7 +178,7 @@ When the response is unsuccessful, the function throws a `NetworkException`:
 class NetworkException(message: String) : Exception(message)
 ```
 
-### Task — Implement article loading from an unstable network
+### Task – Implement article loading from an unstable network
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task6Exceptions.kt` file again.
 It contains the following `observeArticlesUnstable()` function:
@@ -177,7 +230,7 @@ If the function throws a `NetworkException`, the exception stops the flow and pr
 Run the application, select **UNSTABLE_NETWORK** from the **Loading Mode** menu, and click **Load comments**.
 
 The application displays each `Article` object emitted before an exception occurs.
-If the `getCommentsUnstable()` function throws a `NetworkException`, the current loading attempt stops and the application displays the **FAILED** status.
+If the `getCommentsUnstable()` function throws a `NetworkException`, the current loading attempt stops and the application displays the failed status.
 
 ![Article list after an unstable-network request fails, showing five loaded articles and a failed status](unstable-network-failure.png){width="700"}
 

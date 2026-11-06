@@ -4,8 +4,10 @@
 
 Concurrent loading starts several child coroutines to request comments.
 When loading is no longer needed, the application must be able to stop these coroutines as a group.
+For example, a user may close a window, navigate away from a screen, or decide to cancel a long-running loading operation before it finishes.
+In each case, the application can stop the remaining work instead of letting it continue in the background.
 
-In this part of the tutorial, you'll compare the cancellation behavior of child coroutines started in the scope created by `coroutineScope()` and coroutines started in `GlobalScope`.
+In this part of the tutorial, you'll explore the cancellation behavior of coroutines.
 
 ## Cancel coroutines
 
@@ -25,7 +27,7 @@ When you click **Cancel**, the `ArticlesViewModel.cancelLoading()` function invo
 In the previous part of the tutorial, the `loadArticlesConcurrently()` function used `coroutineScope()` to connect each child coroutine to the parent loading coroutine.
 
 Structured concurrency ensures that canceling a coroutine also cancels all its children.
-This behavior is known as *cancellation propagation*.
+This behavior is known as _cancellation propagation_.
 
 In **CONCURRENT** mode, each `.async()` call starts a child coroutine that requests comments for an `ArticleInfo` object.
 When the application cancels the parent loading coroutine, cancellation propagates to these child coroutines and stops their work as well.
@@ -42,65 +44,6 @@ If it has, the coroutine stops and throws a `CancellationException`.
 Each child coroutine in `loadArticlesConcurrently()` calls the suspending `getComments()` function.
 The function can suspend while waiting for an HTTP response, giving the coroutine a suspension point where it can react to cancellation.
 
-### Task — Implement a delay before requesting comments
-
-Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task2SequentialVsAsynchronous.kt` file.
-
-The `loadArticlesConcurrently()` function calls `getComments()` as soon as each child coroutine starts.
-Because all the child coroutines start quickly, the local server usually receives every HTTP request before you can click **Cancel**.
-
-Canceling the parent coroutine still cancels its child coroutines, but it can't prevent HTTP requests that have already reached the server from completing.
-As a result, the server can continue logging `GET` requests after you cancel loading.
-
-To make cancellation easier to observe, use the [`delay()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html) suspending function before each child coroutine calls `getComments()`.
-The `delay()` function accepts a `Duration` value.
-To express this duration in seconds, import the `seconds` extension property from the `kotlin.time` package.
-
-Here's an example:
-
-```kotlin
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
-
-suspend fun waitBeforeRequest() {
-    delay(3.seconds)
-}
-```
-
-Now, add a three-second delay before each call to `getComments()` in the `loadArticlesConcurrently()` function.
-
-#### Solution for delaying comment requests {initial-collapse-state="collapsed" collapsible="true" id="comment-request-delay-solution"}
-
-1. Add the necessary imports for the `delay()` function and the `seconds` extension property.
-2. In each `.async()` block, use `delay(3.seconds)` before calling `getComments()`.
-
-```kotlin
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
-
-// Task: Implement concurrent loading of articles
-suspend fun loadArticlesConcurrently(
-    service: BlogService
-): List<Article> = coroutineScope {
-    service.getArticleInfoList()
-        .map { articleInfo ->
-            async {
-                delay(3.seconds)
-                Article(
-                    articleInfo,
-                    service.getComments(articleInfo)
-                )
-            }
-        }
-        .let { it.awaitAll() }
-}
-```
-
-The `delay()` function suspends each child coroutine for three seconds before it calls `getComments()`.
-This provides a suspension point where the child coroutine can react to cancellation before sending its HTTP request.
-
-After implementing the next version that [starts coroutines in `GlobalScope`](#start-coroutines-in-globalscope), you'll compare how the two implementations react to cancellation.
-
 ### Start coroutines in `GlobalScope`
 
 The [`GlobalScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) object provides a scope that isn't connected to the parent loading coroutine.
@@ -109,14 +52,18 @@ A coroutine started with `GlobalScope.async()` isn't a child of the loading coro
 Therefore, canceling the loading coroutine doesn't automatically cancel it.
 
 The coroutine can still be canceled by invoking `cancel()` on its own `Deferred` handle.
-However, this doesn't happen automatically through cancellation propagation.
+However, this doesn't happen automatically through cancellation propagation because starting the coroutine in `GlobalScope` breaks structured concurrency.
 
-> This task uses `GlobalScope` to demonstrate what happens when coroutines aren't connected through structured concurrency.
-> In production applications, use `GlobalScope` only when the coroutines should remain active for the application's entire lifetime and you manage their cancellation explicitly.
+> `GlobalScope` is a delicate API, so avoid using it in production applications.
+> This task uses `GlobalScope` to demonstrate the risks of running coroutines that aren't connected through structured concurrency.
+> 
+> One of its few legitimate use cases is for work that must remain active for the application's entire lifetime.
+> Even then, a dedicated `CoroutineScope` tied to the application's lifecycle is a better solution that
+> lets you manage application-wide coroutines as a group.
 >
 {style="warning"}
 
-### Task — Implement loading with `GlobalScope`
+### Task – Implement loading with `GlobalScope`
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task3StructuralConcurrency.kt` file.
 It contains the `loadArticlesNonCancelable()` function with a `TODO()` placeholder:
@@ -135,15 +82,11 @@ suspend fun loadArticlesNonCancelable(service: BlogService): List<Article> {
 Implement the function by adapting the `loadArticlesConcurrently()` function from the previous task.
 Start the coroutines that request comments in `GlobalScope` and return the resulting `Article` objects after all the coroutines complete.
 
-Add the same three-second delay before each call to `getComments()`.
-This ensures that the scope where each coroutine starts is the only difference between the two implementations.
-
-#### Solution for loading with GlobalScope {initial-collapse-state="collapsed" collapsible="true" id="global-scope-loading-solution"}
+#### Solution for loading with `GlobalScope` {initial-collapse-state="collapsed" collapsible="true" id="global-scope-loading-solution"}
 
 1. Call the `getArticleInfoList()` function and store the returned list.
 2. Use the `.map()` extension function to process each `ArticleInfo` object.
 3. Inside `.map()`, call `GlobalScope.async()`:
-    * Use `delay(3.seconds)` to suspend the coroutine before it sends the HTTP request.
     * Call the `getComments()` function.
     * Create an `Article` object from the article information and comments.
 4. Call the `.awaitAll()` extension function on the resulting list and return the completed `Article` objects.
@@ -158,7 +101,6 @@ suspend fun loadArticlesNonCancelable(
     val articleInfoList = service.getArticleInfoList()
     val deferreds = articleInfoList.map { article ->
         GlobalScope.async {
-            delay(3.seconds)
             Article(article, service.getComments(article))
         }
     }
@@ -175,7 +117,7 @@ When you click **Cancel**, the `ArticlesViewModel.cancelLoading()` function in t
 This property stores the `Job` returned by the `.launch()` call in `loadComments()`.
 
 In **CONCURRENT** mode, cancellation propagates through the coroutine hierarchy to the child coroutines started inside the `loadArticlesConcurrently()` function.
-As a result, child coroutines still suspended in `delay()` stop before calling `getComments()`, and the application doesn't request the remaining comments:
+As a result, the child coroutines stop their remaining work:
 
 ![Console output showing that structured child coroutines stop before sending comment requests](cancelable-scope.png){width="700"}
 
@@ -188,6 +130,7 @@ They continue requesting comments after the parent loading coroutine has been ca
 ![Console output showing that coroutines started in GlobalScope continue sending comment requests after cancellation](globalscope-cancel.png){width="700"}
 
 > You can still cancel coroutines started in `GlobalScope` by invoking `cancel()` on their `Deferred` handles.
+> However, you must track and cancel these handles explicitly, which makes cancellation harder to manage and easier to overlook.
 > 
 {style="tip"}
 
@@ -199,6 +142,7 @@ The tests check the following behavior:
 
 * The `loadArticlesNonCancelable()` function returns the expected `Article` objects when loading completes.
 * The `loadArticlesConcurrently()` function reacts to cancellation.
+
 The test starts the function in a coroutine, waits for one second of virtual time, and cancels its `Job`.
 It then checks that the `Job` is canceled and that cancellation completes before two seconds of virtual time have elapsed.
 

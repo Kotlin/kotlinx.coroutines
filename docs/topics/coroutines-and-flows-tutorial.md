@@ -31,14 +31,14 @@ To implement these loading strategies, you'll progress through the following ste
 
 Complete the following before starting the tutorial:
 
-1. Download and install the latest version of [IntelliJ IDEA](https://www.jetbrains.com/idea/download/).
-2. Make sure that JDK 17 or later is installed and configured for Gradle.
+1. Install the latest version of IntelliJ IDEA using the [JetBrains Toolbox App](https://www.jetbrains.com/toolbox-app/). Alternatively, download the [standalone installer](https://www.jetbrains.com/idea/download/).
+2. Make sure that [JDK 17 or later](https://www.oracle.com/java/technologies/downloads/) is installed and [configured for Gradle](https://www.jetbrains.com/help/idea/gradle-jvm-selection.html).
 3. Clone the [project template](https://github.com/kotlin-hands-on/intro-coroutines-flows) by selecting **File | New | Project from Version Control** in IntelliJ IDEA and using this URL:
 
    ```text
    https://github.com/kotlin-hands-on/intro-coroutines-flows
    ```
-   
+  
 4. Check out the `main` branch, which contains the unfinished tasks.
 
 ### Explore the project
@@ -46,18 +46,23 @@ Complete the following before starting the tutorial:
 The `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks` directory contains the task files you'll work with throughout the tutorial.
 In these files, you'll find the `TODO()` placeholders to complete.
 
-![The coroutines and flows tutorial project structure ](coroutines-tutorial-project-structure.png){width="700"}
+![The coroutines and flows tutorial project structure](coroutines-tutorial-project-structure.png){width="700"}
 
 If you'd like to practice writing flow tests, the `desktop-client/src/jvmTest/kotlin/org/example/articles/exercises` directory contains optional exercises.
 
 You can inspect the following directories and modules to understand how the tasks connect to the application, and you'll also modify some of their files later in the tutorial:
 
-* `desktop-client/src/jvmMain/kotlin/org/example/articles/ui` contains the Compose UI and the view model that calls your task functions.
-* `desktop-client/src/jvmMain/kotlin/org/example/articles/network` contains the blocking and suspending clients for loading articles and comments.
-* `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks` contains the test files referenced throughout the tutorial.
-* `desktop-client/src/jvmTest/kotlin/org/example/articles/data` contains the mock service and expected results used by the tests.
-* `server` contains the local Ktor server and simulates response delays and unsuccessful HTTP responses.
-* `shared` contains the article data and local server configuration shared by the client and server.
+The `desktop-client` module contains:
+
+* **The Compose UI and view model** that calls your task functions in `src/jvmMain/kotlin/org/example/articles/ui`.
+* **Blocking and suspending network clients** for loading articles and comments in `src/jvmMain/kotlin/org/example/articles/network`.
+* **Tutorial tests** referenced after each task in `src/jvmTest/kotlin/org/example/articles/tasks`.
+* **Test data** containing the mock service and expected results used by the tests in `src/jvmTest/kotlin/org/example/articles/data`.
+
+The project also includes:
+
+* **The local Ktor server** that simulates response delays and unsuccessful HTTP responses in the `server` module.
+* **Article data and local server configuration** shared by the client and server in the `shared` module.
 
 You can find solutions for all the tasks on the `solutions` branch of the [project's repository](https://github.com/kotlin-hands-on/intro-coroutines-flows/tree/solutions).
 

@@ -42,7 +42,7 @@ suspend fun printMessages() {
 }
 ```
 
-### Task — Implement progress reporting
+### Task – Implement progress reporting
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task4Progress.kt` file.
 It contains the `observeArticlesLoading()` function with a `TODO()` placeholder:
@@ -113,7 +113,7 @@ However, it adds each `Article` object to the displayed results as soon as the f
 
 ![Partially loaded article list while loading is still in progress](load-progress.png){width="700"}
 
-### Optional task — Create tests for sequential loading {initial-collapse-state="collapsed" collapsible="true" id="sequential-loading-tests-exercise"}
+### Optional task – Create tests for sequential loading {initial-collapse-state="collapsed" collapsible="true" id="sequential-loading-tests-exercise"}
 
 You can use the [Turbine library](https://github.com/cashapp/turbine) to test flows, including the values they emit and how they complete.
 
@@ -170,7 +170,7 @@ class SequentialTest {
     fun `test observeArticlesLoading Result`() = runTest {
         TODO()
     }
-    
+
     @Test
     fun `test observeArticlesLoading Duration`() = runTest {
         TODO()
@@ -180,7 +180,7 @@ class SequentialTest {
 
 Implement the tests so that:
 
-* The `test observeArticlesLoading Result()` function verifies that `observeArticlesLoading()` emits the expected Article objects in order.
+* The `test observeArticlesLoading Result()` function verifies that `observeArticlesLoading()` emits the expected `Article` objects in order.
 * The `test observeArticlesLoading Duration()` function verifies that collecting the flow takes the expected amount of virtual time.
 
 Pass the `MockBlogService` object to the `observeArticlesLoading()` function.
@@ -192,7 +192,7 @@ Use the following test data:
 
 #### Solution for sequential loading tests {initial-collapse-state="collapsed" collapsible="true" id="sequential-loading-tests-solution"}
 
-For the `test observeArticlesLoading Result`() function:
+For the `test observeArticlesLoading Result()` function:
 
 1. Create a mutable list to store the emitted `Article` objects.
 2. Call the `observeArticlesLoading()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
@@ -201,7 +201,26 @@ For the `test observeArticlesLoading Result`() function:
 5. Call the `awaitComplete()` function to verify that the flow completes successfully.
 6. Use the `assertEquals()` function to compare the collected objects with `ArticlesFakeDataResults.expectedSequentialList.list`.
 
-For the `test observeArticlesLoading Duration`() function:
+```kotlin
+@Test
+fun `test observeArticlesLoading Result`() = runTest {
+    val results = mutableListOf<Article>()
+    observeArticlesLoading(MockBlogService).test {
+        repeat(ArticlesFakeData.getArticles().size) {
+            results += awaitItem()
+        }
+        awaitComplete()
+    }
+    assertEquals(
+        expected = ArticlesFakeDataResults.expectedSequentialList.list,
+        actual = results,
+        message = "Wrong emission order/result for 'observeArticlesLoading' " +
+                "(loading is sequential, so articles should arrive in list order)"
+    )
+}
+```
+
+To implement the `test observeArticlesLoading Duration()` test:
 
 1. Store the value of the `currentTime` property before collecting the flow.
 2. Call the `observeArticlesLoading()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
@@ -211,52 +230,19 @@ For the `test observeArticlesLoading Duration`() function:
 6. Use the `assertEquals()` function to compare the duration with `ArticlesFakeDataResults.expectedSequentialList.duration`.
 
 ```kotlin
-import app.cash.turbine.test
-import org.example.articles.data.ArticlesFakeDataResults
-import org.example.articles.data.MockBlogService
-import org.example.articles.model.Article
-import org.example.articles.tasks.observeArticlesLoading
-import org.example.data.ArticlesFakeData
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.currentTime
-import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.time.Duration.Companion.milliseconds
-
-@OptIn(ExperimentalCoroutinesApi::class)
-class SequentialTest {
-    @Test
-    fun `test observeArticlesLoading Result`() = runTest {
-        val results = mutableListOf<Article>()
-        observeArticlesLoading(MockBlogService).test {
-            repeat(ArticlesFakeData.getArticles().size) {
-                results += awaitItem()
-            }
-            awaitComplete()
-        }
-        assertEquals(
-            expected = ArticlesFakeDataResults.expectedSequentialList.list,
-            actual = results,
-            message = "Wrong emission order/result for 'observeArticlesLoading' " +
-                    "(loading is sequential, so articles should arrive in list order)"
-        )
+@Test
+fun `test observeArticlesLoading Duration`() = runTest {
+    val startTime = currentTime
+    observeArticlesLoading(MockBlogService).test {
+        repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
+        awaitComplete()
     }
-
-    @Test
-    fun `test observeArticlesLoading Duration`() = runTest {
-        val startTime = currentTime
-        observeArticlesLoading(MockBlogService).test {
-            repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
-            awaitComplete()
-        }
-        val totalTime = (currentTime - startTime).milliseconds
-        assertEquals(
-            expected = ArticlesFakeDataResults.expectedSequentialList.duration,
-            actual = totalTime,
-            message = "Wrong total virtual time for 'observeArticlesLoading'"
-        )
-    }
+    val totalTime = (currentTime - startTime).milliseconds
+    assertEquals(
+        expected = ArticlesFakeDataResults.expectedSequentialList.duration,
+        actual = totalTime,
+        message = "Wrong total virtual time for 'observeArticlesLoading'"
+    )
 }
 ```
 

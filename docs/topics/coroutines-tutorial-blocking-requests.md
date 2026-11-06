@@ -6,7 +6,7 @@
 In this part of the tutorial, you'll implement two strategies for loading articles and their comments.
 First, you'll send requests synchronously from the thread that updates the interface and handles user input, also known as the _UI thread_.
 
-You'll observe how blocking this thread affects the application.
+You'll observe how blocking this thread negatively affects the application.
 Then, you'll send the same requests with suspending functions so that the application remains responsive while waiting for data.
 
 ## Explore the article-loading task
@@ -36,28 +36,13 @@ The application invokes the corresponding function based on the selected loading
 {style="note"}
 
 The two `loadArticles()` functions create and return instances of the `Article` data class.
-Each instance combines an instance of the `ArticleInfo` data class with a list of instances of the `Comment` data class.
+Each instance combines an `ArticleInfo` object with a list of instances of the `Comment` data class.
 These data classes are declared in the following files:
 
 * The `shared/src/main/kotlin/org/example/blog/ArticleInfo.kt` file contains:
     * `ArticleInfo`, which stores an article's ID, author, and title.
     * `Comment`, which stores a comment's author and content.
 * The `desktop-client/src/jvmMain/kotlin/org/example/articles/model/Article.kt` file contains the `Article` data class, which combines an `ArticleInfo` object with its comments: `Article(info: ArticleInfo, comments: List<Comment>)`.
-
-The project provides two ways to request data from the local server:
-
-* The `BlogServiceBlocking` class in the `network/BlogServiceBlocking.kt` file uses the [Retrofit library](https://github.com/lysine-dev/retrofit) to send blocking HTTP requests.
-* The `BlogService` interface in the `network/BlogService.kt` file declares suspending functions for the same requests.
-  Its private `BlogServiceImpl` class implements these functions with [Ktor](https://ktor.io/docs/welcome.html).
-
-For this task, you'll use the following functions from the `BlogServiceBlocking` class and the `BlogService` interface:
-
-* The `getArticleInfoList()` function to request the list of available articles.
-* The `getComments(articleInfo: ArticleInfo)` function to request the comments for the specified `ArticleInfo`.
-
-The local server applies a predefined delay of 0.25 to 2 seconds before returning the comments for each article.
-In both implementations for this task, the application loads comments for one article at a time.
-As a result, these delays can add up to approximately 10 seconds.
 
 ## Blocking requests
 
@@ -67,7 +52,13 @@ On the JVM, code runs on threads.
 If the thread responsible for handling events has to wait for an operation to finish, it can't do other work in the meantime.
 An operation that causes the thread to wait in this way is known as a _blocking operation_.
 
-The `BlogServiceBlocking` class uses the Retrofit library to perform HTTP requests.
+The `BlogServiceBlocking` class in the `network/BlogServiceBlocking.kt` file uses the [Retrofit](https://github.com/lysine-dev/retrofit) library to perform HTTP requests.
+
+For the blocking implementation, you'll use the following functions:
+
+* `getArticleInfoList()` to request the list of available articles.
+* `getComments(articleInfo: ArticleInfo)` to request the comments for the specified `ArticleInfo`.
+
 For example, its `getArticleInfoList()` function contains the following code:
 
 ```kotlin
@@ -131,10 +122,14 @@ fun loadArticles(serviceBlocking: BlogServiceBlocking): List<Article> {
 
 [Run the application](coroutines-and-flows-tutorial.md#run-the-application), select **BLOCKING** from the **Loading Mode** menu, and click **Load comments**.
 
+To simulate real-world network latency, the local server delays its response to each request for comments by 0.25 to 2 seconds.
+The blocking implementation loads comments for one article at a time, so these delays can add up to approximately 10 seconds.
+
 The application invokes the blocking `loadArticles()` function on the UI thread.
 Each time `BlogServiceBlocking` invokes Retrofit's `execute()` function, the UI thread waits until the local server returns an HTTP response.
 While it waits, the thread can't update the window or handle input.
 As a result, the rotating emoji stops and the application remains unresponsive until all articles and comments have loaded.
+This behavior demonstrates why blocking operations are a poor fit for the UI thread and why loading data in real-world applications requires a different approach.
 
 ![Result of running the blocking function](blocking-function.png){width="700"}
 
@@ -149,7 +144,7 @@ To declare a suspending function, use the `suspend` keyword:
 suspend fun suspendableComputation() { /* ... */ }
 ```
 
-The `BlogService` interface declares `getArticleInfoList()` and `getComments()` as suspending functions.
+The `BlogService` interface in the `network/BlogService.kt` file declares `getArticleInfoList()` and `getComments()` as suspending functions.
 The private `BlogServiceImpl` class implements these functions with Ktor, such as in the `getArticleInfoList()` function:
 
 ```kotlin
@@ -189,7 +184,7 @@ The `.launch()` builder function accepts a suspending lambda that contains the c
 Inside this lambda, you can call suspending functions.
 
 In this project, `loadingScope` is the `CoroutineScope` used for loading articles.
-Each time you click **Load comments** the `ArticlesViewModel.loadComments()` function in the
+Each time you click **Load comments**, the `ArticlesViewModel.loadComments()` function in the
 `desktop-client/src/jvmMain/kotlin/org/example/articles/ui/ArticlesViewModel.kt` file calls the
 `.launch()` coroutine builder function and runs the selected loading mode inside it:
 
@@ -213,7 +208,7 @@ loadingJob = loadingScope.launch(coroutineExceptionHandler) {
 
 Because the block passed to `.launch()` is suspending, it can call the suspending `loadArticles(service)` function.
 
-### Task — Implement the suspending function
+### Task – Implement the suspending function
 
 In the `Task1BlockVsSuspend.kt` file, replace the `TODO()` placeholder in the following function:
 
@@ -258,16 +253,13 @@ suspend fun loadArticles(service: BlogService): List<Article> {
 
 Run the application, select **SUSPENDING** from the **Loading Mode** menu, and click **Load comments**.
 
-The application invokes the suspending `loadArticles()` function in a coroutine on the UI thread.
-While the coroutine waits for an HTTP response, it suspends and allows the UI thread to handle other work.
-As a result, the rotating emoji continues moving and the application remains responsive while the articles and comments load.
-
-Loading still takes approximately 10 seconds because the application requests comments for one article at a time.
-The coroutine can suspend while waiting for each response without blocking the UI thread, but the requests still run sequentially.
+Even though the suspending `loadArticles()` function follows the same loading logic as the blocking version,
+it doesn't block the UI thread while waiting for responses.
+Its calls to `getArticleInfoList()` and `getComments()` can suspend, allowing the application to remain responsive.
+You can see this in the application, where the emoji continues rotating while the articles and comments load.
+Loading still takes approximately 10 seconds because the application requests comments sequentially, one article at a time.
 
 ![Observing the suspending load mode](suspending-loading.png){width="700"}
-
-In the next part of the tutorial, you'll send the comment requests concurrently to reduce the total loading time.
 
 ## Test your implementation
 
@@ -275,6 +267,12 @@ Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tas
 
 The tests check that the suspending `loadArticles()` function returns the expected `Article` objects and loads their comments sequentially.
 They use virtual time, so you don't have to wait for the simulated delays.
+
+Congratulations! You've completed the first part of this tutorial.
+
+By switching to an implementation based on suspending functions, you've freed the UI thread to perform other meaningful work without changing the loading logic.
+
+In the next part of the tutorial, you'll send the comment requests concurrently to reduce the total loading time.
 
 ## Next step
 
