@@ -129,11 +129,6 @@ They continue requesting comments after the parent loading coroutine has been ca
 
 ![Console output showing that coroutines started in GlobalScope continue sending comment requests after cancellation](globalscope-cancel.png){width="700"}
 
-> You can still cancel coroutines started in `GlobalScope` by invoking `cancel()` on their `Deferred` handles.
-> However, you must track and cancel these handles explicitly, which makes cancellation harder to manage and easier to overlook.
-> 
-{style="tip"}
-
 ### Test your implementation
 
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task3StructuralConcurrencyKtTest.kt` file.
