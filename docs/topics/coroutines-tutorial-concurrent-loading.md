@@ -2,6 +2,8 @@
 
 [//]: # (title: Concurrent loading – tutorial)
 
+In the previous part, you kept the application responsive while loading articles, but the comment requests still ran one at a time.
+
 Coroutines can run concurrently with other coroutines and potentially in parallel.
 In this part of the tutorial, you'll use multiple coroutines to request comments concurrently and reduce the total loading time.
 
@@ -11,7 +13,7 @@ Two operations run concurrently when one can start before the other has finished
 On the JVM, coroutines can run concurrently on the same thread.
 When a coroutine suspends, it stops using the thread until it can continue, allowing another coroutine to run on that thread.
 
-As a result, concurrent operations don't require a separate thread for every coroutine.
+![Two coroutines and other work share a single thread. Each coroutine starts, suspends, and resumes later, allowing the thread to perform other work in between.](concurrent-coroutines.svg){width="700"}
 
 To load comments concurrently, the implementation you'll write starts a separate coroutine for each `ArticleInfo` object returned by the `getArticleInfoList()` function.
 Each coroutine calls the `getComments(articleInfo)` function to request that article's comments.
@@ -28,21 +30,29 @@ You can use the [`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutin
 This function takes a suspending lambda and uses the created `CoroutineScope` as the [lambda's receiver](lambdas.md#function-literals-with-receiver).
 This receiver provides the scope for child coroutines started in the lambda.
 
-For example, the following function calls the `.launch()` coroutine builder function on this scope to start two child coroutines:
+For example, the following function calls the [`.launch()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html) coroutine builder function twice on this scope to start two child coroutines.
+Each child calls the [`delay()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html) function, which suspends the child coroutine for a specified `Duration` without blocking the thread.
+To express the durations in seconds, import the `seconds` extension property from the `kotlin.time` package:
 
 ```kotlin
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.seconds
+
 suspend fun printMessages() = coroutineScope {
     launch {
+        delay(1.seconds)
         println("Hello")
     }
 
     launch {
+        delay(2.seconds)
         println("World")
     }
 }
 ```
 
 Each `.launch()` call starts a child coroutine in the scope created by `coroutineScope()`.
+The first child coroutine resumes and prints `Hello` before the second resumes and prints `World`.
 The `printMessages()` function returns after both child coroutines complete.
 
 ## Return values from coroutines
@@ -52,12 +62,12 @@ In addition to the `.launch()` coroutine builder function, you can also use the 
 Both functions are extension functions on `CoroutineScope`.
 When you call either function in a `coroutineScope()` block, it starts a child coroutine in that scope.
 
-You can use these coroutine builder functions for different purposes:
+These coroutine builder functions serve different purposes:
 
 * Use `.launch()` when the coroutine doesn't need to produce a result. It returns a [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle that represents the coroutine.
 * Use `.async()` when the coroutine needs to produce a result. It returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/) handle that represents a result that becomes available when the coroutine completes.
 
-To retrieve a result of an `.async()` function, use the [`await()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html) function.
+To retrieve a result of a coroutine started with the `.async()` function, use the [`await()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html) function.
 If the result isn't available yet, the `await()` function suspends until the coroutine completes and then returns the result:
 
 ```kotlin
@@ -70,7 +80,7 @@ suspend fun calculateAnswer(): Int = coroutineScope {
 }
 ```
 
-You can also retrieve results from multiple `Deferred` with the [`.awaitAll()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-all.html) extension function.
+You can also retrieve results from multiple `Deferred` handles with the [`.awaitAll()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-all.html) extension function.
 The `.awaitAll()` function suspends until all the coroutines complete and returns their results as a list.
 
 Here's an example:
@@ -86,7 +96,7 @@ suspend fun calculateAnswers(): List<Int> = coroutineScope {
 }
 ```
 
-### Task — Implement concurrent loading
+### Task – Implement concurrent loading
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task2SequentialVsAsynchronous.kt` file.
 
