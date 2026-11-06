@@ -420,12 +420,15 @@ internal open class SharedFlowImpl<T>(
     }
 
     override suspend fun emit(value: T) {
-        // this call doesn't necessarily suspend
-        // the suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
-        // for debugger-agent wrappers down the line
-        if (suspendCoroutineUninterceptedOrReturn<Boolean> { cont -> tryEmit(value, cont) }) return // fast-path
+        if (tryEmitWithContinuation(value)) return // fast-path
         emitSuspend(value)
     }
+
+    // This call never suspends.
+    // The suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
+    // for debugger-agent wrappers in tryEmit.
+    private suspend fun tryEmitWithContinuation(value: T): Boolean =
+        suspendCoroutineUninterceptedOrReturn { cont -> tryEmit(value, cont) }
 
     @Suppress("UNCHECKED_CAST")
     private fun tryEmitLocked(value: T, continuation: Continuation<*>? = null): Boolean {

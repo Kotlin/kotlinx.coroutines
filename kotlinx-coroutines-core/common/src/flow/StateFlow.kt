@@ -402,13 +402,17 @@ private class StateFlowImpl<T>(
         return true
     }
 
-    // emit doesn't necessarily suspend here,
-    // the suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
-    // for debugger-agent wrappers inside updateState
-    override suspend fun emit(value: T): Unit = suspendCoroutineUninterceptedOrReturn { cont ->
-        updateState(null, value ?: NULL, cont)
-        Unit
+    override suspend fun emit(value: T) {
+        tryEmitWithContinuation(value)
     }
+
+    // This call never suspends.
+    // The suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
+    // for debugger-agent wrappers in updateState.
+    private suspend fun tryEmitWithContinuation(value: T): Unit =
+        suspendCoroutineUninterceptedOrReturn { cont ->
+            updateState(null, value ?: NULL, cont)
+        }
 
     @Suppress("UNCHECKED_CAST")
     override fun resetReplayCache() {
