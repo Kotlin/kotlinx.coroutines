@@ -627,6 +627,7 @@ private fun String.repr(): String = buildString {
             '\n' -> append("\\n")
             '\r' -> append("\\r")
             '\t' -> append("\\t")
+            in '\u0000'..'\u001F' -> append("\\u${c.code.toString(16).padStart(4, '0')}")
             else -> append(c)
         }
     }
