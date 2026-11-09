@@ -254,10 +254,8 @@ public fun TestScope.runTest(
                                 "there were active child jobs: $activeChildren. " +
                                     "Use `TestScope.backgroundScope` " +
                                     "to launch the coroutines that need to be cancelled when the test body finishes"
-
                             testBodyFinished.load() ->
                                 "the test completed, but only after the timeout"
-
                             else ->
                                 "the test body did not run to completion"
                         }
