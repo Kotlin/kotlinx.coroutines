@@ -35,7 +35,7 @@ internal open class CancellableContinuationImpl<in T>(
         assert { resumeMode != MODE_UNINITIALIZED } // invalid mode for CancellableContinuationImpl
     }
 
-    public override val context: CoroutineContext = delegate.context
+    public override val context: CoroutineContext get() = delegate.context
 
     /*
      * Implementation notes
