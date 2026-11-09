@@ -18,13 +18,10 @@ class DumpOnTimeoutTest {
         try {
             System.setErr(PrintStream(baos, true))
             DebugProbes.withDebugProbes {
-                try {
+                assertFailsWith<UncompletedCoroutinesError> {
                     runTest(timeout = 100.milliseconds) {
                         uniquelyNamedFunction()
                     }
-                    throw IllegalStateException("unreachable")
-                } catch (e: UncompletedCoroutinesError) {
-                    // do nothing
                 }
             }
             baos.toString().let {

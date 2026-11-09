@@ -12,6 +12,8 @@ import kotlin.time.*
  * - [StandardTestDispatcher] is a dispatcher that places new tasks into a queue.
  * - [UnconfinedTestDispatcher] is a dispatcher that behaves like [Dispatchers.Unconfined] while allowing to control
  *   the virtual time.
+ *
+ * A [TestDispatcher] should typically be used together with [runTest], which processes tasks from the [scheduler].
  */
 @Suppress("INVISIBLE_REFERENCE")
 public abstract class TestDispatcher internal constructor() : CoroutineDispatcher(), Delay, DelayWithTimeoutDiagnostics {
@@ -57,4 +59,3 @@ private class CancellableContinuationRunnable(
 ) : Runnable {
     override fun run() = with(dispatcher) { with(continuation) { resumeUndispatched(Unit) } }
 }
-

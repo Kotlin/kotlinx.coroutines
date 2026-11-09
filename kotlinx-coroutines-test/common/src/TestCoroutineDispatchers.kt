@@ -34,8 +34,6 @@ import kotlin.coroutines.*
  * }
  * ```
  *
- * Using this [TestDispatcher] can greatly simplify writing tests where it's not important which thread is used when and
- * in which order the queued coroutines are executed.
  * Another typical use case for this dispatcher is launching child coroutines that are resumed immediately, without
  * going through a dispatch; this can be helpful for testing [Channel] and [StateFlow] usages.
  *
@@ -116,15 +114,14 @@ private class UnconfinedTestDispatcherImpl(
 /**
  * Creates an instance of a [TestDispatcher] whose tasks are run inside calls to the [scheduler].
  *
- * This [TestDispatcher] instance does not itself execute any of the tasks. Instead, it always sends them to its
- * [scheduler], which can then be accessed via [TestCoroutineScheduler.runCurrent],
- * [TestCoroutineScheduler.advanceUntilIdle], or [TestCoroutineScheduler.advanceTimeBy], which will then execute these
- * tasks in a blocking manner.
+ * This [TestDispatcher] instance does not itself execute any of the tasks.
+ * Instead, it always sends them to its [scheduler].
+ * Normally, these tasks are then executed by [runTest] (see its documentation for more details).
  *
  * In practice, this means that [launch] or [async] blocks will not be entered immediately (unless they are
- * parameterized with [CoroutineStart.UNDISPATCHED]), and one should either call [TestCoroutineScheduler.runCurrent] to
- * run these pending tasks, which will block until there are no more tasks scheduled at this point in time, or, when
- * inside [runTest], call [yield] to yield the (only) thread used by [runTest] to the newly launched coroutines.
+ * parameterized with [CoroutineStart.UNDISPATCHED]).
+ * Instead, they will be put in a queue to be executed later, when it is their turn to get processed
+ * on the (single) [runTest] thread.
  *
  * If no [scheduler] is passed as an argument, [Dispatchers.Main] is checked, and if it was mocked with a
  * [TestDispatcher] via [Dispatchers.setMain], the [TestDispatcher.scheduler] of the mock dispatcher is used; if

@@ -15,7 +15,7 @@ internal actual fun createTestResult(testProcedure: suspend CoroutineScope.() ->
 internal actual fun systemPropertyImpl(name: String): String? =
     try {
         System.getProperty(name)
-    } catch (e: SecurityException) {
+    } catch (_: SecurityException) {
         null
     }
 

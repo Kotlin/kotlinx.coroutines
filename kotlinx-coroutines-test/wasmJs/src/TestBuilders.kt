@@ -2,6 +2,7 @@ package kotlinx.coroutines.test
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.test.internal.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.js.*
 
 public actual typealias TestResult = JsPromiseInterfaceForTesting
