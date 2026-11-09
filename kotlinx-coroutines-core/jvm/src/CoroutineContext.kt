@@ -170,15 +170,6 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): WithThreadLoc
     return completion.undispatchedCompletion() // walk up the call stack with tail call
 }
 
-/**
- * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
- * Used as a performance optimization to avoid stack walking where it is not necessary.
- */
-private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
-    override val key: CoroutineContext.Key<*>
-        get() = this
-}
-
 // Used by withContext when context changes, but dispatcher stays the same
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,

@@ -25,8 +25,12 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
         val key = element.key
         val collectElement = collectContext[key]
         if (key !== Job) {
-            return@fold if (element !== collectElement) Int.MIN_VALUE
-            else count + 1
+            return@fold when {
+                element === collectElement -> count + 1
+                 // If the current context has UndispatchedMarker, but the collector doesn't, don't count it:
+                key === UndispatchedMarker -> count
+                else -> Int.MIN_VALUE
+            }
         }
 
         val collectJob = collectElement as Job?
@@ -62,14 +66,12 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
          * ```
          * is a completely valid.
          */
-        if (emissionParentJob !== collectJob) {
-            error(
-                "Flow invariant is violated:\n" +
-                        "\t\tEmission from another coroutine is detected.\n" +
-                        "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
-                        "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
-                        "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
-            )
+        check(emissionParentJob === collectJob) {
+            "Flow invariant is violated:\n" +
+                    "\t\tEmission from another coroutine is detected.\n" +
+                    "\t\tChild of $emissionParentJob, expected child of $collectJob.\n" +
+                    "\t\tFlowCollector is not thread-safe and concurrent emissions are prohibited.\n" +
+                    "\t\tTo mitigate this restriction please use 'channelFlow' builder instead of 'flow'"
         }
 
         /*
@@ -80,13 +82,11 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
         if (collectJob == null) count else count + 1
     }
     // For most cases, this is invoked at most once per collector, so not caching the result.
-    if (result != collectContext.fold(0) { count, _ -> count + 1 }) {
-        error(
-            "Flow invariant is violated:\n" +
-                    "\t\tFlow was collected in $collectContext,\n" +
-                    "\t\tbut emission happened in $currentContext.\n" +
-                    "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
-        )
+    check(result == collectContext.fold(0) { count, _ -> count + 1 }) {
+        "Flow invariant is violated:\n" +
+                "\t\tFlow was collected in $collectContext,\n" +
+                "\t\tbut emission happened in $currentContext.\n" +
+                "\t\tPlease refer to 'flow' documentation or use 'flowOn' instead"
     }
 }
 

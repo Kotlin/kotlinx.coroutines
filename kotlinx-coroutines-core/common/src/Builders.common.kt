@@ -571,3 +571,13 @@ internal class DispatchedCoroutine<in T>(
         return state as T
     }
 }
+
+/**
+ * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
+ * Used as a performance optimization to avoid stack walking where it is not necessary.
+ */
+internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
+    override val key: CoroutineContext.Key<*>
+        get() = this
+}
+
