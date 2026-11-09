@@ -239,11 +239,9 @@ public fun TestScope.runTest(
         }
         val isSuccess = coroutineScope {
             val collectJob = launch(start = CoroutineStart.UNDISPATCHED) {
-                nonCancellable {
-                    scope.join()
-                    backgroundScope.coroutineContext.job.cancelAndJoin()
-                    workRunner.cancelAndJoin()
-                }
+                scope.join()
+                backgroundScope.coroutineContext.job.cancelAndJoin()
+                workRunner.cancelAndJoin()
             }
             withContext(Dispatchers.Unconfined) { // use the default dispatcher and not the `runBlocking` event loop
                 select {
