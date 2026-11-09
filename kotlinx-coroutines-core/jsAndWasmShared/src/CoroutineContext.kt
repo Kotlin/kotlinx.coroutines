@@ -44,4 +44,6 @@ internal actual class UndispatchedContinuation<in T> actual constructor(
     }
 
     actual override fun getStackTraceElement(): StackTraceElement? = null
+
+    actual fun afterResumeUndispatched() { }
 }

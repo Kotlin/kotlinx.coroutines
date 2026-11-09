@@ -205,6 +205,7 @@ private class UndispatchedContextCollector<T>(
     private val emitContext: CoroutineContext
 ) : FlowCollector<T> {
     private val countOrElement = threadContextElements(emitContext) // precompute for fast withContextUndispatched
+
     private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit =
@@ -218,7 +219,17 @@ internal suspend fun <T, V> withContextUndispatched(
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
 ): T = suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
-    withCoroutineContext(newContext, countOrElement) {
-        block.startCoroutineUninterceptedOrReturn(value, UndispatchedContinuation(uCont, newContext))
+    val undispatchedCont = UndispatchedContinuation(uCont, newContext)
+    try {
+        withCoroutineContext(newContext, countOrElement) {
+            block.startCoroutineUninterceptedOrReturn(value, undispatchedCont)
+        }
+    } catch (e: Throwable) {
+        undispatchedCont.afterResumeUndispatched()
+        throw e
+    }.also {
+        if (it !== COROUTINE_SUSPENDED) {
+            undispatchedCont.afterResumeUndispatched()
+        }
     }
 }

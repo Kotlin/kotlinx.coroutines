@@ -224,6 +224,10 @@ internal actual class UndispatchedContinuation<in T> actual constructor(
 
     override fun clearThreadContext(): Boolean =
         threadState.clearThreadContext()
+
+    actual fun afterResumeUndispatched() {
+        val _ = clearThreadContext()
+    }
 }
 
 internal interface WithThreadLocalState {

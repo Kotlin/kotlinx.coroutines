@@ -515,6 +515,9 @@ internal expect class UndispatchedContinuation<in T>(
     override val context: CoroutineContext
     override val callerFrame: CoroutineStackFrame?
     override fun getStackTraceElement(): StackTraceElement?
+
+    /** Called if the continuation was not used at all, but the associated cleanup needs to happen */
+    fun afterResumeUndispatched(): Unit
 }
 
 private const val UNDECIDED = 0
