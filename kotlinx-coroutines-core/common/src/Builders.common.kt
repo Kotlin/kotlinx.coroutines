@@ -582,5 +582,8 @@ internal class DispatchedCoroutine<in T>(
 internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
     override val key: CoroutineContext.Key<*>
         get() = this
+
+    fun install(context: CoroutineContext): CoroutineContext =
+        if (context[this] === null) context + this else context
 }
 

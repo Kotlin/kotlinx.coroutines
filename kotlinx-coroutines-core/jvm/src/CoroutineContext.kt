@@ -174,7 +174,7 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): WithThreadLoc
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
     uCont: Continuation<T>,
-) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont),
+) : ScopeCoroutine<T>(UndispatchedMarker.install(context), uCont),
     WithThreadLocalState
 {
     private val threadState: ThreadLocalState = ThreadLocalState(context, uCont.context[ContinuationInterceptor])
@@ -201,11 +201,14 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
 
 internal actual class UndispatchedContinuation<in T> actual constructor(
     private val uCont: Continuation<T>,
-    context: CoroutineContext,
+    // Must have the `UndispatchedMarker` by convention.
+    actual override val context: CoroutineContext,
 ): Continuation<T>, CoroutineStackFrame, WithThreadLocalState {
     private val threadState: ThreadLocalState = ThreadLocalState(context, uCont.context[ContinuationInterceptor])
 
-    actual override val context = if (context[UndispatchedMarker] != null) context else context + UndispatchedMarker
+    init {
+        assert { context[UndispatchedMarker] !== null }
+    }
 
     actual override val callerFrame: CoroutineStackFrame?
         get() = uCont as? CoroutineStackFrame

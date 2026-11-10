@@ -145,7 +145,7 @@ internal abstract class ChannelFlowOperator<S, T>(
     private suspend fun collectWithContextUndispatched(collector: FlowCollector<T>, newContext: CoroutineContext) {
         val originalContextCollector = collector.withUndispatchedContextCollector(coroutineContext)
         // invoke flowCollect(originalContextCollector) in the newContext
-        return withContextUndispatched(newContext, block = { flowCollect(it) }, value = originalContextCollector)
+        return withContextUndispatched(UndispatchedMarker.install(newContext), block = { flowCollect(it) }, value = originalContextCollector)
     }
 
     // Slow path when output channel is required
@@ -197,22 +197,29 @@ private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: C
     // SendingCollector & NopCollector do not care about the context at all and can be used as is
     is SendingCollector, is NopCollector -> this
     // Otherwise just wrap into UndispatchedContextCollector interface implementation
-    else -> UndispatchedContextCollector(this, emitContext)
+    else -> UndispatchedContextCollector(this, UndispatchedMarker.install(emitContext))
 }
 
 private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
-    private val emitContext: CoroutineContext
+    emitContext: CoroutineContext
 ) : FlowCollector<T> {
     private val countOrElement = threadContextElements(emitContext) // precompute for fast withContextUndispatched
+
+    private val emitContextWithMarker = UndispatchedMarker.install(emitContext)
 
     private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit =
-        withContextUndispatched(emitContext, value, countOrElement, emitRef)
+        withContextUndispatched(emitContextWithMarker, value, countOrElement, emitRef)
 }
 
-// Efficiently computes block(value) in the newContext
+/**
+ * Efficiently computes [block](value) in the [newContext]
+ * Cross-reference with [ScopeCoroutine.startUndispatched] on changes.
+ *
+ * [newContext] must include [UndispatchedMarker].
+ */
 internal suspend fun <T, V> withContextUndispatched(
     newContext: CoroutineContext,
     value: V,
