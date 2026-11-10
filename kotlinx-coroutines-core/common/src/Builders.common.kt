@@ -507,6 +507,19 @@ internal expect class UndispatchedCoroutine<in T>(
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>
 
+// Continuation that links the caller with uCont with walkable CoroutineStackFrame
+internal expect class UndispatchedContinuation<in T>(
+    uCont: Continuation<T>, context: CoroutineContext
+) : Continuation<T>, CoroutineStackFrame {
+    override fun resumeWith(result: Result<T>): Unit
+    override val context: CoroutineContext
+    override val callerFrame: CoroutineStackFrame?
+    override fun getStackTraceElement(): StackTraceElement?
+
+    /** Called if the continuation was not used at all, but the associated cleanup needs to happen */
+    fun afterResumeUndispatched(): Unit
+}
+
 private const val UNDECIDED = 0
 private const val SUSPENDED = 1
 private const val RESUMED = 2
@@ -561,3 +574,16 @@ internal class DispatchedCoroutine<in T>(
         return state as T
     }
 }
+
+/**
+ * Marker indicating that an undispatched completion exists somewhere up in the stack.
+ * Used as a performance optimization to avoid stack walking where it is not necessary.
+ */
+internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
+    override val key: CoroutineContext.Key<*>
+        get() = this
+
+    fun install(context: CoroutineContext): CoroutineContext =
+        if (context[this] === null) context + this else context
+}
+

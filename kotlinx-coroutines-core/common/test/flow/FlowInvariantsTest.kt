@@ -233,7 +233,7 @@ class FlowInvariantsTest : TestBase() {
 
     @Test
     fun testEmptyCoroutineContextViolationTransform() = runTest {
-        try {
+        assertFailsWith<IllegalStateException> {
             emptyContextTest {
                 transform {
                     expect(it)
@@ -242,16 +242,15 @@ class FlowInvariantsTest : TestBase() {
                     }
                 }
             }
-            expectUnreached()
-        } catch (e: IllegalStateException) {
-            assertTrue(e.message!!.contains("Flow invariant is violated"), "But had: ${e.message}")
-            finish(2)
+        }.apply {
+            assertTrue(message!!.contains("Flow invariant is violated"), "But had: $message")
         }
+        finish(2)
     }
 
     @Test
     fun testEmptyCoroutineContextViolationTransformWhile() = runTest {
-        try {
+        assertFailsWith<IllegalStateException> {
             emptyContextTest {
                 transformWhile {
                     expect(it)
@@ -261,11 +260,18 @@ class FlowInvariantsTest : TestBase() {
                     true
                 }
             }
-            expectUnreached()
-        } catch (e: IllegalStateException) {
-            assertTrue(e.message!!.contains("Flow invariant is violated"))
-            finish(2)
+        }.apply {
+            assertTrue(message!!.contains("Flow invariant is violated"), "But had: $message")
         }
+        finish(2)
+    }
+
+    /** Tests that changing the coroutine context by introducing the undispatched marker does not break the invariant
+     * See <https://github.com/Kotlin/kotlinx.coroutines/pull/4777#discussion_r4334875441>. */
+    @Test
+    fun testUndispatchedEmissionsNotViolatingInvariant() = runTest {
+        assertEquals(listOf(1), flowOf(1).flowOn(CoroutineName("upstream")).transform { emit(it) }.toList())
+        assertEquals(listOf(3), flowOf(1).zip(flowOf(2)) { a, b -> a + b }.transform<Int, Int> { emit(it) }.toList())
     }
 
     private suspend fun emptyContextTest(block: Flow<Int>.() -> Flow<Int>) {

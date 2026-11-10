@@ -145,7 +145,7 @@ internal abstract class ChannelFlowOperator<S, T>(
     private suspend fun collectWithContextUndispatched(collector: FlowCollector<T>, newContext: CoroutineContext) {
         val originalContextCollector = collector.withUndispatchedContextCollector(coroutineContext)
         // invoke flowCollect(originalContextCollector) in the newContext
-        return withContextUndispatched(newContext, block = { flowCollect(it) }, value = originalContextCollector)
+        return withContextUndispatched(UndispatchedMarker.install(newContext), block = { flowCollect(it) }, value = originalContextCollector)
     }
 
     // Slow path when output channel is required
@@ -202,38 +202,41 @@ private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: C
 
 private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
-    private val emitContext: CoroutineContext
+    emitContext: CoroutineContext
 ) : FlowCollector<T> {
     private val countOrElement = threadContextElements(emitContext) // precompute for fast withContextUndispatched
+
+    private val emitContextWithMarker = UndispatchedMarker.install(emitContext)
+
     private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit =
-        withContextUndispatched(emitContext, value, countOrElement, emitRef)
+        withContextUndispatched(emitContextWithMarker, value, countOrElement, emitRef)
 }
 
-// Efficiently computes block(value) in the newContext
+/**
+ * Efficiently computes [block](value) in the [newContext]
+ * Cross-reference with [ScopeCoroutine.startUndispatched] on changes.
+ *
+ * [newContext] must include [UndispatchedMarker].
+ */
 internal suspend fun <T, V> withContextUndispatched(
     newContext: CoroutineContext,
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
-): T = withCoroutineContext(newContext, countOrElement) {
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
+): T = suspendCoroutineUninterceptedOrReturn { uCont ->
+    val undispatchedCont = UndispatchedContinuation(uCont, newContext)
+    withCoroutineContext(newContext, countOrElement) {
+        try {
+            block.startCoroutineUninterceptedOrReturn(value, undispatchedCont)
+        } catch (e: Throwable) {
+            undispatchedCont.afterResumeUndispatched()
+            throw e
+        }.also {
+            if (it !== COROUTINE_SUSPENDED) {
+                undispatchedCont.afterResumeUndispatched()
+            }
+        }
     }
-}
-
-// Continuation that links the caller with uCont with walkable CoroutineStackFrame
-private class StackFrameContinuation<T>(
-    private val uCont: Continuation<T>, override val context: CoroutineContext
-) : Continuation<T>, CoroutineStackFrame {
-
-    override val callerFrame: CoroutineStackFrame?
-        get() = uCont as? CoroutineStackFrame
-
-    override fun resumeWith(result: Result<T>) {
-        uCont.resumeWith(result)
-    }
-
-    override fun getStackTraceElement(): StackTraceElement? = null
 }

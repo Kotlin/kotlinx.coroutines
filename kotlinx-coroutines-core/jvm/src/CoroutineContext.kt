@@ -139,7 +139,7 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
     }
 }
 
-internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
+internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): WithThreadLocalState? {
     if (this !is CoroutineStackFrame) return null
     /*
      * Fast-path to detect whether we have undispatched coroutine at all in our stack.
@@ -153,42 +153,99 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
      *    Both options should work, but it requires more careful studying of the performance
      *    and, mostly, maintainability impact.
      */
-    val potentiallyHasUndispatchedCoroutine = context[UndispatchedMarker] !== null
-    if (!potentiallyHasUndispatchedCoroutine) return null
+    val potentiallyHasUndispatchedCompletion = context[UndispatchedMarker] !== null
+    if (!potentiallyHasUndispatchedCompletion) return null
     val completion = undispatchedCompletion()
     completion?.saveThreadContext(context, oldValue)
     return completion
 }
 
-internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
+internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): WithThreadLocalState? {
     // Find direct completion of this continuation
     val completion: CoroutineStackFrame = when (this) {
         is DispatchedCoroutine<*> -> return null
         else -> callerFrame ?: return null // something else -- not supported
     }
-    if (completion is UndispatchedCoroutine<*>) return completion // found UndispatchedCoroutine!
+    if (completion is WithThreadLocalState) return completion // found UndispatchedCoroutine or UndispatchedContinuation!
     return completion.undispatchedCompletion() // walk up the call stack with tail call
-}
-
-/**
- * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
- * Used as a performance optimization to avoid stack walking where it is not necessary.
- */
-private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {
-    override val key: CoroutineContext.Key<*>
-        get() = this
 }
 
 // Used by withContext when context changes, but dispatcher stays the same
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
-    uCont: Continuation<T>
-) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
+    uCont: Continuation<T>,
+) : ScopeCoroutine<T>(UndispatchedMarker.install(context), uCont),
+    WithThreadLocalState
+{
+    private val threadState: ThreadLocalState = ThreadLocalState(context, uCont.context[ContinuationInterceptor])
 
+    override fun afterCompletionUndispatched() {
+        threadState.clearThreadLocal()
+    }
+
+    override fun afterResume(state: Any?) {
+        threadState.clearThreadLocal()
+        // resume undispatched -- update context but stay on the same dispatcher
+        val result = recoverResult(state, uCont)
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
+    }
+
+    override fun saveThreadContext(context: CoroutineContext, oldValue: Any?) =
+        threadState.saveThreadContext(context, oldValue)
+
+    override fun clearThreadContext(): Boolean =
+        threadState.clearThreadContext()
+}
+
+internal actual class UndispatchedContinuation<in T> actual constructor(
+    private val uCont: Continuation<T>,
+    // Must have the `UndispatchedMarker` by convention.
+    actual override val context: CoroutineContext,
+): Continuation<T>, CoroutineStackFrame, WithThreadLocalState {
+    private val threadState: ThreadLocalState = ThreadLocalState(context, uCont.context[ContinuationInterceptor])
+
+    init {
+        assert { context[UndispatchedMarker] !== null }
+    }
+
+    actual override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    actual override fun resumeWith(result: Result<T>) {
+        threadState.clearThreadLocal()
+        withContinuationContext(uCont, null) {
+            uCont.resumeWith(result)
+        }
+    }
+
+    actual override fun getStackTraceElement(): StackTraceElement? = null
+
+    override fun saveThreadContext(context: CoroutineContext, oldValue: Any?) =
+        threadState.saveThreadContext(context, oldValue)
+
+    override fun clearThreadContext(): Boolean =
+        threadState.clearThreadContext()
+
+    actual fun afterResumeUndispatched() {
+        threadState.clearThreadLocal()
+    }
+}
+
+internal interface WithThreadLocalState {
+    fun saveThreadContext(context: CoroutineContext, oldValue: Any?)
+    fun clearThreadContext(): Boolean
+}
+
+private class ThreadLocalState(
+    context: CoroutineContext,
+    continuationInterceptor: ContinuationInterceptor?,
+) {
     /**
-     * The state of [ThreadContextElement]s associated with the current undispatched coroutine.
-     * It is stored in a thread local because this coroutine can be used concurrently in suspend-resume race scenario.
-     * See the followin, boiled down example with inlined `withContinuationContext` body:
+     * The state of [ThreadContextElement]s associated with the current undispatched completion.
+     * It is stored in a thread local because this completion can be used concurrently in suspend-resume race scenario.
+     * See the following, boiled down example with inlined `withContinuationContext` body:
      * ```
      * val state = saveThreadContext(ctx)
      * try {
@@ -215,20 +272,21 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
      *
      * To avoid that, we attempt to narrow down the lifetime of this thread local as much as possible:
      * - It's never accessed when we are sure there are no thread context elements
-     * - It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
+     * - It's cleaned up via [ThreadLocal.remove] as soon as the completion is finished or a suspension
+     *   renders the thread-local obsolete.
      */
     private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
 
     /*
-     * Indicates that a coroutine has at least one thread context element associated with it
-     * and that 'threadStateToRecover' is going to be set in case of dispatchhing in order to preserve them.
+     * Indicates that a completion has at least one thread context element associated with it
+     * and that 'threadStateToRecover' is going to be set in case of dispatching in order to preserve them.
      * Better than nullable thread-local for easier debugging.
      *
      * It is used as a performance optimization to avoid 'threadStateToRecover' initialization
      * (note: tl.get() initializes thread local),
      * and is prone to false-positives as it is never reset: otherwise
      * it may lead to logical data races between suspensions point where
-     * coroutine is yet being suspended in one thread while already being resumed
+     * an undispatched coroutine is yet being suspended in one thread while already being resumed
      * in another.
      */
     @Volatile
@@ -240,7 +298,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
          * 'ThreadLocalStressTest' covers this change properly.
          *
          * The scenario this change covers is the following:
-         * 1) The coroutine is being started as plain non kotlinx.coroutines related suspend function,
+         * 1) The execution is being started as plain non kotlinx.coroutines related suspend function,
          *    e.g. `suspend fun main` or, more importantly, Ktor `SuspendFunGun`, that is invoking
          *    `withContext(tlElement)` which creates `UndispatchedCoroutine`.
          * 2) It (original continuation) is then not wrapped into `DispatchedContinuation` via `intercept()`
@@ -252,7 +310,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
          * Here we detect precisely this situation and properly setup context to recover later.
          *
          */
-        if (uCont.context[ContinuationInterceptor] !is CoroutineDispatcher) {
+        if (continuationInterceptor !is CoroutineDispatcher) {
             /*
              * We cannot just "read" the elements as there is no such API,
              * so we update-restore it immediately and use the intermediate value
@@ -276,20 +334,7 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
         }
     }
 
-    override fun afterCompletionUndispatched() {
-        clearThreadLocal()
-    }
-
-    override fun afterResume(state: Any?) {
-        clearThreadLocal()
-        // resume undispatched -- update context but stay on the same dispatcher
-        val result = recoverResult(state, uCont)
-        withContinuationContext(uCont, null) {
-            uCont.resumeWith(result)
-        }
-    }
-
-    private fun clearThreadLocal() {
+    fun clearThreadLocal() {
         if (threadLocalIsSet) {
             threadStateToRecover.get()?.let { (ctx, value) ->
                 restoreThreadContext(ctx, value)
