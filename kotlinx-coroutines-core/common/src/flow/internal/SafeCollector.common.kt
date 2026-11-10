@@ -27,7 +27,7 @@ internal fun SafeCollector<*>.checkContext(currentContext: CoroutineContext) {
         if (key !== Job) {
             return@fold when {
                 element === collectElement -> count + 1
-                 // If the current context has UndispatchedMarker, but the collector doesn't, don't count it:
+                // If the current context has UndispatchedMarker, but the collector doesn't, don't count it:
                 key === UndispatchedMarker -> count
                 else -> Int.MIN_VALUE
             }

@@ -153,8 +153,8 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
      *    Both options should work, but it requires more careful studying of the performance
      *    and, mostly, maintainability impact.
      */
-    val potentiallyHasUndispatchedCoroutine = context[UndispatchedMarker] !== null
-    if (!potentiallyHasUndispatchedCoroutine) return null
+    val potentiallyHasUndispatchedCompletion = context[UndispatchedMarker] !== null
+    if (!potentiallyHasUndispatchedCompletion) return null
     val completion = undispatchedCompletion()
     completion?.saveThreadContext(context, oldValue)
     return completion
@@ -166,7 +166,7 @@ internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): WithThreadLoc
         is DispatchedCoroutine<*> -> return null
         else -> callerFrame ?: return null // something else -- not supported
     }
-    if (completion is WithThreadLocalState) return completion // found UndispatchedCoroutine!
+    if (completion is WithThreadLocalState) return completion // found UndispatchedCoroutine or UndispatchedContinuation!
     return completion.undispatchedCompletion() // walk up the call stack with tail call
 }
 
@@ -229,7 +229,7 @@ internal actual class UndispatchedContinuation<in T> actual constructor(
         threadState.clearThreadContext()
 
     actual fun afterResumeUndispatched() {
-        val _ = clearThreadContext()
+        threadState.clearThreadLocal()
     }
 }
 
@@ -241,11 +241,11 @@ internal interface WithThreadLocalState {
 private class ThreadLocalState(
     context: CoroutineContext,
     continuationInterceptor: ContinuationInterceptor?,
-): WithThreadLocalState {
+) {
     /**
-     * The state of [ThreadContextElement]s associated with the current undispatched coroutine.
-     * It is stored in a thread local because this coroutine can be used concurrently in suspend-resume race scenario.
-     * See the followin, boiled down example with inlined `withContinuationContext` body:
+     * The state of [ThreadContextElement]s associated with the current undispatched completion.
+     * It is stored in a thread local because this completion can be used concurrently in suspend-resume race scenario.
+     * See the following, boiled down example with inlined `withContinuationContext` body:
      * ```
      * val state = saveThreadContext(ctx)
      * try {
@@ -272,20 +272,21 @@ private class ThreadLocalState(
      *
      * To avoid that, we attempt to narrow down the lifetime of this thread local as much as possible:
      * - It's never accessed when we are sure there are no thread context elements
-     * - It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
+     * - It's cleaned up via [ThreadLocal.remove] as soon as the completion is finished or a suspension
+     *   renders the thread-local obsolete.
      */
     private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
 
     /*
-     * Indicates that a coroutine has at least one thread context element associated with it
-     * and that 'threadStateToRecover' is going to be set in case of dispatchhing in order to preserve them.
+     * Indicates that a completion has at least one thread context element associated with it
+     * and that 'threadStateToRecover' is going to be set in case of dispatching in order to preserve them.
      * Better than nullable thread-local for easier debugging.
      *
      * It is used as a performance optimization to avoid 'threadStateToRecover' initialization
      * (note: tl.get() initializes thread local),
      * and is prone to false-positives as it is never reset: otherwise
      * it may lead to logical data races between suspensions point where
-     * coroutine is yet being suspended in one thread while already being resumed
+     * an undispatched coroutine is yet being suspended in one thread while already being resumed
      * in another.
      */
     @Volatile
@@ -297,7 +298,7 @@ private class ThreadLocalState(
          * 'ThreadLocalStressTest' covers this change properly.
          *
          * The scenario this change covers is the following:
-         * 1) The coroutine is being started as plain non kotlinx.coroutines related suspend function,
+         * 1) The execution is being started as plain non kotlinx.coroutines related suspend function,
          *    e.g. `suspend fun main` or, more importantly, Ktor `SuspendFunGun`, that is invoking
          *    `withContext(tlElement)` which creates `UndispatchedCoroutine`.
          * 2) It (original continuation) is then not wrapped into `DispatchedContinuation` via `intercept()`
@@ -322,12 +323,12 @@ private class ThreadLocalState(
         }
     }
 
-    override fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
+    fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
         threadLocalIsSet = true // Specify that thread-local is touched at all
         threadStateToRecover.set(context to oldValue)
     }
 
-    override fun clearThreadContext(): Boolean {
+    fun clearThreadContext(): Boolean {
         return !(threadLocalIsSet && threadStateToRecover.get() == null).also {
             threadStateToRecover.remove()
         }

@@ -576,7 +576,7 @@ internal class DispatchedCoroutine<in T>(
 }
 
 /**
- * Marker indicating that [UndispatchedCoroutine] exists somewhere up in the stack.
+ * Marker indicating that an undispatched completion exists somewhere up in the stack.
  * Used as a performance optimization to avoid stack walking where it is not necessary.
  */
 internal object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Key<UndispatchedMarker> {

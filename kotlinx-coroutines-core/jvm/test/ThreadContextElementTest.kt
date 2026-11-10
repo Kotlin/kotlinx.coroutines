@@ -248,7 +248,7 @@ class ThreadContextElementTest : TestBase() {
                         } catch (e: Throwable) {
                             AssertionError(
                                 "Failed with parameters: " +
-                                    "outerDispatcher: $outerDispatcher, " +
+                                    "outerDispatcher=$outerDispatcher, " +
                                     "dispatcher=$dispatcher, " +
                                     "doYield=$doYield, " +
                                     "useThreadLocalInOuterContext=$useThreadLocalInOuterContext", e

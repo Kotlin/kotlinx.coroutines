@@ -197,7 +197,7 @@ private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: C
     // SendingCollector & NopCollector do not care about the context at all and can be used as is
     is SendingCollector, is NopCollector -> this
     // Otherwise just wrap into UndispatchedContextCollector interface implementation
-    else -> UndispatchedContextCollector(this, UndispatchedMarker.install(emitContext))
+    else -> UndispatchedContextCollector(this, emitContext)
 }
 
 private class UndispatchedContextCollector<T>(
@@ -225,18 +225,18 @@ internal suspend fun <T, V> withContextUndispatched(
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
     block: suspend (V) -> T
-): T = suspendCoroutineUninterceptedOrReturn sc@{ uCont ->
+): T = suspendCoroutineUninterceptedOrReturn { uCont ->
     val undispatchedCont = UndispatchedContinuation(uCont, newContext)
-    try {
-        withCoroutineContext(newContext, countOrElement) {
+    withCoroutineContext(newContext, countOrElement) {
+        try {
             block.startCoroutineUninterceptedOrReturn(value, undispatchedCont)
-        }
-    } catch (e: Throwable) {
-        undispatchedCont.afterResumeUndispatched()
-        throw e
-    }.also {
-        if (it !== COROUTINE_SUSPENDED) {
+        } catch (e: Throwable) {
             undispatchedCont.afterResumeUndispatched()
+            throw e
+        }.also {
+            if (it !== COROUTINE_SUSPENDED) {
+                undispatchedCont.afterResumeUndispatched()
+            }
         }
     }
 }
