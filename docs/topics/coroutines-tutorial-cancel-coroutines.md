@@ -44,6 +44,9 @@ If it has, the coroutine stops and throws a `CancellationException`.
 Each child coroutine in `loadArticlesConcurrently()` calls the suspending `getComments()` function.
 The function can suspend while waiting for an HTTP response, giving the coroutine a suspension point where it can react to cancellation.
 
+When a coroutine is canceled while waiting for an HTTP response, the Ktor client cancels the request.
+In this project, the local server configures Ktor's [`HttpRequestLifecycle`](https://api.ktor.io/ktor-server-core/io.ktor.server.http/-http-request-lifecycle.html) to cancel the coroutine processing that request.
+
 ### Start coroutines in `GlobalScope`
 
 The [`GlobalScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) object provides a scope that isn't connected to the parent loading coroutine.
@@ -92,9 +95,6 @@ Start the coroutines that request comments in `GlobalScope` and return the resul
 4. Call the `.awaitAll()` extension function on the resulting list and return the completed `Article` objects.
 
 ```kotlin
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
-
 suspend fun loadArticlesNonCancelable(
     service: BlogService
 ): List<Article> {
@@ -117,15 +117,15 @@ When you click **Cancel**, the `ArticlesViewModel.cancelLoading()` function in t
 This property stores the `Job` returned by the `.launch()` call in `loadComments()`.
 
 In **CONCURRENT** mode, cancellation propagates through the coroutine hierarchy to the child coroutines started inside the `loadArticlesConcurrently()` function.
-As a result, the child coroutines stop their remaining work:
+The Ktor client cancels their pending HTTP requests, and the server logs a `CANCELLED` message for each request:
 
-![Console output showing that structured child coroutines stop before sending comment requests](cancelable-scope.png){width="700"}
+![Console output showing server logs for pending comment requests canceled in CONCURRENT mode](cancelable-scope.png){width="700"}
 
 Next, select **NON_CANCELABLE**, click **Load comments**, and click **Cancel** again.
 
 The application still cancels the parent loading coroutine.
 However, the coroutines started with `GlobalScope.async()` aren't its children, so cancellation doesn't propagate to them.
-They continue requesting comments after the parent loading coroutine has been canceled:
+As a result, they continue requesting comments after the parent loading coroutine has been canceled:
 
 ![Console output showing that coroutines started in GlobalScope continue sending comment requests after cancellation](globalscope-cancel.png){width="700"}
 
@@ -142,7 +142,6 @@ The test starts the function in a coroutine, waits for one second of virtual tim
 It then checks that the `Job` is canceled and that cancellation completes before two seconds of virtual time have elapsed.
 
 The tests don't check whether the coroutines started in `GlobalScope` continue after the parent loading coroutine is canceled.
-You verified this behavior by comparing the two loading modes in the application.
 
 In the next part of the tutorial, you'll use a flow to report loading progress as each article becomes available.
 
