@@ -45,7 +45,7 @@ internal class ChannelFlowMerge<T>(
         ChannelFlowMerge(flow, concurrency, context, capacity, onBufferOverflow)
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
-        return scope.produce(context, capacity, block = collectToFun)
+        return scope.produce(context, capacity, onBufferOverflow, block = collectToFun)
     }
 
     override suspend fun collectTo(scope: ProducerScope<T>) {
@@ -83,7 +83,7 @@ internal class ChannelLimitedFlowMerge<T>(
         ChannelLimitedFlowMerge(flows, context, capacity, onBufferOverflow)
 
     override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
-        return scope.produce(context, capacity, block = collectToFun)
+        return scope.produce(context, capacity, onBufferOverflow, block = collectToFun)
     }
 
     override suspend fun collectTo(scope: ProducerScope<T>) {
