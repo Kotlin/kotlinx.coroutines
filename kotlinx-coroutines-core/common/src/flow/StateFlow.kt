@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.contracts.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 /**
  * A [SharedFlow] that represents a read-only state with a single updatable data [value] that emits updates
@@ -328,6 +329,10 @@ private class StateFlowImpl<T>(
     private val _state = atomic(initialState) // T | NULL
     private var sequence = 0 // serializes updates, value update is in process when sequence is odd
 
+    init {
+        collectStacktrace(this, NULL.unbox<T>(initialState))
+    }
+
     public override var value: T
         get() = NULL.unbox(_state.value)
         set(value) {
@@ -338,14 +343,22 @@ private class StateFlowImpl<T>(
     override fun compareAndSet(expect: T, update: T): Boolean =
         updateState(expect ?: NULL, update ?: NULL)
 
-    private fun updateState(expectedState: Any?, newState: Any): Boolean {
+    private fun updateState(expectedState: Any?, newState: Any, continuation: Continuation<*>? = null): Boolean {
         var curSequence: Int
         var curSlots: Array<StateFlowSlot?>? // benign race, we will not use it
         synchronized(this) {
             val oldState = _state.value
             if (expectedState != null && oldState != expectedState) return false // CAS support
             if (oldState == newState) return true // Don't do anything if value is not changing, but CAS -> true
+
+            // Collect the stacktrace before publishing the new state
+            // because it becomes immediately visible for collectors, and hence can be requested from the debugger.
+            // Also need to indicate the state, because the old state might be requested from the debugger
+            // before this state is published.
+            collectStacktrace(this, NULL.unbox<T>(newState), continuation)
             _state.value = newState
+            dropStacktrace(this, NULL.unbox<T>(oldState))
+
             curSequence = sequence
             if (curSequence and 1 == 0) { // even sequence means quiescent state flow (no ongoing update)
                 curSequence++ // make it odd
@@ -390,8 +403,16 @@ private class StateFlowImpl<T>(
     }
 
     override suspend fun emit(value: T) {
-        this.value = value
+        tryEmitWithContinuation(value)
     }
+
+    // This call never suspends.
+    // The suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
+    // for debugger-agent wrappers in updateState.
+    private suspend fun tryEmitWithContinuation(value: T): Unit =
+        suspendCoroutineUninterceptedOrReturn { cont ->
+            updateState(null, value ?: NULL, cont)
+        }
 
     @Suppress("UNCHECKED_CAST")
     override fun resetReplayCache() {
@@ -413,7 +434,7 @@ private class StateFlowImpl<T>(
                 collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collector.emit(NULL.unbox(newState))
+                    collector.emit(matchStacktrace(this, NULL.unbox<T>(newState)))
                     oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot
