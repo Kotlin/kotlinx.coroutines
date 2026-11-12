@@ -29,6 +29,20 @@ loadingScope.launch {
 In this example, `updateResultsWithProgress()` collects the flow returned by `observeArticlesUnstable()`.
 If the flow throws a `NetworkException` during collection, the `catch` block handles it by printing its stack trace.
 
+You can use a [`finally` block](exceptions.md#the-finally-block) for cleanup code that runs after the `try` block and any `catch` block.
+This cleanup runs whether the code in `try` completes normally, throws an exception, or stops because the coroutine is canceled.
+
+For example, you can use a `finally` block to release a resource whether the coroutine completes normally, fails, or is canceled:
+
+```kotlin
+val resource = openResource()
+try {
+    resource.process()
+} finally {
+    resource.close()
+}
+```
+
 ### Exception propagation in coroutine hierarchies
 
 With structured concurrency, coroutines form a hierarchy of parent and child coroutines.
