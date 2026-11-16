@@ -49,10 +49,10 @@ These data classes are declared in the following files:
 An application can become unresponsive when it has to wait for an operation to finish before it can handle other work.
 
 On the JVM, code runs on threads.
-If the thread responsible for handling events has to wait for an operation to finish, it can't do other work in the meantime.
+If the thread responsible for handling user interactions has to wait for an operation to finish, it can't do other work in the meantime.
 An operation that causes the thread to wait in this way is known as a _blocking operation_.
 
-The `BlogServiceBlocking` class in the `network/BlogServiceBlocking.kt` file uses the [Retrofit](https://github.com/lysine-dev/retrofit) library to perform HTTP requests.
+The `BlogServiceBlocking` class in the `network/BlogServiceBlocking.kt` file uses the blocking API from the [Retrofit](https://github.com/lysine-dev/retrofit) library to perform HTTP requests.
 
 For the blocking implementation, you'll use the following functions:
 
@@ -79,7 +79,7 @@ The `execute()` function sends the request and blocks the current thread until t
 
 ### Task – Implement the blocking function
 
-In the `Task1BlockVsSuspend.kt` file, replace the `TODO()` placeholder in the following function:
+In the `Task1BlockVsSuspend.kt` file, find the following `TODO()` placeholder function:
 
 ```kotlin
 fun loadArticles(serviceBlocking: BlogServiceBlocking): List<Article> {
@@ -91,7 +91,7 @@ fun loadArticles(serviceBlocking: BlogServiceBlocking): List<Article> {
 > 
 {style="tip"}
 
-Then replace the `TODO()` placeholder with code that:
+Replace the `TODO()` placeholder with code that:
 
 * Loads the available `ArticleInfo` objects.
 * Loads the comments for each article.
@@ -126,8 +126,8 @@ To simulate real-world network latency, the local server delays its response to 
 The blocking implementation loads comments for one article at a time, so these delays can add up to approximately 10 seconds.
 
 The application invokes the blocking `loadArticles()` function on the UI thread.
-Each time `BlogServiceBlocking` invokes Retrofit's `execute()` function, the UI thread waits until the local server returns an HTTP response.
-While it waits, the thread can't update the window or handle input.
+To load the articles and comments, `BlogServiceBlocking` invokes Retrofit's `execute()` function for each HTTP request.
+The UI thread can't update the window or handle input until `loadArticles()` returns.
 As a result, the rotating emoji stops and the application remains unresponsive until all articles and comments have loaded.
 This behavior demonstrates why blocking operations are a poor fit for the UI thread and why loading data in real-world applications requires a different approach.
 

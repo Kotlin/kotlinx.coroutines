@@ -77,7 +77,7 @@ Before running the application, make sure that port `9020` is available for the 
    Alternatively, run the application from the command line with the following:
 
     ```bash
-    ./gradlew :desktop-client:jvmRun -DmainClass=org.example.articles.ArticlesMainKt
+    ./gradlew :desktop-client:run
     ```
 
 2. Wait for the local server to start. When it's ready, the article browser appears in the application window.
