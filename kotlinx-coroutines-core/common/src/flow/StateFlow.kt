@@ -134,6 +134,13 @@ import kotlin.coroutines.*
 @OptIn(ExperimentalSubclassOptIn::class)
 @SubclassOptInRequired(ExperimentalForInheritanceCoroutinesApi::class)
 @Suppress("EXPOSED_NOT_EXPORTED_SUPER_INTERFACE_WARNING")
+// The super interface (SharedFlow) is not exported, so it is omitted from the generated TypeScript.
+// See ^KT-83009: this is dangerous when JS/TS code implements such an interface
+// and passes the object back to Kotlin, because the inherited (non-exported) members are missing at runtime.
+// StateFlow is not affected: it is not stable for inheritance (see `@SubclassOptInRequired` above) and is not
+// supposed to be implemented outside of kotlinx.coroutines. All instances are created on the Kotlin side
+// (e.g. via the `MutableStateFlow()` constructor function), so they always implement every inherited member.
+// The same is relevant for the MutableStateFlow interface.
 @JsOptionalExport(couldBeConvertedToExplicitExport = true)
 public interface StateFlow<out T> : SharedFlow<T> {
     /**
