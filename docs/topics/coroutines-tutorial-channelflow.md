@@ -122,6 +122,14 @@ Because the comment requests take different amounts of time, the order of the di
 
 ### Optional task – Create tests for concurrent loading {initial-collapse-state="collapsed" collapsible="true" id="concurrent-loading-tests-exercise"}
 
+> This task uses the Turbine library to demonstrate how to retrieve the expected number of values
+> and then verify that the flow completes successfully.
+> 
+> As a simpler approach, you can call the [.toSet()](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html)
+> extension function on the flow to collect its values directly into a set.
+>
+{style="note"}
+
 This exercise builds on the optional test-writing exercise from the [previous part](coroutines-tutorial-loading-progress-with-flow.md) of the tutorial.
 Follow the same test structure as in the previous exercise, using `.test()`, `awaitItem()`, `awaitComplete()`, `runTest()`, and `currentTime`.
 

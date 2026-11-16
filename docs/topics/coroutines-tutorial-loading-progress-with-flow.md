@@ -10,7 +10,7 @@ This allows the application to display articles progressively instead of waiting
 ## Flows
 
 A _flow_ represents a sequential stream of values that can be produced asynchronously.
-Unlike a suspending function, which returns one value, a flow can produce multiple sequential values over time.
+Unlike a suspending function, which returns one value, a flow can produce multiple values sequentially over time.
 
 In a flow, the code that produces values is called the _emitter_, and the code that consumes them is called the _collector_.
 
@@ -114,6 +114,14 @@ However, it adds each `Article` object to the displayed results as soon as the f
 ![Partially loaded article list while loading is still in progress](load-progress.png){width="700"}
 
 ### Optional task – Create tests for sequential loading {initial-collapse-state="collapsed" collapsible="true" id="sequential-loading-tests-exercise"}
+
+> To show the Turbine library in action, this task uses it to retrieve emitted values one at a time and verify that the flow completes successfully.
+> 
+> As a simpler approach, you can call the
+> [`.toList()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-list.html)
+> extension function on the flow to collect its values into a list.
+>
+{style="note"}
 
 You can use the [Turbine library](https://github.com/cashapp/turbine) to test flows, including the values they emit and how they complete.
 

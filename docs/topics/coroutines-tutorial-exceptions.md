@@ -29,19 +29,9 @@ loadingScope.launch {
 In this example, `updateResultsWithProgress()` collects the flow returned by `observeArticlesUnstable()`.
 If the flow throws a `NetworkException` during collection, the `catch` block handles it by printing its stack trace.
 
-You can use a [`finally` block](exceptions.md#the-finally-block) for cleanup code that runs after the `try` block and any `catch` block.
+Additionally, you can use a `finally` block for cleanup code that runs after the `try` block and any `catch` block.
 This cleanup runs whether the code in `try` completes normally, throws an exception, or stops because the coroutine is canceled.
-
-For example, you can use a `finally` block to release a resource whether the coroutine completes normally, fails, or is canceled:
-
-```kotlin
-val resource = openResource()
-try {
-    resource.process()
-} finally {
-    resource.close()
-}
-```
+For more information, see [The `finally` block](exceptions.md#the-finally-block) section.
 
 ### Exception propagation in coroutine hierarchies
 
@@ -50,11 +40,17 @@ With structured concurrency, coroutines form a hierarchy of parent and child cor
 If a child coroutine doesn't handle an exception, the exception propagates to its parent by default, unless it's a `CancellationException`.
 This cancels the parent, which then cancels its other child coroutines.
 
-Here's an example of exception propagation using nested `.launch()` calls:
+Here's an example where an exception thrown in a child coroutine propagates to its parent:
 
 ```kotlin
 loadingScope.launch { // Parent coroutine
-    launch { // Child coroutine
+    launch { // First child coroutine
+        delay(1.seconds)
+        // This message isn't printed because the parent coroutine cancels this child
+        println("Coroutine completed")
+    }
+
+    launch { // Second child coroutine
         // The exception propagates to the parent coroutine and cancels it
         throw NetworkException("Loading articles was unsuccessful.")
     }
@@ -64,15 +60,21 @@ loadingScope.launch { // Parent coroutine
 In this example, there is no `catch` block to handle the `NetworkException` thrown inside the child coroutine.
 The exception propagates to the parent coroutine and cancels it.
 
-Here's the same example with the exception handled inside the child coroutine:
+Here's the same example with the exception handled inside the second child coroutine:
 
 ```kotlin
 loadingScope.launch { // Parent coroutine
-    launch { // Child coroutine
+    launch { // First child coroutine
+        delay(1.seconds)
+        // This message is printed because the parent coroutine remains active
+        println("Coroutine completed")
+    }
+
+    launch { // Second child coroutine
         try {
             throw NetworkException("Loading articles was unsuccessful.")
         } catch (e: NetworkException) {
-            // The exception doesn't propagate to the parent coroutine.
+            // The exception doesn't propagate to the parent coroutine
             e.printStackTrace()
         }
     }
@@ -157,7 +159,11 @@ If `viewModelScope` is canceled, cancellation still propagates to `loadingScope`
 Run the application again, select **UNSTABLE_NETWORK**, and click **Load comments**.
 
 The `observeArticlesUnstable()` function still throws a `NetworkException`, so the loading attempt fails.
-The `CoroutineExceptionHandler` passed to `.launch()` receives the exception and updates the loading status.
+
+[`CoroutineExceptionHandler`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/)
+handles exceptions a coroutine can't propagate to a parent.
+Here, the application passes a `CoroutineExceptionHandler` to `.launch()` because a `SupervisorJob` doesn't handle exceptions from its child coroutines.
+The handler receives the `NetworkException` and updates the loading status.
 
 However, the exception no longer cancels `loadingScope`.
 If you click **Load comments** again, the application starts another loading attempt in a new coroutine.

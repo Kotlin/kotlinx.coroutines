@@ -17,7 +17,7 @@ When a coroutine suspends, it stops using the thread until it can continue, allo
 
 To load comments concurrently, the implementation you'll write starts a separate coroutine for each `ArticleInfo` object returned by the `getArticleInfoList()` function.
 Each coroutine calls the `getComments(articleInfo)` function to request that article's comments.
-When one coroutine suspends while waiting for a response, the UI thread can run another coroutine and send the next HTTP request.
+When one coroutine suspends while waiting for a response, the UI thread can run another coroutine and schedule the next HTTP request for execution.
 
 This allows multiple HTTP requests to remain in progress at the same time, even though the coroutines execute one at a time on the UI thread.
 
@@ -136,7 +136,7 @@ Here's an example solution:
 2. Use the `.map()` extension function to transform each `ArticleInfo` object into a `Deferred<Article>` handle:
     * Call the `.async()` function to start a child coroutine.
     * In the coroutine, call the `getComments()` function and create an `Article` object from the article information and comments.
-3. Use the [`.let()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/let.html) extension function to call `.awaitAll()` on the resulting list of `Deferred<Article>` handles.
+3. Call the `.awaitAll()` extension function on the resulting list of `Deferred<Article>` handles.
 4. Return the `List<Article>` produced by `.awaitAll()` after all the child coroutines complete.
 
 ```kotlin
@@ -150,7 +150,7 @@ suspend fun loadArticlesConcurrently(service: BlogService): List<Article> = coro
                 )
             }
         }
-        .let { it.awaitAll() }
+        .awaitAll()
 }
 ```
 
