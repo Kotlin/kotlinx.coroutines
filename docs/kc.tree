@@ -19,7 +19,6 @@
             <toc-element topic="coroutines-flow-operators.md"/>
         </toc-element>
 		<toc-element topic="composing-suspending-functions.md"/>
-        <toc-element topic="coroutines-and-channels.md"/>
 		<toc-element topic="coroutine-context-and-dispatchers.md"/>
 		<toc-element topic="channels.md"/>
 		<toc-element topic="exception-handling.md"/>

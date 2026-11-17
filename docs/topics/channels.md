@@ -8,9 +8,12 @@ Channels provide a way to transfer a stream of values.
 
 ## Channel basics
 
-A [Channel] is conceptually very similar to `BlockingQueue`. One key difference is that
-instead of a blocking `put` operation it has a suspending [send][SendChannel.send], and instead of 
-a blocking `take` operation it has a suspending [receive][ReceiveChannel.receive].
+[Channels](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.channels/-channel/) are communication primitives that allow data to be passed between coroutines. One coroutine can _send_
+some information to a channel, while another can _receive_ that information from it.
+
+![Using channels](using-channel.png)
+
+Here's an example:
 
 ```kotlin
 import kotlinx.coroutines.*
@@ -48,6 +51,94 @@ Done!
 ```
 
 <!--- TEST -->
+
+A coroutine that sends (produces) information is often called a producer, and a coroutine that receives (consumes)
+information is called a consumer. One or multiple coroutines can send information to the same channel, and one or multiple
+coroutines can receive data from it:
+
+![Using channels with many coroutines](using-channel-many-coroutines.png)
+
+When many coroutines receive information from the same channel, each element is handled only once by one of the
+consumers. Once an element is handled, it is immediately removed from the channel.
+
+A channel is conceptually very similar to `BlockingQueue`. One key difference is that
+instead of a blocking `put` operation it has a suspending [send][SendChannel.send], and instead of
+a blocking `take` operation it has a suspending [receive][ReceiveChannel.receive].
+
+### Channel interfaces
+
+`Channel` is represented by three different interfaces: `SendChannel`, `ReceiveChannel`, and `Channel`, with the latter
+extending the first two. You usually create a channel and give it to producers as a `SendChannel` instance so that only
+they can send information to the channel.
+You give a channel to consumers as a `ReceiveChannel` instance so that only they can receive from it. Both `send`
+and `receive` methods are declared as `suspend`:
+
+```kotlin
+interface SendChannel<in E> {
+    suspend fun send(element: E)
+    fun close(): Boolean
+}
+
+interface ReceiveChannel<out E> {
+    suspend fun receive(): E
+}
+
+interface Channel<E> : SendChannel<E>, ReceiveChannel<E>
+```
+
+The producer can close a channel to indicate that no more elements are coming.
+
+## Channel types
+
+Several types of channels are defined in the library. They differ in how many elements they can internally store and
+whether the `send()` call can be suspended or not.
+For all of the channel types, the `receive()` call behaves similarly: it receives an element if the channel is not empty;
+otherwise, it is suspended.
+
+<deflist collapsible="true">
+   <def title="Unlimited channel" id="unlimited-channel">
+       <p>An unlimited channel is the closest analog to a queue: producers can send elements to this channel and it will
+keep growing indefinitely. The <code>send()</code> call will never be suspended.
+If the program runs out of memory, you'll get an <code>OutOfMemoryException</code>.
+The difference between an unlimited channel and a queue is that when a consumer tries to receive from an empty channel,
+it becomes suspended until some new elements are sent.</p>
+       <img src="unlimited-channel.png" alt="Unlimited channel" width="500"/>
+   </def>
+   <def title="Buffered channel" id="buffered-channel">
+       <p>The size of a buffered channel is constrained by the specified number.
+Producers can send elements to this channel until the size limit is reached. All of the elements are internally stored.
+When the channel is full, the next <code>send()</code> call on it is suspended until more free space becomes available.</p>
+       <img src="buffered-channel.png" alt="Buffered channel" width="500"/>
+   </def>
+   <def title="Rendezvous channel" id="rendezvous-channel">
+       <p>The "Rendezvous" channel is a channel without a buffer, the same as a buffered channel with zero size.
+One of the functions (<code>send()</code> or <code>receive()</code>) is always suspended until the other is called. </p>
+       <p>If the <code>send()</code> function is called and there's no suspended <code>receive()</code> call ready to process the element, then <code>send()</code>
+is suspended. Similarly, if the <code>receive()</code> function is called and the channel is empty or, in other words, there's no
+suspended <code>send()</code> call ready to send the element, the <code>receive()</code> call is suspended. </p>
+       <p>The "rendezvous" name ("a meeting at an agreed time and place") refers to the fact that <code>send()</code> and <code>receive()</code>
+should "meet on time".</p>
+       <img src="rendezvous-channel.png" alt="Rendezvous channel" width="500"/>
+   </def>
+   <def title="Conflated channel" id="conflated-channel">
+       <p>A new element sent to the conflated channel will overwrite the previously sent element, so the receiver will always
+get only the latest element. The <code>send()</code> call is never suspended.</p>
+       <img src="conflated-channel.gif" alt="Conflated channel" width="500"/>
+   </def>
+</deflist>
+
+When you create a channel, specify its type or the buffer size (if you need a buffered one):
+
+```kotlin
+val rendezvousChannel = Channel<String>()
+val bufferedChannel = Channel<String>(10)
+val conflatedChannel = Channel<String>(CONFLATED)
+val unlimitedChannel = Channel<String>(UNLIMITED)
+```
+
+By default, a "Rendezvous" channel is created.
+
+<!--- CLEAR -->
 
 ## Closing and iteration over channels 
 
