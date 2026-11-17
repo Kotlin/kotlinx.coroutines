@@ -70,7 +70,7 @@ You can find solutions for all the tasks on the `solutions` branch of the [proje
 
 Before running the application, make sure that port `9020` is available for the local server.
 
-1. Select the **Articles** run configuration in IntelliJ IDEA, and click **Run** ![Run icon](run-icon.png){width=20}{type="joined"}:
+1. Select the **Articles** run configuration in IntelliJ IDEA and click **Run** ![Run icon](run-icon.png){width=20}{type="joined"}:
 
    ![Select the `articles` run configuration, and click run](run-articles-app.png){width="600"}
 

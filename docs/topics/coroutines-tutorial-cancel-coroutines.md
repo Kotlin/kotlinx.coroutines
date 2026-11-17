@@ -2,6 +2,8 @@
 
 [//]: # (title: Cancel concurrent loading with structured concurrency – tutorial)
 
+<web-summary>The third part of the Kotlin coroutines and flows tutorial, where you learn how structured concurrency makes coroutines cancelable.</web-summary>
+
 Concurrent loading starts several child coroutines to request comments.
 When loading is no longer needed, the application must be able to stop these coroutines as a group.
 For example, a user may close a window, navigate away from a screen, or decide to cancel a long-running loading operation before it finishes.
@@ -68,7 +70,7 @@ However, this doesn't happen automatically through cancellation propagation beca
 
 ### Task – Implement loading with `GlobalScope`
 
-Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task3StructuralConcurrency.kt` file.
+Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task3StructuredConcurrency.kt` file.
 It contains the `loadArticlesNonCancelable()` function with a `TODO()` placeholder:
 
 ```kotlin
@@ -131,7 +133,7 @@ As a result, they continue requesting comments after the parent loading coroutin
 
 ### Test your implementation
 
-Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task3StructuralConcurrencyKtTest.kt` file.
+Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task3StructuredConcurrencyKtTest.kt` file.
 
 The tests check the following behavior:
 

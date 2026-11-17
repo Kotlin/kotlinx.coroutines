@@ -2,6 +2,8 @@
 
 [//]: # (title: Handle exceptions – tutorial)
 
+<web-summary>The final part of the Kotlin coroutines and flows tutorial, where you learn how to handle exceptions in coroutines and flows.</web-summary>
+
 The loading functions you've implemented so far assume that every HTTP request succeeds.
 
 In this part of the tutorial, you'll request comments from an unstable network and handle exceptions caused by unsuccessful responses.
@@ -31,7 +33,7 @@ If the flow throws a `NetworkException` during collection, the `catch` block han
 
 Additionally, you can use a `finally` block for cleanup code that runs after the `try` block and any `catch` block.
 This cleanup runs whether the code in `try` completes normally, throws an exception, or stops because the coroutine is canceled.
-For more information, see [The `finally` block](exceptions.md#the-finally-block) section.
+For more information, see [The `finally` block](exceptions.md#the-finally-block).
 
 ### Exception propagation in coroutine hierarchies
 
@@ -94,7 +96,7 @@ Other child coroutines can continue running, and you can start new child corouti
 
 > Canceling the `SupervisorJob` cancels all its child coroutines.
 > 
-{style="tip"}
+{style="note"}
 
 ### Observe a failed loading attempt
 
@@ -161,7 +163,7 @@ Run the application again, select **UNSTABLE_NETWORK**, and click **Load comment
 The `observeArticlesUnstable()` function still throws a `NetworkException`, so the loading attempt fails.
 
 [`CoroutineExceptionHandler`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/)
-handles exceptions a coroutine can't propagate to a parent.
+handles exceptions that a coroutine can't propagate to a parent.
 Here, the application passes a `CoroutineExceptionHandler` to `.launch()` because a `SupervisorJob` doesn't handle exceptions from its child coroutines.
 The handler receives the `NetworkException` and updates the loading status.
 
@@ -191,7 +193,7 @@ override suspend fun getCommentsUnstable(articleInfo: ArticleInfo): List<Comment
 }
 ```
 
-The function sends an HTTP request with a 30% chance of receiving an unsuccessful response.
+The function sends an HTTP request that has a 30% chance of returning an unsuccessful response.
 When the response is unsuccessful, the function throws a `NetworkException`:
 
 ```kotlin
@@ -229,10 +231,6 @@ Adapt the sequential flow structure of the `observeArticlesLoading()` function i
     * Use the `emit()` function to emit the `Article` object.
 
 ```kotlin
-import org.example.articles.model.Article
-import org.example.articles.network.BlogService
-import kotlinx.coroutines.flow.*
-
 // Task: Implement loading of articles from an unstable network
 fun observeArticlesUnstable(service: BlogService): Flow<Article> = flow {
     val list = service.getArticleInfoList()

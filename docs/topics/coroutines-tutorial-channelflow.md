@@ -2,13 +2,15 @@
 
 [//]: # (title: Emit values concurrently with channelFlow – tutorial)
 
+<web-summary>The fifth part of the Kotlin coroutines and flows tutorial, where you learn how to emit values concurrently with channelFlow().</web-summary>
+
 In the previous part of the tutorial, you used a flow to display articles as their comments loaded.
 However, the application still requested comments for one article at a time.
 
 In this part, you'll use `channelFlow()` to load comments for articles concurrently.
 This way, the application can display each resulting `Article` object as soon as its comments become available.
 
-## Emit values concurrently with `channelFlow()`
+## Emit values concurrently with the `channelFlow()` function
 
 The `flow()` builder function is simple and efficient for flows that emit values sequentially from a single coroutine.
 To produce values from multiple coroutines concurrently, use the [`channelFlow()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/channel-flow.html) builder function.
@@ -115,7 +117,7 @@ The `updateResultsWithProgress()` function collects the flow, which starts the `
 The child coroutines request comments concurrently and send each `Article` object when its comments become available.
 The application updates the displayed article list after receiving each object.
 
-Loading takes approximately 2 seconds, and the articles appear progressively.
+Loading takes approximately two seconds, and the articles appear progressively.
 Because the comment requests take different amounts of time, the order of the displayed articles isn't guaranteed.
 
 ![Articles appearing progressively while channelFlow loads comments concurrently](concurrent-channelflow-loading.png){width="700"}
@@ -125,7 +127,7 @@ Because the comment requests take different amounts of time, the order of the di
 > This task uses the Turbine library to demonstrate how to retrieve the expected number of values
 > and then verify that the flow completes successfully.
 > 
-> As a simpler approach, you can call the [.toSet()](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html)
+> As a simpler approach, you can call the [`.toSet()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html)
 > extension function on the flow to collect its values directly into a set.
 >
 {style="note"}

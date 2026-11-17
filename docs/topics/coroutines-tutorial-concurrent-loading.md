@@ -2,6 +2,8 @@
 
 [//]: # (title: Concurrent loading – tutorial)
 
+<web-summary>The second part of the Kotlin coroutines and flows tutorial, where you learn how to load data concurrently with coroutines.</web-summary>
+
 In the previous part, you kept the application responsive while loading articles, but the comment requests still ran one at a time.
 
 Coroutines can run concurrently with other coroutines and potentially in parallel.
@@ -57,7 +59,7 @@ The `printMessages()` function returns after both child coroutines complete.
 
 ## Return values from coroutines
 
-In addition to the `.launch()` coroutine builder function, you can also use the [`.async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to start a coroutine.
+In addition to the `.launch()` coroutine builder function, you can use the [`.async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to start a coroutine.
 
 Both functions are extension functions on `CoroutineScope`.
 When you call either function in a `coroutineScope()` block, it starts a child coroutine in that scope.
@@ -67,7 +69,7 @@ These coroutine builder functions serve different purposes:
 * Use `.launch()` when the coroutine doesn't need to produce a result. It returns a [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle that represents the coroutine.
 * Use `.async()` when the coroutine needs to produce a result. It returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/) handle that represents a result that becomes available when the coroutine completes.
 
-To retrieve a result of a coroutine started with the `.async()` function, use the [`await()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html) function.
+To retrieve the result of a coroutine started with the `.async()` function, use the [`await()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await.html) function.
 If the result isn't available yet, the `await()` function suspends until the coroutine completes and then returns the result:
 
 ```kotlin
@@ -161,7 +163,7 @@ Run the application, select **CONCURRENT** from the **Loading Mode** menu, and c
 The application sends each HTTP request without waiting for the previous response.
 While one coroutine waits for a response, another coroutine can call the `getComments()` function for another `ArticleInfo` object.
 
-Loading now takes approximately 2 seconds instead of 10 seconds.
+Loading now takes approximately two seconds instead of ten seconds.
 The requests remain in progress concurrently, so the longest simulated delay determines the total loading time instead of the sum of all delays.
 
 ![Concurrent loading](concurrent-loading.png){width="700"}
@@ -171,7 +173,7 @@ The requests remain in progress concurrently, so the longest simulated delay det
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task2SequentialVsAsynchronousKtTest.kt` file.
 
 The tests check that the `loadArticlesConcurrently()` function returns the expected `Article` objects.
-They also check that loading takes 2 seconds of virtual time, which matches the longest possible simulated delay.
+They also check that loading takes tw seconds of virtual time, which matches the longest possible simulated delay.
 
 In the next part of the tutorial, you'll explore how structured concurrency keeps concurrent loading cancelable.
 
@@ -185,4 +187,3 @@ In the next part of the tutorial, you'll explore how structured concurrency keep
     <a as="button" href="coroutines-tutorial-cancel-coroutines.md" mode="classic" icon="arrow-right" icon-position="right">Next step</a>
   </li>
 </list>
-

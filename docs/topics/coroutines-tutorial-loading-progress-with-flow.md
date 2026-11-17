@@ -2,6 +2,8 @@
 
 [//]: # (title: Show loading progress with a flow – tutorial)
 
+<web-summary>The fourth part of the Kotlin coroutines and flows tutorial, where you learn how to report loading progress with a flow.</web-summary>
+
 The loading functions you've implemented so far return the articles only after all their comments have loaded.
 
 In this part of the tutorial, you'll use a [flow](coroutines-flow.md) to load each article's comments and produce the corresponding `Article` object.
@@ -31,7 +33,7 @@ fun messageFlow(): Flow<String> = flow {
 > 
 {style="tip"}
 
-To collect the emitted values, use the `collect()` function.
+To collect the emitted values, use the [`collect()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/collect.html) function.
 The lambda passed to `collect()` receives each value:
 
 ```kotlin
@@ -134,7 +136,7 @@ Inside the lambda passed to `.test()`, use:
 The `.test()` function is suspending.
 To call it from a test, use the [`runTest()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-test.html) function, which runs the test body in a coroutine.
 
-Unlike `runBlocking()`, `runTest()` skips delays controlled by its test scheduler by advancing virtual time.
+Unlike `runBlocking()`, `runTest()` advances virtual time to skip delays controlled by its test scheduler.
 This allows the test to complete quickly while preserving the simulated loading duration.
 
 For example, the following test verifies that a flow emits `1`, waits for one second using the `delay()` function, emits `2`, and completes successfully:
@@ -264,7 +266,7 @@ They check that the `observeArticlesLoading()` function:
 
 * Emits the expected `Article` objects in order.
 * Completes after emitting all the objects.
-* Uses the expected sequential loading time.
+* Takes the expected sequential loading time.
 
 The tests use virtual time, so you don't have to wait for the simulated delays.
 

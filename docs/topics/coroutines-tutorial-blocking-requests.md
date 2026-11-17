@@ -3,6 +3,8 @@
 
 [//]: # (title: Replace blocking calls with suspending functions – tutorial)
 
+<web-summary>The first part of the Kotlin coroutines and flows tutorial, where you learn how blocking calls and suspending functions differ.</web-summary>
+
 In this part of the tutorial, you'll implement two strategies for loading articles and their comments.
 First, you'll send requests synchronously from the thread that updates the interface and handles user input, also known as the _UI thread_.
 
@@ -173,7 +175,7 @@ On the JVM, coroutines run on threads and can be suspended.
 When a coroutine is suspended, the corresponding computation is paused, removed from the thread, and stored in memory.
 Meanwhile, the thread is free to run other tasks:
 
-![Suspending coroutines](suspension-process.gif){width=700}
+![Suspending coroutines](suspension-process.gif){width="700"}
 
 New coroutines are launched in a [`CoroutineScope`](coroutines-basics.md#coroutine-scope-and-structured-concurrency).
 A `CoroutineScope` defines the context in which its coroutines run and manages their lifecycle.
