@@ -14,6 +14,8 @@ import kotlin.coroutines.*
 @IgnorableReturnValue
 internal fun collectStacktrace(sharedFlow: SharedFlow<*>, index: Long, continuation: Continuation<*>?): Any? = null
 @IgnorableReturnValue
+internal fun relocateStacktrace(sharedFlow: SharedFlow<*>, fromIndex: Long, toIndex: Long): Any? = null
+@IgnorableReturnValue
 internal fun dropStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null
 @IgnorableReturnValue
 internal fun matchStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = null

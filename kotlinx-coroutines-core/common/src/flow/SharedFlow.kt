@@ -350,6 +350,17 @@ internal open class SharedFlowImpl<T>(
           replayIndex <= head + bufferSize
      */
 
+    /*
+     This data structure has DebuggerWrappers.kt hooks for IDEA's debugger.
+     These hooks, on collection, provide the stacktrace of the coroutine
+     which produced the collected element.
+     collect/relocate/dropStacktrace invocations should be coupled
+     with setBufferAt invocation inside the SharedFlow implementation.
+     Almost all setBufferAt invocations need either of the methods to be invoked,
+     except for a few housekeeping ones (reallocating the buffer, cleaning up NO_VALUE).
+     These methods do not need to be invoked in any other scenarios.
+     */
+
     // Stored state
     private var buffer: Array<Any?>? = null // allocated when needed, allocated size always power of two
     private var replayIndex = 0L // minimal index from which new collector gets values
@@ -405,6 +416,7 @@ internal open class SharedFlowImpl<T>(
 
     override fun tryEmit(value: T): Boolean = tryEmit(value, null)
 
+    // The continuation is passed here for debugger-agent wrappers (collectSenderStacktrace) only.
     private fun tryEmit(value: T, continuation: Continuation<*>?): Boolean {
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitted = synchronized(this) {
@@ -466,8 +478,8 @@ internal open class SharedFlowImpl<T>(
     }
 
     private fun dropOldestLocked() {
-        dropStacktrace(this, head)
         buffer!!.setBufferAt(head, null)
+        dropStacktrace(this, head)
         bufferSize--
         val newHead = head + 1
         if (replayIndex < newHead) replayIndex = newHead
@@ -534,6 +546,7 @@ internal open class SharedFlowImpl<T>(
         val buffer = buffer!!
         if (buffer.getBufferAt(emitter.index) !== emitter) return@synchronized // already resumed
         buffer.setBufferAt(emitter.index, NO_VALUE)
+        dropStacktrace(this, emitter.index)
         cleanupTailLocked()
     }
 
@@ -582,6 +595,7 @@ internal open class SharedFlowImpl<T>(
                     emitter as Emitter // must have Emitter class
                     resumes[resumeCount++] = emitter.cont
                     buffer.setBufferAt(curEmitterIndex, NO_VALUE) // make as canceled if we moved ahead
+                    relocateStacktrace(this, curEmitterIndex, newBufferEndIndex)
                     buffer.setBufferAt(newBufferEndIndex, emitter.value)
                     newBufferEndIndex++
                     if (resumeCount >= maxResumeCount) break // enough resumed, done
@@ -619,8 +633,8 @@ internal open class SharedFlowImpl<T>(
         assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head is about to move)
         for (index in head until newHead) {
-            dropStacktrace(this, index)
             buffer!!.setBufferAt(index, null)
+            dropStacktrace(this, index)
         }
         // update all state variables to newly computed values
         replayIndex = newReplayIndex
