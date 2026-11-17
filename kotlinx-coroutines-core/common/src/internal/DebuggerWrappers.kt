@@ -20,7 +20,8 @@ internal fun matchStacktrace(sharedFlow: SharedFlow<*>, index: Long): Any? = nul
 
 @IgnorableReturnValue
 internal fun <T> collectStacktrace(stateFlow: StateFlow<T>, state: T, continuation: Continuation<*>? = null): Any? = null
-internal fun <T> matchStacktrace(stateFlow: StateFlow<T>, state: T): T = state
+@IgnorableReturnValue
+internal fun <T> matchStacktrace(stateFlow: StateFlow<T>, state: T): Any? = null
 @IgnorableReturnValue
 internal fun <T> dropStacktrace(stateFlow: StateFlow<T>, state: T): Any? = null
 

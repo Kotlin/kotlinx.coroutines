@@ -355,6 +355,8 @@ private class StateFlowImpl<T>(
             // because it becomes immediately visible for collectors, and hence can be requested from the debugger.
             // Also need to indicate the state, because the old state might be requested from the debugger
             // before this state is published.
+            // It is sufficient to only collect the stacktrace here and in the init,
+            // as all state updates go through this function (updateState).
             collectStacktrace(this, NULL.unbox<T>(newState), continuation)
             _state.value = newState
             dropStacktrace(this, NULL.unbox<T>(oldState))
@@ -434,7 +436,9 @@ private class StateFlowImpl<T>(
                 collectorJob?.ensureActive()
                 // Conflate value emissions using equality
                 if (oldState == null || oldState != newState) {
-                    collector.emit(matchStacktrace(this, NULL.unbox<T>(newState)))
+                    val value = NULL.unbox<T>(newState)
+                    matchStacktrace(this, value)
+                    collector.emit(value)
                     oldState = newState
                 }
                 // Note: if awaitPending is cancelled, then it bails out of this loop and calls freeSlot
