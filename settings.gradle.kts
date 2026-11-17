@@ -11,7 +11,7 @@ pluginManagement {
     }
 
     repositories {
-        maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
+        maven(url = "https://redirector.kotlinlang.org/maven/dokka-dev")
     }
 }
 plugins {
