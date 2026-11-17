@@ -4,7 +4,9 @@ import kotlinx.coroutines.*
 import org.junit.*
 import java.util.concurrent.*
 import kotlin.test.assertFailsWith
+import kotlin.concurrent.atomics.*
 
+@OptIn(ExperimentalAtomicApi::class)
 class LimitingDispatcherTest : SchedulerTestBase() {
 
     @Test
@@ -37,5 +39,29 @@ class LimitingDispatcherTest : SchedulerTestBase() {
         }
 
         tasks.joinAll()
+    }
+
+    /** Tests that saturating [Dispatchers.Default] with limited dispatcher workers still allows other tasks to run. */
+    @Test(timeout = 10_000)
+    fun testDefaultFairness() = runBlocking<Unit> {
+        corePoolSize = 2
+        val entered = AtomicBoolean(false)
+        val firstViewStarted = CountDownLatch(1)
+        launch(view(1)) {
+            firstViewStarted.countDown()
+            while (!entered.load()) {
+                yield()
+            }
+        }
+        launch(view(1)) {
+            yield()
+            firstViewStarted.await()
+            launch(dispatcher) {
+                entered.store(true)
+            }
+            while (!entered.load()) {
+                yield()
+            }
+        }
     }
 }
