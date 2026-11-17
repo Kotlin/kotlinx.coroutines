@@ -38,7 +38,7 @@ fun main() = runBlocking<Unit> {
     }
     launch(newSingleThreadContext("MyOwnThread")) { // will get its own new thread
         println("newSingleThreadContext: I'm working in thread ${Thread.currentThread().name}")
-    }    
+    }
 }
 //sampleEnd
 ```
@@ -100,7 +100,7 @@ fun main() = runBlocking<Unit> {
         println("main runBlocking: I'm working in thread ${Thread.currentThread().name}")
         delay(1000)
         println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
-    }    
+    }
 }
 //sampleEnd
 ```
