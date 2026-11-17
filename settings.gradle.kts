@@ -6,7 +6,7 @@ pluginManagement {
     }
 
     repositories {
-        maven(url = "https://maven.pkg.jetbrains.space/kotlin/p/dokka/dev/")
+        maven(url = "https://redirector.kotlinlang.org/maven/dokka-dev")
         val cacheRedirectorEnabled = System.getenv("CACHE_REDIRECTOR")?.toBoolean() == true
         if (cacheRedirectorEnabled) {
             maven("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2")
