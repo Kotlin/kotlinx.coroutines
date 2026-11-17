@@ -80,7 +80,7 @@ Before running the application, make sure that port `9020` is available for the 
     ./gradlew :desktop-client:run
     ```
 
-2. Wait for the local server to start. When it's ready, the article browser appears in the application window.
+2. Wait for the local server to start. When it's ready, the article loader application starts in a separate window.
 
 As you complete each task, select the corresponding option from the **Loading Mode** menu to see how your implementation behaves:
 
