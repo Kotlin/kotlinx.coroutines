@@ -1518,7 +1518,7 @@ public class ClosedSendChannelException(message: String?) : IllegalStateExceptio
  * [closed-for-receiving][ReceiveChannel.isClosedForReceive] channel
  * that was [closed][SendChannel.close] without a cause.
  *
- * If a clause was provided, that clause is thrown from [receive][ReceiveChannel.receive] instead of this exception.
+ * If a cause was provided, that cause is thrown from [receive][ReceiveChannel.receive] instead of this exception.
  * In particular, if the channel was closed because it was [cancelled][ReceiveChannel.cancel],
  * this exception will never be thrown: either the `cause` of the cancellation is thrown,
  * or a new [CancellationException] gets constructed to be thrown from [ReceiveChannel.receive].
