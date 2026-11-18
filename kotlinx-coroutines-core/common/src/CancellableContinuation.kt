@@ -326,6 +326,8 @@ internal fun <T> CancellableContinuation<T>.invokeOnCancellation(handler: Cancel
  * the [block]. This function throws a [CancellationException] if the [Job] of the coroutine is
  * cancelled or completed while it is suspended, or if [CancellableContinuation.cancel] is invoked.
  *
+ * The [block] is invoked synchronously before this function can suspend the coroutine.
+ *
  * A typical use of this function is to suspend a coroutine while waiting for a result
  * from a single-shot callback API and to return the result to the caller.
  * For multi-shot callback APIs see [callbackFlow][kotlinx.coroutines.flow.callbackFlow].
