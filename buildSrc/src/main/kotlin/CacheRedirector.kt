@@ -29,7 +29,6 @@ private val mirroredUrls = listOf(
     "https://github.com/yarnpkg/yarn/releases/download",
     "https://jitpack.io",
     "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap",
-    "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev",
     "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/eap",
     "https://nodejs.org/dist",
     "https://oss.sonatype.org/content/repositories/releases",
