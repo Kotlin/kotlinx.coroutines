@@ -51,8 +51,6 @@ buildscript {
         repositories {
             mavenLocal()
             maven("https://redirector.kotlinlang.org/maven/dev")
-            maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-            maven("https://redirector.kotlinlang.org/maven/dev")
             if (!kotlinRepoUrl.isNullOrBlank()) {
                 maven(kotlinRepoUrl)
             }
@@ -73,7 +71,6 @@ allprojects {
         }
         google()
         mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
         maven("https://redirector.kotlinlang.org/maven/dev")
         mavenLocal()
         maven(rootProject.layout.projectDirectory.dir("../build/build-local-repository/"))
