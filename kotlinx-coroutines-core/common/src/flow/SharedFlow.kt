@@ -5,6 +5,7 @@ import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.internal.*
 import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.jvm.*
 
 /**
@@ -349,6 +350,17 @@ internal open class SharedFlowImpl<T>(
           replayIndex <= head + bufferSize
      */
 
+    /*
+     This data structure has DebuggerWrappers.kt hooks for IDEA's debugger.
+     These hooks, on collection, provide the stacktrace of the coroutine
+     which produced the collected element.
+     collect/relocate/dropStacktrace invocations should be coupled
+     with setBufferAt invocation inside the SharedFlow implementation.
+     Almost all setBufferAt invocations need either of the methods to be invoked,
+     except for a few housekeeping ones (reallocating the buffer, cleaning up NO_VALUE).
+     These methods do not need to be invoked in any other scenarios.
+     */
+
     // Stored state
     private var buffer: Array<Any?>? = null // allocated when needed, allocated size always power of two
     private var replayIndex = 0L // minimal index from which new collector gets values
@@ -402,10 +414,13 @@ internal open class SharedFlowImpl<T>(
         }
     }
 
-    override fun tryEmit(value: T): Boolean {
+    override fun tryEmit(value: T): Boolean = tryEmit(value, null)
+
+    // The continuation is passed here for debugger-agent wrappers (collectSenderStacktrace) only.
+    private fun tryEmit(value: T, continuation: Continuation<*>?): Boolean {
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val emitted = synchronized(this) {
-            if (tryEmitLocked(value)) {
+            if (tryEmitLocked(value, continuation)) {
                 resumes = findSlotsToResumeLocked(resumes)
                 true
             } else {
@@ -417,14 +432,20 @@ internal open class SharedFlowImpl<T>(
     }
 
     override suspend fun emit(value: T) {
-        if (tryEmit(value)) return // fast-path
+        if (tryEmitWithContinuation(value)) return // fast-path
         emitSuspend(value)
     }
 
+    // This call never suspends.
+    // The suspendCoroutineUninterceptedOrReturn is only here to obtain the continuation
+    // for debugger-agent wrappers in tryEmit.
+    private suspend fun tryEmitWithContinuation(value: T): Boolean =
+        suspendCoroutineUninterceptedOrReturn { cont -> tryEmit(value, cont) }
+
     @Suppress("UNCHECKED_CAST")
-    private fun tryEmitLocked(value: T): Boolean {
+    private fun tryEmitLocked(value: T, continuation: Continuation<*>? = null): Boolean {
         // Fast path without collectors -> no buffering
-        if (nCollectors == 0) return tryEmitNoCollectorsLocked(value) // always returns true
+        if (nCollectors == 0) return tryEmitNoCollectorsLocked(value, continuation) // always returns true
         // With collectors we'll have to buffer
         // cannot emit now if buffer is full & blocked by slow collectors
         if (bufferSize >= bufferCapacity && minCollectorIndex <= replayIndex) {
@@ -434,7 +455,7 @@ internal open class SharedFlowImpl<T>(
                 BufferOverflow.DROP_OLDEST -> {} // force enqueue & drop oldest instead
             }
         }
-        enqueueLocked(value)
+        enqueueLocked(value, continuation)
         bufferSize++ // value was added to buffer
         // drop oldest from the buffer if it became more than bufferCapacity
         if (bufferSize > bufferCapacity) dropOldestLocked()
@@ -445,10 +466,10 @@ internal open class SharedFlowImpl<T>(
         return true
     }
 
-    private fun tryEmitNoCollectorsLocked(value: T): Boolean {
+    private fun tryEmitNoCollectorsLocked(value: T, continuation: Continuation<*>? = null): Boolean {
         assert { nCollectors == 0 }
         if (replay == 0) return true // no need to replay, just forget it now
-        enqueueLocked(value) // enqueue to replayCache
+        enqueueLocked(value, continuation) // enqueue to replayCache
         bufferSize++ // value was added to buffer
         // drop oldest from the buffer if it became more than replay
         if (bufferSize > replay) dropOldestLocked()
@@ -458,6 +479,7 @@ internal open class SharedFlowImpl<T>(
 
     private fun dropOldestLocked() {
         buffer!!.setBufferAt(head, null)
+        dropStacktrace(this, head)
         bufferSize--
         val newHead = head + 1
         if (replayIndex < newHead) replayIndex = newHead
@@ -475,12 +497,13 @@ internal open class SharedFlowImpl<T>(
     }
 
     // enqueues item to buffer array, caller shall increment either bufferSize or queueSize
-    private fun enqueueLocked(item: Any?) {
+    private fun enqueueLocked(item: Any?, continuation: Continuation<*>? = null) {
         val curSize = totalSize
         val buffer = when (val curBuffer = buffer) {
             null -> growBuffer(null, 0, 2)
             else -> if (curSize >= curBuffer.size) growBuffer(curBuffer, curSize,curBuffer.size * 2) else curBuffer
         }
+        collectStacktrace(this, head + curSize, continuation)
         buffer.setBufferAt(head + curSize, item)
     }
 
@@ -506,7 +529,7 @@ internal open class SharedFlowImpl<T>(
             }
             // add suspended emitter to the buffer
             Emitter(this, head + totalSize, value, cont).also {
-                enqueueLocked(it)
+                enqueueLocked(it, cont)
                 queueSize++ // added to queue of waiting emitters
                 // synchronous shared flow might rendezvous with waiting emitter
                 if (bufferCapacity == 0) resumes = findSlotsToResumeLocked(resumes)
@@ -523,6 +546,7 @@ internal open class SharedFlowImpl<T>(
         val buffer = buffer!!
         if (buffer.getBufferAt(emitter.index) !== emitter) return@synchronized // already resumed
         buffer.setBufferAt(emitter.index, NO_VALUE)
+        dropStacktrace(this, emitter.index)
         cleanupTailLocked()
     }
 
@@ -571,6 +595,7 @@ internal open class SharedFlowImpl<T>(
                     emitter as Emitter // must have Emitter class
                     resumes[resumeCount++] = emitter.cont
                     buffer.setBufferAt(curEmitterIndex, NO_VALUE) // make as canceled if we moved ahead
+                    relocateStacktrace(this, curEmitterIndex, newBufferEndIndex)
                     buffer.setBufferAt(newBufferEndIndex, emitter.value)
                     newBufferEndIndex++
                     if (resumeCount >= maxResumeCount) break // enough resumed, done
@@ -607,7 +632,10 @@ internal open class SharedFlowImpl<T>(
         val newHead = minOf(newMinCollectorIndex, newReplayIndex)
         assert { newHead >= head }
         // cleanup items we don't have to buffer anymore (because head is about to move)
-        for (index in head until newHead) buffer!!.setBufferAt(index, null)
+        for (index in head until newHead) {
+            buffer!!.setBufferAt(index, null)
+            dropStacktrace(this, index)
+        }
         // update all state variables to newly computed values
         replayIndex = newReplayIndex
         minCollectorIndex = newMinCollectorIndex
@@ -641,6 +669,7 @@ internal open class SharedFlowImpl<T>(
             } else {
                 val oldIndex = slot.index
                 val newValue = getPeekedValueLockedAt(index)
+                matchStacktrace(this, index)
                 slot.index = index + 1 // points to the next index after peeked one
                 resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
