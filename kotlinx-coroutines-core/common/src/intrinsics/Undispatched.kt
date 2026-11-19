@@ -71,7 +71,6 @@ private fun <T, R> ScopeCoroutine<T>.startUndispatched(
     } catch (e: Throwable) {
         CompletedExceptionally(e)
     }
-
     /*
      * We are trying to complete our undispatched block with the following possible codepaths:
      * 1) The coroutine just suspended. I.e. `coroutineScope { .. suspend here }`.
