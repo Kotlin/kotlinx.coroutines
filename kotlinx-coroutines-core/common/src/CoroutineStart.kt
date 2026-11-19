@@ -346,7 +346,7 @@ public enum class CoroutineStart {
      * Starts the corresponding block with receiver as a coroutine with this coroutine start strategy.
      *
      * - [DEFAULT] uses [startCoroutineCancellable].
-     * - [ATOMIC] uses [startCoroutine].
+     * - [ATOMIC] uses [startCoroutineAtomic].
      * - [UNDISPATCHED] uses [startCoroutineUndispatched].
      * - [LAZY] does nothing.
      *
@@ -356,7 +356,7 @@ public enum class CoroutineStart {
     public operator fun <R, T> invoke(block: suspend R.() -> T, receiver: R, completion: Continuation<T>): Unit =
         when (this) {
             DEFAULT -> block.startCoroutineCancellable(receiver, completion)
-            ATOMIC -> block.startCoroutine(receiver, completion)
+            ATOMIC -> block.startCoroutineAtomic(receiver, completion)
             UNDISPATCHED -> block.startCoroutineUndispatched(receiver, completion)
             LAZY -> Unit // will start lazily
         }
