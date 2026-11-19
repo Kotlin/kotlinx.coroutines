@@ -464,8 +464,20 @@ internal suspend inline fun <T> suspendCancellableCoroutineReusable(
 }
 
 internal fun <T> getOrCreateCancellableContinuation(delegate: Continuation<T>): CancellableContinuationImpl<T> {
-    // If used outside our dispatcher
-    if (delegate !is DispatchedContinuation<T>) {
+    /**
+     * Two cases where we don't attempt to reuse an instance:
+     * 1) If `delegate` is not a dispatched continuation, there is nothing to reuse.
+     * 2) If `delegate.context` may change over time.
+     *    Several places in code assume that the context of one `CancellableContinuationImpl` instance never changes.
+     *    Instead of removing that assumption,
+     *    we enforce it by excluding the single non-conforming continuation that we control:
+     *    `SafeCollector` gets reused for different emissions, and its [Continuation.context] get modified.
+     */
+    @Suppress("IMPOSSIBLE_IS_CHECK_ERROR") // `SafeCollector` is a `Continuation` on the JVM
+    if (
+        delegate !is DispatchedContinuation<T> ||
+        delegate.continuation is kotlinx.coroutines.flow.internal.SafeCollector<*>
+    ) {
         return CancellableContinuationImpl(delegate, MODE_CANCELLABLE)
     }
     /*
