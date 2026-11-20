@@ -27,6 +27,11 @@ To implement these loading strategies, you'll progress through the following ste
    <img src="icon-6.svg" width="20" alt="Sixth step"/> <a href="coroutines-tutorial-exceptions.md">Handle exceptions while loading articles</a><br/>
 </p>
 
+> If you're looking for a beginner-friendly video course, watch the [Kotlin Coroutines: Full 4-Hour Course](https://www.youtube.com/watch?v=2kkvXR-J45E) by Sebastian Aigner.
+> It covers many of the same topics as this tutorial and uses the same accompanying project for several examples and exercises.
+> 
+{style="tip"}
+
 ## Before you start
 
 Complete the following before starting the tutorial:
