@@ -133,14 +133,13 @@ Because the comment requests take different amounts of time, the order of the di
 {style="note"}
 
 This exercise builds on the optional test-writing exercise from the [previous part](coroutines-tutorial-loading-progress-with-flow.md) of the tutorial.
-Follow the same test structure as in the previous exercise, using `.test()`, `awaitItem()`, `awaitComplete()`, `runTest()`, and `currentTime`.
+Follow the same test structure as in the previous exercise, using `.test()`, `awaitItem()`, `awaitComplete()`, `runTest()`, and `.measureTime()`.
 
 Unlike sequential loading, concurrent loading doesn't guarantee the order in which the flow emits its values.
 To verify the results without requiring a particular order, convert the expected and collected lists to sets with the [`.toSet()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/to-set.html) extension function before comparing them.
 
-Like before, you can use the `currentTime` property to measure the elapsed virtual time.
-Its value is in milliseconds, but `ArticlesFakeDataResults.expectedConcurrentList.duration` is a `Duration`.
-To compare both values in milliseconds, use the [`inWholeMilliseconds`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.time/-duration/in-whole-milliseconds.html) property.
+Like before, you can use the `testScheduler.timeSource.measureTime()` function to measure the elapsed virtual time.
+It returns a `Duration`, so you can compare it directly with `ArticlesFakeDataResults.expectedConcurrentList.duration`.
 
 To verify that the elapsed time doesn't exceed the expected upper bound, use the [`assertTrue()`](https://kotlinlang.org/api/core/kotlin-test/kotlin.test/assert-true.html) function.
 
@@ -148,7 +147,6 @@ Open the `desktop-client/src/jvmTest/kotlin/org/example/articles/exercises/Async
 It contains the following test functions with `TODO()` placeholders:
 
 ```kotlin
-@OptIn(ExperimentalCoroutinesApi::class)
 class AsyncProgressTurbineTest {
     @Test
     fun `test observeArticlesConcurrently Result`() = runTest {
@@ -207,27 +205,26 @@ fun `test observeArticlesConcurrently Result`() = runTest {
 
 To implement the `test observeArticlesConcurrently Duration()` test:
 
-1. Store the value of the `currentTime` property before collecting the flow.
+1. Collect the flow inside a `testScheduler.timeSource.measureTime()` block and store the `Duration` it returns.
 2. Call the `observeArticlesConcurrently()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
 3. Use the `repeat()` function with `ArticlesFakeData.getArticles().size` and call the `awaitItem()` function during each iteration.
 4. Call the `awaitComplete()` function to verify that the flow completes successfully.
-5. Subtract the stored time from the current value of the `currentTime` property.
-6. Convert `ArticlesFakeDataResults.expectedConcurrentList.duration` to milliseconds with its `inWholeMilliseconds` property.
-7. Use the `assertTrue()` function to verify that the elapsed time doesn't exceed the expected upper bound.
+5. Store `ArticlesFakeDataResults.expectedConcurrentList.duration` as the expected upper bound.
+6. Use the `assertTrue()` function to verify that the elapsed time doesn't exceed the expected upper bound.
 
 ```kotlin
 @Test
 fun `test observeArticlesConcurrently Duration`() = runTest {
-    val startTime = currentTime
-    observeArticlesConcurrently(MockBlogService).test {
-        repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
-        awaitComplete()
+    val totalTime = testScheduler.timeSource.measureTime {
+        observeArticlesConcurrently(MockBlogService).test {
+            repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
+            awaitComplete()
+        }
     }
-    val totalTime = currentTime - startTime
-    val upperBound = ArticlesFakeDataResults.expectedConcurrentList.duration.inWholeMilliseconds
+    val upperBound = ArticlesFakeDataResults.expectedConcurrentList.duration
     assertTrue(
         totalTime <= upperBound,
-        "Concurrent loading took $totalTime ms of virtual time, expected at most $upperBound ms"
+        "Concurrent loading took $totalTime of virtual time, expected at most $upperBound"
     )
 }
 ```
