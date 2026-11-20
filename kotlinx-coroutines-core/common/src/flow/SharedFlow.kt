@@ -460,11 +460,11 @@ internal open class SharedFlowImpl<T>(
         bufferSize--
         val newHead = head + 1
         if (replayIndex < newHead) replayIndex = newHead
-        if (minCollectorIndex < newHead) correctCollectorIndexesOnDropOldest(newHead)
+        if (minCollectorIndex < newHead) correctCollectorIndexesOnDropOldestLocked(newHead)
         assert { head == newHead } // since head = minOf(minCollectorIndex, replayIndex) it should have updated
     }
 
-    private fun correctCollectorIndexesOnDropOldest(newHead: Long) {
+    private fun correctCollectorIndexesOnDropOldestLocked(newHead: Long) {
         forEachSlotLocked { slot ->
             if (slot.index in 0..<newHead) {
                 slot.index = newHead // force move it up (this collector was too slow and missed the value at its index)
