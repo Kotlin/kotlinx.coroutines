@@ -21,7 +21,7 @@ loadingScope.launch {
     val startTime = TimeSource.Monotonic.markNow()
     try {
         val articleResults = observeArticlesUnstable(service)
-        updateResultsWithProgress(articleResults, startTime)
+        updateResultsWithFailures(articleResults, startTime)
     } catch (e: NetworkException) {
         e.printStackTrace()
     }
@@ -102,6 +102,18 @@ Other child coroutines can continue running, and you can start new child corouti
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task6Exceptions.kt` file.
 
+This file declares the `ArticleResult` type, which represents the outcome of loading one article:
+
+```kotlin
+sealed interface ArticleResult {
+    data class Success(val article: Article) : ArticleResult
+    data class Failure(val articleInfo: ArticleInfo, val exception: Throwable) : ArticleResult
+}
+```
+
+A `Success` object holds a loaded `Article` object.
+A `Failure` object holds the article information and the exception that stopped the request.
+
 The initial `observeArticlesUnstable()` function loads the comments for one article at a time and doesn't handle exceptions:
 
 ```kotlin
@@ -165,7 +177,7 @@ If `viewModelScope` is canceled, cancellation still propagates to `loadingScope`
 
 Run the application again, select **UNSTABLE_NETWORK**, and click **Load comments**.
 
-The `observeArticlesUnstable()` function still throws a `NetworkException`, so the loading attempt fails.
+The `observeArticlesUnstable()` function still doesn't handle exceptions, so an unsuccessful response fails the loading attempt.
 
 [`CoroutineExceptionHandler`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-coroutine-exception-handler/)
 handles exceptions that a coroutine can't propagate to a parent.
@@ -177,13 +189,20 @@ If you click **Load comments** again, the application starts another loading att
 
 ## Load comments from an unstable network
 
-The initial `observeArticlesUnstable()` function deliberately throws a `NetworkException` before requesting any data.
-This makes the effect of a failed loading attempt easy to observe.
-
-Now, in the next task you will replace the deliberate exception with the article-loading logic.
-The `desktop-client/src/jvmMain/kotlin/org/example/articles/network/BlogService.kt` file declares the `getCommentsUnstable()` suspending function for requesting comments with simulated network failures:
+The `desktop-client/src/jvmMain/kotlin/org/example/articles/network/BlogService.kt` file declares the `getArticleInfoListUnstable()`
+and `getCommentsUnstable()` suspending functions for requesting data with simulated network failures:
 
 ```kotlin
+override suspend fun getArticleInfoListUnstable(): List<ArticleInfo> {
+    log("Started loading articles")
+    val response = client.get(articlesUnstableEndpoint)
+    response.throwIfUnsuccessful("Loaded articles failure: ${response.status}")
+    return response.body<List<ArticleInfo>>()
+        .also { 
+            log("Loaded articles unstable") 
+        }
+}
+
 override suspend fun getCommentsUnstable(articleInfo: ArticleInfo): List<Comment> {
     log("Started loading comments for article ${articleInfo.title}")
     val response = client.get(commentsUnstableEndpoint(articleInfo.id))
@@ -195,12 +214,30 @@ override suspend fun getCommentsUnstable(articleInfo: ArticleInfo): List<Comment
 }
 ```
 
-The function sends an HTTP request that has a 30% chance of returning an unsuccessful response.
-When the response is unsuccessful, the function throws a `NetworkException`:
+Each function sends an HTTP request that has a 30% chance of returning an unsuccessful response.
+When a response is unsuccessful, the shared `throwIfUnsuccessful()` function throws a `NetworkException`:
+
+```kotlin
+private fun HttpResponse.throwIfUnsuccessful(failureLog: String) {
+    if (!status.isSuccess()) {
+        log(failureLog)
+        throw NetworkException("HTTP ${status.value}")
+    }
+}
+```
+
+The same file declares this exception type:
 
 ```kotlin
 class NetworkException(message: String) : Exception(message)
 ```
+
+The `getArticleInfoListUnstable()` call runs before any comment requests.
+If it throws a `NetworkException`, the exception propagates from the flow and stops the loading attempt.
+The initial `observeArticlesUnstable()` function also lets exceptions from individual comment requests propagate.
+As a result, one unsuccessful comment response stops the loading attempt, even though the comments for the remaining articles could still load.
+
+The comment requests are independent, so in the next task you'll handle each failure separately.
 
 ### Task – Implement article loading from an unstable network
 
@@ -208,55 +245,99 @@ Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task6Exce
 It contains the following `observeArticlesUnstable()` function:
 
 ```kotlin
-fun observeArticlesUnstable(service: BlogService): Flow<Article> = flow {
-    throw NetworkException("Loading articles was unsuccessful.")
-}
-```
-
-Replace the deliberately thrown `NetworkException` with code that:
-
-* Requests the list of available articles.
-* Loads the comments for one article at a time with the `getCommentsUnstable()` function.
-* Emits each resulting `Article` object after its comments have loaded.
-
-#### Tip for article loading from an unstable network {initial-collapse-state="collapsed" collapsible="true" id="unstable-loading-tip"}
-
-Adapt the sequential flow structure of the `observeArticlesLoading()` function in the `Task4Progress.kt` file.
-
-#### Solution for article loading from an unstable network {initial-collapse-state="collapsed" collapsible="true" id="unstable-loading-solution"}
-
-1. Call the `getArticleInfoList()` function and store the returned list.
-2. Use a `for` loop to process each `ArticleInfo` object.
-3. For each object:
-    * Call the `getCommentsUnstable()` function.
-    * Create an `Article` object from the article information and comments.
-    * Use the `emit()` function to emit the `Article` object.
-
-```kotlin
-// Task: Implement loading of articles from an unstable network
-fun observeArticlesUnstable(service: BlogService): Flow<Article> = flow {
-    val list = service.getArticleInfoList()
-    for (articleInfo in list) {
-        emit(Article(articleInfo, service.getCommentsUnstable(articleInfo)))
+fun observeArticlesUnstable(service: BlogService): Flow<ArticleResult> = flow {
+    val articleInfoList = service.getArticleInfoListUnstable()
+    articleInfoList.forEach { articleInfo ->
+        val comments = service.getCommentsUnstable(articleInfo)
+        emit(ArticleResult.Success(Article(articleInfo, comments)))
     }
 }
 ```
 
-If `getCommentsUnstable()` returns the comments, the flow emits the corresponding `Article` object.
-If the function throws a `NetworkException`, the exception stops the flow and propagates to the loading coroutine.
+Update the function so that it:
+
+* Requests the list of available articles with the `getArticleInfoListUnstable()` function.
+* Starts a child coroutine for each `ArticleInfo` object.
+* Loads the comments for the articles concurrently with the `getCommentsUnstable()` function.
+* Sends an `ArticleResult.Success` object when the comments for an article have loaded.
+* Sends an `ArticleResult.Failure` object when the request for an article's comments throws a `NetworkException`.
+
+Keep the `getArticleInfoListUnstable()` call outside the `try` block so that any exception it throws propagates from the flow and stops the loading attempt.
+
+#### Tip for article loading from an unstable network {initial-collapse-state="collapsed" collapsible="true" id="unstable-loading-tip"}
+
+Adapt the `channelFlow()` structure of the `observeArticlesConcurrently()` function in the `Task5AsyncProgress.kt` file.
+In each child coroutine, use a `try` block for the `getCommentsUnstable()` call and a `catch` block for the `NetworkException`:
+
+```kotlin
+launch {
+    val result = try {
+        /* Create an ArticleResult.Success object */
+    } catch (exception: NetworkException) {
+        /* Create an ArticleResult.Failure object */
+    }
+    send(result)
+}
+```
+
+#### Solution for article loading from an unstable network {initial-collapse-state="collapsed" collapsible="true" id="unstable-loading-solution"}
+
+1. Use the `channelFlow()` builder function to create the flow.
+2. Call the `getArticleInfoListUnstable()` function and store the returned list.
+3. Use a `.forEach()` function to process each `ArticleInfo` object.
+4. For each object, call the `.launch()` coroutine builder function to start a child coroutine that loads its comments.
+5. In each child coroutine:
+    * Call the `getCommentsUnstable()` function in a `try` block and create an `ArticleResult.Success` object from the article information and comments.
+    * Create an `ArticleResult.Failure` object from the article information and the exception in the `catch` block.
+    * Use the `send()` function to send the result.
+
+```kotlin
+fun observeArticlesUnstable(service: BlogService): Flow<ArticleResult> = channelFlow {
+    val articleInfoList = service.getArticleInfoListUnstable()
+    articleInfoList.forEach { articleInfo ->
+        launch {
+            val result = try {
+                ArticleResult.Success(Article(articleInfo, service.getCommentsUnstable(articleInfo)))
+            } catch (exception: NetworkException) {
+                ArticleResult.Failure(articleInfo, exception)
+            }
+            send(result)
+        }
+    }
+}
+```
+
+The `catch` block handles the `NetworkException` inside the child coroutine, so the exception doesn't propagate to the `channelFlow()` block or affect the other child coroutines.
+Because the `getArticleInfoListUnstable()` call is outside the try block,
+an exception from this call propagates from the flow and stops the loading attempt.
 
 ### Observe loading from an unstable network
 
 Run the application, select **UNSTABLE_NETWORK** from the **Loading Mode** menu, and click **Load comments**.
 
-The application displays each `Article` object emitted before an exception occurs.
-If the `getCommentsUnstable()` function throws a `NetworkException`, the current loading attempt stops and the application displays the failed status.
+The application displays each successfully loaded article and lists failed comment requests in red.
+A failed comment request doesn't stop the remaining requests, and the application displays **Loading status: completed with errors** when loading finishes.
 
-![Article list after an unstable-network request fails, showing five loaded articles and a failed status](unstable-network-failure.png){width="700"}
+![Article list after unstable-network requests fail, showing the loaded articles and the failed requests in red](unstable-network-failure.png){width="700"}
 
 If you click **Load comments** again, the application can start a new loading attempt because the previous exception didn't cancel `loadingScope`.
 
-The simulated failures are random, so a loading attempt can also complete successfully.
+The simulated failures are random, so a loading attempt can also complete without any failed requests.
+
+### Test your implementation
+
+Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task6ExceptionsKtTest.kt` file.
+
+The tests use the Turbine library to collect the flow and check that the `observeArticlesUnstable()` function:
+
+* Sends an `ArticleResult.Success` object for each article whose comments load successfully.
+* Sends an `ArticleResult.Failure` object with a `NetworkException` for each article whose comments fail to load.
+* Completes after sending a result for every article.
+* Completes within the expected concurrent loading time.
+* Propagates a `NetworkException` when the request for the article list fails.
+
+Instead of `MockBlogService`, the tests use `UnstableMockBlogService` to simulate failures for specific comment requests or the article-list request.
+This makes the simulated failures predictable, so the tests can compare the results with the expected ones.
 
 <list id="tour-nav">
   <li>

@@ -242,7 +242,7 @@ The tests use the Turbine library to collect the flow and check that the `observ
 
 The result test compares sets instead of lists because concurrent loading doesn't guarantee the order of the emitted objects.
 
-In the next part of the tutorial, you'll handle exceptions when comment requests fail because of an unstable network.
+In the next part of the tutorial, you'll handle exceptions when requests fail because of an unstable network.
 
 ## Next step
 
