@@ -156,25 +156,20 @@ fun `test a delayed flow`() = runTest {
 }
 ```
 
-To measure how much virtual time passes while collecting a flow, use the [`currentTime`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/current-time.html) property.
-Inside a `runTest()` block, this property returns the current virtual time in milliseconds.
-
-Store its value before collecting the flow, then subtract it from `currentTime` afterward.
-Convert the result to a `Duration` with the `milliseconds` extension property from `kotlin.time.Duration.Companion`:
+To measure how much virtual time passes while collecting a flow, use the [`.measureTime()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.time/measure-time.html) function
+with the [`testScheduler.timeSource`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scheduler/time-source.html) property.
+Inside a `runTest()` block, this property represents the test scheduler's virtual time, and the `.measureTime()` function returns the elapsed time as a `Duration`:
 
 ```kotlin
-val startTime = currentTime
-
-// Collect the flow
-
-val totalTime = (currentTime - startTime).milliseconds
+val totalTime = testScheduler.timeSource.measureTime {
+    // Collect the flow
+}
 ```
 
 Open the `desktop-client/src/jvmTest/kotlin/org/example/articles/exercises/SequentialTest.kt` file.
 It contains the following test functions with `TODO()` placeholders:
 
 ```kotlin
-@OptIn(ExperimentalCoroutinesApi::class)
 class SequentialTest {
     @Test
     fun `test observeArticlesLoading Result`() = runTest {
@@ -232,22 +227,21 @@ fun `test observeArticlesLoading Result`() = runTest {
 
 To implement the `test observeArticlesLoading Duration()` test:
 
-1. Store the value of the `currentTime` property before collecting the flow.
+1. Collect the flow inside a `testScheduler.timeSource.measureTime()` block and store the `Duration` it returns.
 2. Call the `observeArticlesLoading()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
 3. Use the `repeat()` function with `ArticlesFakeData.getArticles().size` and call the `awaitItem()` function during each iteration.
 4. Call the `awaitComplete()` function to verify that the flow completes successfully.
-5. Subtract the stored time from the current value of the `currentTime` property and convert the result to a `Duration`.
-6. Use the `assertEquals()` function to compare the duration with `ArticlesFakeDataResults.expectedSequentialList.duration`.
+5. Use the `assertEquals()` function to compare the duration with `ArticlesFakeDataResults.expectedSequentialList.duration`.
 
 ```kotlin
 @Test
 fun `test observeArticlesLoading Duration`() = runTest {
-    val startTime = currentTime
-    observeArticlesLoading(MockBlogService).test {
-        repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
-        awaitComplete()
+    val totalTime = testScheduler.timeSource.measureTime {
+        observeArticlesLoading(MockBlogService).test {
+            repeat(ArticlesFakeData.getArticles().size) { awaitItem() }
+            awaitComplete()
+        }
     }
-    val totalTime = (currentTime - startTime).milliseconds
     assertEquals(
         expected = ArticlesFakeDataResults.expectedSequentialList.duration,
         actual = totalTime,

@@ -18,7 +18,7 @@ Here's an example using the application's custom `NetworkException`:
 
 ```kotlin
 loadingScope.launch {
-    val startTime = System.currentTimeMillis()
+    val startTime = TimeSource.Monotonic.markNow()
     try {
         val articles = observeArticlesUnstable(service)
         updateResultsWithProgress(articles, startTime)
