@@ -136,7 +136,7 @@ val conflatedChannel = Channel<String>(CONFLATED)
 val unlimitedChannel = Channel<String>(UNLIMITED)
 ```
 
-By default, `Channel()` function creates a rendezvous channel, and most of the examples below use this type.
+By default, `Channel()` function creates a "Rendezvous" channel, and most of the examples below use this type.
 For an example that uses a buffer, see [Buffered channels](#buffered-channels).
 
 <!--- CLEAR -->
