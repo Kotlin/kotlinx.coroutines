@@ -641,13 +641,12 @@ internal open class SharedFlowImpl<T>(
     private fun tryTakeValue(slot: SharedFlowSlot): Any? {
         var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
         val value = synchronized(this) {
-            val index = tryPeekLocked(slot)
-            if (index < 0) {
+            val oldIndex = slot.index
+            if (canNotPeekWithoutSuspensionLocked(oldIndex)) {
                 NO_VALUE
             } else {
-                val oldIndex = slot.index
-                val newValue = getPeekedValueLockedAt(index)
-                slot.index = index + 1 // points to the next index after peeked one
+                val newValue = getPeekedValueLockedAt(oldIndex)
+                slot.index = oldIndex + 1 // points to the next index after peeked one
                 resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
             }
@@ -656,17 +655,14 @@ internal open class SharedFlowImpl<T>(
         return value
     }
 
-    // returns -1 if cannot peek value without suspension
-    private fun tryPeekLocked(slot: SharedFlowSlot): Long {
-        // return buffered value if possible
-        val index = slot.index
-        if (index < bufferEndIndex) return index
-        if (bufferCapacity > 0) return -1L // if there's a buffer, never try to rendezvous with emitters
-        // Synchronous shared flow (bufferCapacity == 0) tries to rendezvous
-        if (index > head) return -1L // ... but only with the first emitter (never look forward)
-        if (queueSize == 0) return -1L // nothing there to rendezvous with
-        return index // rendezvous with the first emitter
-    }
+    // returns `true` if cannot peek value at `index` without suspension
+    private fun canNotPeekWithoutSuspensionLocked(index: Long): Boolean =
+        /* Two options where we can peek without suspending:
+         * 1. We pick a buffered value (`index < bufferEndIndex`).
+         * 2. In the no-buffer case (`bufferCapacity == 0`), we rendezvous with the first emitter (`index <= head`)
+         *    if it exists (`queueSize > 0`).
+         * We can not peek without suspending if none of these options are available. */
+        index >= bufferEndIndex && (bufferCapacity > 0 || index > head || queueSize == 0)
 
     private fun getPeekedValueLockedAt(index: Long): Any? =
         when (val item = buffer!!.getBufferAt(index)) {
@@ -676,8 +672,7 @@ internal open class SharedFlowImpl<T>(
 
     private suspend fun awaitValue(slot: SharedFlowSlot): Unit = suspendCancellableCoroutine { cont ->
         synchronized(this) lock@{
-            val index = tryPeekLocked(slot) // recheck under this lock
-            if (index < 0) {
+            if (canNotPeekWithoutSuspensionLocked(slot.index)) { // recheck under this lock
                 slot.cont = cont // Ok -- suspending
             } else {
                 cont.resume(Unit) // has value, no need to suspend
@@ -692,7 +687,7 @@ internal open class SharedFlowImpl<T>(
         var resumeCount = resumesIn.size
         forEachSlotLocked loop@{ slot ->
             val cont = slot.cont ?: return@loop // only waiting slots
-            if (tryPeekLocked(slot) < 0) return@loop // only slots that can peek a value
+            if (canNotPeekWithoutSuspensionLocked(slot.index)) return@loop // only slots that can peek a value
             if (resumeCount >= resumes.size) resumes = resumes.copyOf(maxOf(2, 2 * resumes.size))
             resumes[resumeCount++] = cont
             slot.cont = null // not waiting anymore
