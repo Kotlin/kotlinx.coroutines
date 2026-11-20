@@ -136,7 +136,8 @@ val conflatedChannel = Channel<String>(CONFLATED)
 val unlimitedChannel = Channel<String>(UNLIMITED)
 ```
 
-By default, a "Rendezvous" channel is created.
+By default, `Channel()` function creates a rendezvous channel, and most of the examples below use this type.
+For an example that uses a buffer, see [Buffered channels](#buffered-channels).
 
 <!--- CLEAR -->
 
@@ -546,12 +547,10 @@ BAR!
 
 ## Buffered channels
 
-The channels shown so far had no buffer. Unbuffered channels transfer elements when sender and receiver 
-meet each other (aka rendezvous). If send is invoked first, then it is suspended until receive is invoked, 
-if receive is invoked first, it is suspended until send is invoked.
+The examples shown so far use "Rendezvous" channels, which have no buffer.
 
-Both [Channel()] factory function and [produce] builder take an optional `capacity` parameter to
-specify _buffer size_. Buffer allows senders to send multiple elements before suspending, 
+The [Channel()] factory function and the [produce] builder both take an optional `capacity`
+parameter to specify the _buffer size_. Buffer allows senders to send multiple elements before suspending, 
 similar to the `BlockingQueue` with a specified capacity, which blocks when buffer is full.
 
 Take a look at the behavior of the following code:
