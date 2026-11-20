@@ -6,7 +6,7 @@
 
 The loading functions you've implemented so far assume that every HTTP request succeeds.
 
-In this part of the tutorial, you'll request comments from an unstable network and handle exceptions caused by unsuccessful responses.
+In this part of the tutorial, you'll request articles and comments from an unstable network and handle exceptions caused by unsuccessful responses.
 You'll explore how exceptions propagate through a coroutine hierarchy and how to keep separate loading attempts independent.
 
 ## Handle exceptions in coroutines
@@ -20,15 +20,15 @@ Here's an example using the application's custom `NetworkException`:
 loadingScope.launch {
     val startTime = TimeSource.Monotonic.markNow()
     try {
-        val articles = observeArticlesUnstable(service)
-        updateResultsWithProgress(articles, startTime)
+        val articleResults = observeArticlesUnstable(service)
+        updateResultsWithProgress(articleResults, startTime)
     } catch (e: NetworkException) {
         e.printStackTrace()
     }
 }
 ```
 
-In this example, `updateResultsWithProgress()` collects the flow returned by `observeArticlesUnstable()`.
+In this example, `updateResultsWithFailures()` collects the flow returned by `observeArticlesUnstable()`.
 If the flow throws a `NetworkException` during collection, the `catch` block handles it by printing its stack trace.
 
 Additionally, you can use a `finally` block for cleanup code that runs after the `try` block and any `catch` block.
@@ -102,17 +102,22 @@ Other child coroutines can continue running, and you can start new child corouti
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task6Exceptions.kt` file.
 
-The initial `observeArticlesUnstable()` function throws a `NetworkException` when the application collects its flow:
+The initial `observeArticlesUnstable()` function loads the comments for one article at a time and doesn't handle exceptions:
 
 ```kotlin
-fun observeArticlesUnstable(service: BlogService): Flow<Article> = flow {
-    throw NetworkException("Loading articles was unsuccessful.")
+fun observeArticlesUnstable(service: BlogService): Flow<ArticleResult> = flow {
+    val articleInfoList = service.getArticleInfoListUnstable()
+    articleInfoList.forEach { articleInfo ->
+        val comments = service.getCommentsUnstable(articleInfo)
+        emit(ArticleResult.Success(Article(articleInfo, comments)))
+    }
 }
 ```
 
 Run the application, select **UNSTABLE_NETWORK** from the **Loading Mode** menu, and click **Load comments**.
 
-The exception stops the loading attempt, and the application displays **Loading status: failed**.
+The first unsuccessful response throws a `NetworkException`, which stops the loading attempt. 
+The application then displays **Loading status: failed** and **Loading failed: HTTP 500**.
 
 The `loadingScope` property in the `desktop-client/src/jvmMain/kotlin/org/example/articles/ui/ArticlesViewModel.kt` file currently uses a regular `Job`:
 
@@ -175,17 +180,14 @@ If you click **Load comments** again, the application starts another loading att
 The initial `observeArticlesUnstable()` function deliberately throws a `NetworkException` before requesting any data.
 This makes the effect of a failed loading attempt easy to observe.
 
-Now, replace the deliberate exception with the article-loading logic.
+Now, in the next task you will replace the deliberate exception with the article-loading logic.
 The `desktop-client/src/jvmMain/kotlin/org/example/articles/network/BlogService.kt` file declares the `getCommentsUnstable()` suspending function for requesting comments with simulated network failures:
 
 ```kotlin
 override suspend fun getCommentsUnstable(articleInfo: ArticleInfo): List<Comment> {
     log("Started loading comments for article ${articleInfo.title}")
     val response = client.get(commentsUnstableEndpoint(articleInfo.id))
-    if (!response.status.isSuccess()) {
-        log("Loaded comments failure for article ${articleInfo.title}: ${response.status}")
-        throw NetworkException("Loading article ${articleInfo.id} was unsuccessful.")
-    }
+    response.throwIfUnsuccessful("Loaded comments failure for article ${articleInfo.title}: ${response.status}")
     return response.body<List<Comment>>()
         .also {
             log("Loaded comments unstable for article ${articleInfo.title}")
