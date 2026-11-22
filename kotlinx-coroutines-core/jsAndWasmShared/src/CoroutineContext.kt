@@ -1,6 +1,6 @@
 package kotlinx.coroutines
 
-import kotlinx.coroutines.internal.ScopeCoroutine
+import kotlinx.coroutines.internal.*
 import kotlin.coroutines.*
 
 @PublishedApi // Used from kotlinx-coroutines-test via suppress, not part of ABI
@@ -28,4 +28,24 @@ internal actual class UndispatchedCoroutine<in T> actual constructor(
     uCont: Continuation<T>
 ) : ScopeCoroutine<T>(context, uCont) {
     override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
+}
+
+internal actual fun CoroutineContext.withUndispatchedMarkerIfNeeded(callerContext: CoroutineContext): CoroutineContext =
+    this
+
+internal actual class StackFrameContinuation<T> actual constructor(
+    private val uCont: Continuation<T>,
+    override val context: CoroutineContext,
+    callerContext: CoroutineContext?,
+    callerCountOrElement: Any?
+) : Continuation<T>, CoroutineStackFrame {
+
+    override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    override fun resumeWith(result: Result<T>) {
+        uCont.resumeWith(result)
+    }
+
+    override fun getStackTraceElement(): StackTraceElement? = null
 }

@@ -114,7 +114,7 @@ internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, c
     try {
         return block()
     } finally {
-        restoreThreadContext(context, oldValue)
+        restoreThreadContext(context, oldValue, countOrElement)
     }
 }
 
@@ -124,7 +124,7 @@ internal actual inline fun <T> withCoroutineContext(context: CoroutineContext, c
 internal actual inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T {
     val context = continuation.context
     val oldValue = updateThreadContext(context, countOrElement)
-    val undispatchedCompletion = if (oldValue !== NO_THREAD_ELEMENTS) {
+    val threadStateFrame = if (oldValue !== NO_THREAD_ELEMENTS) {
         // Only if some values were replaced we'll go to the slow path of figuring out where/how to restore them
         continuation.updateUndispatchedCompletion(context, oldValue)
     } else {
@@ -133,13 +133,56 @@ internal actual inline fun <T> withContinuationContext(continuation: Continuatio
     try {
         return block()
     } finally {
-        if (undispatchedCompletion == null || undispatchedCompletion.clearThreadContext()) {
-            restoreThreadContext(context, oldValue)
+        if (threadStateFrame == null || threadStateFrame.pop()) {
+            restoreThreadContext(context, oldValue, countOrElement)
         }
     }
 }
 
-internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): UndispatchedCoroutine<*>? {
+private val threadStateFrames = ThreadLocal<ThreadStateFrame?>()
+
+/**
+ * Protocol for storing frames (i.e. thread context state) for a thread in a specific point in time. Frames never
+ * leave their thread, avoiding any synchronization on suspend/resume.
+ *
+ * [withContinuationContext] pushes a frame, the holder consumes it and for the pusher restoration is skipped if
+ * frame is consumed
+ */
+internal class ThreadStateFrame(
+    @JvmField val completion: UndispatchedCompletion,
+    @JvmField val context: CoroutineContext,
+    @JvmField val oldValue: Any?,
+    @JvmField val previous: ThreadStateFrame?
+) {
+    @JvmField var consumed = false
+
+    fun pop(): Boolean {
+        // set is used without remove() for performance reasons, it only updates a single field. Calling
+        // remove() means having to build an entire entry on every resume. When outermost withContinuationContext
+        // finishes, previous is `null` which means between resumes the entry exists but holds nothing,
+        // guaranteeing one map entry per thread.
+        threadStateFrames.set(previous)
+        return !consumed
+    }
+}
+
+@IgnorableReturnValue
+private fun UndispatchedCompletion.restoreSavedThreadContext(): Boolean {
+    if (!hasThreadStateFrames) return false
+    var frame = threadStateFrames.get()
+    while (frame != null) {
+        if (frame.completion === this) {
+            if (frame.consumed) return false
+            frame.consumed = true
+            restoreThreadContext(frame.context, frame.oldValue)
+            return true
+        }
+        frame = frame.previous
+    }
+    return false
+}
+
+internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineContext, oldValue: Any?): ThreadStateFrame? {
     if (this !is CoroutineStackFrame) return null
     /*
      * Fast-path to detect whether we have undispatched coroutine at all in our stack.
@@ -155,18 +198,20 @@ internal fun Continuation<*>.updateUndispatchedCompletion(context: CoroutineCont
      */
     val potentiallyHasUndispatchedCoroutine = context[UndispatchedMarker] !== null
     if (!potentiallyHasUndispatchedCoroutine) return null
-    val completion = undispatchedCompletion()
-    completion?.saveThreadContext(context, oldValue)
-    return completion
+    val completion = undispatchedCompletion() ?: return null
+    completion.hasThreadStateFrames = true
+    // Without this, the recorded state from construction could be restored later on top of a normal thread handoff
+    if (completion is UndispatchedCoroutine<*>) completion.discardInitialThreadState()
+    return ThreadStateFrame(completion, context, oldValue, threadStateFrames.get()).also { threadStateFrames.set(it) }
 }
 
-internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCoroutine<*>? {
+internal tailrec fun CoroutineStackFrame.undispatchedCompletion(): UndispatchedCompletion? {
     // Find direct completion of this continuation
     val completion: CoroutineStackFrame = when (this) {
         is DispatchedCoroutine<*> -> return null
         else -> callerFrame ?: return null // something else -- not supported
     }
-    if (completion is UndispatchedCoroutine<*>) return completion // found UndispatchedCoroutine!
+    if (completion is UndispatchedCompletion) return completion
     return completion.undispatchedCompletion() // walk up the call stack with tail call
 }
 
@@ -179,60 +224,35 @@ private object UndispatchedMarker: CoroutineContext.Element, CoroutineContext.Ke
         get() = this
 }
 
-// Used by withContext when context changes, but dispatcher stays the same
+private fun CoroutineContext.withUndispatchedMarker(): CoroutineContext =
+    if (this[UndispatchedMarker] == null) this + UndispatchedMarker else this
+
+// A marker is needed when a key gets added which the caller lacks in order for resumption to hand-off correctly.
+// Without it, you would have nesting (which is correct only when no key is added)
+internal actual fun CoroutineContext.withUndispatchedMarkerIfNeeded(callerContext: CoroutineContext): CoroutineContext {
+    if (this[UndispatchedMarker] != null) return this
+    val hasElementsAbsentInCaller = fold(false) { found, element ->
+        found || element is ThreadContextElement<*> && callerContext[element.key] == null
+    }
+    return if (hasElementsAbsentInCaller) this + UndispatchedMarker else this
+}
+
+internal sealed interface UndispatchedCompletion {
+    // Since frames never leave a physical Thread, a plain var here is enough. @Volatile is not needed since
+    // the only Thread that needs to see true is the same one that pushed the frame. The value is also never set
+    // to false, so there isn't a case of another thread needing to see this state change.
+    var hasThreadStateFrames: Boolean
+}
+
+// Used by withContext when context changes, but dispatcher stays the same. See ThreadStateFrame for the protocol.
 internal actual class UndispatchedCoroutine<in T>actual constructor (
     context: CoroutineContext,
     uCont: Continuation<T>
-) : ScopeCoroutine<T>(if (context[UndispatchedMarker] == null) context + UndispatchedMarker else context, uCont) {
+) : ScopeCoroutine<T>(context.withUndispatchedMarker(), uCont), UndispatchedCompletion {
 
-    /**
-     * The state of [ThreadContextElement]s associated with the current undispatched coroutine.
-     * It is stored in a thread local because this coroutine can be used concurrently in suspend-resume race scenario.
-     * See the followin, boiled down example with inlined `withContinuationContext` body:
-     * ```
-     * val state = saveThreadContext(ctx)
-     * try {
-     *     invokeSmthWithThisCoroutineAsCompletion() // Completion implies that 'afterResume' will be called
-     *     // COROUTINE_SUSPENDED is returned
-     * } finally {
-     *     thisCoroutine().clearThreadContext() // Concurrently the "smth" could've been already resumed on a different thread
-     *     // and it also calls saveThreadContext and clearThreadContext
-     * }
-     * ```
-     *
-     * Usage note:
-     *
-     * This part of the code is performance-sensitive.
-     * It is a well-established pattern to wrap various activities into system-specific undispatched
-     * `withContext` for the sake of logging, MDC, tracing etc., meaning that there exists thousands of
-     * undispatched coroutines.
-     * Each access to Java's [ThreadLocal] leaves a footprint in the corresponding Thread's `ThreadLocalMap`
-     * that is cleared automatically as soon as the associated thread-local (-> UndispatchedCoroutine) is garbage collected
-     * when either the corresponding thread is GC'ed or it cleans up its stale entries on other TL accesses.
-     * When such coroutines are promoted to old generation, `ThreadLocalMap`s become bloated and an arbitrary accesses to thread locals
-     * start to consume significant amount of CPU because these maps are open-addressed and cleaned up incrementally on each access.
-     * (You can read more about this effect as "GC nepotism").
-     *
-     * To avoid that, we attempt to narrow down the lifetime of this thread local as much as possible:
-     * - It's never accessed when we are sure there are no thread context elements
-     * - It's cleaned up via [ThreadLocal.remove] as soon as the coroutine is suspended or finished.
-     */
-    private val threadStateToRecover = ThreadLocal<Pair<CoroutineContext, Any?>>()
+    override var hasThreadStateFrames = false
 
-    /*
-     * Indicates that a coroutine has at least one thread context element associated with it
-     * and that 'threadStateToRecover' is going to be set in case of dispatchhing in order to preserve them.
-     * Better than nullable thread-local for easier debugging.
-     *
-     * It is used as a performance optimization to avoid 'threadStateToRecover' initialization
-     * (note: tl.get() initializes thread local),
-     * and is prone to false-positives as it is never reset: otherwise
-     * it may lead to logical data races between suspensions point where
-     * coroutine is yet being suspended in one thread while already being resumed
-     * in another.
-     */
-    @Volatile
-    private var threadLocalIsSet = false
+    private var initialThreadState: InitialThreadState? = null
 
     init {
         /*
@@ -246,8 +266,11 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
          * 2) It (original continuation) is then not wrapped into `DispatchedContinuation` via `intercept()`
          *    and goes neither through `DC.run` nor through `resumeUndispatchedWith` that both
          *    do thread context element tracking.
-         * 3) So thread locals never got chance to get properly set up via `saveThreadContext`,
-         *    but when `withContext` finishes, it attempts to recover thread locals in its `afterResume`.
+         * 3) As a result, no frame gets pushed for this coroutine (which would ordinarily happen in
+         *    `updateUndispatchedCompletion` called within a `withContinuationContext`).
+         * 4) Recovery then happens in `restoreThreadState()` which `afterResume`/`afterCompletionUndispatched` call.
+         *    So `restoreThreadState()` doesn't find a frame and hence nothing ends up being restored which is what
+         *    causes the values within the `ThreadLocal` to leak.
          *
          * Here we detect precisely this situation and properly setup context to recover later.
          *
@@ -261,27 +284,21 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
              */
             val values = updateThreadContext(context, null)
             restoreThreadContext(context, values)
-            saveThreadContext(context, values)
+            initialThreadState = InitialThreadState(Thread.currentThread(), context, values)
         }
     }
 
-    fun saveThreadContext(context: CoroutineContext, oldValue: Any?) {
-        threadLocalIsSet = true // Specify that thread-local is touched at all
-        threadStateToRecover.set(context to oldValue)
-    }
-
-    fun clearThreadContext(): Boolean {
-        return !(threadLocalIsSet && threadStateToRecover.get() == null).also {
-            threadStateToRecover.remove()
-        }
+    fun discardInitialThreadState() {
+        val state = initialThreadState ?: return
+        if (state.thread === Thread.currentThread()) initialThreadState = null
     }
 
     override fun afterCompletionUndispatched() {
-        clearThreadLocal()
+        restoreThreadState()
     }
 
     override fun afterResume(state: Any?) {
-        clearThreadLocal()
+        restoreThreadState()
         // resume undispatched -- update context but stay on the same dispatcher
         val result = recoverResult(state, uCont)
         withContinuationContext(uCont, null) {
@@ -289,14 +306,45 @@ internal actual class UndispatchedCoroutine<in T>actual constructor (
         }
     }
 
-    private fun clearThreadLocal() {
-        if (threadLocalIsSet) {
-            threadStateToRecover.get()?.let { (ctx, value) ->
-                restoreThreadContext(ctx, value)
-            }
-            threadStateToRecover.remove()
+    private fun restoreThreadState() {
+        val restored = restoreSavedThreadContext()
+        val state = initialThreadState ?: return
+        if (state.thread !== Thread.currentThread()) return
+        initialThreadState = null
+        if (!restored) restoreThreadContext(state.context, state.oldValue)
+    }
+
+    private class InitialThreadState(
+        @JvmField val thread: Thread,
+        @JvmField val context: CoroutineContext,
+        @JvmField val oldValue: Any?
+    )
+}
+
+internal actual class StackFrameContinuation<T> actual constructor(
+    private val uCont: Continuation<T>,
+    override val context: CoroutineContext,
+    private val callerContext: CoroutineContext?,
+    private val callerCountOrElement: Any?
+) : Continuation<T>, CoroutineStackFrame, UndispatchedCompletion {
+
+    override var hasThreadStateFrames = false
+
+    override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    // Only runs when inner block finishes after a suspension
+    override fun resumeWith(result: Result<T>) {
+        restoreSavedThreadContext()
+        // === is intentional, it's only valid from the exact object reference it was computed from.
+        // == would introduce an expensive check that is being avoided.
+        val countOrElement = if (uCont.context === callerContext) callerCountOrElement else null
+        withContinuationContext(uCont, countOrElement) {
+            uCont.resumeWith(result)
         }
     }
+
+    override fun getStackTraceElement(): StackTraceElement? = null
 }
 
 internal actual val CoroutineContext.coroutineName: String? get() {

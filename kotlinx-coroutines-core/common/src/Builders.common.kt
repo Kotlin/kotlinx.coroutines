@@ -456,8 +456,10 @@ public suspend fun <T> withContext(
         // `equals` is used by design (see equals implementation is wrapper context like ExecutorCoroutineDispatcher)
         if (newContext[ContinuationInterceptor] == oldContext[ContinuationInterceptor]) {
             val coroutine = UndispatchedCoroutine(newContext, uCont)
-            // There are changes in the context, so this thread needs to be updated
-            withCoroutineContext(coroutine.context, null) {
+            // There are changes in the context, so this thread needs to be updated. Note that
+            // `threadContextElements(coroutine.context)` is intentional. This makes the restore at the end of
+            // withCoroutineContext cheap if the JVM inliner misses it
+            withCoroutineContext(coroutine.context, threadContextElements(coroutine.context)) {
                 return@sc coroutine.startUndispatchedOrReturn(coroutine, block)
             }
         }

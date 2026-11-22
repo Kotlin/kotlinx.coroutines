@@ -34,3 +34,12 @@ internal expect inline fun <T> withCoroutineContext(context: CoroutineContext, c
 internal expect inline fun <T> withContinuationContext(continuation: Continuation<*>, countOrElement: Any?, block: () -> T): T
 internal expect fun Continuation<*>.toDebugString(): String
 internal expect val CoroutineContext.coroutineName: String?
+internal expect fun CoroutineContext.withUndispatchedMarkerIfNeeded(callerContext: CoroutineContext): CoroutineContext
+
+// Continuation that links the caller with uCont with walkable CoroutineStackFrame
+internal expect class StackFrameContinuation<T>(
+    uCont: Continuation<T>,
+    context: CoroutineContext,
+    callerContext: CoroutineContext?,
+    callerCountOrElement: Any?
+) : Continuation<T>

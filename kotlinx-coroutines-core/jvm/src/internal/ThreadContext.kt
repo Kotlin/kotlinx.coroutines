@@ -76,6 +76,15 @@ internal fun updateThreadContext(context: CoroutineContext, countOrElement: Any?
     }
 }
 
+internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?, countOrElement: Any?) {
+    if (countOrElement is ThreadContextElement<*>) {
+        @Suppress("UNCHECKED_CAST")
+        (countOrElement as ThreadContextElement<Any?>).restoreThreadContext(context, oldState)
+    } else {
+        restoreThreadContext(context, oldState)
+    }
+}
+
 internal fun restoreThreadContext(context: CoroutineContext, oldState: Any?) {
     when {
         oldState === NO_THREAD_ELEMENTS -> return // very fast path when there are no ThreadContextElements

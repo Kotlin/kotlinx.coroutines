@@ -285,6 +285,80 @@ class ThreadContextElementTest : TestBase() {
             myThreadLocal.set(null)
         }
     }
+
+    @Test
+    fun testFlowOnScopesAreNestedWhenResumedOnAnotherThread() = runTest {
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            for (outerWithContext in listOf(false, true)) {
+                for (flowOnAddsElement in listOf(false, true)) {
+                    for (suspendInUpstream in listOf(false, true)) {
+                        try {
+                            checkFlowOnScopesAreNested(executor, outerWithContext, flowOnAddsElement, suspendInUpstream)
+                        } catch (e: Throwable) {
+                            throw AssertionError("Failed with parameters: outerWithContext=$outerWithContext, " +
+                                "flowOnAddsElement=$flowOnAddsElement, suspendInUpstream=$suspendInUpstream", e)
+                        }
+                    }
+                }
+            }
+        } finally {
+            executor.shutdown()
+        }
+    }
+
+    private suspend fun checkFlowOnScopesAreNested(
+        executor: ExecutorService, outerWithContext: Boolean, flowOnAddsElement: Boolean, suspendInUpstream: Boolean
+    ) {
+        val errors = CopyOnWriteArrayList<String>()
+        suspend fun resumeOnExecutor() = suspendCancellableCoroutine { cont -> executor.execute { cont.resume(Unit) } }
+        val collectFlow: suspend () -> Unit = {
+            flow {
+                repeat(3) {
+                    emit(it)
+                    if (suspendInUpstream) resumeOnExecutor()
+                }
+            }
+                .flowOn(if (flowOnAddsElement) StackElement(StackElement.UpstreamKey, errors) else CoroutineName("upstream"))
+                .collect {
+                    if (!suspendInUpstream) resumeOnExecutor()
+                }
+        }
+        val element = StackElement(StackElement.Key, errors)
+        if (outerWithContext) {
+            withContext(Dispatchers.Unconfined) {
+                withContext(element) { collectFlow() }
+            }
+        } else {
+            withContext(Dispatchers.Unconfined + element) { collectFlow() }
+        }
+        assertEquals(emptyList(), StackElement.openScopes.get())
+        assertEquals(emptyList(), executor.submit<List<Int>> { StackElement.openScopes.get() }.get())
+        assertEquals(emptyList(), errors)
+    }
+}
+
+private class StackElement(
+    override val key: CoroutineContext.Key<StackElement>,
+    private val errors: MutableList<String>
+) : ThreadContextElement<Int> {
+    companion object Key : CoroutineContext.Key<StackElement> {
+        val UpstreamKey = object : CoroutineContext.Key<StackElement> {}
+        val openScopes: ThreadLocal<ArrayList<Int>> = ThreadLocal.withInitial { ArrayList() }
+        private var nextId = 0
+    }
+
+    override fun updateThreadContext(context: CoroutineContext): Int {
+        val id = synchronized(Key) { ++nextId }
+        openScopes.get().add(id)
+        return id
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: Int) {
+        val scopes = openScopes.get()
+        if (scopes.lastOrNull() != oldState) errors.add("Closing scope $oldState, but the open scopes are $scopes")
+        scopes.remove(oldState)
+    }
 }
 
 class MyData
