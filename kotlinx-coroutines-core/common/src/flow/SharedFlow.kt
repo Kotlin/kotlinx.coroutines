@@ -548,6 +548,18 @@ internal open class SharedFlowImpl<T>(
         // Compute new buffer size if we drop items we no longer need and no emitter is resumed:
         // We must keep all the items from newMinIndex to the end of buffer
         var newBufferEndIndex = bufferEndIndex // var to grow when waiters are resumed
+        // If all collectors went past the first queued emitter, but that emitter was cancelled,
+        // then the collectors have consumed nothing, so no emitter must be resumed on their behalf.
+        // The cancelled cell is no longer usable, as it will be skipped.
+        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
+        val newQueueEndIndex = newBufferEndIndex + queueSize
+        val shouldSkipCancelledEmitter = bufferCapacity == 0 && newMinCollectorIndex > head &&
+            buffer!!.getBufferAt(head) === NO_VALUE && nCollectors > 0
+        if (shouldSkipCancelledEmitter) {
+            // The old buffer index will no longer be checked, so it is forbidden to move emitters' values to it.
+            newBufferEndIndex++
+        }
+        // collect emitters to resume if we have them
         val maxResumeCount = if (nCollectors > 0) {
             // If we have collectors we can resume up to maxResumeCount waiting emitters
             // a) queueSize -> that's how many waiting emitters we have
@@ -558,9 +570,7 @@ internal open class SharedFlowImpl<T>(
             // If we don't have collectors anymore we must resume all waiting emitters
             queueSize // that's how many waiting emitters we have (at most)
         }
-        var resumes: Array<Continuation<Unit>?> = EMPTY_RESUMES
-        var newQueueEndIndex = newBufferEndIndex + queueSize
-        if (maxResumeCount > 0) { // collect emitters to resume if we have them
+        if (maxResumeCount > 0) {
             resumes = arrayOfNulls(maxResumeCount)
             var resumeCount = 0
             val buffer = buffer!!
@@ -575,21 +585,9 @@ internal open class SharedFlowImpl<T>(
                     if (resumeCount >= maxResumeCount) break // enough resumed, done
                 }
             }
-            while (
-                newQueueEndIndex > maxOf(newBufferEndIndex, newMinCollectorIndex)
-                && buffer.getBufferAt(newQueueEndIndex - 1) === NO_VALUE
-            ) {
-                newQueueEndIndex--
-                buffer.setBufferAt(newQueueEndIndex, null)
-            }
         }
         // Compute new replay size -> limit to replay the number of items we need, take into account that it can only grow
-        var newReplayIndex = maxOf(replayIndex, head, newBufferEndIndex - replay)
-        // adjustment for synchronous case with cancelled emitter (NO_VALUE)
-        if (bufferCapacity == 0 && newReplayIndex < newQueueEndIndex && buffer!!.getBufferAt(newReplayIndex) == NO_VALUE) {
-            newBufferEndIndex++
-            newReplayIndex++
-        }
+        val newReplayIndex = maxOf(replayIndex, head, newBufferEndIndex - replay)
         // Note: When nCollectors == 0 we resume ALL queued emitters and we might have resumed more than bufferCapacity,
         // and newMinCollectorIndex might pointing the wrong place because of that. The easiest way to fix it is by
         // forcing newMinCollectorIndex = newBufferEndIndex.
@@ -598,8 +596,9 @@ internal open class SharedFlowImpl<T>(
         updateBufferLocked(newReplayIndex, newMinCollectorIndex, newBufferEndIndex, newQueueEndIndex)
         // just in case we've moved all buffered emitters and have NO_VALUE's at the tail now
         cleanupTailLocked()
-        // We need to waken up suspended collectors if any emitters were resumed here
-        if (resumes.isNotEmpty()) resumes = findSlotsToResumeLocked(resumes)
+        // We need to waken up suspended collectors if any emitters were resumed here,
+        // or if the next queued emitter became the first one and is now available for a rendezvous
+        if (resumes.isNotEmpty() || shouldSkipCancelledEmitter) resumes = findSlotsToResumeLocked(resumes)
         return resumes
     }
 
@@ -645,7 +644,7 @@ internal open class SharedFlowImpl<T>(
             if (canNotPeekWithoutSuspensionLocked(oldIndex)) {
                 NO_VALUE
             } else {
-                val newValue = getPeekedValueLockedAt(oldIndex)
+                val newValue = getPeekedValueLockedAt(oldIndex) // may be `NO_VALUE` if the emitter got cancelled
                 slot.index = oldIndex + 1 // points to the next index after peeked one
                 resumes = updateCollectorIndexLocked(oldIndex)
                 newValue
@@ -682,6 +681,15 @@ internal open class SharedFlowImpl<T>(
         }
     }
 
+    /**
+     * Equivalent to pseudocode:
+     * ```
+     * val newResumes = run {
+     *    // find slots that can be resumed without suspending
+     * }
+     * return resumesIn + newResumes
+     * ```
+     */
     private fun findSlotsToResumeLocked(resumesIn: Array<Continuation<Unit>?>): Array<Continuation<Unit>?> {
         var resumes: Array<Continuation<Unit>?> = resumesIn
         var resumeCount = resumesIn.size
