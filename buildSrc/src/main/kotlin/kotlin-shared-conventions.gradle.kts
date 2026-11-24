@@ -95,15 +95,6 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         iosX64()
         mingwX64()
         watchosDeviceArm64()
-
-        // Deprecated for removal: see KT-86581
-        @Suppress("DEPRECATION", "DEPRECATION_ERROR")
-        run {
-            androidNativeArm32()
-            androidNativeArm64()
-            androidNativeX86()
-            androidNativeX64()
-        }
         js {
             outputModuleName = project.name
             nodejs()
