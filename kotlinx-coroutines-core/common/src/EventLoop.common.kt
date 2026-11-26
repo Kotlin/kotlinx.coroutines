@@ -113,7 +113,7 @@ internal abstract class EventLoop : CoroutineDispatcher() {
 }
 
 internal object ThreadLocalEventLoop {
-    private val ref = commonThreadLocal<EventLoop?>(Symbol("ThreadLocalEventLoop"))
+    private val ref = commonThreadLocal<EventLoop?>()
 
     internal val eventLoop: EventLoop
         get() = ref.get() ?: createEventLoop().also { ref.set(it) }
@@ -122,7 +122,7 @@ internal object ThreadLocalEventLoop {
         ref.get()
 
     internal fun resetEventLoop() {
-        ref.set(null)
+        ref.remove()
     }
 
     internal fun setEventLoop(eventLoop: EventLoop) {
