@@ -193,11 +193,17 @@ public fun <T> CompletionStage<T>.asDeferred(): Deferred<T> {
  * If the [Job] of the current coroutine is cancelled while this suspending function is waiting, this function
  * stops waiting for the completion stage and immediately resumes with [CancellationException][kotlinx.coroutines.CancellationException].
  *
+ * If [Future.cancel] gets invoked, the [mayInterruptIfRunning] flag (`false` by default) is passed to it unchanged.
+ * Note that the standard [CompletableFuture] implementation does not react to [mayInterruptIfRunning],
+ * and it is up to subclasses to implement interruptions.
+ * For readability, please name the [mayInterruptIfRunning] parameter when using it, like so:
+ * `future.consume(mayInterruptIfRunning = true)`.
+ *
  * This method is intended to be used with one-shot futures, so on coroutine cancellation the [CompletableFuture] that
  * corresponds to this [CompletionStage] (see [CompletionStage.toCompletableFuture])
  * is cancelled. If cancelling the given stage is undesired, `stage.asDeferred().await()` should be used instead.
  */
-public suspend fun <T> CompletionStage<T>.consume(): T {
+public suspend fun <T> CompletionStage<T>.consume(mayInterruptIfRunning: Boolean = false): T {
     val future = toCompletableFuture() // retrieve the future
     // fast path when CompletableFuture is already done (does not suspend)
     if (future.isDone) {
@@ -213,7 +219,7 @@ public suspend fun <T> CompletionStage<T>.consume(): T {
         val consumer = ContinuationHandler(cont)
         handle(consumer)
         cont.invokeOnCancellation {
-            future.cancel(false)
+            future.cancel(mayInterruptIfRunning)
             consumer.cont = null // shall clear reference to continuation to aid GC
         }
     }
