@@ -158,6 +158,7 @@ internal open class BufferedChannel<E>(
             segment = segment, index = index, element = element, s = s,
             // Store the created continuation as a waiter.
             waiter = cont,
+            continuation = cont,
             // If a rendezvous happens or the element has been buffered,
             // resume the continuation and finish. In case of prompt
             // cancellation, it is guaranteed that the element
@@ -228,6 +229,7 @@ internal open class BufferedChannel<E>(
         sendImpl(
             element = element,
             waiter = SendBroadcast(cont),
+            continuation = cont,
             onRendezvousOrBuffered = { cont.resume(true) },
             onSuspend = { _, _ -> },
             onClosed = { cont.resume(false) }
@@ -252,6 +254,8 @@ internal open class BufferedChannel<E>(
         In the latter case, when the algorithm decides
         to suspend, [onNoWaiterSuspend] is called. */
         waiter: Any?,
+        /* Current continuation, when it is already available at the call-site. */
+        continuation: Continuation<*>? = null,
         /* This lambda is invoked when the element has been
         buffered or a rendezvous with a receiver happens. */
         onRendezvousOrBuffered: () -> R,
@@ -304,7 +308,7 @@ internal open class BufferedChannel<E>(
             // Update the cell according to the algorithm. Importantly, when
             // the channel is already closed, storing a waiter is illegal, so
             // the algorithm stores the `INTERRUPTED_SEND` token in this case.
-            when (updateCellSend(segment, i, element, s, waiter, closed)) {
+            when (updateCellSend(segment, i, element, s, waiter, closed, continuation)) {
                 RESULT_RENDEZVOUS -> {
                     // A rendezvous with a receiver has happened.
                     // The previous segments are no longer needed
@@ -387,6 +391,8 @@ internal open class BufferedChannel<E>(
         s: Long,
         /* The waiter to be stored in case of suspension. */
         waiter: Waiter,
+        /* Current continuation, when it is already available at the call-site. */
+        continuation: Continuation<*>? = null,
         /* This lambda is invoked when the element has been
         buffered or a rendezvous with a receiver happens.*/
         onRendezvousOrBuffered: () -> Unit,
@@ -397,7 +403,7 @@ internal open class BufferedChannel<E>(
         // Update the cell again, now with the non-null waiter,
         // restarting the operation from the beginning on failure.
         // Check the `sendImpl(..)` function for the comments.
-        when (updateCellSend(segment, index, element, s, waiter, false)) {
+        when (updateCellSend(segment, index, element, s, waiter, false, continuation)) {
             RESULT_RENDEZVOUS -> {
                 segment.cleanPrev()
                 onRendezvousOrBuffered()
@@ -417,6 +423,7 @@ internal open class BufferedChannel<E>(
                 sendImpl(
                     element = element,
                     waiter = waiter,
+                    continuation = continuation,
                     onRendezvousOrBuffered = onRendezvousOrBuffered,
                     onSuspend = { _, _ -> },
                     onClosed = onClosed,
@@ -437,7 +444,8 @@ internal open class BufferedChannel<E>(
         s: Long,
         /* The waiter to be stored in case of suspension. */
         waiter: Any?,
-        closed: Boolean
+        closed: Boolean,
+        continuation: Continuation<*>?
     ): Int {
         // This is a fast-path of `updateCellSendSlow(..)`.
         //
@@ -445,6 +453,7 @@ internal open class BufferedChannel<E>(
         // performing the synchronization after that.
         // This way, receivers safely retrieve the
         // element, following the safe publication pattern.
+        collectStacktrace(segment, index, continuation)
         segment.storeElement(index, element)
         if (closed) return updateCellSendSlow(segment, index, element, s, waiter, closed)
         // Read the current cell state.
@@ -1022,6 +1031,7 @@ internal open class BufferedChannel<E>(
         // This is a fast-path of `updateCellReceiveSlow(..)`.
         //
         // Read the current cell state.
+        matchStacktrace(segment, index)
         val state = segment.getState(index)
         when {
             // The cell is empty.
