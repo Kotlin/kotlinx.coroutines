@@ -775,6 +775,43 @@ class ListenableFutureTest : TestBase() {
         assertEquals(exception, parent.getCancellationException().cause)
     }
 
+    @Test
+    fun testConsumeInterruptingTask() = runTest {
+        class MyListenableFuture : AbstractFuture<Int>() {
+            fun wasInterruptedPublic() = wasInterrupted()
+        }
+        // Normal cancellation
+        with(MyListenableFuture()) {
+            assertFalse(wasInterruptedPublic())
+            assertFalse(isCancelled())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume()
+            }.cancelAndJoin()
+            assertTrue(isCancelled())
+            assertFalse(wasInterruptedPublic())
+        }
+        // Cancellation with an explicit `mayInterruptIfRunning = false`
+        with(MyListenableFuture()) {
+            assertFalse(wasInterruptedPublic())
+            assertFalse(isCancelled())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume(mayInterruptIfRunning = false)
+            }.cancelAndJoin()
+            assertTrue(isCancelled())
+            assertFalse(wasInterruptedPublic())
+        }
+        // Cancellation with `mayInterruptIfRunning = true`
+        with(MyListenableFuture()) {
+            assertFalse(wasInterruptedPublic())
+            assertFalse(isCancelled())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume(mayInterruptIfRunning = true)
+            }.cancelAndJoin()
+            assertTrue(isCancelled())
+            assertTrue(wasInterruptedPublic())
+        }
+    }
+
     // Stress tests.
 
     @Test

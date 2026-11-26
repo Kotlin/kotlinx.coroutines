@@ -614,4 +614,50 @@ class FutureTest : TestBase() {
         }
         assertTrue(didRun.load())
     }
+
+    @Test
+    fun testConsumeInterruptingTask() = runTest {
+        class MyCompletableFuture : CompletableFuture<Int>() {
+            val state = AtomicReference(CancellationState.NOT_CANCELLED)
+            override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+                val newState = if (mayInterruptIfRunning) CancellationState.INTERRUPTED
+                else CancellationState.CANCELLED_NOT_INTERRUPTED
+                return state.compareAndSet(CancellationState.NOT_CANCELLED, newState).also {
+                    if (it) {
+                        super.cancel(false) // `mayInterruptIfRunning` has no effect on `CompletableFuture()` itself
+                    }
+                }
+            }
+        }
+        // Normal cancellation
+        with(MyCompletableFuture()) {
+            assertEquals(CancellationState.NOT_CANCELLED, state.load())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume()
+            }.cancelAndJoin()
+            assertEquals(CancellationState.CANCELLED_NOT_INTERRUPTED, state.load())
+        }
+        // Cancellation with an explicit `mayInterruptIfRunning = false`
+        with(MyCompletableFuture()) {
+            assertEquals(CancellationState.NOT_CANCELLED, state.load())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume(mayInterruptIfRunning = false)
+            }.cancelAndJoin()
+            assertEquals(CancellationState.CANCELLED_NOT_INTERRUPTED, state.load())
+        }
+        // Cancellation with `mayInterruptIfRunning = true`
+        with(MyCompletableFuture()) {
+            assertEquals(CancellationState.NOT_CANCELLED, state.load())
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                val _ = consume(mayInterruptIfRunning = true)
+            }.cancelAndJoin()
+            assertEquals(CancellationState.INTERRUPTED, state.load())
+        }
+    }
+
+    private enum class CancellationState {
+        NOT_CANCELLED,
+        CANCELLED_NOT_INTERRUPTED,
+        INTERRUPTED,
+    }
 }

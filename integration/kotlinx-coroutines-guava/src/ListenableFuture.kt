@@ -239,6 +239,10 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
  * However, if the coroutine calling [consume] is cancelled before the future completes,
  * the future also gets cancelled.
  *
+ * If [Future.cancel] gets invoked, the [mayInterruptIfRunning] flag (`false` by default) is passed to it unchanged.
+ * For readability, please name the [mayInterruptIfRunning] parameter when using it, like so:
+ * `future.consume(mayInterruptIfRunning = true)`.
+ *
  * This method is most suitable for cases where only one consumer is expected for the given [ListenableFuture]:
  * this way, there is no need to explicitly cancel the future to avoid wasting resources.
  * If cancelling the given future is undesired, use [Futures.nonCancellationPropagating]
@@ -249,7 +253,7 @@ public fun <T> Deferred<T>.asListenableFuture(): ListenableFuture<T> {
  * There is a **prompt cancellation guarantee**: even if this function is ready to return the result, but was cancelled
  * while suspended, [CancellationException] will be thrown. See [suspendCancellableCoroutine] for low-level details.
  */
-public suspend fun <T> ListenableFuture<T>.consume(): T {
+public suspend fun <T> ListenableFuture<T>.consume(mayInterruptIfRunning: Boolean = false): T {
     try {
         if (isDone) return Uninterruptibles.getUninterruptibly(this)
     } catch (e: ExecutionException) {
@@ -266,7 +270,7 @@ public suspend fun <T> ListenableFuture<T>.consume(): T {
             ToContinuation(this, cont),
             MoreExecutors.directExecutor())
         cont.invokeOnCancellation {
-            cancel(false)
+            cancel(mayInterruptIfRunning)
         }
     }
 }
