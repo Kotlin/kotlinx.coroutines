@@ -54,7 +54,6 @@ class LimitingDispatcherTest : SchedulerTestBase() {
             }
         }
         launch(view(1)) {
-            yield()
             firstViewStarted.await()
             launch(dispatcher) {
                 entered.store(true)
