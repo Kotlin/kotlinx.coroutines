@@ -51,3 +51,23 @@ internal actual class UndispatchedCoroutine<in T> actual constructor(
 ) : ScopeCoroutine<T>(context, uCont) {
     override fun afterResume(state: Any?) = uCont.resumeWith(recoverResult(state, uCont))
 }
+
+internal actual fun CoroutineContext.withUndispatchedMarkerIfNeeded(callerContext: CoroutineContext): CoroutineContext =
+    this
+
+internal actual class StackFrameContinuation<T> actual constructor(
+    private val uCont: Continuation<T>,
+    override val context: CoroutineContext,
+    callerContext: CoroutineContext?,
+    callerCountOrElement: Any?
+) : Continuation<T>, CoroutineStackFrame {
+
+    override val callerFrame: CoroutineStackFrame?
+        get() = uCont as? CoroutineStackFrame
+
+    override fun resumeWith(result: Result<T>) {
+        uCont.resumeWith(result)
+    }
+
+    override fun getStackTraceElement(): StackTraceElement? = null
+}

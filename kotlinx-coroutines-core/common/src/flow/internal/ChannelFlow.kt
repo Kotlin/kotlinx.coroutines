@@ -143,9 +143,18 @@ internal abstract class ChannelFlowOperator<S, T>(
 
     // Changes collecting context upstream to the specified newContext, while collecting in the original context
     private suspend fun collectWithContextUndispatched(collector: FlowCollector<T>, newContext: CoroutineContext) {
-        val originalContextCollector = collector.withUndispatchedContextCollector(coroutineContext)
+        // Never mark the context that gets emitted back. SafeCollector.checkContext requires the exact same context
+        val collectContext = coroutineContext
+        val upstreamContext = newContext.withUndispatchedMarkerIfNeeded(collectContext)
+        val originalContextCollector = collector.withUndispatchedContextCollector(collectContext, upstreamContext)
         // invoke flowCollect(originalContextCollector) in the newContext
-        return withContextUndispatched(newContext, block = { flowCollect(it) }, value = originalContextCollector)
+        return withContextUndispatched(
+            upstreamContext,
+            block = { flowCollect(it) },
+            value = originalContextCollector,
+            callerContext = collectContext,
+            callerCountOrElement = threadContextElements(collectContext)
+        )
     }
 
     // Slow path when output channel is required
@@ -193,22 +202,27 @@ internal class ChannelFlowOperatorImpl<T>(
 
 // Now if the underlying collector was accepting concurrent emits, then this one is too
 // todo: we might need to generalize this pattern for "thread-safe" operators that can fuse with channels
-private fun <T> FlowCollector<T>.withUndispatchedContextCollector(emitContext: CoroutineContext): FlowCollector<T> = when (this) {
+private fun <T> FlowCollector<T>.withUndispatchedContextCollector(
+    emitContext: CoroutineContext,
+    upstreamContext: CoroutineContext
+): FlowCollector<T> = when (this) {
     // SendingCollector & NopCollector do not care about the context at all and can be used as is
     is SendingCollector, is NopCollector -> this
     // Otherwise just wrap into UndispatchedContextCollector interface implementation
-    else -> UndispatchedContextCollector(this, emitContext)
+    else -> UndispatchedContextCollector(this, emitContext, upstreamContext)
 }
 
 private class UndispatchedContextCollector<T>(
     downstream: FlowCollector<T>,
-    private val emitContext: CoroutineContext
+    private val emitContext: CoroutineContext,
+    private val upstreamContext: CoroutineContext
 ) : FlowCollector<T> {
     private val countOrElement = threadContextElements(emitContext) // precompute for fast withContextUndispatched
+    private val upstreamCountOrElement = threadContextElements(upstreamContext)
     private val emitRef: suspend (T) -> Unit = { downstream.emit(it) } // allocate suspend function ref once on creation
 
     override suspend fun emit(value: T): Unit =
-        withContextUndispatched(emitContext, value, countOrElement, emitRef)
+        withContextUndispatched(emitContext, value, countOrElement, upstreamContext, upstreamCountOrElement, emitRef)
 }
 
 // Efficiently computes block(value) in the newContext
@@ -216,24 +230,14 @@ internal suspend fun <T, V> withContextUndispatched(
     newContext: CoroutineContext,
     value: V,
     countOrElement: Any = threadContextElements(newContext), // can be precomputed for speed
+    callerContext: CoroutineContext? = null,
+    callerCountOrElement: Any? = null,
     block: suspend (V) -> T
-): T = withCoroutineContext(newContext, countOrElement) {
-    suspendCoroutineUninterceptedOrReturn { uCont ->
-        block.startCoroutineUninterceptedOrReturn(value, StackFrameContinuation(uCont, newContext))
+): T = suspendCoroutineUninterceptedOrReturn { uCont ->
+    // The try/finally must stay inside the non-suspending lambda so restore runs on suspension
+    withCoroutineContext(newContext, countOrElement) {
+        block.startCoroutineUninterceptedOrReturn(
+            value, StackFrameContinuation(uCont, newContext, callerContext, callerCountOrElement)
+        )
     }
-}
-
-// Continuation that links the caller with uCont with walkable CoroutineStackFrame
-private class StackFrameContinuation<T>(
-    private val uCont: Continuation<T>, override val context: CoroutineContext
-) : Continuation<T>, CoroutineStackFrame {
-
-    override val callerFrame: CoroutineStackFrame?
-        get() = uCont as? CoroutineStackFrame
-
-    override fun resumeWith(result: Result<T>) {
-        uCont.resumeWith(result)
-    }
-
-    override fun getStackTraceElement(): StackTraceElement? = null
 }
