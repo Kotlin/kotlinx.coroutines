@@ -130,7 +130,7 @@ internal class LimitedDispatcher(
                     if (++fairnessCounter >= 16 && dispatcher.safeIsDispatchNeeded(this@LimitedDispatcher)) {
                         // Do "yield" to let other views execute their runnable as well
                         // Note that we do not decrement 'runningWorkers' as we are still committed to our part of work
-                        dispatcher.safeDispatch(this@LimitedDispatcher, this)
+                        dispatcher.dispatchYield(this@LimitedDispatcher, this)
                         return
                     }
                 }
