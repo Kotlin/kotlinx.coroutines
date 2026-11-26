@@ -235,6 +235,24 @@ class ThreadContextElementTest : TestBase() {
         executor.shutdownNow()
     }
 
+    /** Tests that appending a copyable thread context element does not assume the original element is copyable. */
+    @Test
+    fun testNotAssumingCopyableOriginalElement() = runTest {
+        val SharedKey = object : CoroutineContext.Key<CoroutineContext.Element> { }
+        class PlainElement : AbstractCoroutineContextElement(SharedKey)
+        class CopyableElement : AbstractCoroutineContextElement(SharedKey), CopyableThreadContextElement<Unit> {
+            override fun updateThreadContext(context: CoroutineContext) {}
+            override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) {}
+            override fun copyForChild() = CopyableElement()
+            override fun mergeForChild(overwritingElement: CoroutineContext.Element) = overwritingElement
+        }
+        withContext(PlainElement()) {
+            withContext(CopyableElement()) {
+                assertIs<CopyableElement>(currentCoroutineContext()[SharedKey])
+            }
+        }
+    }
+
     @Test
     fun testThreadLocalFlowOn() = runTest {
         val parameters: List<Triple<CoroutineContext, Boolean, Boolean>> =
