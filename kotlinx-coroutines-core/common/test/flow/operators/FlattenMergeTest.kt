@@ -50,83 +50,21 @@ class FlattenMergeTest : FlatMapMergeBaseTest() {
     }
 
     @Test
-    fun testConflatedProduceIn() = runTest {
-        val completed = CompletableDeferred<Unit>()
-        val source = flow {
-            emit(1)
-            emit(2)
-            emit(3)
-            completed.complete(Unit)
-        }
-
-        val channel = flowOf(source)
-            .flattenMerge(concurrency = 2)
-            .conflate()
-            .produceIn(this)
-
-        try {
-            repeat(100) {
-                if (!completed.isCompleted) yield()
-            }
-
-            assertTrue(completed.isCompleted)
-            assertEquals(3, channel.receive())
-        } finally {
-            channel.cancel()
+    fun testOverridingBuffer() = runTest {
+        for ((capacity, onBufferOverflow, expected) in listOf(
+            Triple(1, BufferOverflow.DROP_OLDEST, listOf(0, 20)),
+            Triple(1, BufferOverflow.DROP_LATEST, listOf(0, 1)),
+            Triple(5, BufferOverflow.DROP_OLDEST, listOf(0, 16, 17, 18, 19, 20)),
+            Triple(5, BufferOverflow.DROP_LATEST, listOf(0, 1, 2, 3, 4, 5)),
+            Triple(5, BufferOverflow.SUSPEND, (0..20).toList()),
+        )) {
+            val actual = (0..20).asFlow()
+                .flatMapMerge { flowOf(it) }
+                .buffer(capacity = capacity, onBufferOverflow = onBufferOverflow)
+                .onEach { repeat(20) { yield() } }
+                .toList()
+            assertEquals(expected, actual)
         }
     }
 
-    @Test
-    fun testDropOldestProduceIn() = runTest {
-        val completed = CompletableDeferred<Unit>()
-        val source = flow {
-            emit(1)
-            emit(2)
-            emit(3)
-            completed.complete(Unit)
-        }
-
-        val channel = flowOf(source)
-            .flattenMerge(concurrency = 2)
-            .buffer(capacity = 0, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-            .produceIn(this)
-
-        try {
-            repeat(100) {
-                if (!completed.isCompleted) yield()
-            }
-
-            assertTrue(completed.isCompleted)
-            assertEquals(3, channel.receive())
-        } finally {
-            channel.cancel()
-        }
-    }
-
-    @Test
-    fun testDropLatestProduceIn() = runTest {
-        val completed = CompletableDeferred<Unit>()
-        val source = flow {
-            emit(1)
-            emit(2)
-            emit(3)
-            completed.complete(Unit)
-        }
-
-        val channel = flowOf(source)
-            .flattenMerge(concurrency = 2)
-            .buffer(capacity = 0, onBufferOverflow = BufferOverflow.DROP_LATEST)
-            .produceIn(this)
-
-        try {
-            repeat(100) {
-                if (!completed.isCompleted) yield()
-            }
-
-            assertTrue(completed.isCompleted)
-            assertEquals(1, channel.receive())
-        } finally {
-            channel.cancel()
-        }
-    }
 }
