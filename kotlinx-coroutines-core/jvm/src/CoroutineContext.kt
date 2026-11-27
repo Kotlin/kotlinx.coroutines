@@ -45,9 +45,10 @@ public actual fun CoroutineContext.newCoroutineContext(addedContext: CoroutineCo
     // CoroutineContext.plus.
     return addedContext.fold(this) { result, element ->
         if (element !is CopyableThreadContextElement<*>) return@fold result + element // not CTCE, append normally
-        val oldElement = result[element.key] ?: return@fold result + element.copyForChild() // new CTCE, append copy
+        val oldElement = (result[element.key] as? CopyableThreadContextElement<*>)
+            ?: return@fold result + element.copyForChild() // new CTCE or overwriting non-CTCE, append copy
         // otherwise, overwrite oldElement with merged CTCE
-        result.replace(element.key, (oldElement as CopyableThreadContextElement<*>).mergeForChild(element))
+        result.replace(element.key, oldElement.mergeForChild(element))
     }
 }
 
