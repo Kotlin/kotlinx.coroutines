@@ -247,8 +247,11 @@ class ThreadContextElementTest : TestBase() {
             override fun mergeForChild(overwritingElement: CoroutineContext.Element) = overwritingElement
         }
         withContext(PlainElement()) {
-            withContext(CopyableElement()) {
-                assertIs<CopyableElement>(currentCoroutineContext()[SharedKey])
+            val outerCopyable = CopyableElement()
+            withContext(outerCopyable) {
+                val innerCopyable = currentCoroutineContext()[SharedKey]
+                assertIs<CopyableElement>(innerCopyable)
+                assertNotSame(outerCopyable, innerCopyable)
             }
         }
     }
