@@ -43,11 +43,11 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
                     expect(3)
                     emit(1)
                 }
+                    .onCompletion { expect(4) }
+                    .flatMapMerge<_, Int> {
+                        expectUnreached()
+                    }
                     .onCompletion { expect(5) }
-                    .flatMapMerge {
-                        expect(4)
-                        flowOf(it).onCompletion { expectUnreached() } }
-                    .onCompletion { expect(6) }
 
                 launch {
                     expect(1)
@@ -55,12 +55,11 @@ class FlatMapMergeTest : FlatMapMergeBaseTest() {
                 }
                 launch {
                     expect(2)
-                    yield()
                     job.cancel()
                 }
             }
         }
-        finish(7)
+        finish(6)
     }
 
     @Test
