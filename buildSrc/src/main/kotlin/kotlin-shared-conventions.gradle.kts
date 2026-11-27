@@ -117,7 +117,7 @@ plugins.withId("org.jetbrains.kotlin.multiplatform") {
         }
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
         wasmWasi {
-            nodejs()
+            wasmtime()
             compilations.configureEach {
                 compileTaskProvider.configure {
                     compilerOptions {

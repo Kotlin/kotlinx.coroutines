@@ -6,6 +6,8 @@ import org.gradle.api.initialization.dsl.*
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.*
 import org.jetbrains.kotlin.gradle.targets.js.yarn.*
+import org.jetbrains.kotlin.gradle.targets.wasm.wasmtime.*
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import java.net.*
 
 /**
@@ -26,6 +28,7 @@ private val mirroredUrls = listOf(
     "https://dl.google.com/dl/android/studio/ide-zips",
     "https://dl.google.com/go",
     "https://download.jetbrains.com",
+    "https://github.com/bytecodealliance/wasmtime/releases/download",
     "https://github.com/yarnpkg/yarn/releases/download",
     "https://jitpack.io",
     "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap",
@@ -126,6 +129,20 @@ private fun Project.configureNodeJsRedirects() {
     }
 }
 
+@OptIn(ExperimentalWasmDsl::class)
+private fun Project.configureWasmtimeRedirects() {
+    if (CacheRedirector.isEnabled) {
+        plugins.withType(WasmtimePlugin::class) {
+            extensions.configure(WasmtimeEnvSpec::class.java) {
+                // no API to modify the value in-place keeping it lazy: https://github.com/gradle/gradle/issues/27227
+                downloadBaseUrl.orNull?.let {
+                    downloadBaseUrl = CacheRedirector.maybeRedirect(it)
+                }
+            }
+        }
+    }
+}
+
 // Used from Groovy scripts
 // TODO get rid of Groovy, come up with a proper convention for rootProject vs arbitrary project argument
 object CacheRedirector {
@@ -141,6 +158,7 @@ object CacheRedirector {
     fun configure(project: Project) {
         project.checkRedirect(project.repositories, project.displayName)
         project.configureNodeJsRedirects()
+        project.configureWasmtimeRedirects()
     }
 
     /**
