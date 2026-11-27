@@ -44,10 +44,6 @@ internal class ChannelFlowMerge<T>(
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelFlowMerge(flow, concurrency, context, capacity, onBufferOverflow)
 
-    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
-        return scope.produce(context, capacity, block = collectToFun)
-    }
-
     override suspend fun collectTo(scope: ProducerScope<T>) {
         val semaphore = Semaphore(concurrency)
         val collector = SendingCollector(scope)
@@ -81,10 +77,6 @@ internal class ChannelLimitedFlowMerge<T>(
 ) : ChannelFlow<T>(context, capacity, onBufferOverflow) {
     override fun create(context: CoroutineContext, capacity: Int, onBufferOverflow: BufferOverflow): ChannelFlow<T> =
         ChannelLimitedFlowMerge(flows, context, capacity, onBufferOverflow)
-
-    override fun produceImpl(scope: CoroutineScope): ReceiveChannel<T> {
-        return scope.produce(context, capacity, block = collectToFun)
-    }
 
     override suspend fun collectTo(scope: ProducerScope<T>) {
         val collector = SendingCollector(scope)

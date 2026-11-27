@@ -2,6 +2,7 @@ package kotlinx.coroutines.flow
 
 import kotlinx.coroutines.testing.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
 import kotlin.test.*
 import kotlinx.coroutines.flow.merge as originalMerge
 
@@ -97,6 +98,24 @@ abstract class MergeTest : TestBase() {
                     flow.collect { send(it) }
                 }
             }
+        }
+    }
+
+    @Test
+    fun testOverridingBuffer() = runTest {
+        for ((capacity, onBufferOverflow, expected) in listOf(
+            Triple(1, BufferOverflow.DROP_OLDEST, listOf(0, 20)),
+            Triple(1, BufferOverflow.DROP_LATEST, listOf(0, 1)),
+            Triple(5, BufferOverflow.DROP_OLDEST, listOf(0, 16, 17, 18, 19, 20)),
+            Triple(5, BufferOverflow.DROP_LATEST, listOf(0, 1, 2, 3, 4, 5)),
+            Triple(5, BufferOverflow.SUSPEND, (0..20).toList()),
+        )) {
+            val actual = (0..20).map { flowOf(it) }
+                .merge()
+                .buffer(capacity = capacity, onBufferOverflow = onBufferOverflow)
+                .onEach { repeat(20) { yield() } }
+                .toList()
+            assertEquals(expected, actual)
         }
     }
 
