@@ -11,7 +11,7 @@ You'll explore how exceptions propagate through a coroutine hierarchy and how to
 
 ## Handle exceptions in coroutines
 
-To handle exceptions in coroutines, use `try` and `catch` blocks.
+To handle exceptions in coroutines, use [`try` and `catch` blocks](exceptions.md#handle-exceptions-using-try-catch-blocks).
 Place the code that might throw an exception in a `try` block and handle the exception in a `catch` block.
 
 Here's an example using the application's custom `NetworkException`:
@@ -38,9 +38,9 @@ For more information, see [The `finally` block](exceptions.md#the-finally-block)
 ### Exception propagation in coroutine hierarchies
 
 With structured concurrency, coroutines form a hierarchy of parent and child coroutines.
-
 If a child coroutine doesn't handle an exception, the exception propagates to its parent by default, unless it's a `CancellationException`.
-This cancels the parent, which then cancels its other child coroutines.
+A propagated exception cancels the parent, which then cancels its other child coroutines.
+This ensures that no unnecessary work continues when an operation requires all child coroutines to succeed.
 
 Here's an example where an exception thrown in a child coroutine propagates to its parent:
 
@@ -48,7 +48,8 @@ Here's an example where an exception thrown in a child coroutine propagates to i
 loadingScope.launch { // Parent coroutine
     launch { // First child coroutine
         delay(1.seconds)
-        // This message isn't printed because the parent coroutine cancels this child
+        // This message isn't printed because the parent coroutine
+        // cancels this child
         println("Coroutine completed")
     }
 
@@ -68,7 +69,8 @@ Here's the same example with the exception handled inside the second child corou
 loadingScope.launch { // Parent coroutine
     launch { // First child coroutine
         delay(1.seconds)
-        // This message is printed because the parent coroutine remains active
+        // This message is printed because
+        // the parent coroutine remains active
         println("Coroutine completed")
     }
 
@@ -84,6 +86,7 @@ loadingScope.launch { // Parent coroutine
 ```
 
 In this example, the `catch` block handles the exception, so it doesn't propagate and the parent coroutine isn't canceled.
+You can use this approach when an application needs to continue independent operations and provide useful results even if one operation fails.
 
 ### Isolate failures with `SupervisorJob`
 
@@ -94,7 +97,7 @@ You can use a [`SupervisorJob`](https://kotlinlang.org/api/kotlinx.coroutines/ko
 Unlike a `Job`, a `SupervisorJob` isn't canceled when one of its child coroutines fails.
 Other child coroutines can continue running, and you can start new child coroutines in the same coroutine scope.
 
-> Canceling the `SupervisorJob` cancels all its child coroutines.
+> Canceling a `SupervisorJob` cancels all its child coroutines.
 > 
 {style="note"}
 
@@ -143,7 +146,7 @@ The exception from the loading coroutine propagates to this `Job` and cancels it
 
 If you click **Load comments** again, the application can't run another loading attempt because the `Job` is already canceled.
 
-### Task – Implement independent loading attempts
+### Task 7 – Implement independent loading attempts
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/ui/ArticlesViewModel.kt` file and find the `loadingScope` property:
 
@@ -188,6 +191,9 @@ However, the exception no longer cancels `loadingScope`.
 If you click **Load comments** again, the application starts another loading attempt in a new coroutine.
 
 ## Load comments from an unstable network
+
+So far, one unsuccessful comment request stops the entire loading attempt.
+Let's handle these failures separately so that the remaining requests can continue.
 
 The `desktop-client/src/jvmMain/kotlin/org/example/articles/network/BlogService.kt` file declares the `getArticleInfoListUnstable()`
 and `getCommentsUnstable()` suspending functions for requesting data with simulated network failures:
@@ -239,7 +245,7 @@ As a result, one unsuccessful comment response stops the loading attempt, even t
 
 The comment requests are independent, so in the next task you'll handle each failure separately.
 
-### Task – Implement article loading from an unstable network
+### Task 8 – Implement article loading from an unstable network
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task6Exceptions.kt` file again.
 It contains the following `observeArticlesUnstable()` function:
@@ -285,13 +291,16 @@ launch {
 1. Use the `channelFlow()` builder function to create the flow.
 2. Call the `getArticleInfoListUnstable()` function and store the returned list.
 3. Use a `.forEach()` function to process each `ArticleInfo` object.
-4. For each object, call the `.launch()` coroutine builder function to start a child coroutine that loads its comments.
-5. In each child coroutine:
+4. Import the `.launch()` coroutine builder function from the `kotlinx.coroutines` package.
+5. For each object, call the `.launch()` coroutine builder function to start a child coroutine that loads its comments.
+6. In each child coroutine:
     * Call the `getCommentsUnstable()` function in a `try` block and create an `ArticleResult.Success` object from the article information and comments.
     * Create an `ArticleResult.Failure` object from the article information and the exception in the `catch` block.
     * Use the `send()` function to send the result.
 
 ```kotlin
+import kotlinx.coroutines.launch
+
 fun observeArticlesUnstable(service: BlogService): Flow<ArticleResult> = channelFlow {
     val articleInfoList = service.getArticleInfoListUnstable()
     articleInfoList.forEach { articleInfo ->
@@ -322,7 +331,7 @@ A failed comment request doesn't stop the remaining requests, and the applicatio
 
 If you click **Load comments** again, the application can start a new loading attempt because the previous exception didn't cancel `loadingScope`.
 
-The simulated failures are random, so a loading attempt can also complete without any failed requests.
+The simulated failures are random, so a loading attempt can also complete without any failed requests or fail at the start.
 
 ### Test your implementation
 
@@ -338,12 +347,6 @@ The tests use the Turbine library to collect the flow and check that the `observ
 
 Instead of `MockBlogService`, the tests use `UnstableMockBlogService` to simulate failures for specific comment requests or the article-list request.
 This makes the simulated failures predictable, so the tests can compare the results with the expected ones.
-
-<list id="tour-nav">
-  <li>
-    <a as="button" href="coroutines-tutorial-channelflow.md" mode="outline" icon="arrow-left" icon-position="left">Previous step</a>
-  </li>
-</list>
 
 ## What's next
 
@@ -362,3 +365,9 @@ If you'd like to dive deeper into coroutines, explore these topics:
 * [Coroutine basics](coroutines-basics.md)
 * [Coroutine cancellation](coroutines-cancellation.md)
 * [Flows](coroutines-flow.md)
+
+<list id="tour-nav">
+  <li>
+    <a as="button" href="coroutines-tutorial-channelflow.md" mode="outline" icon="arrow-left" icon-position="left">Previous step</a>
+  </li>
+</list>

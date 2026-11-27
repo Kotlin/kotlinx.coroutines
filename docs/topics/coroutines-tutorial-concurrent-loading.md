@@ -26,11 +26,10 @@ This allows multiple HTTP requests to remain in progress at the same time, even 
 ## Coroutine scopes and structured concurrency
 
 When you start multiple coroutines, you need a way to manage them as a group.
-The principle of _structured concurrency_ provides this structure by connecting each child coroutine to the scope in which you start it.
+The principle of _structured concurrency_ connects each child coroutine to the scope in which you start it, so you can manage them together.
 
 You can use the [`coroutineScope()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/coroutine-scope.html) coroutine builder function to create a `CoroutineScope`.
-This function takes a suspending lambda and uses the created `CoroutineScope` as the [lambda's receiver](lambdas.md#function-literals-with-receiver).
-This receiver provides the scope for child coroutines started in the lambda.
+This function takes a suspending lambda and uses the created `CoroutineScope` as the [lambda's receiver](lambdas.md#function-literals-with-receiver), allowing you to start child coroutines in that scope.
 
 For example, the following function calls the [`.launch()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/launch.html) coroutine builder function twice on this scope to start two child coroutines.
 Each child calls the [`delay()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/delay.html) function, which suspends the child coroutine for a specified `Duration` without blocking the thread.
@@ -53,18 +52,16 @@ suspend fun printMessages() = coroutineScope {
 }
 ```
 
-Each `.launch()` call starts a child coroutine in the scope created by `coroutineScope()`.
 The first child coroutine resumes and prints `Hello` before the second resumes and prints `World`.
-The `printMessages()` function returns after both child coroutines complete.
+The `printMessages()` function returns only after both child coroutines complete.
 
 ## Return values from coroutines
 
 In addition to the `.launch()` coroutine builder function, you can use the [`.async()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/async.html) function to start a coroutine.
 
-Both functions are extension functions on `CoroutineScope`.
-When you call either function in a `coroutineScope()` block, it starts a child coroutine in that scope.
+Since they are both extension functions on `CoroutineScope`, you can call either function in a `coroutineScope()` block to start a child coroutine.
 
-These coroutine builder functions serve different purposes:
+Each function serves different purposes:
 
 * Use `.launch()` when the coroutine doesn't need to produce a result. It returns a [`Job`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/) handle that represents the coroutine.
 * Use `.async()` when the coroutine needs to produce a result. It returns a [`Deferred`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-deferred/) handle that represents a result that becomes available when the coroutine completes.
@@ -83,9 +80,7 @@ suspend fun calculateAnswer(): Int = coroutineScope {
 ```
 
 You can also retrieve results from multiple `Deferred` handles with the [`.awaitAll()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/await-all.html) extension function.
-The `.awaitAll()` function suspends until all the coroutines complete and returns their results as a list.
-
-Here's an example:
+The `.awaitAll()` function suspends until all the coroutines complete and returns their results as a list:
 
 ```kotlin
 suspend fun calculateAnswers(): List<Int> = coroutineScope {
@@ -98,7 +93,7 @@ suspend fun calculateAnswers(): List<Int> = coroutineScope {
 }
 ```
 
-### Task – Implement concurrent loading
+### Task 3 – Implement concurrent loading
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task2SequentialVsAsynchronous.kt` file.
 
@@ -173,7 +168,7 @@ The requests remain in progress concurrently, so the longest simulated delay det
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task2SequentialVsAsynchronousKtTest.kt` file.
 
 The tests check that the `loadArticlesConcurrently()` function returns the expected `Article` objects.
-They also check that loading takes tw seconds of virtual time, which matches the longest possible simulated delay.
+They also check that loading takes two seconds of virtual time, which matches the longest possible simulated delay.
 
 In the next part of the tutorial, you'll explore how structured concurrency keeps concurrent loading cancelable.
 

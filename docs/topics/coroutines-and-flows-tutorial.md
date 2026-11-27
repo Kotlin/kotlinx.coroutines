@@ -8,7 +8,7 @@ Learn how to use Kotlin coroutines and flows by completing this hands-on tutoria
 
 > No prior knowledge of coroutines is required, but you should be familiar with basic Kotlin syntax.
 >
-> If you're new to Kotlin, we recommend completing the [Kotlin tour](kotlin-tour-welcome.md) first.
+> If you're new to Kotlin, check out the [Kotlin tour](kotlin-tour-welcome.md) first to grasp the fundamentals of the language.
 >
 {style="tip"}
 
@@ -23,7 +23,7 @@ To implement these loading strategies, you'll progress through the following ste
    <img src="icon-2.svg" width="20" alt="Second step"/> <a href="coroutines-tutorial-concurrent-loading.md">Load articles concurrently</a><br/>
    <img src="icon-3.svg" width="20" alt="Third step"/> <a href="coroutines-tutorial-cancel-coroutines.md">Cancel concurrent loading with structured concurrency</a><br/>
    <img src="icon-4.svg" width="20" alt="Fourth step"/> <a href="coroutines-tutorial-loading-progress-with-flow.md">Show loading progress with a flow</a><br/>
-   <img src="icon-5.svg" width="20" alt="Fifth step"/> <a href="coroutines-tutorial-channelflow.md">Emit values concurrently with channelFlow()</a><br/>
+   <img src="icon-5.svg" width="20" alt="Fifth step"/> <a href="coroutines-tutorial-channelflow.md">Emit values concurrently with <code>channelFlow()</code></a><br/>
    <img src="icon-6.svg" width="20" alt="Sixth step"/> <a href="coroutines-tutorial-exceptions.md">Handle exceptions while loading articles</a><br/>
 </p>
 
@@ -38,13 +38,13 @@ Complete the following before starting the tutorial:
 
 1. Install the latest version of IntelliJ IDEA using the [JetBrains Toolbox App](https://www.jetbrains.com/toolbox-app/). Alternatively, download the [standalone installer](https://www.jetbrains.com/idea/download/).
 2. Make sure that [JDK 17 or later](https://www.oracle.com/java/technologies/downloads/) is installed and [configured for Gradle](https://www.jetbrains.com/help/idea/gradle-jvm-selection.html).
-3. Clone the [project template](https://github.com/kotlin-hands-on/intro-coroutines-flows) by selecting **File | New | Project from Version Control** in IntelliJ IDEA and using this URL:
+3. In IntelliJ IDEA, select **File | New | Get from Version Control**  to clone the [project template](https://github.com/kotlin-hands-on/intro-coroutines-flows) with this URL:
 
    ```text
    https://github.com/kotlin-hands-on/intro-coroutines-flows
    ```
   
-4. Check out the `main` branch, which contains the unfinished tasks.
+4. Check out the `main` branch, which contains some unfinished tasks.
 
 ### Explore the project
 
@@ -90,6 +90,8 @@ Before running the application, make sure that port `9020` is available for the 
 As you complete each task, select the corresponding option from the **Loading Mode** menu to see how your implementation behaves:
 
 ![The Articles application with the Loading Mode menu](articles-app.png){width="700"}
+
+In the first part of the tutorial, you'll learn about blocking network calls and how to replace them with suspending functions to keep the UI responsive.
 
 ## Next step
 

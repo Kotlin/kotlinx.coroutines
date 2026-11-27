@@ -39,7 +39,7 @@ fun messageFlow(): Flow<String> = channelFlow {
 
 Because the child coroutines run concurrently, the order in which the collector receives their values isn't guaranteed.
 
-### Task – Implement concurrent progress reporting
+### Task 6 – Implement concurrent progress reporting
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task5AsyncProgress.kt` file.
 It contains the `observeArticlesConcurrently()` function with a `TODO()` placeholder:
@@ -124,16 +124,13 @@ Because the comment requests take different amounts of time, the order of the di
 
 ### Optional task – Create tests for concurrent loading {initial-collapse-state="collapsed" collapsible="true" id="concurrent-loading-tests-exercise"}
 
-> This task uses the Turbine library to demonstrate how to retrieve the expected number of values
-> and then verify that the flow completes successfully.
-> 
+This exercise builds on the optional test-writing exercise from the [previous part](coroutines-tutorial-loading-progress-with-flow.md) of the tutorial.
+As in the previous exercise, use the Turbine library with the same test structure, using `.test()`, `awaitItem()`, `awaitComplete()`, `runTest()`, and `.measureTime()`.
+
 > As a simpler approach, you can call the [`.toSet()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-set.html)
 > extension function on the flow to collect its values directly into a set.
 >
-{style="note"}
-
-This exercise builds on the optional test-writing exercise from the [previous part](coroutines-tutorial-loading-progress-with-flow.md) of the tutorial.
-Follow the same test structure as in the previous exercise, using `.test()`, `awaitItem()`, `awaitComplete()`, `runTest()`, and `.measureTime()`.
+{style="tip"}
 
 Unlike sequential loading, concurrent loading doesn't guarantee the order in which the flow emits its values.
 To verify the results without requiring a particular order, convert the expected and collected lists to sets with the [`.toSet()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/to-set.html) extension function before comparing them.
@@ -183,8 +180,16 @@ For the `test observeArticlesConcurrently Result()` function:
 5. Call the `awaitComplete()` function to verify that the flow completes successfully.
 6. Convert the expected and collected lists to sets with the `.toSet()` extension function.
 7. Use the `assertEquals()` function to compare the sets.
+8. Follow the IDE's suggestions to import the necessary symbols.
 
 ```kotlin
+import app.cash.turbine.test
+import org.example.articles.data.ArticlesFakeDataResults
+import org.example.articles.data.MockBlogService
+import org.example.articles.model.Article
+import org.example.data.ArticlesFakeData
+import kotlin.test.assertEquals
+
 @Test
 fun `test observeArticlesConcurrently Result`() = runTest {
     val results = mutableListOf<Article>()
@@ -211,8 +216,12 @@ To implement the `test observeArticlesConcurrently Duration()` test:
 4. Call the `awaitComplete()` function to verify that the flow completes successfully.
 5. Store `ArticlesFakeDataResults.expectedConcurrentList.duration` as the expected upper bound.
 6. Use the `assertTrue()` function to verify that the elapsed time doesn't exceed the expected upper bound.
+7. Import the `assertTrue()` function from `kotlin.test` and the `.measureTime()` function from `kotlin.time`.
 
 ```kotlin
+import kotlin.test.assertTrue
+import kotlin.time.measureTime
+
 @Test
 fun `test observeArticlesConcurrently Duration`() = runTest {
     val totalTime = testScheduler.timeSource.measureTime {

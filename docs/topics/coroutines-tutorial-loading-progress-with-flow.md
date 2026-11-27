@@ -44,7 +44,7 @@ suspend fun printMessages() {
 }
 ```
 
-### Task – Implement progress reporting
+### Task 5 – Implement progress reporting
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task4Progress.kt` file.
 It contains the `observeArticlesLoading()` function with a `TODO()` placeholder:
@@ -117,15 +117,12 @@ However, it adds each `Article` object to the displayed results as soon as the f
 
 ### Optional task – Create tests for sequential loading {initial-collapse-state="collapsed" collapsible="true" id="sequential-loading-tests-exercise"}
 
-> To show the Turbine library in action, this task uses it to retrieve emitted values one at a time and verify that the flow completes successfully.
-> 
-> As a simpler approach, you can call the
-> [`.toList()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-list.html)
-> extension function on the flow to collect its values into a list.
->
-{style="note"}
+[Turbine](https://github.com/cashapp/turbine) is a library for testing Kotlin flows, including the values they emit and how they complete.
+To see Turbine in action, you'll use it in this task to retrieve emitted values one at a time and verify that the flow completes successfully.
 
-You can use the [Turbine library](https://github.com/cashapp/turbine) to test flows, including the values they emit and how they complete.
+> As a simpler approach, you can call the [`.toList()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines.flow/to-list.html) extension function on the flow to collect its values into a list.
+> 
+{style="tip"}
 
 To collect a flow in a Turbine test, call the [`.test()`](https://cashapp.github.io/turbine/docs/1.x/-turbine/app.cash.turbine/test.html) extension function on it.
 Inside the lambda passed to `.test()`, use:
@@ -136,7 +133,7 @@ Inside the lambda passed to `.test()`, use:
 The `.test()` function is suspending.
 To call it from a test, use the [`runTest()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/run-test.html) function, which runs the test body in a coroutine.
 
-Unlike `runBlocking()`, `runTest()` advances virtual time to skip delays controlled by its test scheduler.
+The `runTest()` function advances virtual time to skip delays controlled by its test scheduler.
 This allows the test to complete quickly while preserving the simulated loading duration.
 
 For example, the following test verifies that a flow emits `1`, waits for one second using the `delay()` function, emits `2`, and completes successfully:
@@ -158,7 +155,7 @@ fun `test a delayed flow`() = runTest {
 
 To measure how much virtual time passes while collecting a flow, use the [`.measureTime()`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.time/measure-time.html) function
 with the [`testScheduler.timeSource`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-test/kotlinx.coroutines.test/-test-coroutine-scheduler/time-source.html) property.
-Inside a `runTest()` block, this property represents the test scheduler's virtual time, and the `.measureTime()` function returns the elapsed time as a `Duration`:
+Inside a `runTest()` block, this property represents the test scheduler's virtual time and the `.measureTime()` function returns the elapsed time as a `Duration`:
 
 ```kotlin
 val totalTime = testScheduler.timeSource.measureTime {
@@ -205,8 +202,16 @@ For the `test observeArticlesLoading Result()` function:
 4. During each iteration, call the `awaitItem()` function and add the returned `Article` object to the mutable list.
 5. Call the `awaitComplete()` function to verify that the flow completes successfully.
 6. Use the `assertEquals()` function to compare the collected objects with `ArticlesFakeDataResults.expectedSequentialList.list`.
+7. Follow the IDE's suggestions to import the necessary symbols.
 
 ```kotlin
+import app.cash.turbine.test
+import org.example.articles.data.ArticlesFakeDataResults
+import org.example.articles.data.MockBlogService
+import org.example.articles.model.Article
+import org.example.data.ArticlesFakeData
+import kotlin.test.assertEquals
+
 @Test
 fun `test observeArticlesLoading Result`() = runTest {
     val results = mutableListOf<Article>()
@@ -227,13 +232,16 @@ fun `test observeArticlesLoading Result`() = runTest {
 
 To implement the `test observeArticlesLoading Duration()` test:
 
-1. Collect the flow inside a `testScheduler.timeSource.measureTime()` block and store the `Duration` it returns.
-2. Call the `observeArticlesLoading()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
-3. Use the `repeat()` function with `ArticlesFakeData.getArticles().size` and call the `awaitItem()` function during each iteration.
-4. Call the `awaitComplete()` function to verify that the flow completes successfully.
-5. Use the `assertEquals()` function to compare the duration with `ArticlesFakeDataResults.expectedSequentialList.duration`.
+1. Import the `measureTime()` function from the `kotlin.time` package.
+2. Collect the flow inside a `testScheduler.timeSource.measureTime()` block and store the `Duration` it returns.
+3. Call the `observeArticlesLoading()` function with `MockBlogService`, then call the `.test()` extension function on the returned flow.
+4. Use the `repeat()` function with `ArticlesFakeData.getArticles().size` and call the `awaitItem()` function during each iteration.
+5. Call the `awaitComplete()` function to verify that the flow completes successfully.
+6. Use the `assertEquals()` function to compare the duration with `ArticlesFakeDataResults.expectedSequentialList.duration`.
 
 ```kotlin
+import kotlin.time.measureTime
+
 @Test
 fun `test observeArticlesLoading Duration`() = runTest {
     val totalTime = testScheduler.timeSource.measureTime {

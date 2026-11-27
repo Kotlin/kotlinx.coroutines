@@ -13,13 +13,13 @@ In this part of the tutorial, you'll explore the cancellation behavior of corout
 
 ## Cancel coroutines
 
-Cancellation lets you request to stop a coroutine before it completes.
+A coroutine's `Job` handle represents its lifecycle and parent-child relationships.
+You can use it to request to stop a coroutine before it completes.
 
-Cancellation works through a coroutine's `Job` handle, which represents the lifecycle of a coroutine and its parent-child relationships.
 The `.launch()` coroutine builder function returns a `Job`.
 The `.async()` coroutine builder function returns a `Deferred`, which implements `Job` and supports the same cancellation behavior.
 
-You can request cancellation by invoking the [`cancel()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html) function on a coroutine's `Job` handle.
+To request cancellation, invoke the [`cancel()`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-job/cancel.html) function on the coroutine's `Job` handle.
 
 In the Articles application, the `ArticlesViewModel.loadComments()` function stores the `Job` returned by `loadingScope.launch()` in the `loadingJob` property.
 When you click **Cancel**, the `ArticlesViewModel.cancelLoading()` function invokes `cancel()` on this `Job`.
@@ -27,7 +27,6 @@ When you click **Cancel**, the `ArticlesViewModel.cancelLoading()` function invo
 ## Cancellation propagation
 
 In the previous part of the tutorial, the `loadArticlesConcurrently()` function used `coroutineScope()` to connect each child coroutine to the parent loading coroutine.
-
 Structured concurrency ensures that canceling a coroutine also cancels all its children.
 This behavior is known as _cancellation propagation_.
 
@@ -51,6 +50,7 @@ In this project, the local server configures Ktor's [`HttpRequestLifecycle`](htt
 
 ### Start coroutines in `GlobalScope`
 
+Sometimes, you may want to start a coroutine that continues running for the application's entire lifetime, independently of other coroutines.
 The [`GlobalScope`](https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/-global-scope/) object provides a scope that isn't connected to the parent loading coroutine.
 
 A coroutine started with `GlobalScope.async()` isn't a child of the loading coroutine.
@@ -60,15 +60,15 @@ The coroutine can still be canceled by invoking `cancel()` on its own `Deferred`
 However, this doesn't happen automatically through cancellation propagation because starting the coroutine in `GlobalScope` breaks structured concurrency.
 
 > `GlobalScope` is a delicate API, so avoid using it in production applications.
-> This task uses `GlobalScope` to demonstrate the risks of running coroutines that aren't connected through structured concurrency.
+>
+> Even for work that must remain active for the application's entire lifetime, a dedicated `CoroutineScope` tied to the application's lifecycle is a better solution.
+> This keeps application-wide coroutines connected through structured concurrency and lets you manage them as a group.
 > 
-> One of its few legitimate use cases is for work that must remain active for the application's entire lifetime.
-> Even then, a dedicated `CoroutineScope` tied to the application's lifecycle is a better solution that
-> lets you manage application-wide coroutines as a group.
+> This task uses `GlobalScope` to demonstrate the risks of running coroutines that aren't connected through structured concurrency.
 >
 {style="warning"}
 
-### Task – Implement loading with `GlobalScope`
+### Task 4 – Implement loading with `GlobalScope`
 
 Open the `desktop-client/src/jvmMain/kotlin/org/example/articles/tasks/Task3StructuredConcurrency.kt` file.
 It contains the `loadArticlesNonCancelable()` function with a `TODO()` placeholder:
@@ -135,12 +135,9 @@ As a result, they continue requesting comments after the parent loading coroutin
 
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task3StructuredConcurrencyKtTest.kt` file.
 
-The tests check the following behavior:
-
-* The `loadArticlesNonCancelable()` function returns the expected `Article` objects when loading completes.
-* The `loadArticlesConcurrently()` function reacts to cancellation.
-
-The test starts the function in a coroutine, waits for one second of virtual time, and cancels its `Job`.
+The tests verify that the `loadArticlesNonCancelable()` function returns the expected `Article` objects when loading completes.
+They also verify that the `loadArticlesConcurrently()` function reacts to cancellation.
+The `test loadArticlesConcurrently Cancellation()` function starts `loadArticlesConcurrently()` in a coroutine, waits for one second of virtual time, and cancels the coroutine's `Job`.
 It then checks that the `Job` is canceled and that cancellation completes before two seconds of virtual time have elapsed.
 
 The tests don't check whether the coroutines started in `GlobalScope` continue after the parent loading coroutine is canceled.

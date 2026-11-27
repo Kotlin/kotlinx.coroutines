@@ -26,18 +26,17 @@ suspend fun loadArticles(service: BlogService): List<Article> {
 }
 ```
 
-The application invokes the corresponding function based on the selected loading mode:
+The application invokes the corresponding `loadArticles()` function based on the selected loading mode:
 
-* **BLOCKING** invokes the function with a `BlogServiceBlocking` parameter.
-* **SUSPENDING** invokes the suspending function with a `BlogService` parameter.
+* **BLOCKING** invokes the function with the `BlogServiceBlocking` parameter.
+* **SUSPENDING** invokes the suspending function with the `BlogService` parameter.
 
-> The file also contains the `main0()` and `main()` functions.
-> You don't need to run these functions during the tutorial.
+> The file also contains the `main0()` and `main()` functions, but you don't need to use these to run the application.
 > [Run the **Articles** application](coroutines-and-flows-tutorial.md#run-the-application) instead.
 >
 {style="note"}
 
-The two `loadArticles()` functions create and return instances of the `Article` data class.
+The `loadArticles()` functions create and return instances of the `Article` data class.
 Each instance combines an `ArticleInfo` object with a list of instances of the `Comment` data class.
 These data classes are declared in the following files:
 
@@ -50,7 +49,7 @@ These data classes are declared in the following files:
 
 An application can become unresponsive when it has to wait for an operation to finish before it can handle other work.
 
-On the JVM, code runs on threads.
+On the JVM, applications use threads to perform work.
 If the thread responsible for handling user interactions has to wait for an operation to finish, it can't do other work in the meantime.
 An operation that causes the thread to wait in this way is known as a _blocking operation_.
 
@@ -79,7 +78,7 @@ fun getArticleInfoList(): List<ArticleInfo> {
 The `getArticlesCall()` function prepares an HTTP request.
 The `execute()` function sends the request and blocks the current thread until the server returns a response.
 
-### Task – Implement the blocking function
+### Task 1 – Implement the blocking function
 
 In the `Task1BlockVsSuspend.kt` file, find the following `TODO()` placeholder function:
 
@@ -131,13 +130,13 @@ The application invokes the blocking `loadArticles()` function on the UI thread.
 To load the articles and comments, `BlogServiceBlocking` invokes Retrofit's `execute()` function for each HTTP request.
 The UI thread can't update the window or handle input until `loadArticles()` returns.
 As a result, the rotating emoji stops and the application remains unresponsive until all articles and comments have loaded.
-This behavior demonstrates why blocking operations are a poor fit for the UI thread and why loading data in real-world applications requires a different approach.
+With this behavior, you clearly see why blocking operations are a poor fit for the UI thread and why loading data in real-world applications requires a different approach.
 
 ![Result of running the blocking function](blocking-function.png){width="700"}
 
 ## Suspending functions
 
-Kotlin provides [_suspending functions_](coroutines-basics.md#suspending-functions), which can pause at a _suspension point_ without blocking the thread and continue later from that point.
+As an alternative, Kotlin provides [_suspending functions_](coroutines-basics.md#suspending-functions), which can pause at a _suspension point_ without blocking the thread and continue later from that point.
 You can only call a suspending function from another suspending function.
 
 To declare a suspending function, use the `suspend` keyword:
@@ -164,7 +163,7 @@ Ktor's suspending [`.get()`](https://api.ktor.io/ktor-client-core/io.ktor.client
 While waiting for a response, the `getArticleInfoList()` function can suspend its execution without blocking the thread.
 When the server returns a response, the function continues.
 
-The `suspend` keyword doesn't make blocking code non-blocking by itself.
+The `suspend` keyword alone doesn't make blocking code non-blocking.
 It declares a function as suspending, which allows the function to call other suspending functions.
 Because `getArticleInfoList()` and `getComments()` are suspending functions, the second `loadArticles()` function also uses the `suspend` keyword.
 
@@ -208,9 +207,9 @@ loadingJob = loadingScope.launch(coroutineExceptionHandler) {
 }
 ```
 
-Because the block passed to `.launch()` is suspending, it can call the suspending `loadArticles(service)` function.
+Because `.launch()` takes a suspending lambda, it can call the suspending `loadArticles(service)` function.
 
-### Task – Implement the suspending function
+### Task 2 — Implement the suspending function
 
 In the `Task1BlockVsSuspend.kt` file, replace the `TODO()` placeholder in the following function:
 
@@ -266,6 +265,12 @@ Loading still takes approximately 10 seconds because the application requests co
 ## Test your implementation
 
 Run the tests in the `desktop-client/src/jvmTest/kotlin/org/example/articles/tasks/Task1BlockVsSuspendKtTest.kt` file.
+
+In IntelliJ IDEA, click the **Run** icon in the gutter next to the test class declaration.
+
+> For more information, see [Run tests](jvm-test-using-junit.md#run-tests).
+>
+{style="tip"}
 
 The tests check that the suspending `loadArticles()` function returns the expected `Article` objects and loads their comments sequentially.
 They use virtual time, so you don't have to wait for the simulated delays.
